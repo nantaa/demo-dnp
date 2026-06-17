@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNP Monitoring System</title>
+  <style>
+    body {
+      margin: 0;
+      background: #F2EFE8;
+      font-family: system-ui, sans-serif;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1"
+  }
+}
+</script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+
+<body>
+  <div id="root">
+    <div style="padding:40px;text-align:center;font-family:system-ui;color:#888">
+      Loading DNP Monitoring System...
+    </div>
+  </div>
+
+  <script type="module">
+    import React, { useState, useEffect, useMemo, useRef } from 'react';
+    import * as ReactDOM from 'react-dom/client';
+    import {
+      LayoutDashboard, Columns, List, Plus, Bell, LogOut, CheckCircle2,
+      AlertTriangle, Clock, FileText, Upload, X, Building2, Calendar,
+      User, FileCheck, Package, ChevronRight, Search, ArrowRight, Trash2,
+      Eye, Banknote, ShieldCheck, Hourglass, Database, Download, RotateCcw,
+      HardHat, ClipboardList, ChevronLeft, Activity, AlertCircle,
+      Printer, Wrench, BriefcaseBusiness, Boxes, Award
+    } from 'lucide-react';
+
+    window.React = React;
+    window.ReactDOM = ReactDOM;
+    Object.assign(window, {
+      useState, useEffect, useMemo, useRef,
+      LayoutDashboard, Columns, List, Plus, Bell, LogOut, CheckCircle2,
+      AlertTriangle, Clock, FileText, Upload, X, Building2, Calendar,
+      User, FileCheck, Package, ChevronRight, Search, ArrowRight, Trash2,
+      Eye, Banknote, ShieldCheck, Hourglass, Database, Download, RotateCcw,
+      HardHat, ClipboardList, ChevronLeft, Activity, AlertCircle,
+      Printer, Wrench, BriefcaseBusiness, Boxes, Award
+    });
+
+    window.storage = {
+      async get(key) {
+        try {
+          const v = localStorage.getItem(key);
+          return v ? { value: JSON.parse(v) } : null;
+        } catch (e) { return null; }
+      },
+      async set(key, val) {
+        try {
+          const payload = (val && typeof val === 'object' && 'value' in val) ? val.value : val;
+          localStorage.setItem(key, JSON.stringify(payload));
+          return true;
+        } catch (e) { return false; }
+      },
+      async delete(key) {
+        try { localStorage.removeItem(key); return true; } catch (e) { return false; }
+      },
+    };
+
+    window.__DNP_READY__ = true;
+    window.dispatchEvent(new Event('dnp:ready'));

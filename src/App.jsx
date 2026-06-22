@@ -26,6 +26,16 @@ const storage = {
   async delete(key) {
     try { localStorage.removeItem(key); return true } catch (e) { return false }
   },
+  async list(prefix) {
+    try {
+      const keys = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (k && k.startsWith(prefix)) keys.push(k)
+      }
+      return { keys }
+    } catch (e) { return { keys: [] } }
+  },
 }
 
 // ── Paste everything from your <script type="text/babel"> block here ──
@@ -512,49 +522,72 @@ function recommendInspektur(targetJob, allJobs, inspekturList = INSPEKTUR_LIST) 
 }
 
 // ============================================================
-// STORAGE LAYER
+// API STORAGE LAYER  (Express + SQLite backend)
 // ============================================================
 
+// ── App-state KV (user session, etc.) via localStorage ─────
+// We keep the user session in localStorage so login survives
+// a server restart without re-prompting every time.
 async function safeGet(key) {
   try {
-    const r = await window.storage.get(key);
-    return r ? JSON.parse(r.value) : null;
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : null;
   } catch { return null; }
 }
 async function safeSet(key, val) {
-  try { await window.storage.set(key, JSON.stringify(val)); return true; }
+  try { localStorage.setItem(key, JSON.stringify(val)); return true; }
   catch { return false; }
 }
 async function safeDelete(key) {
-  try { await window.storage.delete(key); return true; }
+  try { localStorage.removeItem(key); return true; }
   catch { return false; }
 }
-async function safeList(prefix) {
-  try {
-    const r = await window.storage.list(prefix);
-    return r?.keys || [];
-  } catch { return []; }
-}
 
+// ── Jobs API ────────────────────────────────────────────────
 async function loadAllJobs() {
-  const keys = await safeList('job:');
-  const jobs = await Promise.all(keys.map(k => safeGet(k)));
-  return jobs.filter(Boolean).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  try {
+    const res = await fetch('/api/jobs');
+    const data = await res.json();
+    return data.ok ? data.jobs : [];
+  } catch (e) {
+    console.error('[API] loadAllJobs failed:', e);
+    return [];
+  }
 }
 
 async function saveJob(job) {
-  return safeSet(`job:${job.id}`, job);
+  try {
+    const res = await fetch(`/api/jobs/${job.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(job),
+    });
+    return (await res.json()).ok;
+  } catch (e) {
+    console.error('[API] saveJob failed:', e);
+    return false;
+  }
 }
 
 async function deleteJob(id) {
-  return safeDelete(`job:${id}`);
+  try {
+    const res = await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+    return (await res.json()).ok;
+  } catch (e) {
+    console.error('[API] deleteJob failed:', e);
+    return false;
+  }
 }
 
 async function getNextSeq() {
-  const state = await safeGet('app:seq');
-  const next = (state?.value || 0) + 1;
-  await safeSet('app:seq', { value: next });
-  return next;
+  try {
+    const res = await fetch('/api/jobs/seq/next');
+    const data = await res.json();
+    return data.ok ? data.seq : Date.now();
+  } catch (e) {
+    console.error('[API] getNextSeq failed:', e);
+    return Date.now();
+  }
 }
 
 // ============================================================
@@ -6877,10 +6910,9 @@ function App() {
   const [showNewJob, setShowNewJob] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Initial load
+  // Initial load — server auto-seeds on first run
   useEffect(() => {
     (async () => {
-      await seedDemoData(); // Only seeds if empty
       const savedUser = await safeGet('app:user');
       const loadedJobs = await loadAllJobs();
       setUser(savedUser);
@@ -6951,8 +6983,11 @@ function App() {
 
   const handleResetDemo = async () => {
     if (!confirm('Reset semua data ke demo awal? Semua perubahan akan hilang.')) return;
-    await clearAllData();
-    await seedDemoData();
+    await fetch('/api/jobs/seed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: true }),
+    });
     setSelectedJob(null);
     await refreshJobs();
   };

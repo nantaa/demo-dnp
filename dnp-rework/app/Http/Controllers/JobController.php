@@ -18,7 +18,11 @@ class JobController extends Controller
             abort(403, 'Unauthorized to create jobs. Stage 1 is owned by Marketing.');
         }
 
-        return Inertia::render('Jobs/Create');
+        return Inertia::render('Jobs/Create', [
+            'auth' => [
+                'user' => Auth::user(),
+            ]
+        ]);
     }
 
     /**

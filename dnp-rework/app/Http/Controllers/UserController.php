@@ -22,6 +22,9 @@ class UserController extends Controller
 
         return Inertia::render('Users/Index', [
             'users' => $users,
+            'auth' => [
+                'user' => Auth::user(),
+            ]
         ]);
     }
 

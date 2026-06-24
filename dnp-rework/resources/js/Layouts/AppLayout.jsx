@@ -21,17 +21,58 @@ export default function AppLayout({ header, children }) {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col text-gray-900 font-sans">
+        <div className="min-h-screen flex flex-col text-gray-900 font-sans" style={{ background: 'var(--bg-deep)' }}>
+            <style dangerouslySetInnerHTML={{__html: `
+                :root {
+                  --bg-deep: #F2EFE8;
+                  --bg-card: #FFFFFF;
+                  --ink: #111111;
+                  --ink-soft: #666666;
+                  --ink-faint: #AAAAAA;
+                  --line: #E5E2DC;
+                  --line-soft: #F0EDE6;
+                  --ok: #15803d;
+                  --warn: #b45309;
+                  --bad: #b91c1c;
+                  --info: #0369a1;
+                  --accent: #b45309;
+                }
+                .dnp-serif {
+                  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+                }
+                .dnp-mono {
+                  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+                .panel {
+                  background: var(--bg-card);
+                  border: 1px solid var(--line);
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                }
+                .tag {
+                  display: inline-flex;
+                  align-items: center;
+                  padding: 2px 6px;
+                  border-radius: 4px;
+                  font-size: 10px;
+                  font-weight: 600;
+                  letter-spacing: 0.05em;
+                  text-transform: uppercase;
+                }
+                .tag-ok { background: #dcfce7; color: var(--ok); border: 1px solid #bbf7d0; }
+                .tag-warn { background: #fef3c7; color: var(--warn); border: 1px solid #fde68a; }
+                .tag-bad { background: #fee2e2; color: var(--bad); border: 1px solid #fecaca; }
+                .tag-slate { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+            `}} />
             {/* Header */}
-            <header className="bg-white border-b sticky top-0 z-10">
+            <header className="border-b sticky top-0 z-10" style={{ background: 'var(--bg-deep)', borderColor: 'var(--line)' }}>
                 <div className="px-6 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded">
                             <HardHat size={18} />
                         </div>
                         <div>
-                            <div className="text-[10px] tracking-widest uppercase text-gray-500 font-bold leading-none">PT Delta Nusantara Persada</div>
-                            <div className="text-base font-medium leading-tight mt-1">Riksa Uji · Monitoring</div>
+                            <div className="text-[10px] tracking-widest uppercase font-bold leading-none" style={{ color: 'var(--ink-soft)' }}>PT Delta Nusantara Persada</div>
+                            <div className="text-base font-medium leading-tight mt-1 dnp-serif" style={{ fontSize: '18px', fontWeight: 600 }}>Riksa Uji · Monitoring System</div>
                         </div>
                     </div>
 
@@ -54,8 +95,8 @@ export default function AppLayout({ header, children }) {
 
             {/* Sidebar + Main Content */}
             <div className="flex flex-1 overflow-hidden">
-                <nav className="w-60 bg-white border-r px-4 py-6 shrink-0 overflow-y-auto">
-                    <div className="text-[10px] tracking-widest uppercase text-gray-400 font-bold mb-4 px-2">Menu Utama</div>
+                <nav className="w-60 border-r px-4 py-6 shrink-0 overflow-y-auto" style={{ background: 'var(--bg-deep)', borderColor: 'var(--line)' }}>
+                    <div className="text-[10px] tracking-widest uppercase font-bold mb-4 px-2" style={{ color: 'var(--ink-soft)' }}>Menu</div>
                     
                     <div className="space-y-1">
                         {navItems.map((item) => {
@@ -80,7 +121,7 @@ export default function AppLayout({ header, children }) {
                     </div>
                 </nav>
 
-                <main className="flex-1 overflow-x-auto bg-gray-50 p-6">
+                <main className="flex-1 overflow-x-auto p-6" style={{ background: 'var(--bg-deep)' }}>
                     {children}
                 </main>
             </div>

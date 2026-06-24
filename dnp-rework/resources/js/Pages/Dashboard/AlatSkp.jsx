@@ -1,8 +1,17 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import ErrorBoundary from '@/Components/ErrorBoundary';
 
-export default function AlatSkp({ inspectors, auth }) {
+export default function AlatSkpWrapper(props) {
+    return (
+        <ErrorBoundary>
+            <AlatSkp {...props} />
+        </ErrorBoundary>
+    );
+}
+
+function AlatSkp({ inspectors = [], auth = {} }) {
     
     // Sort inspectors by expiration date (ascending)
     const sortedInspectors = [...inspectors].sort((a, b) => {

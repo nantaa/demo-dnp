@@ -1,8 +1,17 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import ErrorBoundary from '@/Components/ErrorBoundary';
 
-export default function ReminderSuket({ jobs, auth }) {
+export default function ReminderSuketWrapper(props) {
+    return (
+        <ErrorBoundary>
+            <ReminderSuket {...props} />
+        </ErrorBoundary>
+    );
+}
+
+function ReminderSuket({ jobs = [], auth = {} }) {
     const { user } = auth;
     
     // Disnaker jobs are now Stage 8 in the new 12-stage pipeline

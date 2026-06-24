@@ -42,11 +42,14 @@ class DashboardController extends Controller
 
     public function reminderSuket()
     {
-        return Inertia::render('Dashboard/ReminderSuket', $this->getSharedData());
+        $data = $this->getSharedData();
+        return Inertia::render('Dashboard/ReminderSuket', $data);
     }
 
     public function inventory()
     {
-        return Inertia::render('Dashboard/AlatSkp', $this->getSharedData());
+        $data = $this->getSharedData();
+        $data['inspectors'] = \App\Models\InspectorProfile::with('user')->get();
+        return Inertia::render('Dashboard/AlatSkp', $data);
     }
 }

@@ -103,14 +103,25 @@ class JobController extends Controller
     }
 
     /**
-     * Fetch all jobs for the Kanban board view.
+     * Fetch all jobs for the list view.
      */
     public function index()
     {
+        $user = Auth::user();
+        $stagePermissions = $user->isSuperadmin() 
+            ? 'superadmin' 
+            : $user->stagePermissions()->get()->keyBy('stage');
+
         $jobs = Job::with(['inspectors', 'documents', 'unitsTracking'])
                    ->orderBy('created_at', 'desc')
                    ->get();
 
-        return response()->json($jobs);
+        return Inertia::render('Jobs/List', [
+            'auth' => [
+                'user' => $user,
+                'permissions' => $stagePermissions,
+            ],
+            'jobs' => $jobs,
+        ]);
     }
 }

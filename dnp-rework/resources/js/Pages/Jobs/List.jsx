@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import AppLayout from '../Layouts/AppLayout';
+import AppLayout from '@/Layouts/AppLayout';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES } from '../Constants';
+import { STAGES } from '@/Constants';
 
 export default function JobList({ jobs, auth }) {
     const [searchTerm, setSearchTerm] = useState('');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Head, Link } from '@inertiajs/react';
-import AppLayout from '../Layouts/AppLayout';
-import { STAGES } from '../Constants';
+import AppLayout from '@/Layouts/AppLayout';
+import { STAGES } from '@/Constants';
 
 export default function DashboardIndex({ jobs, auth }) {
     const { user } = auth;

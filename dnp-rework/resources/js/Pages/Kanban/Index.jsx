@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
-import AppLayout from '../Layouts/AppLayout';
+import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES } from '../Constants';
+import { STAGES } from '@/Constants';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;

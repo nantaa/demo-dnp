@@ -12,19 +12,19 @@ export default function ReminderSuketWrapper(props) {
     );
 }
 
-function KPICard({ label, value, sub, icon: Icon, accent }) {
+function KPICard({ label, value, sub, icon: Icon, accentClass = 'text-gray-500' }) {
     return (
-        <div className="panel" style={{ padding: 20, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-soft)', fontWeight: 600 }}>
+        <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col relative">
+            <div className="flex justify-between items-start">
+                <div className="text-xs tracking-wider uppercase text-gray-500 font-semibold">
                     {label}
                 </div>
-                <Icon size={18} style={{ color: accent || 'var(--ink-faint)' }} />
+                <Icon size={18} className={accentClass} />
             </div>
-            <div className="dnp-serif" style={{ fontSize: 36, fontWeight: 400, marginTop: 12, color: accent || 'var(--ink)' }}>
+            <div className={`text-4xl font-semibold mt-3 ${accentClass !== 'text-gray-500' ? accentClass : 'text-gray-900'}`}>
                 {value}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 8 }}>
+            <div className="text-sm text-gray-500 mt-2">
                 {sub}
             </div>
         </div>
@@ -43,12 +43,16 @@ const daysBetween = (d1, d2) => {
     return Math.floor((b - a) / (1000 * 60 * 60 * 24));
 };
 
-function StatusTag({ status, children }) {
-    let cls = 'tag-slate';
-    if (status === 'valid') cls = 'tag-ok';
-    if (status === 'expiring_soon') cls = 'tag-warn';
-    if (status === 'expired') cls = 'tag-bad';
-    return <span className={`tag ${cls}`} style={{ fontSize: 10 }}>{children}</span>;
+function StatusBadge({ status, children }) {
+    let cls = 'bg-gray-100 text-gray-700 border-gray-200';
+    if (status === 'valid') cls = 'bg-green-100 text-green-700 border-green-200';
+    if (status === 'expiring_soon') cls = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    if (status === 'expired') cls = 'bg-red-100 text-red-700 border-red-200';
+    return (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${cls}`}>
+            {children}
+        </span>
+    );
 }
 
 function ReminderSuket({ jobs = [] }) {
@@ -105,46 +109,55 @@ function ReminderSuket({ jobs = [] }) {
     const renderList = (list, label) => {
         if (list.length === 0) return null;
         return (
-            <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-soft)', fontWeight: 600, marginBottom: 8 }}>{label} · {list.length}</div>
-                <div className="panel overflow-hidden">
-                    <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr 1fr 160px 160px 160px 110px', padding: '10px 16px', background: 'var(--bg-deep)', borderBottom: '1px solid var(--line)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-soft)', fontWeight: 600 }}>
-                        <div>Kode-Unit</div>
-                        <div>Klien</div>
-                        <div>Unit / No Suket</div>
-                        <div>Tgl Terbit</div>
-                        <div>Berlaku Sampai</div>
-                        <div>Masa Berlaku</div>
-                        <div style={{ textAlign: 'center' }}>Status</div>
-                    </div>
-                    {list.map((row, i) => {
-                        const st = rowStatus(row);
-                        const days = daysBetween(todayStr, row.expired_at);
-                        const validityLabel = row.validity_months >= 12 ? `${row.validity_months / 12} tahun` : `${row.validity_months} bulan`;
-                        
-                        return (
-                            <Link key={row.key} href={route('jobs.show', row.job.id)} className="block hover:bg-gray-50 transition-colors"
-                                style={{ display: 'grid', gridTemplateColumns: '130px 1fr 1fr 160px 160px 160px 110px', padding: '12px 16px', borderBottom: i < list.length - 1 ? '1px solid var(--line-soft)' : 'none', alignItems: 'center', fontSize: 13, color: 'inherit', textDecoration: 'none' }}>
-                                <div className="dnp-mono" style={{ fontWeight: 600, fontSize: 11, color: 'var(--ink)' }}>{row.kode}</div>
-                                <div style={{ fontWeight: 500, color: 'var(--ink)' }}>{row.klien}</div>
-                                <div>
-                                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{row.unit_label}</div>
-                                    <div className="dnp-mono" style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 2 }}>{row.no_suket}</div>
-                                </div>
-                                <div style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 12, color: 'var(--ink)' }}>{formatDate(row.tgl_suket)}</div>
-                                <div style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 12, color: 'var(--ink)' }}>
-                                    {formatDate(row.expired_at)}
-                                    <div style={{ fontSize: 10, color: 'var(--ink-soft)' }}>
-                                        {days < 0 ? `Expired ${Math.abs(days)} hari lalu` : `${days} hari lagi`}
-                                    </div>
-                                </div>
-                                <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{validityLabel || '—'}</div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <StatusTag status={st}>{{ expired: 'EXPIRED', expiring_soon: 'EXPIRING', valid: 'VALID' }[st]}</StatusTag>
-                                </div>
-                            </Link>
-                        );
-                    })}
+            <div className="mb-8">
+                <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3 px-1">{label} · {list.length}</div>
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
+                                <th className="p-4 font-semibold">Kode-Unit</th>
+                                <th className="p-4 font-semibold">Klien</th>
+                                <th className="p-4 font-semibold">Unit / No Suket</th>
+                                <th className="p-4 font-semibold">Tgl Terbit</th>
+                                <th className="p-4 font-semibold">Berlaku Sampai</th>
+                                <th className="p-4 font-semibold">Masa Berlaku</th>
+                                <th className="p-4 font-semibold text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {list.map((row) => {
+                                const st = rowStatus(row);
+                                const days = daysBetween(todayStr, row.expired_at);
+                                const validityLabel = row.validity_months >= 12 ? `${row.validity_months / 12} tahun` : `${row.validity_months} bulan`;
+                                
+                                return (
+                                    <tr key={row.key} className="border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm">
+                                        <td className="p-4 align-top">
+                                            <Link href={route('jobs.show', row.job.id)} className="font-mono font-bold text-blue-600 hover:underline">
+                                                {row.kode}
+                                            </Link>
+                                        </td>
+                                        <td className="p-4 align-top font-medium text-gray-900">{row.klien}</td>
+                                        <td className="p-4 align-top">
+                                            <div className="font-semibold text-gray-900">{row.unit_label}</div>
+                                            <div className="font-mono text-xs text-gray-500 mt-1">{row.no_suket}</div>
+                                        </td>
+                                        <td className="p-4 align-top font-mono text-xs text-gray-700">{formatDate(row.tgl_suket)}</td>
+                                        <td className="p-4 align-top">
+                                            <div className="font-mono text-xs text-gray-900">{formatDate(row.expired_at)}</div>
+                                            <div className="text-[10px] text-gray-500 mt-1">
+                                                {days < 0 ? `Expired ${Math.abs(days)} hari lalu` : `${days} hari lagi`}
+                                            </div>
+                                        </td>
+                                        <td className="p-4 align-top text-xs text-gray-600">{validityLabel || '—'}</td>
+                                        <td className="p-4 align-top text-center">
+                                            <StatusBadge status={st}>{{ expired: 'EXPIRED', expiring_soon: 'EXPIRING', valid: 'VALID' }[st]}</StatusBadge>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         );
@@ -154,26 +167,26 @@ function ReminderSuket({ jobs = [] }) {
         <AppLayout>
             <Head title="Reminder Suket" />
             
-            <div className="fadein" style={{ padding: '0 0 24px 0' }}>
-                <div style={{ marginBottom: 24 }}>
-                    <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-soft)', fontWeight: 600 }}>Re-Inspection Reminder</div>
-                    <h1 className="dnp-serif" style={{ fontSize: 32, fontWeight: 500, margin: '4px 0 0' }}>Database Masa Berlaku Suket</h1>
-                    <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
+            <div className="pb-8">
+                <div className="mb-6 px-1">
+                    <div className="text-xs tracking-widest uppercase text-gray-500 font-bold">Re-Inspection Reminder</div>
+                    <h1 className="text-3xl font-bold text-gray-900 mt-1">Database Masa Berlaku Suket</h1>
+                    <div className="text-sm text-gray-500 mt-1">
                         Reminder otomatis per-unit: setiap Suket dilacak independen sesuai masa berlaku. Alert H-90 untuk re-inspeksi.
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
-                    <KPICard label="Expired" value={expired.length} sub="Perlu kontak klien" icon={AlertCircle} accent={expired.length > 0 ? 'var(--bad)' : null} />
-                    <KPICard label="Akan Expire (≤90h)" value={expiringSoon.length} sub="Schedule re-inspeksi" icon={Clock} accent={expiringSoon.length > 0 ? 'var(--warn)' : null} />
-                    <KPICard label="Valid" value={valid.length} sub="Suket aktif" icon={ShieldCheck} accent="var(--ok)" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <KPICard label="Expired" value={expired.length} sub="Perlu kontak klien" icon={AlertCircle} accentClass={expired.length > 0 ? 'text-red-600' : 'text-gray-500'} />
+                    <KPICard label="Akan Expire (≤90h)" value={expiringSoon.length} sub="Schedule re-inspeksi" icon={Clock} accentClass={expiringSoon.length > 0 ? 'text-yellow-600' : 'text-gray-500'} />
+                    <KPICard label="Valid" value={valid.length} sub="Suket aktif" icon={ShieldCheck} accentClass="text-green-600" />
                 </div>
 
                 {sukets.length === 0 ? (
-                    <div className="panel" style={{ padding: 40, textAlign: 'center', color: 'var(--ink-soft)' }}>
-                        <ShieldCheck size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                        <div>Belum ada Suket terbit.</div>
-                        <div style={{ fontSize: 12, marginTop: 4 }}>Suket akan muncul di sini setelah Kadiv RU input No Suket dari Disnaker di Tahap 6.</div>
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-12 text-center text-gray-500">
+                        <ShieldCheck size={32} className="mx-auto mb-3 opacity-40" />
+                        <div className="font-medium text-gray-900">Belum ada Suket terbit.</div>
+                        <div className="text-xs mt-1">Suket akan muncul di sini setelah Kadiv RU input No Suket dari Disnaker di Tahap 6.</div>
                     </div>
                 ) : (
                     <>

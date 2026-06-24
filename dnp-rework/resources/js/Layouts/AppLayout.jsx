@@ -16,8 +16,8 @@ export default function AppLayout({ header, children }) {
         { href: '/jobs', label: 'Daftar Job', icon: List },
         { href: '/jobs/create', label: 'Job Baru', icon: Plus, roles: ['marketing', 'manager', 'superadmin'] },
         { href: '/users', label: 'User Management', icon: ShieldCheck, roles: ['superadmin'] },
-        { href: '#', label: 'Reminder Suket', icon: ShieldCheck, roles: ['marketing', 'manager', 'admin', 'superadmin'] },
-        { href: '#', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'superadmin'] },
+        { href: '/reminder-suket', label: 'Reminder Suket', icon: ShieldCheck, roles: ['marketing', 'manager', 'admin', 'superadmin'] },
+        { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'superadmin'] },
     ];
 
     return (

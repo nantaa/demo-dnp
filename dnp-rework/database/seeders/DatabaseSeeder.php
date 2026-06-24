@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Admin (Budi Susanto) - owns stages 2, 3, 4, 5
+        // 3. Admin (Budi Susanto) - owns stages 2, 3, 5, 7, 9
         $admin1 = User::firstOrCreate(
             ['email' => 'budi@deltaindo.co.id'],
             [
@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $this->assignStages($admin1, [2, 3, 4, 5]);
+        $this->assignStages($admin1, [2, 3, 5, 7, 9]);
 
         // 4. Kadiv RU (Terzha)
         $mgr = User::firstOrCreate(
@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $this->assignStages($mgr, [8, 9]); // Review LHPP, Pengurusan Suket
+        $this->assignStages($mgr, [8]); // Disnaker
 
         // 5. Finance (Putri)
         $fin = User::firstOrCreate(
@@ -70,7 +70,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $this->assignStages($fin, [10, 11]); // Penagihan, Lunas
+        $this->assignStages($fin, [10, 12]); // Penagihan, Lunas
 
         // 6. Inspekturs
         $this->createInspector('rendi@deltaindo.co.id', 'Rendi Pratama', $password, 'Bekasi', ['Umum', 'Listrik'], 3);
@@ -100,7 +100,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->assignStages($user, [6, 7]); // Pelaksanaan RU, Penyusunan LHPP
+        $this->assignStages($user, [4, 6]); // Pelaksanaan RU, Penyusunan LHPP
 
         InspectorProfile::firstOrCreate(
             ['user_id' => $user->id],

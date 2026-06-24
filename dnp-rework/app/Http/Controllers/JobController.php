@@ -115,6 +115,39 @@ class JobController extends Controller
     }
 
     /**
+     * Reject a job and send it back to the previous stage.
+     */
+    public function rejectStage(Request $request, Job $job)
+    {
+        $currentStage = $job->stage;
+
+        if (!Auth::user()->canOwnStage($currentStage)) {
+            abort(403, 'Only the designated owner of Stage ' . $currentStage . ' can reject this job.');
+        }
+
+        $validated = $request->validate([
+            'notes' => 'required|string',
+        ]);
+
+        $prevStage = $currentStage - 1;
+        if ($prevStage < 1) $prevStage = 1;
+
+        $job->update([
+            'stage' => $prevStage,
+            'stage_started_at' => now(),
+        ]);
+
+        // Log history with rejection notes
+        $job->historyLogs()->create([
+            'stage' => $prevStage,
+            'action' => 'DITOLAK (Dikembalikan dari S' . $currentStage . ' ke S' . $prevStage . '). Alasan: ' . $validated['notes'],
+            'action_by_user_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Job berhasil dikembalikan ke Stage ' . $prevStage . '.');
+    }
+
+    /**
      * Fetch all jobs for the list view.
      */
     public function index()

@@ -39,4 +39,14 @@ class DashboardController extends Controller
     {
         return Inertia::render('Kanban/Index', $this->getSharedData());
     }
+
+    public function reminderSuket()
+    {
+        return Inertia::render('Dashboard/ReminderSuket', $this->getSharedData());
+    }
+
+    public function inventory()
+    {
+        return Inertia::render('Dashboard/AlatSkp', $this->getSharedData());
+    }
 }

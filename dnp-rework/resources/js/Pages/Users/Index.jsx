@@ -3,8 +3,17 @@ import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { ROLES, STAGES } from '@/Constants';
 import { Trash2, Shield, Plus, X } from 'lucide-react';
+import ErrorBoundary from '@/Components/ErrorBoundary';
 
-export default function UsersIndex({ users = [], auth = {} }) {
+export default function UsersIndexWrapper(props) {
+    return (
+        <ErrorBoundary>
+            <UsersIndex {...props} />
+        </ErrorBoundary>
+    );
+}
+
+function UsersIndex({ users = [], auth = {} }) {
     const [showNewUser, setShowNewUser] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null); // For permission modal
     const [renderError, setRenderError] = useState(null);

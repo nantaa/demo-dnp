@@ -7,8 +7,8 @@ export default function DashboardIndex({ jobs, auth }) {
     const { user } = auth;
     
     // Derived stats
-    const activeJobs = jobs.filter(j => j.stage < 11);
-    const completedJobs = jobs.filter(j => j.stage === 11);
+    const activeJobs = jobs.filter(j => j.stage < 12);
+    const completedJobs = jobs.filter(j => j.stage === 12);
     const pipelineValue = activeJobs.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
     const formatRp = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
@@ -70,8 +70,8 @@ export default function DashboardIndex({ jobs, auth }) {
             {/* ADMIN VIEW */}
             {isADM && (
                 <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded">
-                    <h2 className="font-bold text-blue-900 mb-2">Antrian Admin RU</h2>
-                    <div className="grid grid-cols-3 gap-4">
+                    <h2 className="font-bold text-blue-900 mb-2">Antrian Admin</h2>
+                    <div className="grid grid-cols-4 gap-4">
                         <div className="bg-white p-4 shadow-sm border rounded">
                             <div className="text-xs text-gray-500">Antrian Verifikasi Dok (S2)</div>
                             <div className="text-xl font-bold">{jobs.filter(j => j.stage === 2).length}</div>
@@ -81,8 +81,12 @@ export default function DashboardIndex({ jobs, auth }) {
                             <div className="text-xl font-bold">{jobs.filter(j => j.stage === 3).length}</div>
                         </div>
                         <div className="bg-white p-4 shadow-sm border rounded">
-                            <div className="text-xs text-gray-500">H-5 Pelaksanaan Pending</div>
-                            <div className="text-xl font-bold text-amber-600">0</div>
+                            <div className="text-xs text-gray-500">Review Dokumen Lap. (S5)</div>
+                            <div className="text-xl font-bold">{jobs.filter(j => j.stage === 5).length}</div>
+                        </div>
+                        <div className="bg-white p-4 shadow-sm border rounded">
+                            <div className="text-xs text-gray-500">Input & Review SUKET (S7/S9)</div>
+                            <div className="text-xl font-bold text-amber-600">{jobs.filter(j => j.stage === 7 || j.stage === 9).length}</div>
                         </div>
                     </div>
                 </div>
@@ -94,12 +98,12 @@ export default function DashboardIndex({ jobs, auth }) {
                     <h2 className="font-bold text-teal-900 mb-2">Tugas Lapangan & LHPP</h2>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white p-4 shadow-sm border rounded">
-                            <div className="text-xs text-gray-500">Tugas Lapangan (S6)</div>
-                            <div className="text-xl font-bold">{jobs.filter(j => j.stage === 6).length}</div>
+                            <div className="text-xs text-gray-500">Tugas Lapangan (S4)</div>
+                            <div className="text-xl font-bold">{jobs.filter(j => j.stage === 4).length}</div>
                         </div>
                         <div className="bg-white p-4 shadow-sm border rounded">
-                            <div className="text-xs text-gray-500">Draft LHPP (S7)</div>
-                            <div className="text-xl font-bold">{jobs.filter(j => j.stage === 7).length}</div>
+                            <div className="text-xs text-gray-500">Draft LHPP (S6)</div>
+                            <div className="text-xl font-bold">{jobs.filter(j => j.stage === 6).length}</div>
                         </div>
                     </div>
                 </div>
@@ -128,11 +132,11 @@ export default function DashboardIndex({ jobs, auth }) {
                     <h2 className="font-bold text-indigo-900 mb-2">Monitoring Kadiv / Manager</h2>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white p-4 shadow-sm border rounded">
-                            <div className="text-xs text-gray-500">Review LHPP (S8)</div>
+                            <div className="text-xs text-gray-500">Disnaker (S8)</div>
                             <div className="text-xl font-bold text-indigo-700">{jobs.filter(j => j.stage === 8).length}</div>
                         </div>
                         <div className="bg-white p-4 shadow-sm border rounded">
-                            <div className="text-xs text-gray-500">Suket Disnaker Pending (S9)</div>
+                            <div className="text-xs text-gray-500">Suket Review Pending (S9)</div>
                             <div className="text-xl font-bold">{jobs.filter(j => j.stage === 9).length}</div>
                         </div>
                     </div>

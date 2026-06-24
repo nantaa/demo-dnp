@@ -15,6 +15,17 @@ export default function JobDetailSheet({ job, onClose, canManage }) {
         });
     };
 
+    const handleRejectStage = () => {
+        if (!confirm(`Tolak dan kembalikan ke Stage ${job.stage - 1}? Pastikan notes sudah diisi.`)) return;
+        if (!data.notes) {
+            alert('Notes / Alasan penolakan wajib diisi!');
+            return;
+        }
+        post(`/jobs/${job.id}/reject`, {
+            onSuccess: () => onClose()
+        });
+    };
+
     return (
         <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
@@ -110,13 +121,25 @@ export default function JobDetailSheet({ job, onClose, canManage }) {
                                                 onChange={e => setData('notes', e.target.value)}
                                             ></textarea>
                                         </div>
-                                        <button 
-                                            type="submit" 
-                                            disabled={processing}
-                                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                        >
-                                            {processing ? 'Processing...' : `Move to Stage ${job.stage + 1}`}
-                                        </button>
+                                        <div className="flex gap-2">
+                                            {(job.stage === 5 || job.stage === 9) && (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={handleRejectStage}
+                                                    disabled={processing}
+                                                    className="w-1/3 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                >
+                                                    {processing ? '...' : `Tolak (ke S${job.stage - 1})`}
+                                                </button>
+                                            )}
+                                            <button 
+                                                type="submit" 
+                                                disabled={processing}
+                                                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                            >
+                                                {processing ? 'Processing...' : `Lanjut ke Stage ${job.stage + 1}`}
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             )}

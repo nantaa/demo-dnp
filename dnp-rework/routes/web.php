@@ -16,12 +16,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Feature 3: Tabular Job List
     Route::get('/jobs', [JobController::class, 'index'])->name('jobs.index');
-    
+
+    // Reminder Suket & SKP
+    Route::get('/reminder-suket', [DashboardController::class, 'reminderSuket'])->name('reminder.suket');
+    Route::get('/inventory', [DashboardController::class, 'inventory'])->name('inventory');
+
     // API/Actions
     Route::get('/jobs/create', [JobController::class, 'create'])->name('jobs.create');
     Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
     Route::put('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
     Route::post('/jobs/{job}/move', [JobController::class, 'updateStage'])->name('jobs.move');
+    Route::post('/jobs/{job}/reject', [JobController::class, 'rejectStage'])->name('jobs.reject');
 
     // Smart Recommendation API
     Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');

@@ -10,6 +10,18 @@ use Illuminate\Support\Facades\Auth;
 class JobController extends Controller
 {
     /**
+     * Show the form for creating a new job.
+     */
+    public function create()
+    {
+        if (!Auth::user()->canOwnStage(1)) {
+            abort(403, 'Unauthorized to create jobs. Stage 1 is owned by Marketing.');
+        }
+
+        return Inertia::render('Jobs/Create');
+    }
+
+    /**
      * Store a newly created job.
      */
     public function store(Request $request)

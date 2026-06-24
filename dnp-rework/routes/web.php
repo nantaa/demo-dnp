@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/jobs', [JobController::class, 'index'])->name('jobs.index');
     
     // API/Actions
+    Route::get('/jobs/create', [JobController::class, 'create'])->name('jobs.create');
     Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
     Route::put('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
     Route::post('/jobs/{job}/move', [JobController::class, 'updateStage'])->name('jobs.move');

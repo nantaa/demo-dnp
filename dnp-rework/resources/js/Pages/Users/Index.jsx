@@ -4,13 +4,20 @@ import AppLayout from '@/Layouts/AppLayout';
 import { ROLES, STAGES } from '@/Constants';
 import { Trash2, Shield, Plus, X } from 'lucide-react';
 
-export default function UsersIndex({ users, auth }) {
+export default function UsersIndex({ users = [], auth = {} }) {
     const [showNewUser, setShowNewUser] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null); // For permission modal
+    const [renderError, setRenderError] = useState(null);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         name: '', email: '', password: '', role: 'marketing'
     });
+
+    if (renderError) {
+        return <div className="p-10 text-red-500 font-bold">Render Error: {renderError}</div>;
+    }
+
+    try {
 
     const submitNewUser = (e) => {
         e.preventDefault();
@@ -51,38 +58,38 @@ export default function UsersIndex({ users, auth }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y">
-                        {users.map(user => (
-                            <tr key={user.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3 font-bold">{user.name}</td>
-                                <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                        {(users || []).map(user => (
+                            <tr key={user?.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 font-bold">{user?.name}</td>
+                                <td className="px-4 py-3 text-gray-600">{user?.email}</td>
                                 <td className="px-4 py-3">
                                     <span className="bg-gray-100 px-2 py-1 rounded text-xs font-mono font-bold border border-gray-200">
-                                        {ROLES[user.role]?.label || user.role}
+                                        {(ROLES && ROLES[user?.role]?.label) || user?.role || 'UNK'}
                                     </span>
                                 </td>
                                 <td className="px-4 py-3">
-                                    {user.role === 'superadmin' ? (
+                                    {user?.role === 'superadmin' ? (
                                         <span className="text-xs text-gray-500">Unrestricted (Semua Stage)</span>
                                     ) : (
                                         <div className="flex flex-wrap gap-1">
-                                            {user.stage_permissions?.map(p => (
-                                                <span key={p.id} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-200" title={STAGES.find(s => s.id === p.stage)?.name}>
+                                            {(user?.stage_permissions || []).map(p => (
+                                                <span key={p.id} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-200" title={(STAGES || []).find(s => s.id == p.stage)?.name}>
                                                     S{p.stage}
                                                 </span>
                                             ))}
-                                            {(!user.stage_permissions || user.stage_permissions.length === 0) && (
+                                            {(!user?.stage_permissions || user.stage_permissions.length === 0) && (
                                                 <span className="text-xs text-red-500">No Access</span>
                                             )}
                                         </div>
                                     )}
                                 </td>
                                 <td className="px-4 py-3 flex items-center gap-2">
-                                    {user.role !== 'superadmin' && (
+                                    {user?.role !== 'superadmin' && (
                                         <button onClick={() => setSelectedUser(user)} className="text-blue-600 hover:text-blue-800 p-1 bg-blue-50 rounded" title="Set Stage Permissions">
                                             <Shield size={16} />
                                         </button>
                                     )}
-                                    {user.id !== auth.user.id && (
+                                    {user?.id !== auth?.user?.id && (
                                         <button onClick={() => deleteUser(user)} className="text-red-600 hover:text-red-800 p-1 bg-red-50 rounded" title="Hapus User">
                                             <Trash2 size={16} />
                                         </button>
@@ -140,6 +147,10 @@ export default function UsersIndex({ users, auth }) {
             )}
         </AppLayout>
     );
+    } catch (e) {
+        if (!renderError) setRenderError(e.message);
+        return <div className="p-10 text-red-500 font-bold">Render Error: {e.message}</div>;
+    }
 }
 
 function PermissionModal({ user, onClose }) {
@@ -179,17 +190,17 @@ function PermissionModal({ user, onClose }) {
                     </div>
 
                     <div className="space-y-2 max-h-64 overflow-y-auto border rounded p-2">
-                        {STAGES.map(stage => (
+                        {(STAGES || []).map(stage => (
                             <label key={stage.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0">
                                 <input 
                                     type="checkbox" 
-                                    checked={selectedStages.includes(stage.id)}
+                                    checked={selectedStages.includes(stage.id) || selectedStages.includes(String(stage.id))}
                                     onChange={() => toggleStage(stage.id)}
                                     className="w-4 h-4 rounded text-black focus:ring-black"
                                 />
                                 <div className="flex-1">
                                     <div className="font-bold text-sm">Stage {stage.id}: {stage.name}</div>
-                                    <div className="text-xs text-gray-500">Default Owner: {ROLES[stage.role]?.name}</div>
+                                    <div className="text-xs text-gray-500">Default Owner: {(ROLES && ROLES[stage.role]?.name) || stage.role}</div>
                                 </div>
                             </label>
                         ))}

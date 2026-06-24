@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
+import SmartRecommendation from './SmartRecommendation';
 
 export default function JobDetailSheet({ job, onClose, canManage }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -81,6 +82,19 @@ export default function JobDetailSheet({ job, onClose, canManage }) {
                                     </div>
                                 </dl>
                             </div>
+
+                            {/* Smart Recommendation for Stage 3 (Penjadwalan) */}
+                            {job.stage === 3 && canManage && (
+                                <div className="mt-6 border-t pt-6">
+                                    <SmartRecommendation 
+                                        job={job} 
+                                        onSelectInspector={(user) => {
+                                            alert(`Inspektur ${user.name} dipilih. Lanjutkan Move Stage.`);
+                                            setData('notes', `Assigned to: ${user.name}`);
+                                        }} 
+                                    />
+                                </div>
+                            )}
 
                             {/* Stage Progression Action */}
                             {canManage && job.stage < 12 && (

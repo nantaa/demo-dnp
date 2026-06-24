@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\InspectorRecommendationController;
 use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -19,6 +21,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
     Route::put('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
     Route::post('/jobs/{job}/move', [JobController::class, 'updateStage'])->name('jobs.move');
+
+    // Smart Recommendation API
+    Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');
+
+    // Feature 4: User Management (Superadmin Only)
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users/{user}/permissions', [UserController::class, 'updatePermissions'])->name('users.permissions.update');
 });
 
 require __DIR__.'/auth.php'; // Keep Breeze Auth routes

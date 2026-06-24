@@ -15,6 +15,7 @@ export default function AppLayout({ header, children }) {
         { href: '/kanban', label: 'Kanban Board', icon: Columns },
         { href: '/jobs', label: 'Daftar Job', icon: List },
         { href: '/jobs/create', label: 'Job Baru', icon: Plus, roles: ['marketing', 'manager', 'superadmin'] },
+        { href: '/users', label: 'User Management', icon: ShieldCheck, roles: ['superadmin'] },
     ];
 
     return (

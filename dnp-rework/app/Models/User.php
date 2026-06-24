@@ -50,9 +50,14 @@ class User extends Authenticatable
     /**
      * Stage permissions assigned by Superadmin
      */
-    public function stagePermissions(): HasMany
+    public function stagePermissions()
     {
-        return $this->hasMany(UserStagePermission::class);
+        return $this->hasMany(UserStagePermission::class, 'user_id');
+    }
+
+    public function inspectorProfile()
+    {
+        return $this->hasOne(InspectorProfile::class, 'user_id');
     }
 
     /**

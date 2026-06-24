@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('inspector_profiles', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id')->unique();
+            $table->foreignId('user_id')->unique()->constrained()->onDelete('cascade');
             $table->string('skp')->nullable();
             $table->date('skp_expired_at')->nullable();
             $table->jsonb('spesialisasi')->nullable(); // e.g. ["Umum", "Listrik", "PUBT"]
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('active')->default(true);
             $table->timestamps();
 
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
         });
     }
 

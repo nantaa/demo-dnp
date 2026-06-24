@@ -9,6 +9,8 @@ class AlatUji extends Model
 {
     use HasFactory;
 
+    protected $table = 'alat_ujis';
+
     protected $fillable = [
         'kode_alat',
         'nama',

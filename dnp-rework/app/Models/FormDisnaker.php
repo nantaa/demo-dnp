@@ -9,6 +9,8 @@ class FormDisnaker extends Model
 {
     use HasFactory;
 
+    protected $table = 'form_disnakers';
+
     protected $fillable = [
         'kode_form',
         'kode_disnaker',

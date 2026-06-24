@@ -9,6 +9,8 @@ class RegulasiK3 extends Model
 {
     use HasFactory;
 
+    protected $table = 'regulasi_k3s';
+
     protected $fillable = [
         'kode_reg',
         'kategori',

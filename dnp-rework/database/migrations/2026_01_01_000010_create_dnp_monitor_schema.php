@@ -30,7 +30,7 @@ return new class extends Migration
         });
 
         // 3. Jobs Table
-        Schema::create('jobs', function (Blueprint $table) {
+        Schema::create('dnp_jobs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('kode', 50)->unique(); // e.g. DNP/YYYY/XXXX
             $table->string('klien')->index();
@@ -85,7 +85,7 @@ return new class extends Migration
 
         // 4. Job Inspectors (Pivot)
         Schema::create('job_inspectors', function (Blueprint $table) {
-            $table->foreignUuid('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignUuid('job_id')->constrained('dnp_jobs')->onDelete('cascade');
             $table->string('inspector_id', 50); // e.g. I001 (references internal inspector ID system)
             $table->primary(['job_id', 'inspector_id']);
         });
@@ -93,7 +93,7 @@ return new class extends Migration
         // 5. Job Documents
         Schema::create('job_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignUuid('job_id')->constrained('dnp_jobs')->onDelete('cascade');
             $table->unsignedSmallInteger('stage');
             $table->string('type', 100);
             $table->string('name');
@@ -105,7 +105,7 @@ return new class extends Migration
         // 6. Job History (Audit Log)
         Schema::create('job_history', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignUuid('job_id')->constrained('dnp_jobs')->onDelete('cascade');
             $table->unsignedSmallInteger('stage');
             $table->string('action');
             $table->foreignId('action_by_user_id')->nullable()->constrained('users')->nullOnDelete();
@@ -115,7 +115,7 @@ return new class extends Migration
         // 7. Job Evaluations (Unit specific)
         Schema::create('job_evaluations', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignUuid('job_id')->constrained('dnp_jobs')->onDelete('cascade');
             $table->integer('unit_no');
             $table->string('unit_label');
             $table->string('status', 50); // laik, laik_bersyarat, tidak_laik
@@ -127,7 +127,7 @@ return new class extends Migration
         // 8. Units Tracking (Suket lifecycle)
         Schema::create('units_tracking', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignUuid('job_id')->constrained('dnp_jobs')->onDelete('cascade');
             $table->integer('unit_no');
             $table->string('unit_label');
             $table->string('laik_status', 50);
@@ -145,7 +145,7 @@ return new class extends Migration
         // 9. Disnaker Followups
         Schema::create('disnaker_followups', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('job_id')->constrained('jobs')->onDelete('cascade');
+            $table->foreignUuid('job_id')->constrained('dnp_jobs')->onDelete('cascade');
             $table->foreignId('action_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('status', 50);
             $table->text('notes');

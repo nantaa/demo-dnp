@@ -13,6 +13,13 @@ class Job extends Model
     use HasFactory, HasUuids;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'dnp_jobs';
+
+    /**
      * The attributes that aren't mass assignable.
      */
     protected $guarded = [];

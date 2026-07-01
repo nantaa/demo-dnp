@@ -46,7 +46,7 @@ export default function JobCreate() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Pesawat</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Alat yang di RiksaUji</label>
                                 <select
                                     value={data.pesawat}
                                     onChange={e => setData('pesawat', e.target.value)}

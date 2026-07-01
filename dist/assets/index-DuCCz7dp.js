@@ -247,7 +247,7 @@ Widget ini shortcut untuk membuka job aktif terbaru Anda.`), n(l)
     <tr><td style="width: 200px;">Nama Klien</td><td style="width: 10px;">:</td><td><strong>${e.klien}</strong></td></tr>
     <tr><td>Lokasi Pelaksanaan</td><td>:</td><td>${e.lokasi}</td></tr>
     <tr><td>PIC Klien</td><td>:</td><td>${e.pic_klien || `—`} (${e.pic_klien_phone || `—`})</td></tr>
-    <tr><td>Jenis Alat yang di RiksaUji</td><td>:</td><td>${a?.name || e.pesawat} (${a?.form || `—`})</td></tr>
+    <tr><td>Jenis Pesawat</td><td>:</td><td>${a?.name || e.pesawat} (${a?.form || `—`})</td></tr>
     <tr><td>Jumlah Unit</td><td>:</td><td>${e.units} unit</td></tr>
     <tr><td>Tanggal Pelaksanaan</td><td>:</td><td>${L(i)} pukul ${o} WIB</td></tr>
     <tr><td>Durasi Estimasi</td><td>:</td><td>${c} hari kerja</td></tr>

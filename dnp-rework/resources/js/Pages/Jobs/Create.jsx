@@ -31,12 +31,12 @@ export default function JobCreate() {
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                     <form onSubmit={submit} className="space-y-4">
-                        
+
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Nama Klien / Perusahaan</label>
-                            <input 
-                                type="text" 
-                                value={data.klien} 
+                            <input
+                                type="text"
+                                value={data.klien}
                                 onChange={e => setData('klien', e.target.value)}
                                 className="w-full px-3 py-2 border rounded"
                                 required
@@ -46,9 +46,9 @@ export default function JobCreate() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Pesawat</label>
-                                <select 
-                                    value={data.pesawat} 
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Alat yang di RiksaUji</label>
+                                <select
+                                    value={data.pesawat}
                                     onChange={e => setData('pesawat', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
                                     required
@@ -65,10 +65,10 @@ export default function JobCreate() {
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Jumlah Unit</label>
-                                <input 
-                                    type="number" 
+                                <input
+                                    type="number"
                                     min="1"
-                                    value={data.units} 
+                                    value={data.units}
                                     onChange={e => setData('units', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
                                     required
@@ -79,9 +79,9 @@ export default function JobCreate() {
 
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Lokasi Pemeriksaan</label>
-                            <input 
-                                type="text" 
-                                value={data.lokasi} 
+                            <input
+                                type="text"
+                                value={data.lokasi}
                                 onChange={e => setData('lokasi', e.target.value)}
                                 className="w-full px-3 py-2 border rounded"
                                 placeholder="Kota / Wilayah"
@@ -93,18 +93,18 @@ export default function JobCreate() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">PIC Klien</label>
-                                <input 
-                                    type="text" 
-                                    value={data.pic_klien} 
+                                <input
+                                    type="text"
+                                    value={data.pic_klien}
                                     onChange={e => setData('pic_klien', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">No HP PIC Klien</label>
-                                <input 
-                                    type="text" 
-                                    value={data.pic_klien_phone} 
+                                <input
+                                    type="text"
+                                    value={data.pic_klien_phone}
                                     onChange={e => setData('pic_klien_phone', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
                                 />
@@ -114,9 +114,9 @@ export default function JobCreate() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Marketing In-Charge</label>
-                                <input 
-                                    type="text" 
-                                    value={data.owner_marketing} 
+                                <input
+                                    type="text"
+                                    value={data.owner_marketing}
                                     onChange={e => setData('owner_marketing', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
                                     placeholder="Nama Marketing"
@@ -126,10 +126,10 @@ export default function JobCreate() {
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Nilai PO / SPK (Rp)</label>
-                                <input 
-                                    type="number" 
+                                <input
+                                    type="number"
                                     min="0"
-                                    value={data.nilai} 
+                                    value={data.nilai}
                                     onChange={e => setData('nilai', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
                                     required
@@ -139,8 +139,8 @@ export default function JobCreate() {
                         </div>
 
                         <div className="pt-6 mt-6 border-t flex justify-end">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={processing}
                                 className="bg-black text-white px-6 py-2 rounded font-bold hover:bg-gray-800 disabled:opacity-50"
                             >

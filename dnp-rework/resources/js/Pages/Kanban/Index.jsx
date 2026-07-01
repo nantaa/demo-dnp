@@ -31,7 +31,14 @@ export default function KanbanIndex({ jobs, auth }) {
             <div className="flex h-full overflow-x-auto space-x-4 pb-4">
                 {STAGES.map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);
-                    const columnJobs = hasViewPermission ? jobs.filter(j => j.stage === stage.id) : [];
+                    const columnJobs = jobs.filter(j => {
+                        if (j.stage !== stage.id) return false;
+                        if (permissions === 'superadmin') return true;
+                        if (auth.user.role === 'marketing' && j.owner_marketing === auth.user.name) {
+                            return true;
+                        }
+                        return hasViewPermission;
+                    });
                     const isLocked = !canManageStage(stage.id);
 
                     return (

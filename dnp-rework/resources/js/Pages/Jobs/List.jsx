@@ -12,6 +12,9 @@ export default function JobList({ jobs, auth }) {
 
     const visibleJobs = jobs.filter(job => {
         if (permissions === 'superadmin') return true;
+        if (auth.user.role === 'marketing' && job.owner_marketing === auth.user.name) {
+            return true;
+        }
         const perm = permissions?.[job.stage];
         return perm && (
             perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||

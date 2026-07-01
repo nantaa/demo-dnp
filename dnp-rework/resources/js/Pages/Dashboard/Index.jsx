@@ -6,9 +6,14 @@ import { STAGES } from '@/Constants';
 export default function DashboardIndex({ jobs, auth }) {
     const { user } = auth;
     
+    // Filter jobs visible to the user: marketing users only see their own proposed/added jobs
+    const userJobs = user.role === 'marketing'
+        ? jobs.filter(j => j.owner_marketing === user.name)
+        : jobs;
+    
     // Derived stats
-    const activeJobs = jobs.filter(j => j.stage < 12);
-    const completedJobs = jobs.filter(j => j.stage === 12);
+    const activeJobs = userJobs.filter(j => j.stage < 12);
+    const completedJobs = userJobs.filter(j => j.stage === 12);
     const pipelineValue = activeJobs.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
     const formatRp = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 

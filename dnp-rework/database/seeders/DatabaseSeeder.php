@@ -81,10 +81,12 @@ class DatabaseSeeder extends Seeder
     private function assignStages(User $user, array $stages)
     {
         foreach ($stages as $stage) {
-            UserStagePermission::firstOrCreate([
-                'user_id' => $user->id,
-                'stage' => $stage,
-            ]);
+            // Use updateOrCreate so that re-seeding also fixes rows that
+            // were previously inserted without is_owner = true.
+            UserStagePermission::updateOrCreate(
+                ['user_id' => $user->id, 'stage' => $stage],
+                ['is_owner' => true, 'can_view' => true]
+            );
         }
     }
 

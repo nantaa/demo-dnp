@@ -83,15 +83,12 @@ class User extends Authenticatable
     {
         if ($this->isSuperadmin()) return true;
 
-        // Loop through the user's permissions and check by stage ID directly
-        // This avoids any weird database boolean casting issues with `is_owner`
-        $permissions = $this->stagePermissions()->get();
-        foreach ($permissions as $perm) {
-            if ((int) $perm->stage === $stage) {
-                return true;
-            }
-        }
+        // Query directly — do not rely on loaded collection which may be stale.
+        // Cast is_owner to int to handle PostgreSQL boolean storage (true/1/"1").
+        $permission = $this->stagePermissions()
+            ->where('stage', $stage)
+            ->first();
 
-        return false;
+        return $permission && ((int) $permission->is_owner === 1);
     }
 }

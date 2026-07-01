@@ -91,7 +91,7 @@ export default function JobList({ jobs, auth }) {
 
             {selectedJob && (
                 <JobDetailSheet 
-                    job={selectedJob} 
+                    job={jobs.find(j => j.id === selectedJob.id) || selectedJob} 
                     onClose={() => setSelectedJob(null)} 
                     auth={auth} 
                 />

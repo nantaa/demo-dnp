@@ -199,7 +199,7 @@ class JobController extends Controller
             'action_by_user_id' => $user->id,
         ]);
 
-        return back()->with('success', 'Dokumen berhasil diunggah.');
+        return back(303)->with('success', 'Dokumen berhasil diunggah.');
     }
 
     /**
@@ -221,7 +221,7 @@ class JobController extends Controller
         Storage::disk('public')->delete($document->path);
         $document->delete();
 
-        return back()->with('success', 'Dokumen berhasil dihapus.');
+        return back(303)->with('success', 'Dokumen berhasil dihapus.');
     }
 
     /**

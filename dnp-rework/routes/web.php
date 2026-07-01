@@ -27,6 +27,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
     Route::post('/jobs/{job}/move', [JobController::class, 'updateStage'])->name('jobs.move');
     Route::post('/jobs/{job}/reject', [JobController::class, 'rejectStage'])->name('jobs.reject');
+    Route::post('/jobs/{job}/documents', [JobController::class, 'uploadDocument'])->name('jobs.documents.upload');
+    Route::delete('/jobs/{job}/documents/{document}', [JobController::class, 'deleteDocument'])->name('jobs.documents.delete');
 
     // Smart Recommendation API
     Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');

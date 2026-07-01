@@ -2,12 +2,15 @@ import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 
-export default function JobCreate() {
+export default function JobCreate({ auth }) {
+    const isMkt = auth?.user?.role === 'marketing';
+
     const { data, setData, post, processing, errors } = useForm({
         klien: '',
         pesawat: 'Boiler',
         lokasi: '',
-        owner_marketing: '',
+        // Auto-fill from logged-in user name for marketing; editable for others
+        owner_marketing: isMkt ? (auth.user.name || '') : '',
         pic_klien: '',
         pic_klien_phone: '',
         units: 1,
@@ -113,13 +116,17 @@ export default function JobCreate() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Marketing In-Charge</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">
+                                    Marketing In-Charge
+                                    {isMkt && <span className="ml-2 text-xs text-gray-400 font-normal">(dari akun Anda)</span>}
+                                </label>
                                 <input
                                     type="text"
                                     value={data.owner_marketing}
-                                    onChange={e => setData('owner_marketing', e.target.value)}
-                                    className="w-full px-3 py-2 border rounded"
+                                    onChange={e => !isMkt && setData('owner_marketing', e.target.value)}
+                                    className={`w-full px-3 py-2 border rounded ${isMkt ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
                                     placeholder="Nama Marketing"
+                                    readOnly={isMkt}
                                     required
                                 />
                                 {errors.owner_marketing && <div className="text-red-500 text-xs mt-1">{errors.owner_marketing}</div>}

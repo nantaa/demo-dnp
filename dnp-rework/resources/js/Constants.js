@@ -21,3 +21,19 @@ export const ROLES = {
     finance: { name: 'Admin Keuangan', label: 'FIN' },
     superadmin: { name: 'Super Administrator', label: 'SUP' },
 };
+
+// Required document types per stage (matches prototype DOC_TYPES_BY_STAGE)
+export const DOC_TYPES_BY_STAGE = {
+    1: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama'],
+    2: ['Pengesahan Gambar Kemnaker', 'Catatan Verifikasi'],
+    3: ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
+    4: ['Foto Dokumentasi Lapangan', 'Data Pengukuran', 'Checklist Lapangan'],
+    5: ['LHPP', 'BAP'],
+    6: ['Bundel Dokumen Suket', 'Suket dari Disnaker'],
+    7: ['Invoice', 'Tanda Terima Klien'],
+    8: ['Surat Permohonan Disnaker', 'Bukti Penyerahan Disnaker'],
+    9: ['Draft SUKET Review', 'Catatan Revisi SUKET'],
+    10: ['Invoice Final', 'Bukti Pembayaran', 'Kwitansi'],
+    11: ['Tanda Terima Pengiriman SUKET', 'Bukti Kirim'],
+    12: ['Arsip Final'],
+};

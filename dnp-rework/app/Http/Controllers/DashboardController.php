@@ -17,10 +17,10 @@ class DashboardController extends Controller
 
         return [
             'auth' => [
-                'user' => $user,
+                'user'        => $user,
                 'permissions' => $stagePermissions,
             ],
-            'jobs' => Job::orderBy('updated_at', 'desc')->get(),
+            'jobs' => Job::with(['documents', 'unitsTracking'])->orderBy('updated_at', 'desc')->get(),
         ];
     }
 

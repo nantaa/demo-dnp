@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Job;
+use App\Models\JobDocument;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class JobController extends Controller
 {
@@ -36,28 +38,34 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'klien' => 'required|string|max:255',
-            'pesawat' => 'required|string|max:50',
-            'lokasi' => 'required|string',
-            'owner_marketing' => 'required|string',
-            'pic_klien' => 'nullable|string',
-            'pic_klien_phone' => 'nullable|string',
-            'units' => 'integer|min:1',
-            'nilai' => 'numeric|min:0',
+            'klien'            => 'required|string|max:255',
+            'pesawat'          => 'required|string|max:50',
+            'lokasi'           => 'required|string',
+            'owner_marketing'  => 'required|string',
+            'pic_klien'        => 'nullable|string',
+            'pic_klien_phone'  => 'nullable|string',
+            'units'            => 'integer|min:1',
+            'nilai'            => 'numeric|min:0',
         ]);
 
+        // Always use the real logged-in user's name for marketing role
+        // to guarantee owner_marketing matches auth.user.name on the frontend
+        if (Auth::user()->role === 'marketing') {
+            $validated['owner_marketing'] = Auth::user()->name;
+        }
+
         // Generate unique Kode (e.g. DNP/2026/0001)
-        $year = date('Y');
+        $year  = date('Y');
         $count = Job::whereYear('created_at', $year)->count() + 1;
-        $validated['kode'] = sprintf('DNP/%s/%04d', $year, $count);
+        $validated['kode']  = sprintf('DNP/%s/%04d', $year, $count);
         $validated['stage'] = 1;
 
         $job = Job::create($validated);
 
         // Create initial history log
         $job->historyLogs()->create([
-            'stage' => 1,
-            'action' => 'Job created (PO/SPK received)',
+            'stage'             => 1,
+            'action'            => 'Job created (PO/SPK received)',
             'action_by_user_id' => Auth::id(),
         ]);
 
@@ -93,7 +101,7 @@ class JobController extends Controller
 
         $validated = $request->validate([
             'next_stage' => 'required|integer|min:1|max:12',
-            'notes' => 'nullable|string',
+            'notes'      => 'nullable|string',
         ]);
 
         $nextStage = $validated['next_stage'];
@@ -104,14 +112,14 @@ class JobController extends Controller
         }
 
         $job->update([
-            'stage' => $nextStage,
+            'stage'          => $nextStage,
             'stage_started_at' => now(),
         ]);
 
         // Log history
         $job->historyLogs()->create([
-            'stage' => $nextStage,
-            'action' => 'Moved from stage ' . $currentStage . ' to ' . $nextStage,
+            'stage'             => $nextStage,
+            'action'            => 'Moved from stage ' . $currentStage . ' to ' . $nextStage,
             'action_by_user_id' => Auth::id(),
         ]);
 
@@ -137,18 +145,83 @@ class JobController extends Controller
         if ($prevStage < 1) $prevStage = 1;
 
         $job->update([
-            'stage' => $prevStage,
+            'stage'           => $prevStage,
             'stage_started_at' => now(),
         ]);
 
         // Log history with rejection notes
         $job->historyLogs()->create([
-            'stage' => $prevStage,
-            'action' => 'DITOLAK (Dikembalikan dari S' . $currentStage . ' ke S' . $prevStage . '). Alasan: ' . $validated['notes'],
+            'stage'             => $prevStage,
+            'action'            => 'DITOLAK (Dikembalikan dari S' . $currentStage . ' ke S' . $prevStage . '). Alasan: ' . $validated['notes'],
             'action_by_user_id' => Auth::id(),
         ]);
 
         return back()->with('success', 'Job berhasil dikembalikan ke Stage ' . $prevStage . '.');
+    }
+
+    /**
+     * Upload a document for a specific stage of a job.
+     * Permission: any user with can_view on the stage, or marketing owner of the job.
+     */
+    public function uploadDocument(Request $request, Job $job)
+    {
+        $user = Auth::user();
+
+        // Permission: superadmin, stage owner, stage viewer, or marketing owner of this job
+        $canUpload = $user->isSuperadmin()
+            || ($user->role === 'marketing' && $job->owner_marketing === $user->name)
+            || $user->stagePermissions()->where('stage', $job->stage)->exists();
+
+        if (!$canUpload) {
+            abort(403, 'You do not have permission to upload documents for this job.');
+        }
+
+        $request->validate([
+            'type'  => 'required|string|max:100',
+            'stage' => 'required|integer|min:1|max:12',
+            'file'  => 'required|file|max:2048|mimes:pdf,jpg,jpeg,png,zip,docx,xlsx',
+        ]);
+
+        $uploadedFile = $request->file('file');
+        $path = $uploadedFile->store("job-documents/{$job->id}", 'public');
+
+        $job->documents()->create([
+            'stage'              => $request->stage,
+            'type'               => $request->type,
+            'name'               => $uploadedFile->getClientOriginalName(),
+            'path'               => $path,
+            'uploaded_by_user_id' => $user->id,
+        ]);
+
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => "Dokumen diunggah: [{$request->type}] {$uploadedFile->getClientOriginalName()} (Stage {$request->stage})",
+            'action_by_user_id' => $user->id,
+        ]);
+
+        return back()->with('success', 'Dokumen berhasil diunggah.');
+    }
+
+    /**
+     * Delete a document from a job.
+     * Permission: uploader, stage owner, or superadmin.
+     */
+    public function deleteDocument(Job $job, JobDocument $document)
+    {
+        $user = Auth::user();
+
+        $canDelete = $user->isSuperadmin()
+            || $document->uploaded_by_user_id === $user->id
+            || $user->canOwnStage($document->stage);
+
+        if (!$canDelete) {
+            abort(403, 'You do not have permission to delete this document.');
+        }
+
+        Storage::disk('public')->delete($document->path);
+        $document->delete();
+
+        return back()->with('success', 'Dokumen berhasil dihapus.');
     }
 
     /**
@@ -157,8 +230,8 @@ class JobController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $stagePermissions = $user->isSuperadmin() 
-            ? 'superadmin' 
+        $stagePermissions = $user->isSuperadmin()
+            ? 'superadmin'
             : $user->stagePermissions()->get()->keyBy('stage');
 
         $jobs = Job::with(['inspectors', 'documents', 'unitsTracking'])
@@ -167,7 +240,7 @@ class JobController extends Controller
 
         return Inertia::render('Jobs/List', [
             'auth' => [
-                'user' => $user,
+                'user'        => $user,
                 'permissions' => $stagePermissions,
             ],
             'jobs' => $jobs,

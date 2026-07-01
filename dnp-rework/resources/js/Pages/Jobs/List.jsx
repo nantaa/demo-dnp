@@ -6,7 +6,8 @@ import { STAGES } from '@/Constants';
 
 export default function JobList({ jobs, auth }) {
     const { permissions } = auth;
-    const [searchTerm, setSearchTerm] = useState('');
+    const queryParams = new URLSearchParams(window.location.search);
+    const [searchTerm, setSearchTerm] = useState(queryParams.get('search') || '');
     const [selectedJob, setSelectedJob] = useState(null);
 
     const visibleJobs = jobs.filter(job => {
@@ -38,7 +39,7 @@ export default function JobList({ jobs, auth }) {
                         onChange={e => setSearchTerm(e.target.value)}
                         className="px-4 py-2 border rounded text-sm w-64"
                     />
-                    <Link href={route('jobs.store')} className="bg-black text-white px-4 py-2 rounded text-sm font-medium">
+                    <Link href={route('jobs.create')} className="bg-black text-white px-4 py-2 rounded text-sm font-medium">
                         + Job Baru
                     </Link>
                 </div>

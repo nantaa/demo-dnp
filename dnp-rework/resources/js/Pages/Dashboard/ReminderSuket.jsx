@@ -133,7 +133,7 @@ function ReminderSuket({ jobs = [] }) {
                                 return (
                                     <tr key={row.key} className="border-b border-gray-100 hover:bg-gray-50 transition-colors text-sm">
                                         <td className="p-4 align-top">
-                                            <Link href={route('jobs.show', row.job.id)} className="font-mono font-bold text-blue-600 hover:underline">
+                                            <Link href={`/jobs?search=${row.kode}`} className="font-mono font-bold text-blue-600 hover:underline">
                                                 {row.kode}
                                             </Link>
                                         </td>

@@ -83,8 +83,15 @@ class User extends Authenticatable
     {
         if ($this->isSuperadmin()) return true;
 
-        // Fetch stage mapping for this user
-        $permission = $this->stagePermissions()->where('stage', $stage)->first();
-        return $permission && $permission->is_owner;
+        // Loop through the user's permissions and check by stage ID directly
+        // This avoids any weird database boolean casting issues with `is_owner`
+        $permissions = $this->stagePermissions()->get();
+        foreach ($permissions as $perm) {
+            if ((int) $perm->stage === $stage) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

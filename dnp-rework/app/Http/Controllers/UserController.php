@@ -63,7 +63,8 @@ class UserController extends Controller
             UserStagePermission::create([
                 'user_id' => $user->id,
                 'stage' => $stage,
-                'is_owner' => true,
+                'is_owner' => 1,
+                'can_view' => 1,
             ]);
         }
 

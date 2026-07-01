@@ -2,11 +2,20 @@ import React, { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 
-export default function JobDetailSheet({ job, onClose, canManage }) {
+export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
     const { data, setData, post, processing, errors } = useForm({
         next_stage: job.stage + 1,
         notes: ''
     });
+
+    const { permissions } = auth || {};
+    const canManage = (() => {
+        if (propCanManage !== undefined) return propCanManage;
+        if (!permissions) return false;
+        if (permissions === 'superadmin') return true;
+        const perm = permissions[job.stage];
+        return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
+    })();
 
     const handleMoveStage = (e) => {
         e.preventDefault();

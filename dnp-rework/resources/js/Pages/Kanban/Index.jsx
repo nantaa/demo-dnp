@@ -11,7 +11,17 @@ export default function KanbanIndex({ jobs, auth }) {
 
     const canManageStage = (stageId) => {
         if (permissions === 'superadmin') return true;
-        return !!permissions[stageId];
+        const perm = permissions?.[stageId];
+        return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
+    };
+
+    const canViewStage = (stageId) => {
+        if (permissions === 'superadmin') return true;
+        const perm = permissions?.[stageId];
+        return perm && (
+            perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
+            perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1'
+        );
     };
 
     return (
@@ -20,7 +30,8 @@ export default function KanbanIndex({ jobs, auth }) {
             
             <div className="flex h-full overflow-x-auto space-x-4 pb-4">
                 {STAGES.map((stage) => {
-                    const columnJobs = jobs.filter(j => j.stage === stage.id);
+                    const hasViewPermission = canViewStage(stage.id);
+                    const columnJobs = hasViewPermission ? jobs.filter(j => j.stage === stage.id) : [];
                     const isLocked = !canManageStage(stage.id);
 
                     return (

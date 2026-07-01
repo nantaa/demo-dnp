@@ -5,10 +5,20 @@ import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
 
 export default function JobList({ jobs, auth }) {
+    const { permissions } = auth;
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedJob, setSelectedJob] = useState(null);
 
-    const filteredJobs = jobs.filter(j => 
+    const visibleJobs = jobs.filter(job => {
+        if (permissions === 'superadmin') return true;
+        const perm = permissions?.[job.stage];
+        return perm && (
+            perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
+            perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1'
+        );
+    });
+
+    const filteredJobs = visibleJobs.filter(j => 
         j.kode.toLowerCase().includes(searchTerm.toLowerCase()) ||
         j.klien.toLowerCase().includes(searchTerm.toLowerCase())
     );

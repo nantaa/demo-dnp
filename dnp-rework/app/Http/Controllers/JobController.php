@@ -165,22 +165,23 @@ class JobController extends Controller
      */
     public function uploadDocument(Request $request, Job $job)
     {
-        $user = Auth::user();
-
-        // Permission: superadmin, stage owner, stage viewer, or marketing owner of this job
-        $canUpload = $user->isSuperadmin()
-            || ($user->role === 'marketing' && $job->owner_marketing === $user->name)
-            || $user->stagePermissions()->where('stage', $job->stage)->exists();
-
-        if (!$canUpload) {
-            abort(403, 'You do not have permission to upload documents for this job.');
-        }
-
         $request->validate([
             'type'  => 'required|string|max:100',
             'stage' => 'required|integer|min:1|max:12',
             'file'  => 'required|file|max:2048|mimes:pdf,jpg,jpeg,png,zip,docx,xlsx',
         ]);
+
+        $user = Auth::user();
+
+        // Permission: superadmin, manager, stage owner, or marketing owner of this job for stage 1/11
+        $canUpload = $user->isSuperadmin()
+            || $user->role === 'manager'
+            || ($user->role === 'marketing' && $job->owner_marketing === $user->name && in_array($request->stage, [1, 11]))
+            || $user->canOwnStage($request->stage);
+
+        if (!$canUpload) {
+            abort(403, 'You do not have permission to upload documents for this stage.');
+        }
 
         $uploadedFile = $request->file('file');
         $path = $uploadedFile->store("job-documents/{$job->id}", 'public');
@@ -204,13 +205,14 @@ class JobController extends Controller
 
     /**
      * Delete a document from a job.
-     * Permission: uploader, stage owner, or superadmin.
+     * Permission: uploader, stage owner, manager, or superadmin.
      */
     public function deleteDocument(Job $job, JobDocument $document)
     {
         $user = Auth::user();
 
         $canDelete = $user->isSuperadmin()
+            || $user->role === 'manager'
             || $document->uploaded_by_user_id === $user->id
             || $user->canOwnStage($document->stage);
 

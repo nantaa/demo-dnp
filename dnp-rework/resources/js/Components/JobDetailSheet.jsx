@@ -94,6 +94,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         );
     };
 
+    const canManageStageDocs = (stageId) => {
+        if (user.role === 'superadmin' || user.role === 'manager') return true;
+        if (user.role === 'marketing' && job.owner_marketing === user.name && (stageId === 1 || stageId === 11)) return true;
+        const perm = permissions?.[stageId];
+        return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
+    };
+
     return (
         <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
             <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
@@ -238,6 +245,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         const types = DOC_TYPES_BY_STAGE[s.id] || [];
                                         const docs = (job.documents || []).filter(d => d.stage === s.id);
                                         const isViewable = canViewStageDocs(s.id);
+                                        const isManageable = canManageStageDocs(s.id);
                                         
                                         if (!isViewable && docs.length === 0) return null; // hide if can't view and empty
                                         
@@ -249,7 +257,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                         <div className="font-medium text-gray-900">{s.name}</div>
                                                     </div>
                                                     
-                                                    {isViewable && (
+                                                    {isManageable && (
                                                         uploadStage === s.id ? (
                                                             <div className="flex gap-2 items-center bg-gray-50 p-2 rounded border">
                                                                 <select 
@@ -306,7 +314,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                 >
                                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                                                 </a>
-                                                                {isViewable && (
+                                                                {isManageable && (
                                                                     <button 
                                                                         onClick={() => deleteDoc(doc)}
                                                                         className="text-red-500 hover:text-red-700 p-1"

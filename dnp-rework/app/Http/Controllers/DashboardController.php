@@ -54,6 +54,7 @@ class DashboardController extends Controller
         $data['sertifikat_pjk3'] = \App\Models\SertifikatPjk3::all();
         $data['regulasi_k3'] = \App\Models\RegulasiK3::all();
         $data['form_disnaker'] = \App\Models\FormDisnaker::all();
+        $data['users'] = \App\Models\User::orderBy('name')->get();
 
         return Inertia::render('Dashboard/AlatSkp', $data);
     }

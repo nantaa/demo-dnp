@@ -234,7 +234,7 @@ class JobController extends Controller
         $user = Auth::user();
         $stagePermissions = $user->isSuperadmin()
             ? 'superadmin'
-            : $user->stagePermissions()->get()->keyBy('stage');
+            : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
         $jobs = Job::with(['inspectors', 'documents', 'unitsTracking', 'historyLogs.user'])
                    ->orderBy('created_at', 'desc')

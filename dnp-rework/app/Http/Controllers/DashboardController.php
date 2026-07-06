@@ -13,7 +13,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $stagePermissions = $user->isSuperadmin() 
             ? 'superadmin' 
-            : $user->stagePermissions()->get()->keyBy('stage');
+            : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
         return [
             'auth' => [

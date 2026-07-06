@@ -30,7 +30,7 @@ function UsersIndex({ users = [], auth = {} }) {
 
     const submitNewUser = (e) => {
         e.preventDefault();
-        post(route('users.store'), {
+        post('/users', {
             onSuccess: () => { reset(); setShowNewUser(false); },
         });
     };
@@ -178,7 +178,7 @@ function PermissionModal({ user, onClose }) {
 
     const savePermissions = () => {
         setSaving(true);
-        router.post(route('users.permissions.update', user.id), { stages: selectedStages }, {
+        router.post(`/users/${user.id}/permissions`, { stages: selectedStages }, {
             preserveScroll: true,
             onSuccess: () => onClose(),
             onFinish: () => setSaving(false)

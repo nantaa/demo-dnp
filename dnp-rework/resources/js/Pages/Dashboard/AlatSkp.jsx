@@ -379,9 +379,6 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
             router.delete(`/inventory/form-disnaker/${id}`);
         }
     };
-            router.delete(`/inventory/sertifikat/${id}`);
-        }
-    };
 
     return (
         <AppLayout>

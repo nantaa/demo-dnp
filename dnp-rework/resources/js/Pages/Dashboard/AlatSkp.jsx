@@ -410,6 +410,16 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     <Plus size={16} /> Tambah Sertifikat
                                 </button>
                             )}
+                            {tab === 'regulasi' && (
+                                <button onClick={() => { setSelectedRegulasi(null); regulasiForm.reset(); setShowRegulasiModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> Tambah Regulasi
+                                </button>
+                            )}
+                            {tab === 'form' && (
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.reset(); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> Tambah Form Disnaker
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -603,10 +613,14 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                 <td className="p-4 font-mono text-xs">{formatDate(c.terbit)}</td>
                                                 <td className="p-4 font-mono text-xs">{formatDate(c.expired)}</td>
                                                 <td className="p-4"><StatusBadge status={statObj.status}>{statObj.label}</StatusBadge></td>
-                                                <td className="p-4">
-                                                    <span className="flex items-center gap-1 text-gray-600">
-                                                        <Download size={14} /> <span className="text-xs">{c.file || '—'}</span>
-                                                    </span>
+                                                <td className="p-4 font-medium">
+                                                    {c.file ? (
+                                                        <a href={`/storage/${c.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                            <Download size={14} /> <span className="text-xs">Download</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">—</span>
+                                                    )}
                                                 </td>
                                                 {canManage && (
                                                     <td className="p-4 text-center">
@@ -639,6 +653,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                         <th className="p-4 font-semibold">Terbit</th>
                                         <th className="p-4 font-semibold">Revisi Terakhir</th>
                                         <th className="p-4 font-semibold text-center">Status</th>
+                                        <th className="p-4 font-semibold">File</th>
+                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -651,6 +667,27 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             <td className="p-4 font-mono text-xs">{formatDate(r.terbit)}</td>
                                             <td className="p-4 text-xs text-gray-500">{r.revisi_terakhir}</td>
                                             <td className="p-4 text-center"><StatusBadge status={r.status === 'aktif' ? 'valid' : 'expired'}>{r.status}</StatusBadge></td>
+                                            <td className="p-4 font-medium">
+                                                {r.source ? (
+                                                    <a href={`/storage/${r.source}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                        <Download size={14} /> <span className="text-xs">Download</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </td>
+                                            {canManage && (
+                                                <td className="p-4 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        <button onClick={() => openEditRegulasi(r)} className="text-gray-500 hover:text-black" title="Edit">
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                        <button onClick={() => deleteRegulasi(r.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                            <Trash size={15} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -669,6 +706,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                         <th className="p-4 font-semibold">Revisi</th>
                                         <th className="p-4 font-semibold">Last Updated</th>
                                         <th className="p-4 font-semibold">File</th>
+                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -680,11 +718,27 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             <td className="p-4 text-xs">{f.pesawat}</td>
                                             <td className="p-4 font-mono text-xs">{f.revisi}</td>
                                             <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
-                                            <td className="p-4">
-                                                <span className="flex items-center gap-1 text-gray-600">
-                                                    <Download size={14} />
-                                                </span>
+                                            <td className="p-4 font-medium">
+                                                {f.file ? (
+                                                    <a href={`/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                        <Download size={14} /> <span className="text-xs">Download</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
                                             </td>
+                                            {canManage && (
+                                                <td className="p-4 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit">
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                        <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                            <Trash size={15} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -877,12 +931,132 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">File Name (pdf)</label>
-                                <input type="text" placeholder="SK-PJK3-DNP.pdf" value={sertifikatForm.data.file} onChange={e => sertifikatForm.setData('file', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">File Sertifikat (PDF/Image)</label>
+                                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" onChange={e => sertifikatForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
+                                {selectedSertifikat?.file && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        File saat ini: <a href={`/storage/${selectedSertifikat.file}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-end gap-2 pt-2 border-t">
                                 <button type="button" onClick={() => setShowSertifikatModal(false)} className="px-4 py-2 border rounded text-sm font-medium hover:bg-gray-50">Batal</button>
                                 <button type="submit" disabled={sertifikatForm.processing} className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800 disabled:opacity-50">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Regulasi K3 */}
+            {showRegulasiModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">{selectedRegulasi ? 'Edit Regulasi K3' : 'Tambah Regulasi K3 Baru'}</h2>
+                        <form onSubmit={submitRegulasi} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kode Regulasi</label>
+                                    <input type="text" required disabled={!!selectedRegulasi} value={regulasiForm.data.kode_reg} onChange={e => regulasiForm.setData('kode_reg', e.target.value)} className="w-full border px-3 py-2 rounded text-sm disabled:bg-gray-100" />
+                                    {regulasiForm.errors.kode_reg && <div className="text-red-500 text-xs mt-1">{regulasiForm.errors.kode_reg}</div>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kategori</label>
+                                    <input type="text" placeholder="e.g. UU, PP, Permen" value={regulasiForm.data.kategori} onChange={e => regulasiForm.setData('kategori', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Regulasi</label>
+                                <input type="text" required value={regulasiForm.data.nama} onChange={e => regulasiForm.setData('nama', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Tentang</label>
+                                <textarea value={regulasiForm.data.tentang} onChange={e => regulasiForm.setData('tentang', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" rows={2} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Terbit</label>
+                                    <input type="date" value={regulasiForm.data.terbit} onChange={e => regulasiForm.setData('terbit', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Revisi Terakhir</label>
+                                    <input type="text" placeholder="e.g. N/A or Tahun" value={regulasiForm.data.revisi_terakhir} onChange={e => regulasiForm.setData('revisi_terakhir', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Status</label>
+                                    <select value={regulasiForm.data.status} onChange={e => regulasiForm.setData('status', e.target.value)} className="w-full border px-3 py-2 rounded text-sm bg-white">
+                                        <option value="aktif">Aktif</option>
+                                        <option value="tidak aktif">Tidak Aktif</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Upload File Regulasi</label>
+                                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" onChange={e => regulasiForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
+                                {selectedRegulasi?.source && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        File saat ini: <a href={`/storage/${selectedRegulasi.source}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2 border-t">
+                                <button type="button" onClick={() => setShowRegulasiModal(false)} className="px-4 py-2 border rounded text-sm font-medium hover:bg-gray-50">Batal</button>
+                                <button type="submit" disabled={regulasiForm.processing} className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800 disabled:opacity-50">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Form Disnaker */}
+            {showFormDisnakerModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">{selectedFormDisnaker ? 'Edit Form Disnaker' : 'Tambah Form Disnaker Baru'}</h2>
+                        <form onSubmit={submitFormDisnaker} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kode Form</label>
+                                    <input type="text" required disabled={!!selectedFormDisnaker} value={formDisnakerForm.data.kode_form} onChange={e => formDisnakerForm.setData('kode_form', e.target.value)} className="w-full border px-3 py-2 rounded text-sm disabled:bg-gray-100" />
+                                    {formDisnakerForm.errors.kode_form && <div className="text-red-500 text-xs mt-1">{formDisnakerForm.errors.kode_form}</div>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Form No (Disnaker)</label>
+                                    <input type="text" placeholder="e.g. Form 6, Form 36" value={formDisnakerForm.data.kode_disnaker} onChange={e => formDisnakerForm.setData('kode_disnaker', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Form</label>
+                                <input type="text" required value={formDisnakerForm.data.nama} onChange={e => formDisnakerForm.setData('nama', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Untuk Pesawat</label>
+                                    <input type="text" placeholder="e.g. Boiler, Crane" value={formDisnakerForm.data.pesawat} onChange={e => formDisnakerForm.setData('pesawat', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Revisi</label>
+                                    <input type="text" placeholder="e.g. 01, 02" value={formDisnakerForm.data.revisi} onChange={e => formDisnakerForm.setData('revisi', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Last Updated</label>
+                                <input type="date" value={formDisnakerForm.data.last_updated} onChange={e => formDisnakerForm.setData('last_updated', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Upload File Form</label>
+                                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" onChange={e => formDisnakerForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
+                                {selectedFormDisnaker?.file && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        File saat ini: <a href={`/storage/${selectedFormDisnaker.file}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2 border-t">
+                                <button type="button" onClick={() => setShowFormDisnakerModal(false)} className="px-4 py-2 border rounded text-sm font-medium hover:bg-gray-50">Batal</button>
+                                <button type="submit" disabled={formDisnakerForm.processing} className="bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800 disabled:opacity-50">Simpan</button>
                             </div>
                         </form>
                     </div>

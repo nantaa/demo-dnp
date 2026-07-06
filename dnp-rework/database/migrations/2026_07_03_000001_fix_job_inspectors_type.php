@@ -12,8 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $connection = Schema::connection($this->getConnection());
-        if ($connection->getDriverName() === 'pgsql') {
+        if (DB::getDriverName() === 'pgsql') {
             // 1. Delete non-numeric or invalid inspector_id records to avoid cast errors
             DB::statement("DELETE FROM job_inspectors WHERE inspector_id IS NULL OR inspector_id !~ '^[0-9]+$'");
             

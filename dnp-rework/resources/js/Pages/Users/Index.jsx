@@ -37,7 +37,7 @@ function UsersIndex({ users = [], auth = {} }) {
 
     const deleteUser = (user) => {
         if (confirm(`Hapus user ${user.name}?`)) {
-            router.delete(route('users.destroy', user.id));
+            router.delete(`/users/${user.id}`);
         }
     };
 

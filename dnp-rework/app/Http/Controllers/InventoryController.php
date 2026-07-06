@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\AlatUji;
 use App\Models\InspectorProfile;
 use App\Models\SertifikatPjk3;
+use App\Models\RegulasiK3;
+use App\Models\FormDisnaker;
+use Illuminate\Support\Facades\Storage;
 
 class InventoryController extends Controller
 {
@@ -120,9 +123,14 @@ class InventoryController extends Controller
             'no_sk'     => 'nullable|string|max:255',
             'terbit'    => 'nullable|date',
             'expired'   => 'nullable|date',
-            'file'      => 'nullable|string|max:255',
+            'file'      => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
             'kategori'  => 'nullable|string|max:100',
         ]);
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('master-documents/sertifikat', 'public');
+            $validated['file'] = $path;
+        }
 
         SertifikatPjk3::create($validated);
         return back()->with('success', 'Sertifikat berhasil ditambahkan.');
@@ -137,9 +145,17 @@ class InventoryController extends Controller
             'no_sk'     => 'nullable|string|max:255',
             'terbit'    => 'nullable|date',
             'expired'   => 'nullable|date',
-            'file'      => 'nullable|string|max:255',
+            'file'      => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
             'kategori'  => 'nullable|string|max:100',
         ]);
+
+        if ($request->hasFile('file')) {
+            if ($sertifikatPjk3->file) {
+                Storage::disk('public')->delete($sertifikatPjk3->file);
+            }
+            $path = $request->file('file')->store('master-documents/sertifikat', 'public');
+            $validated['file'] = $path;
+        }
 
         $sertifikatPjk3->update($validated);
         return back()->with('success', 'Sertifikat berhasil diperbarui.');
@@ -148,7 +164,130 @@ class InventoryController extends Controller
     public function destroySertifikat(SertifikatPjk3 $sertifikatPjk3)
     {
         if (!$this->canManage()) abort(403);
+        if ($sertifikatPjk3->file) {
+            Storage::disk('public')->delete($sertifikatPjk3->file);
+        }
         $sertifikatPjk3->delete();
         return back()->with('success', 'Sertifikat berhasil dihapus.');
+    }
+
+    // ─── Regulasi K3 ─────────────────────────────────────────────────────
+    public function storeRegulasi(Request $request)
+    {
+        if (!$this->canManage()) abort(403);
+
+        $validated = $request->validate([
+            'kode_reg'        => 'required|string|max:50|unique:regulasi_k3s,kode_reg',
+            'kategori'        => 'nullable|string|max:100',
+            'nama'            => 'required|string|max:255',
+            'tentang'         => 'nullable|string',
+            'terbit'          => 'nullable|date',
+            'status'          => 'nullable|string|max:50',
+            'file'            => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'revisi_terakhir' => 'nullable|string|max:100',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('master-documents/regulasi', 'public');
+            $validated['source'] = $path;
+        }
+
+        RegulasiK3::create($validated);
+        return back()->with('success', 'Regulasi berhasil ditambahkan.');
+    }
+
+    public function updateRegulasi(Request $request, RegulasiK3 $regulasiK3)
+    {
+        if (!$this->canManage()) abort(403);
+
+        $validated = $request->validate([
+            'kategori'        => 'nullable|string|max:100',
+            'nama'            => 'required|string|max:255',
+            'tentang'         => 'nullable|string',
+            'terbit'          => 'nullable|date',
+            'status'          => 'nullable|string|max:50',
+            'file'            => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'revisi_terakhir' => 'nullable|string|max:100',
+        ]);
+
+        if ($request->hasFile('file')) {
+            if ($regulasiK3->source) {
+                Storage::disk('public')->delete($regulasiK3->source);
+            }
+            $path = $request->file('file')->store('master-documents/regulasi', 'public');
+            $validated['source'] = $path;
+        }
+
+        $regulasiK3->update($validated);
+        return back()->with('success', 'Regulasi berhasil diperbarui.');
+    }
+
+    public function destroyRegulasi(RegulasiK3 $regulasiK3)
+    {
+        if (!$this->canManage()) abort(403);
+        if ($regulasiK3->source) {
+            Storage::disk('public')->delete($regulasiK3->source);
+        }
+        $regulasiK3->delete();
+        return back()->with('success', 'Regulasi berhasil dihapus.');
+    }
+
+    // ─── Form Disnaker ───────────────────────────────────────────────────
+    public function storeFormDisnaker(Request $request)
+    {
+        if (!$this->canManage()) abort(403);
+
+        $validated = $request->validate([
+            'kode_form'     => 'required|string|max:50|unique:form_disnakers,kode_form',
+            'kode_disnaker' => 'nullable|string|max:50',
+            'nama'          => 'required|string|max:255',
+            'pesawat'       => 'nullable|string|max:255',
+            'revisi'        => 'nullable|string|max:100',
+            'last_updated'  => 'nullable|date',
+            'file'          => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('master-documents/form-disnaker', 'public');
+            $validated['file'] = $path;
+        }
+
+        FormDisnaker::create($validated);
+        return back()->with('success', 'Form Disnaker berhasil ditambahkan.');
+    }
+
+    public function updateFormDisnaker(Request $request, FormDisnaker $formDisnaker)
+    {
+        if (!$this->canManage()) abort(403);
+
+        $validated = $request->validate([
+            'kode_disnaker' => 'nullable|string|max:50',
+            'nama'          => 'required|string|max:255',
+            'pesawat'       => 'nullable|string|max:255',
+            'revisi'        => 'nullable|string|max:100',
+            'last_updated'  => 'nullable|date',
+            'file'          => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+        ]);
+
+        if ($request->hasFile('file')) {
+            if ($formDisnaker->file) {
+                Storage::disk('public')->delete($formDisnaker->file);
+            }
+            $path = $request->file('file')->store('master-documents/form-disnaker', 'public');
+            $validated['file'] = $path;
+        }
+
+        $formDisnaker->update($validated);
+        return back()->with('success', 'Form Disnaker berhasil diperbarui.');
+    }
+
+    public function destroyFormDisnaker(FormDisnaker $formDisnaker)
+    {
+        if (!$this->canManage()) abort(403);
+        if ($formDisnaker->file) {
+            Storage::disk('public')->delete($formDisnaker->file);
+        }
+        $formDisnaker->delete();
+        return back()->with('success', 'Form Disnaker berhasil dihapus.');
     }
 }

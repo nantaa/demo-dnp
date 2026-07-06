@@ -50,8 +50,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'destroyInspector'])->name('inventory.inspector.destroy');
 
     Route::post('/inventory/sertifikat', [InventoryController::class, 'storeSertifikat'])->name('inventory.sertifikat.store');
-    Route::put('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'updateSertifikat'])->name('inventory.sertifikat.update');
+    Route::post('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'updateSertifikat'])->name('inventory.sertifikat.update');
     Route::delete('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'destroySertifikat'])->name('inventory.sertifikat.destroy');
+
+    Route::post('/inventory/regulasi', [InventoryController::class, 'storeRegulasi'])->name('inventory.regulasi.store');
+    Route::post('/inventory/regulasi/{regulasiK3}', [InventoryController::class, 'updateRegulasi'])->name('inventory.regulasi.update');
+    Route::delete('/inventory/regulasi/{regulasiK3}', [InventoryController::class, 'destroyRegulasi'])->name('inventory.regulasi.destroy');
+
+    Route::post('/inventory/form-disnaker', [InventoryController::class, 'storeFormDisnaker'])->name('inventory.form-disnaker.store');
+    Route::post('/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'updateFormDisnaker'])->name('inventory.form-disnaker.update');
+    Route::delete('/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'destroyFormDisnaker'])->name('inventory.form-disnaker.destroy');
 });
 
 require __DIR__.'/auth.php'; // Keep Breeze Auth routes

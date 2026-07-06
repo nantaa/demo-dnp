@@ -260,7 +260,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     const submitSertifikat = (e) => {
         e.preventDefault();
         if (selectedSertifikat) {
-            sertifikatForm.put(`/inventory/sertifikat/${selectedSertifikat.id}`, {
+            sertifikatForm.post(`/inventory/sertifikat/${selectedSertifikat.id}`, {
                 onSuccess: () => {
                     setShowSertifikatModal(false);
                     setSelectedSertifikat(null);
@@ -285,7 +285,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
             no_sk: c.no_sk || '',
             terbit: c.terbit ? c.terbit.substring(0, 10) : '',
             expired: c.expired ? c.expired.substring(0, 10) : '',
-            file: c.file || '',
+            file: null, // Reset to null so file input can be used
             kategori: c.kategori || 'Umum'
         });
         setShowSertifikatModal(true);
@@ -293,6 +293,92 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
     const deleteSertifikat = (id) => {
         if (confirm('Hapus sertifikat PJK3 ini?')) {
+            router.delete(`/inventory/sertifikat/${id}`);
+        }
+    };
+
+    // Handle Regulasi Submit
+    const submitRegulasi = (e) => {
+        e.preventDefault();
+        if (selectedRegulasi) {
+            regulasiForm.post(`/inventory/regulasi/${selectedRegulasi.id}`, {
+                onSuccess: () => {
+                    setShowRegulasiModal(false);
+                    setSelectedRegulasi(null);
+                    regulasiForm.reset();
+                }
+            });
+        } else {
+            regulasiForm.post('/inventory/regulasi', {
+                onSuccess: () => {
+                    setShowRegulasiModal(false);
+                    regulasiForm.reset();
+                }
+            });
+        }
+    };
+
+    const openEditRegulasi = (r) => {
+        setSelectedRegulasi(r);
+        regulasiForm.setData({
+            kode_reg: r.kode_reg,
+            kategori: r.kategori || '',
+            nama: r.nama,
+            tentang: r.tentang || '',
+            terbit: r.terbit ? r.terbit.substring(0, 10) : '',
+            status: r.status || 'aktif',
+            file: null,
+            revisi_terakhir: r.revisi_terakhir || ''
+        });
+        setShowRegulasiModal(true);
+    };
+
+    const deleteRegulasi = (id) => {
+        if (confirm('Hapus regulasi K3 ini?')) {
+            router.delete(`/inventory/regulasi/${id}`);
+        }
+    };
+
+    // Handle FormDisnaker Submit
+    const submitFormDisnaker = (e) => {
+        e.preventDefault();
+        if (selectedFormDisnaker) {
+            formDisnakerForm.post(`/inventory/form-disnaker/${selectedFormDisnaker.id}`, {
+                onSuccess: () => {
+                    setShowFormDisnakerModal(false);
+                    setSelectedFormDisnaker(null);
+                    formDisnakerForm.reset();
+                }
+            });
+        } else {
+            formDisnakerForm.post('/inventory/form-disnaker', {
+                onSuccess: () => {
+                    setShowFormDisnakerModal(false);
+                    formDisnakerForm.reset();
+                }
+            });
+        }
+    };
+
+    const openEditFormDisnaker = (f) => {
+        setSelectedFormDisnaker(f);
+        formDisnakerForm.setData({
+            kode_form: f.kode_form,
+            kode_disnaker: f.kode_disnaker || '',
+            nama: f.nama,
+            pesawat: f.pesawat || '',
+            revisi: f.revisi || '',
+            last_updated: f.last_updated ? f.last_updated.substring(0, 10) : '',
+            file: null
+        });
+        setShowFormDisnakerModal(true);
+    };
+
+    const deleteFormDisnaker = (id) => {
+        if (confirm('Hapus form disnaker ini?')) {
+            router.delete(`/inventory/form-disnaker/${id}`);
+        }
+    };
             router.delete(`/inventory/sertifikat/${id}`);
         }
     };

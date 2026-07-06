@@ -76,6 +76,12 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     const [showSertifikatModal, setShowSertifikatModal] = useState(false);
     const [selectedSertifikat, setSelectedSertifikat] = useState(null);
 
+    const [showRegulasiModal, setShowRegulasiModal] = useState(false);
+    const [selectedRegulasi, setSelectedRegulasi] = useState(null);
+
+    const [showFormDisnakerModal, setShowFormDisnakerModal] = useState(false);
+    const [selectedFormDisnaker, setSelectedFormDisnaker] = useState(null);
+
     // Form Hooks
     const alatForm = useForm({
         kode_alat: '',
@@ -104,8 +110,29 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         no_sk: '',
         terbit: '',
         expired: '',
-        file: '',
+        file: null,
         kategori: 'Umum'
+    });
+
+    const regulasiForm = useForm({
+        kode_reg: '',
+        kategori: '',
+        nama: '',
+        tentang: '',
+        terbit: '',
+        status: 'aktif',
+        file: null,
+        revisi_terakhir: ''
+    });
+
+    const formDisnakerForm = useForm({
+        kode_form: '',
+        kode_disnaker: '',
+        nama: '',
+        pesawat: '',
+        revisi: '',
+        last_updated: '',
+        file: null
     });
 
     const renderAlatStatus = (a) => {

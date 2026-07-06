@@ -75,7 +75,7 @@ export default function KanbanIndex({ jobs, auth }) {
                                             if (!stageInfo?.sla) return null;
                                             
                                             let slaDays = stageInfo.sla;
-                                            if (job.stage === 5) slaDays *= (job.units || 1);
+                                            if (job.stage === 6) slaDays *= (job.units || 1);
                                             
                                             const startDate = new Date(job.stage_started_at || job.updated_at);
                                             const now = new Date();

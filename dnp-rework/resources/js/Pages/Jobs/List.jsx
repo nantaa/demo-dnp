@@ -65,7 +65,7 @@ export default function JobList({ jobs, auth }) {
                             let slaDays = stageInfo?.sla;
                             let slaBadge = null;
                             if (slaDays) {
-                                if (job.stage === 5) slaDays *= (job.units || 1);
+                                if (job.stage === 6) slaDays *= (job.units || 1);
                                 const startDate = new Date(job.stage_started_at || job.updated_at);
                                 const diffTime = Math.abs(new Date() - startDate);
                                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

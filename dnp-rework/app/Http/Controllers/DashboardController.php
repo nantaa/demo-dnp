@@ -21,6 +21,7 @@ class DashboardController extends Controller
                 'permissions' => $stagePermissions,
             ],
             'jobs' => Job::with(['inspectors', 'documents', 'unitsTracking', 'historyLogs.user'])->orderBy('updated_at', 'desc')->get(),
+            'inspectors' => \App\Models\InspectorProfile::with('user')->get(),
         ];
     }
 

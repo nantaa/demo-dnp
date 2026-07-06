@@ -178,6 +178,10 @@ class JobController extends Controller
             'file'  => 'required|file|max:2048|mimes:pdf,jpg,jpeg,png,zip,docx,xlsx',
         ]);
 
+        if ((int)$request->stage !== (int)$job->stage) {
+            abort(403, 'You can only upload documents for the job\'s current stage.');
+        }
+
         $user = Auth::user();
 
         // Permission: superadmin, manager, stage owner, or marketing owner of this job for stage 1/11
@@ -216,6 +220,10 @@ class JobController extends Controller
      */
     public function deleteDocument(Job $job, JobDocument $document)
     {
+        if ((int)$document->stage !== (int)$job->stage) {
+            abort(403, 'You can only delete documents belonging to the job\'s current stage.');
+        }
+
         $user = Auth::user();
 
         $canDelete = $user->isSuperadmin()

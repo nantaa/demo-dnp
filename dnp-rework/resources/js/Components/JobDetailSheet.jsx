@@ -418,7 +418,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         const types = DOC_TYPES_BY_STAGE[s.id] || [];
                                         const docs = (job.documents || []).filter(d => d.stage === s.id);
                                         const isViewable = canViewStageDocs(s.id);
-                                        const isManageable = canManageStageDocs(s.id);
+                                        const isManageable = canManageStageDocs(s.id) && s.id === job.stage;
                                         
                                         if (!isViewable && docs.length === 0) return null; // hide if can't view and empty
                                         

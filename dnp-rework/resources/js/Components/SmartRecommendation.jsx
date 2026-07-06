@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Award, Calendar, CheckSquare, XSquare } from 'lucide-react';
 
-export default function SmartRecommendation({ job, onSelectInspector }) {
+export default function SmartRecommendation({ job, onSelectInspector, selectedInspectorIds = [] }) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({ recommended: [], eliminated: [] });
 
@@ -90,9 +90,13 @@ export default function SmartRecommendation({ job, onSelectInspector }) {
 
                         <button 
                             onClick={() => onSelectInspector(rec.user)}
-                            className="w-full py-1.5 border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50 flex justify-center items-center gap-1"
+                            className={`w-full py-1.5 border text-xs font-bold flex justify-center items-center gap-1 ${
+                                selectedInspectorIds.includes(rec.user.id)
+                                    ? 'bg-green-600 border-green-600 text-white hover:bg-green-700'
+                                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
                         >
-                            <CheckSquare size={14} /> Pilih {idx === 0 ? 'Terbaik' : `Top ${idx + 1}`}
+                            <CheckSquare size={14} /> {selectedInspectorIds.includes(rec.user.id) ? 'Terpilih (Klik untuk Hapus)' : `Pilih ${idx === 0 ? 'Terbaik' : `Top ${idx + 1}`}`}
                         </button>
                     </div>
                 ))}

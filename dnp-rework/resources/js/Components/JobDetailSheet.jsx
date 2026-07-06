@@ -1,13 +1,29 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import { DOC_TYPES_BY_STAGE, STAGES } from '@/Constants';
 
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
+    const parseJsonArray = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try {
+            return JSON.parse(val);
+        } catch (e) {
+            return [];
+        }
+    };
+
     const { data, setData, post, processing, errors } = useForm({
         next_stage: job.stage + 1,
         notes: '',
-        inspector_ids: job.inspectors ? job.inspectors.map(i => i.id) : []
+        inspector_ids: job.inspectors ? job.inspectors.map(i => i.id) : [],
+        tgl_pelaksanaan: job.tgl_pelaksanaan || '',
+        jam_mulai: job.jam_mulai || '08:00',
+        durasi_hari: job.durasi_hari || 1,
+        disnaker_tujuan: job.disnaker_tujuan || '',
+        alat_ids: parseJsonArray(job.alat_ids),
+        cert_ids: parseJsonArray(job.cert_ids)
     });
 
     const [activeTab, setActiveTab] = useState('overview');
@@ -16,6 +32,23 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+
+    const [masterData, setMasterData] = useState({ alat_uji: [], sertifikat_pjk3: [] });
+    const [recommendations, setRecommendations] = useState({ recommended: [], eliminated: [] });
+
+    useEffect(() => {
+        if (job.stage === 3) {
+            fetch('/api/master-data')
+                .then(res => res.json())
+                .then(json => setMasterData(json))
+                .catch(err => console.error("Error fetching master data:", err));
+
+            fetch(`/api/jobs/${job.id}/recommendations`)
+                .then(res => res.json())
+                .then(json => setRecommendations(json))
+                .catch(err => console.error("Error fetching recommendations:", err));
+        }
+    }, [job.id, job.stage]);
 
     const editForm = useForm({
         klien: job.klien || '',
@@ -36,9 +69,27 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const handleMoveStage = (e) => {
         e.preventDefault();
-        if (job.stage === 3 && (!data.inspector_ids || data.inspector_ids.length === 0)) {
-            alert('Silakan pilih salah satu ahli K3 / inspektur terlebih dahulu!');
-            return;
+        if (job.stage === 3) {
+            if (!data.tgl_pelaksanaan) {
+                alert('Tanggal Pelaksanaan wajib diisi!');
+                return;
+            }
+            if (!data.jam_mulai) {
+                alert('Jam Mulai wajib diisi!');
+                return;
+            }
+            if (!data.durasi_hari || data.durasi_hari < 1) {
+                alert('Durasi (hari) wajib diisi dan minimal 1!');
+                return;
+            }
+            if (!data.disnaker_tujuan) {
+                alert('Disnaker Tujuan wajib diisi!');
+                return;
+            }
+            if (!data.inspector_ids || data.inspector_ids.length === 0) {
+                alert('Silakan pilih minimal satu ahli K3 / inspektur!');
+                return;
+            }
         }
         post(`/jobs/${job.id}/move`, {
             onSuccess: () => onClose()
@@ -112,9 +163,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
     
+    const isInspector = job.inspectors && job.inspectors.some(i => i.id === user?.id);
+
     const canViewStageDocs = (stageId) => {
-        if (user.role === 'superadmin' || user.role === 'admin' || user.role === 'manager') return true;
-        if (user.role === 'marketing' && job.owner_marketing === user.name) return true;
+        if (user?.role === 'superadmin' || user?.role === 'admin' || user?.role === 'manager') return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name) return true;
+        if (isInspector) return true;
         const perm = permissions?.[stageId];
         return perm && (
             perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
@@ -123,11 +177,30 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const canManageStageDocs = (stageId) => {
-        if (user.role === 'superadmin' || user.role === 'manager') return true;
-        if (user.role === 'marketing' && job.owner_marketing === user.name && (stageId === 1 || stageId === 11)) return true;
+        if (user?.role === 'superadmin' || user?.role === 'manager') return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && (stageId === 1 || stageId === 11)) return true;
+        if (isInspector && stageId >= 4 && stageId <= 10) return true;
         const perm = permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };
+
+    const getH5Status = () => {
+        if (!data.tgl_pelaksanaan) return null;
+        const targetDate = new Date(data.tgl_pelaksanaan);
+        const h5Date = new Date(targetDate.getTime() - (5 * 24 * 60 * 60 * 1000));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        h5Date.setHours(0, 0, 0, 0);
+        
+        const diffDays = Math.ceil((h5Date.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+        
+        return {
+            dateStr: h5Date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+            daysRemaining: diffDays,
+            isOverdue: diffDays < 0
+        };
+    };
+    const h5Status = getH5Status();
 
     return (
         <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
@@ -231,39 +304,234 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         </div>
                                     )}
 
-                                    {job.stage === 3 && canManage && (
-                                        <div className="mt-2 mb-6">
-                                            <SmartRecommendation 
-                                                job={job} 
-                                                onSelectInspector={(insUser) => {
-                                                    setData({
-                                                        ...data,
-                                                        notes: `Assigned to: ${insUser.name}`,
-                                                        inspector_ids: [insUser.id]
-                                                    });
-                                                }} 
-                                            />
-                                        </div>
-                                    )}
-
                                     {canManage && job.stage !== 2 && job.stage < 12 && (
                                         <div className="mt-4 bg-white p-4 rounded shadow-sm border">
                                             <h3 className="font-semibold text-gray-900 mb-3">Move to Next Stage</h3>
                                             <form onSubmit={handleMoveStage}>
                                                 {job.stage === 3 && (
-                                                    <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200 text-xs">
-                                                        <div className="font-bold text-blue-800 uppercase mb-1">Status Penugasan Ahli K3</div>
-                                                        {data.inspector_ids && data.inspector_ids.length > 0 ? (
-                                                            <div className="font-medium text-blue-900 flex items-center gap-1.5">
-                                                                <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                                                                Telah dipilih (Notes: {data.notes || '—'})
+                                                    <div className="space-y-6 mb-6">
+                                                        {/* Section 1: Jadwal Pelaksanaan */}
+                                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                            <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-3 flex items-center gap-1.5 border-b pb-1.5">
+                                                                <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
+                                                                Jadwal Pelaksanaan & Disnaker
+                                                            </h4>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Tanggal Pelaksanaan</label>
+                                                                    <input 
+                                                                        type="date" 
+                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                                        value={data.tgl_pelaksanaan}
+                                                                        onChange={e => setData('tgl_pelaksanaan', e.target.value)}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Jam Mulai</label>
+                                                                    <input 
+                                                                        type="time" 
+                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                                        value={data.jam_mulai}
+                                                                        onChange={e => setData('jam_mulai', e.target.value)}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Durasi Pelaksanaan (Hari)</label>
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min="1"
+                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                                        value={data.durasi_hari}
+                                                                        onChange={e => setData('durasi_hari', parseInt(e.target.value) || 1)}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Disnaker Tujuan</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                                                        placeholder="Contoh: UPTD Pengawasan Ketenagakerjaan Wilayah II Karawang"
+                                                                        value={data.disnaker_tujuan}
+                                                                        onChange={e => setData('disnaker_tujuan', e.target.value)}
+                                                                        required
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                        ) : (
-                                                            <div className="font-medium text-red-600 flex items-center gap-1.5">
-                                                                <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                                                                Belum ada ahli K3 yang dipilih. Silakan klik "Pilih Terbaik" atau "Pilih" pada saran di atas.
+                                                            {h5Status && (
+                                                                <div className={`mt-3 p-2.5 rounded text-xs border ${
+                                                                    h5Status.isOverdue 
+                                                                        ? 'bg-red-50 text-red-800 border-red-200' 
+                                                                        : 'bg-green-50 text-green-800 border-green-200'
+                                                                }`}>
+                                                                    {h5Status.isOverdue ? (
+                                                                        <span>⚠️ <strong>Batas Waktu H-5 Terlewati!</strong> Harus dikirim paling lambat pada {h5Status.dateStr}.</span>
+                                                                    ) : (
+                                                                        <span>✅ <strong>Jadwal Aman.</strong> Batas waktu notifikasi H-5: {h5Status.dateStr} (tersisa {h5Status.daysRemaining} hari).</span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Section 2: Smart Recommendations Scorecard */}
+                                                        <div>
+                                                            <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                                                                <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
+                                                                Rekomendasi & Kecocokan Sistem
+                                                            </h4>
+                                                            <div className="mb-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (recommendations.recommended && recommendations.recommended.length >= 2) {
+                                                                            const top2Ids = recommendations.recommended.slice(0, 2).map(r => r.user.id);
+                                                                            setData('inspector_ids', top2Ids);
+                                                                        }
+                                                                    }}
+                                                                    className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-xs font-semibold shadow-sm transition-colors"
+                                                                >
+                                                                    Pilih 2 Teratas (Cross-check Ideal)
+                                                                </button>
                                                             </div>
-                                                        )}
+                                                            <SmartRecommendation 
+                                                                job={job} 
+                                                                selectedInspectorIds={data.inspector_ids}
+                                                                onSelectInspector={(insUser) => {
+                                                                    let ids = [...data.inspector_ids];
+                                                                    if (ids.includes(insUser.id)) {
+                                                                        ids = ids.filter(id => id !== insUser.id);
+                                                                    } else {
+                                                                        ids.push(insUser.id);
+                                                                    }
+                                                                    setData('inspector_ids', ids);
+                                                                }} 
+                                                            />
+                                                        </div>
+
+                                                        {/* Section 3: Checkbox Grid of All Qualified Inspectors */}
+                                                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                            <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                                                                <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
+                                                                Delegasikan Ahli K3 (Pilihan Multiple)
+                                                            </h4>
+                                                            <p className="text-xs text-gray-500 mb-3">Pilih minimal 1 inspektur. Direkomendasikan 2 orang untuk cross-check silang di lapangan.</p>
+                                                            
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                                                {recommendations.recommended && recommendations.recommended.map(rec => {
+                                                                    const isChecked = data.inspector_ids.includes(rec.user.id);
+                                                                    return (
+                                                                        <label 
+                                                                            key={rec.user.id} 
+                                                                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:bg-gray-50 ${
+                                                                                isChecked 
+                                                                                    ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' 
+                                                                                    : 'border-gray-200'
+                                                                            }`}
+                                                                        >
+                                                                            <input 
+                                                                                type="checkbox" 
+                                                                                className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                                                checked={isChecked}
+                                                                                onChange={() => {
+                                                                                    let ids = [...data.inspector_ids];
+                                                                                    if (ids.includes(rec.user.id)) {
+                                                                                        ids = ids.filter(id => id !== rec.user.id);
+                                                                                    } else {
+                                                                                        ids.push(rec.user.id);
+                                                                                    }
+                                                                                    setData('inspector_ids', ids);
+                                                                                }}
+                                                                            />
+                                                                            <div className="text-xs">
+                                                                                <div className="font-bold text-gray-900">{rec.user.name}</div>
+                                                                                <div className="text-gray-500 mt-0.5">Spesialis: {(rec.profile.spesialisasi || []).slice(0, 2).join(', ')}</div>
+                                                                                <div className="text-gray-500">Domisili: {rec.profile.domisili}</div>
+                                                                                <div className="mt-1 inline-block bg-teal-100 text-teal-800 font-bold px-1 rounded text-[10px]">
+                                                                                    Skor: {rec.score}
+                                                                                </div>
+                                                                            </div>
+                                                                        </label>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Section 4: Alat Uji & Sertifikat PJK3 Checklist */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {/* Column 1: Alat Uji */}
+                                                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                                <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                                                                    <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
+                                                                    Pilih Alat Uji Lampiran
+                                                                </h4>
+                                                                <div className="max-h-48 overflow-y-auto space-y-2 text-xs pr-1">
+                                                                    {masterData.alat_uji && masterData.alat_uji.length === 0 ? (
+                                                                        <div className="text-gray-400 italic">Memuat master alat uji...</div>
+                                                                    ) : (
+                                                                        masterData.alat_uji.map(alat => {
+                                                                            const isChecked = data.alat_ids.includes(alat.id);
+                                                                            return (
+                                                                                <label key={alat.id} className="flex items-center gap-2 cursor-pointer py-0.5 hover:bg-gray-50">
+                                                                                    <input 
+                                                                                        type="checkbox" 
+                                                                                        className="rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                                                        checked={isChecked}
+                                                                                        onChange={() => {
+                                                                                            let ids = [...data.alat_ids];
+                                                                                            if (ids.includes(alat.id)) {
+                                                                                                ids = ids.filter(id => id !== alat.id);
+                                                                                            } else {
+                                                                                                ids.push(alat.id);
+                                                                                            }
+                                                                                            setData('alat_ids', ids);
+                                                                                        }}
+                                                                                    />
+                                                                                    <span className="text-gray-700">{alat.nama} {alat.kode_alat ? `(${alat.kode_alat})` : ''}</span>
+                                                                                </label>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Column 2: Sertifikat PJK3 */}
+                                                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                                                <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-2 flex items-center gap-1.5 border-b pb-1.5">
+                                                                    <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
+                                                                    Pilih SKP / Sertifikat PJK3
+                                                                </h4>
+                                                                <div className="max-h-48 overflow-y-auto space-y-2 text-xs pr-1">
+                                                                    {masterData.sertifikat_pjk3 && masterData.sertifikat_pjk3.length === 0 ? (
+                                                                        <div className="text-gray-400 italic">Memuat master sertifikat...</div>
+                                                                    ) : (
+                                                                        masterData.sertifikat_pjk3.map(cert => {
+                                                                            const isChecked = data.cert_ids.includes(cert.id);
+                                                                            return (
+                                                                                <label key={cert.id} className="flex items-center gap-2 cursor-pointer py-0.5 hover:bg-gray-50">
+                                                                                    <input 
+                                                                                        type="checkbox" 
+                                                                                        className="rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+                                                                                        checked={isChecked}
+                                                                                        onChange={() => {
+                                                                                            let ids = [...data.cert_ids];
+                                                                                            if (ids.includes(cert.id)) {
+                                                                                                ids = ids.filter(id => id !== cert.id);
+                                                                                            } else {
+                                                                                                ids.push(cert.id);
+                                                                                            }
+                                                                                            setData('cert_ids', ids);
+                                                                                        }}
+                                                                                    />
+                                                                                    <span className="text-gray-700">{cert.nama} {cert.nomor_skp ? `(${cert.nomor_skp})` : ''}</span>
+                                                                                </label>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 <div className="mb-4">

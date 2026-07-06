@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Smart Recommendation API
     Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');
+    Route::get('/api/master-data', [JobController::class, 'getMasterData'])->name('api.master-data');
 
     // Feature 4: User Management (Superadmin Only)
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

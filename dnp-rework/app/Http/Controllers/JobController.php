@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\JobDocument;
+use App\Models\AlatUji;
+use App\Models\SertifikatPjk3;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class JobController extends Controller
 {
@@ -99,18 +103,47 @@ class JobController extends Controller
             abort(403, 'Only the designated owner of Stage ' . $currentStage . ' can move this job forward.');
         }
 
-        $validated = $request->validate([
+        $validationRules = [
             'next_stage'    => 'required|integer|min:1|max:12',
             'notes'         => 'nullable|string',
             'inspector_ids' => 'nullable|array',
             'inspector_ids.*' => 'exists:users,id',
-        ]);
+        ];
+
+        // If transitioning from Stage 3, enforce scheduling details validation
+        if ($currentStage == 3) {
+            $validationRules['tgl_pelaksanaan'] = 'required|date';
+            $validationRules['jam_mulai'] = 'required|string';
+            $validationRules['durasi_hari'] = 'required|integer|min:1';
+            $validationRules['disnaker_tujuan'] = 'required|string';
+            $validationRules['inspector_ids'] = 'required|array|min:1';
+            $validationRules['alat_ids'] = 'nullable|array';
+            $validationRules['cert_ids'] = 'nullable|array';
+        }
+
+        $validated = $request->validate($validationRules);
 
         $nextStage = $validated['next_stage'];
 
-        // If moving from Stage 3 to Stage 4, sync the selected inspectors
+        // If moving from Stage 3 to Stage 4, sync the selected inspectors and save scheduling details
         if ($currentStage == 3) {
             $job->inspectors()->sync($validated['inspector_ids'] ?? []);
+            
+            $tgl_pelaksanaan = Carbon::parse($validated['tgl_pelaksanaan']);
+            $tgl_h5 = $tgl_pelaksanaan->copy()->subDays(5);
+
+            $job->update([
+                'tgl_pelaksanaan' => $tgl_pelaksanaan,
+                'jam_mulai' => $validated['jam_mulai'],
+                'durasi_hari' => $validated['durasi_hari'],
+                'disnaker_tujuan' => $validated['disnaker_tujuan'],
+                'tgl_h5' => $tgl_h5,
+                'alat_ids' => json_encode($validated['alat_ids'] ?? []),
+                'cert_ids' => json_encode($validated['cert_ids'] ?? []),
+            ]);
+
+            // Automatically generate the Surat Tugas document
+            $this->generateSuratTugas($job);
         }
 
         // If moving to Stage 8 (Disnaker), set the 30-day EWS deadline
@@ -261,6 +294,113 @@ class JobController extends Controller
                 'permissions' => $stagePermissions,
             ],
             'jobs' => $jobs,
+        ]);
+    }
+
+    /**
+     * Generate Surat Tugas from template and save it as a JobDocument.
+     */
+    private function generateSuratTugas(Job $job)
+    {
+        // Path to the template
+        $templatePath = resource_path('templates/SuratTugas.docx');
+        if (!file_exists($templatePath)) {
+            Log::error("Surat Tugas template not found at: " . $templatePath);
+            return;
+        }
+
+        try {
+            $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
+
+            // Generate No Surat Tugas if not set
+            if (!$job->no_surat_tugas) {
+                $year = date('Y');
+                $count = Job::whereYear('created_at', $year)->count() + 1;
+                $job->no_surat_tugas = sprintf('%03d/DNP/STRU/%s', $count, $year);
+                $job->tgl_surat_tugas = now();
+                $job->save();
+            }
+
+            // Set variables
+            $templateProcessor->setValue('no_surat', $job->no_surat_tugas);
+            $templateProcessor->setValue('perusahaan', $job->klien);
+            $templateProcessor->setValue('no_po', $job->no_po ?? '-');
+            $templateProcessor->setValue('marketing', $job->owner_marketing);
+            $templateProcessor->setValue('tgl_surat', Carbon::parse($job->tgl_surat_tugas)->translatedFormat('d F Y'));
+
+            // Inspectors
+            $inspectors = $job->inspectors()->with('inspectorProfile')->get();
+            
+            for ($i = 1; $i <= 2; $i++) {
+                if (isset($inspectors[$i - 1])) {
+                    $ins = $inspectors[$i - 1];
+                    $templateProcessor->setValue("nama_ins_{$i}", $ins->name);
+                    $templateProcessor->setValue("jabatan_ins_{$i}", $ins->inspectorProfile->jabatan ?? 'Ahli K3 Riksa Uji');
+                } else {
+                    $templateProcessor->setValue("nama_ins_{$i}", '—');
+                    $templateProcessor->setValue("jabatan_ins_{$i}", '—');
+                }
+            }
+
+            // Table row for units (Detail Pekerjaan Table)
+            // Table columns: No, Nama Alat / Unit, Lokasi, Tanggal Pemeriksaan, PIC / HP
+            $units = $job->unitsTracking()->get();
+            if ($units->count() > 0) {
+                $templateProcessor->cloneRow('no', $units->count());
+                foreach ($units as $index => $unit) {
+                    $rowNum = $index + 1;
+                    $templateProcessor->setValue("no#{$rowNum}", $rowNum . '.');
+                    $templateProcessor->setValue("nama_alat#{$rowNum}", $unit->unit_label);
+                    $templateProcessor->setValue("lokasi#{$rowNum}", $job->lokasi);
+                    $templateProcessor->setValue("tanggal#{$rowNum}", Carbon::parse($job->tgl_pelaksanaan)->translatedFormat('d F Y') . ' ' . substr($job->jam_mulai, 0, 5));
+                    $templateProcessor->setValue("pic#{$rowNum}", $job->pic_klien . ' / ' . $job->pic_klien_phone);
+                }
+            } else {
+                $templateProcessor->cloneRow('no', 1);
+                $templateProcessor->setValue("no#1", "1.");
+                $templateProcessor->setValue("nama_alat#1", $job->pesawat . " ({$job->units} Unit)");
+                $templateProcessor->setValue("lokasi#1", $job->lokasi);
+                $templateProcessor->setValue("tanggal#1", Carbon::parse($job->tgl_pelaksanaan)->translatedFormat('d F Y') . ' ' . substr($job->jam_mulai, 0, 5));
+                $templateProcessor->setValue("pic#1", $job->pic_klien . ' / ' . $job->pic_klien_phone);
+            }
+
+            // Create folder in storage/app/public/job-documents/{job_id}
+            $outputDir = storage_path("app/public/job-documents/{$job->id}");
+            if (!file_exists($outputDir)) {
+                mkdir($outputDir, 0755, true);
+            }
+
+            $filename = "Surat-Tugas-" . str_replace('/', '-', $job->no_surat_tugas) . ".docx";
+            $outputPath = $outputDir . '/' . $filename;
+            
+            $templateProcessor->saveAs($outputPath);
+
+            // Register document in job_documents table
+            // Delete previous Surat Tugas if it exists
+            $job->documents()->where('type', 'Surat Tugas')->delete();
+
+            $job->documents()->create([
+                'stage' => 4,
+                'type' => 'Surat Tugas',
+                'name' => $filename,
+                'path' => "job-documents/{$job->id}/{$filename}",
+                'uploaded_by_user_id' => Auth::id()
+            ]);
+
+            Log::info("Generated Surat Tugas successfully for Job ID {$job->id} at path {$outputPath}");
+        } catch (\Exception $e) {
+            Log::error("Error generating Surat Tugas for Job {$job->id}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get master data (Alat Uji & Sertifikat PJK3) for scheduling selections.
+     */
+    public function getMasterData()
+    {
+        return response()->json([
+            'alat_uji' => AlatUji::orderBy('nama')->get(),
+            'sertifikat_pjk3' => SertifikatPjk3::orderBy('nama')->get(),
         ]);
     }
 }

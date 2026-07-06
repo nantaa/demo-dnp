@@ -135,7 +135,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             });
         });
 
-        const workloadByInspektur = isMGR || isSuper ? inspectors.map(insp => {
+        const workloadByInspektur = isMGR || isSuper ? (inspectors || []).map(insp => {
             const activeInspJobs = jobs.filter(j =>
                 j.stage >= 4 && j.stage <= 6 &&
                 (j.inspectors || []).some(x => x.id === insp.user_id)
@@ -172,6 +172,15 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             });
         });
 
+        // Funnel calculation
+        const funnel = [
+            { label: 'Penawaran / Stage 1', stage: 1, count: personalFiltered.filter(j => j.stage === 1).length, total: personalFiltered.filter(j => j.stage === 1).reduce((s, j) => s + Number(j.nilai || 0), 0) },
+            { label: 'Verifikasi Dokumen', stage: 2, count: personalFiltered.filter(j => j.stage === 2).length, total: personalFiltered.filter(j => j.stage === 2).reduce((s, j) => s + Number(j.nilai || 0), 0) },
+            { label: 'Penjadwalan', stage: 3, count: personalFiltered.filter(j => j.stage === 3).length, total: personalFiltered.filter(j => j.stage === 3).reduce((s, j) => s + Number(j.nilai || 0), 0) },
+            { label: 'Pelaksanaan + LHPP', stage: [4, 5, 6], count: personalFiltered.filter(j => [4, 5, 6].includes(j.stage)).length, total: personalFiltered.filter(j => [4, 5, 6].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) },
+            { label: 'Disnaker + Penagihan', stage: [7, 8, 9, 10, 11], count: personalFiltered.filter(j => [7, 8, 9, 10, 11].includes(j.stage)).length, total: personalFiltered.filter(j => [7, 8, 9, 10, 11].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) }
+        ];
+
         // ADM-specific
         const antrianVerifikasi = jobs.filter(j => j.stage === 2);
         const butuhJadwal = jobs.filter(j => j.stage === 3 && !j.no_surat_tugas);
@@ -203,7 +212,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
         return {
             active, completed, thisMonth, overdue, pipeline, monthRevenue, byStage,
             lhppJobs, stage4Mine, lhppNeedReview, suketDisnaker, tidakLaikUnits, workloadByInspektur,
-            mktTarget, mktRealisasi, achievement, expiringSukets,
+            mktTarget, mktRealisasi, achievement, expiringSukets, funnel,
             antrianVerifikasi, butuhJadwal, h5Pending, logistikPending,
             siapTagih, piutangBerjalan, piutangOverdue, totalPiutang, totalOverdue, arBuckets, tandaTerimaPending
         };
@@ -361,8 +370,8 @@ function KPICard({ label, value, sub, icon: Icon, accentClass, bgClass = 'bg-whi
 // MARKETING DASHBOARD
 // ============================================================
 function MktDashboard({ stats, onSelectJob }) {
-    const { mktTarget, mktRealisasi, achievement, funnel, expiringSukets } = stats;
-    const maxFunnel = Math.max(...funnel.map(f => f.count), 1);
+    const { mktTarget, mktRealisasi, achievement, funnel = [], expiringSukets = [] } = stats;
+    const maxFunnel = Math.max(...(funnel || []).map(f => f.count), 1);
 
     return (
         <div className="space-y-6">

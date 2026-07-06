@@ -63,3 +63,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/auth.php'; // Keep Breeze Auth routes
+
+Route::get('/run-migrations-dnp', function() {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        return '<pre>Migration Output:\n' . \Illuminate\Support\Facades\Artisan::output() . '</pre>';
+    } catch (\Exception $e) {
+        return 'Migration failed: ' . $e->getMessage() . '\n\nTrace:\n' . $e->getTraceAsString();
+    }
+});
+
+Route::get('/check-db-schema', function() {
+    try {
+        $columns = \Illuminate\Support\Facades\Schema::getColumnListing('job_inspectors');
+        $types = [];
+        foreach ($columns as $column) {
+            $types[$column] = \Illuminate\Support\Facades\Schema::getColumnType('job_inspectors', $column);
+        }
+        return response()->json([
+            'table' => 'job_inspectors',
+            'columns' => $types,
+            'dnp_jobs_exists' => \Illuminate\Support\Facades\Schema::hasTable('dnp_jobs'),
+            'users_exists' => \Illuminate\Support\Facades\Schema::hasTable('users'),
+        ]);
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});

@@ -16,7 +16,7 @@ export default function KanbanIndex({ jobs, auth }) {
     };
 
     const canViewStage = (stageId) => {
-        if (permissions === 'superadmin') return true;
+        if (permissions === 'superadmin' || auth.user.role === 'admin' || auth.user.role === 'manager') return true;
         const perm = permissions?.[stageId];
         return perm && (
             perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
@@ -67,8 +67,37 @@ export default function KanbanIndex({ jobs, auth }) {
                                     <h3 className="font-bold text-sm text-gray-900 leading-tight mb-1">{job.klien}</h3>
                                     <p className="text-xs text-gray-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
                                     
+                                    
                                     <div className="mt-3 flex justify-between items-center text-[10px] text-gray-400">
                                         <span>Marketing: {job.owner_marketing}</span>
+                                        {(() => {
+                                            const stageInfo = STAGES.find(s => s.id === job.stage);
+                                            if (!stageInfo?.sla) return null;
+                                            
+                                            let slaDays = stageInfo.sla;
+                                            if (job.stage === 5) slaDays *= (job.units || 1);
+                                            
+                                            const startDate = new Date(job.stage_started_at || job.updated_at);
+                                            const now = new Date();
+                                            const diffTime = Math.abs(now - startDate);
+                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                            
+                                            let status = 'ON TRACK';
+                                            let color = 'bg-green-100 text-green-800';
+                                            if (diffDays > slaDays) {
+                                                status = 'OVERDUE';
+                                                color = 'bg-red-100 text-red-800 font-bold';
+                                            } else if (diffDays >= slaDays - 1) {
+                                                status = 'WARNING';
+                                                color = 'bg-yellow-100 text-yellow-800 font-bold';
+                                            }
+
+                                            return (
+                                                <span className={`px-2 py-0.5 rounded ${color}`} title={`${diffDays} hari terpakai dari SLA ${slaDays} hari`}>
+                                                    {status} {diffDays}/{slaDays}d
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             ))}

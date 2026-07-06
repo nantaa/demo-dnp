@@ -11,7 +11,7 @@ export default function JobList({ jobs, auth }) {
     const [selectedJob, setSelectedJob] = useState(null);
 
     const visibleJobs = jobs.filter(job => {
-        if (permissions === 'superadmin') return true;
+        if (permissions === 'superadmin' || auth.user.role === 'admin' || auth.user.role === 'manager') return true;
         if (auth.user.role === 'marketing' && job.owner_marketing === auth.user.name) {
             return true;
         }
@@ -60,24 +60,53 @@ export default function JobList({ jobs, auth }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y">
-                        {filteredJobs.map(job => (
-                            <tr 
-                                key={job.id} 
-                                onClick={() => setSelectedJob(job)}
-                                className="hover:bg-gray-50 cursor-pointer"
-                            >
-                                <td className="px-4 py-3 font-mono text-xs">{job.kode}</td>
-                                <td className="px-4 py-3 font-bold">{job.klien}</td>
-                                <td className="px-4 py-3 text-gray-600">{job.pesawat} ({job.units} unit)</td>
-                                <td className="px-4 py-3">
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-gray-100 border text-xs font-medium">
-                                        <span className="text-[10px] text-gray-500">{job.stage}</span>
-                                        {STAGES.find(s => s.id === job.stage)?.name}
+                        {filteredJobs.map(job => {
+                            const stageInfo = STAGES.find(s => s.id === job.stage);
+                            let slaDays = stageInfo?.sla;
+                            let slaBadge = null;
+                            if (slaDays) {
+                                if (job.stage === 5) slaDays *= (job.units || 1);
+                                const startDate = new Date(job.stage_started_at || job.updated_at);
+                                const diffTime = Math.abs(new Date() - startDate);
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                
+                                let status = 'ON TRACK';
+                                let color = 'bg-green-100 text-green-800';
+                                if (diffDays > slaDays) {
+                                    status = 'OVERDUE';
+                                    color = 'bg-red-100 text-red-800 font-bold';
+                                } else if (diffDays >= slaDays - 1) {
+                                    status = 'WARNING';
+                                    color = 'bg-yellow-100 text-yellow-800 font-bold';
+                                }
+                                
+                                slaBadge = (
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] ml-2 ${color}`} title={`${diffDays} hari terpakai dari SLA ${slaDays} hari`}>
+                                        {status} {diffDays}/{slaDays}d
                                     </span>
-                                </td>
-                                <td className="px-4 py-3 text-gray-600">{job.owner_marketing}</td>
-                            </tr>
-                        ))}
+                                );
+                            }
+
+                            return (
+                                <tr 
+                                    key={job.id} 
+                                    onClick={() => setSelectedJob(job)}
+                                    className="hover:bg-gray-50 cursor-pointer"
+                                >
+                                    <td className="px-4 py-3 font-mono text-xs">{job.kode}</td>
+                                    <td className="px-4 py-3 font-bold">{job.klien}</td>
+                                    <td className="px-4 py-3 text-gray-600">{job.pesawat} ({job.units} unit)</td>
+                                    <td className="px-4 py-3">
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-gray-100 border text-xs font-medium">
+                                            <span className="text-[10px] text-gray-500">{job.stage}</span>
+                                            {stageInfo?.name}
+                                        </span>
+                                        {slaBadge}
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-600">{job.owner_marketing}</td>
+                                </tr>
+                            );
+                        })}
                         {filteredJobs.length === 0 && (
                             <tr>
                                 <td colSpan="5" className="px-4 py-8 text-center text-gray-500">

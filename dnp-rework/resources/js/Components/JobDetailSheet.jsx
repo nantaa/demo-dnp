@@ -14,6 +14,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [uploadType, setUploadType] = useState('');
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+
+    const editForm = useForm({
+        klien: job.klien || '',
+        pesawat: job.pesawat || '',
+        lokasi: job.lokasi || '',
+        nilai: job.nilai || '',
+        units: job.units || 1,
+    });
 
     const { permissions, user } = auth || {};
     const canManage = (() => {
@@ -38,6 +47,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return;
         }
         post(`/jobs/${job.id}/reject`, {
+            onSuccess: () => onClose()
+        });
+    };
+
+    const handleUpdateJob = (e) => {
+        e.preventDefault();
+        editForm.put(`/jobs/${job.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setIsEditing(false),
+        });
+    };
+
+    const handleVerifikasiOK = () => {
+        if (!confirm('Tandai dokumen LENGKAP dan lanjut ke Penjadwalan?')) return;
+        post(`/jobs/${job.id}/move`, {
             onSuccess: () => onClose()
         });
     };
@@ -83,9 +107,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
     
-    // Determine if user can view/upload docs for a specific stage
     const canViewStageDocs = (stageId) => {
-        if (user.role === 'superadmin') return true;
+        if (user.role === 'superadmin' || user.role === 'admin' || user.role === 'manager') return true;
         if (user.role === 'marketing' && job.owner_marketing === user.name) return true;
         const perm = permissions?.[stageId];
         return perm && (
@@ -131,13 +154,25 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     className={`text-sm font-medium ${activeTab === 'overview' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
                                     onClick={() => setActiveTab('overview')}
                                 >
-                                    Overview
+                                    Timeline
                                 </button>
                                 <button 
                                     className={`text-sm font-medium ${activeTab === 'documents' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
                                     onClick={() => setActiveTab('documents')}
                                 >
                                     Dokumen ({job.documents?.length || 0})
+                                </button>
+                                <button 
+                                    className={`text-sm font-medium ${activeTab === 'riwayat' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
+                                    onClick={() => setActiveTab('riwayat')}
+                                >
+                                    Riwayat ({job.history_logs?.length || 0})
+                                </button>
+                                <button 
+                                    className={`text-sm font-medium ${activeTab === 'edit' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
+                                    onClick={() => setActiveTab('edit')}
+                                >
+                                    Info & Edit
                                 </button>
                             </div>
                         </div>
@@ -147,15 +182,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             
                             {activeTab === 'overview' && (
                                 <>
-                                    {/* Alert for Read Only */}
                                     {!canManage && (
                                         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
                                             <div className="flex">
-                                                <div className="flex-shrink-0">
-                                                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                    </svg>
-                                                </div>
                                                 <div className="ml-3 text-sm text-yellow-700">
                                                     <p>You have <strong>View-Only</strong> access to this stage. Editing is locked.</p>
                                                 </div>
@@ -163,46 +192,53 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         </div>
                                     )}
 
-                                    <div className="bg-white p-4 rounded shadow-sm border">
-                                        <h3 className="font-semibold text-gray-900 border-b pb-2 mb-3">Job Overview</h3>
-                                        <dl className="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <dt className="text-gray-500">Marketing PIC</dt>
-                                                <dd className="font-medium text-gray-900">{job.owner_marketing}</dd>
+                                    {job.stage === 2 && canManage && (
+                                        <div className="bg-white p-4 rounded shadow-sm border border-blue-200">
+                                            <h3 className="font-semibold text-blue-900 border-b pb-2 mb-3">Verifikasi Dokumen Klien</h3>
+                                            <div className="mb-4">
+                                                <label className="block text-sm font-medium text-gray-700">Catatan Verifikasi / Kekurangan</label>
+                                                <textarea 
+                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" 
+                                                    rows="3"
+                                                    value={data.notes}
+                                                    onChange={e => setData('notes', e.target.value)}
+                                                    placeholder="Tuliskan catatan jika ada dokumen yang kurang, atau 'Lengkap' jika OK."
+                                                ></textarea>
                                             </div>
-                                            <div>
-                                                <dt className="text-gray-500">Lokasi</dt>
-                                                <dd className="font-medium text-gray-900">{job.lokasi}</dd>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={handleRejectStage}
+                                                    disabled={processing}
+                                                    className="w-1/2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                                                >
+                                                    {processing ? '...' : 'TIDAK (Kembalikan ke PO)'}
+                                                </button>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={handleVerifikasiOK}
+                                                    disabled={processing}
+                                                    className="w-1/2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                                                >
+                                                    {processing ? '...' : 'LENGKAP (Lanjut ke Stage 3)'}
+                                                </button>
                                             </div>
-                                            <div>
-                                                <dt className="text-gray-500">Nilai Kontrak</dt>
-                                                <dd className="font-medium text-gray-900">
-                                                    {canManage ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '*** HIDDEN ***'}
-                                                </dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-gray-500">Units</dt>
-                                                <dd className="font-medium text-gray-900">{job.units}</dd>
-                                            </div>
-                                        </dl>
-                                    </div>
+                                        </div>
+                                    )}
 
-                                    {/* Smart Recommendation for Stage 3 (Penjadwalan) */}
                                     {job.stage === 3 && canManage && (
-                                        <div className="mt-6">
+                                        <div className="mt-2 mb-6">
                                             <SmartRecommendation 
                                                 job={job} 
                                                 onSelectInspector={(insUser) => {
-                                                    alert(`Inspektur ${insUser.name} dipilih. Lanjutkan Move Stage.`);
                                                     setData('notes', `Assigned to: ${insUser.name}`);
                                                 }} 
                                             />
                                         </div>
                                     )}
 
-                                    {/* Stage Progression Action */}
-                                    {canManage && job.stage < 12 && (
-                                        <div className="mt-6 bg-white p-4 rounded shadow-sm border">
+                                    {canManage && job.stage !== 2 && job.stage < 12 && (
+                                        <div className="mt-4 bg-white p-4 rounded shadow-sm border">
                                             <h3 className="font-semibold text-gray-900 mb-3">Move to Next Stage</h3>
                                             <form onSubmit={handleMoveStage}>
                                                 <div className="mb-4">
@@ -237,6 +273,110 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         </div>
                                     )}
                                 </>
+                            )}
+                            
+                            {activeTab === 'riwayat' && (
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-gray-900 border-b pb-2">Riwayat Aktivitas</h3>
+                                    {(!job.history_logs || job.history_logs.length === 0) ? (
+                                        <div className="text-sm text-gray-400 italic">Belum ada riwayat aktivitas.</div>
+                                    ) : (
+                                        <div className="relative border-l border-gray-200 ml-3 space-y-6">
+                                            {job.history_logs.map(log => (
+                                                <div key={log.id} className="relative pl-6">
+                                                    <span className="absolute -left-2 top-1.5 w-4 h-4 rounded-full bg-blue-100 border-2 border-white ring-1 ring-blue-500 flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+                                                    </span>
+                                                    <div className="text-xs text-gray-500 mb-1">
+                                                        {new Date(log.created_at).toLocaleString('id-ID')} &bull; Stage {log.stage} &bull; <span className="font-medium text-gray-700">{log.user?.name || 'Sistem'}</span>
+                                                    </div>
+                                                    <div className="text-sm font-medium text-gray-900">{log.action}</div>
+                                                    {log.notes && <div className="text-sm text-gray-600 mt-1 bg-gray-50 p-2 rounded border border-gray-100">{log.notes}</div>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'edit' && (
+                                <div className="bg-white p-4 rounded shadow-sm border">
+                                    <div className="flex justify-between items-center border-b pb-2 mb-4">
+                                        <h3 className="font-semibold text-gray-900">Info & Edit Job</h3>
+                                        {!isEditing && canManage && (
+                                            <button 
+                                                onClick={() => setIsEditing(true)} 
+                                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                            >
+                                                Edit Data
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    {!isEditing ? (
+                                        <dl className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <dt className="text-gray-500">Marketing PIC</dt>
+                                                <dd className="font-medium text-gray-900">{job.owner_marketing}</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-gray-500">Klien</dt>
+                                                <dd className="font-medium text-gray-900">{job.klien}</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-gray-500">Pesawat</dt>
+                                                <dd className="font-medium text-gray-900">{job.pesawat}</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-gray-500">Lokasi</dt>
+                                                <dd className="font-medium text-gray-900">{job.lokasi}</dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-gray-500">Nilai Kontrak</dt>
+                                                <dd className="font-medium text-gray-900">
+                                                    {canManage || user.role === 'finance' ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '*** HIDDEN ***'}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-gray-500">Units</dt>
+                                                <dd className="font-medium text-gray-900">{job.units}</dd>
+                                            </div>
+                                        </dl>
+                                    ) : (
+                                        <form onSubmit={handleUpdateJob} className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Klien</label>
+                                                <input type="text" value={editForm.data.klien} onChange={e => editForm.setData('klien', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Pesawat</label>
+                                                <input type="text" value={editForm.data.pesawat} onChange={e => editForm.setData('pesawat', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Lokasi</label>
+                                                <input type="text" value={editForm.data.lokasi} onChange={e => editForm.setData('lokasi', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Nilai Kontrak (Rp)</label>
+                                                    <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Jumlah Unit</label>
+                                                    <input type="number" value={editForm.data.units} onChange={e => editForm.setData('units', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required min="1" />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 pt-2">
+                                                <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                                    Batal
+                                                </button>
+                                                <button type="submit" disabled={editForm.processing} className="flex-1 py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                                                    Simpan Perubahan
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+                                </div>
                             )}
                             
                             {activeTab === 'documents' && (

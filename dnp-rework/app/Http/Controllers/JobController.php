@@ -236,7 +236,7 @@ class JobController extends Controller
             ? 'superadmin'
             : $user->stagePermissions()->get()->keyBy('stage');
 
-        $jobs = Job::with(['inspectors', 'documents', 'unitsTracking'])
+        $jobs = Job::with(['inspectors', 'documents', 'unitsTracking', 'historyLogs.user'])
                    ->orderBy('created_at', 'desc')
                    ->get();
 

@@ -6,7 +6,8 @@ import { DOC_TYPES_BY_STAGE, STAGES } from '@/Constants';
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
     const { data, setData, post, processing, errors } = useForm({
         next_stage: job.stage + 1,
-        notes: ''
+        notes: '',
+        inspector_ids: job.inspectors ? job.inspectors.map(i => i.id) : []
     });
 
     const [activeTab, setActiveTab] = useState('overview');
@@ -35,6 +36,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const handleMoveStage = (e) => {
         e.preventDefault();
+        if (job.stage === 3 && (!data.inspector_ids || data.inspector_ids.length === 0)) {
+            alert('Silakan pilih salah satu ahli K3 / inspektur terlebih dahulu!');
+            return;
+        }
         post(`/jobs/${job.id}/move`, {
             onSuccess: () => onClose()
         });
@@ -231,7 +236,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             <SmartRecommendation 
                                                 job={job} 
                                                 onSelectInspector={(insUser) => {
-                                                    setData('notes', `Assigned to: ${insUser.name}`);
+                                                    setData({
+                                                        ...data,
+                                                        notes: `Assigned to: ${insUser.name}`,
+                                                        inspector_ids: [insUser.id]
+                                                    });
                                                 }} 
                                             />
                                         </div>
@@ -241,6 +250,22 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div className="mt-4 bg-white p-4 rounded shadow-sm border">
                                             <h3 className="font-semibold text-gray-900 mb-3">Move to Next Stage</h3>
                                             <form onSubmit={handleMoveStage}>
+                                                {job.stage === 3 && (
+                                                    <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200 text-xs">
+                                                        <div className="font-bold text-blue-800 uppercase mb-1">Status Penugasan Ahli K3</div>
+                                                        {data.inspector_ids && data.inspector_ids.length > 0 ? (
+                                                            <div className="font-medium text-blue-900 flex items-center gap-1.5">
+                                                                <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                                                                Telah dipilih (Notes: {data.notes || '—'})
+                                                            </div>
+                                                        ) : (
+                                                            <div className="font-medium text-red-600 flex items-center gap-1.5">
+                                                                <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                                                                Belum ada ahli K3 yang dipilih. Silakan klik "Pilih Terbaik" atau "Pilih" pada saran di atas.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 <div className="mb-4">
                                                     <label className="block text-sm font-medium text-gray-700">Notes / Keterangan</label>
                                                     <textarea 
@@ -340,6 +365,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             <div>
                                                 <dt className="text-gray-500">Units</dt>
                                                 <dd className="font-medium text-gray-900">{job.units}</dd>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <dt className="text-gray-500">Inspektur / Ahli K3 Ditugaskan</dt>
+                                                <dd className="font-medium text-blue-700 bg-blue-50 p-2 rounded border border-blue-100 mt-0.5">
+                                                    {job.inspectors && job.inspectors.length > 0 
+                                                        ? job.inspectors.map(i => i.name).join(', ') 
+                                                        : 'Belum ditugaskan'}
+                                                </dd>
                                             </div>
                                         </dl>
                                     ) : (

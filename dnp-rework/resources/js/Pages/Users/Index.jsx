@@ -19,7 +19,15 @@ function UsersIndex({ users = [], auth = {} }) {
     const [renderError, setRenderError] = useState(null);
 
     const { data, setData, post, processing, reset, errors } = useForm({
-        name: '', email: '', password: '', role: 'marketing'
+        name: '', 
+        email: '', 
+        password: '', 
+        role: 'marketing',
+        skp: '',
+        skp_expired_at: '',
+        spesialisasi: [],
+        domisili: '',
+        senior_level: false
     });
 
     if (renderError) {
@@ -75,6 +83,22 @@ function UsersIndex({ users = [], auth = {} }) {
                                     <span className="bg-gray-100 px-2 py-1 rounded text-xs font-mono font-bold border border-gray-200">
                                         {(ROLES && ROLES[user?.role]?.label) || user?.role || 'UNK'}
                                     </span>
+                                    {user?.role === 'inspektur' && (user?.inspector_profile || user?.inspectorProfile) && (
+                                        <div className="text-[10px] text-gray-500 mt-1 leading-tight">
+                                            <div>SKP: {(user.inspector_profile || user.inspectorProfile).skp || '—'}</div>
+                                            <div>AK3: {(() => {
+                                                try {
+                                                    const profile = user.inspector_profile || user.inspectorProfile;
+                                                    const specs = typeof profile.spesialisasi === 'string'
+                                                        ? JSON.parse(profile.spesialisasi)
+                                                        : (profile.spesialisasi || []);
+                                                    return Array.isArray(specs) ? specs.join(', ') : '—';
+                                                } catch(e) {
+                                                    return '—';
+                                                }
+                                            })()}</div>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-4 py-3">
                                     {user?.role === 'superadmin' ? (
@@ -141,6 +165,47 @@ function UsersIndex({ users = [], auth = {} }) {
                                     ))}
                                 </select>
                             </div>
+                            {data.role === 'inspektur' && (
+                                <div className="p-3 bg-gray-50 border rounded space-y-3">
+                                    <div className="text-xs font-bold text-gray-500 uppercase">Profil Inspektur / Ahli K3</div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Nomor SKP</label>
+                                        <input type="text" value={data.skp} onChange={e => setData('skp', e.target.value)} className="w-full px-2 py-1 border rounded text-xs" placeholder="e.g. KEP.123/PPK-PNK3/..." />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Berlaku s/d</label>
+                                        <input type="date" value={data.skp_expired_at} onChange={e => setData('skp_expired_at', e.target.value)} className="w-full px-2 py-1 border rounded text-xs" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-1">Spesialisasi</label>
+                                        <div className="grid grid-cols-2 gap-1.5 border p-2 rounded max-h-24 overflow-y-auto bg-white">
+                                            {['PUBT', 'Listrik', 'Kebakaran', 'PAA', 'PTP', 'Elevator & Eskalator', 'Lift'].map(s => {
+                                                const isChecked = data.spesialisasi.includes(s);
+                                                return (
+                                                    <label key={s} className="flex items-center gap-1 text-[11px] cursor-pointer">
+                                                        <input type="checkbox" checked={isChecked} onChange={() => {
+                                                            setData('spesialisasi', isChecked ? data.spesialisasi.filter(x => x !== s) : [...data.spesialisasi, s]);
+                                                        }} />
+                                                        AK3 {s}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1">Domisili</label>
+                                            <input type="text" value={data.domisili} onChange={e => setData('domisili', e.target.value)} className="w-full px-2 py-1 border rounded text-xs" placeholder="e.g. Jakarta" />
+                                        </div>
+                                        <div className="flex items-center pt-5">
+                                            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 cursor-pointer">
+                                                <input type="checkbox" checked={data.senior_level} onChange={e => setData('senior_level', e.target.checked)} />
+                                                Senior Level
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className="pt-4 border-t flex justify-end gap-2">
                                 <button type="button" onClick={() => setShowNewUser(false)} className="px-4 py-2 border rounded text-sm font-medium text-gray-600 hover:bg-gray-50">Batal</button>
                                 <button type="submit" disabled={processing} className="px-4 py-2 bg-black text-white rounded text-sm font-medium hover:bg-gray-800">Simpan User</button>

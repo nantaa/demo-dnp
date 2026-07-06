@@ -20,7 +20,7 @@ class DashboardController extends Controller
                 'user'        => $user,
                 'permissions' => $stagePermissions,
             ],
-            'jobs' => Job::with(['documents', 'unitsTracking', 'historyLogs.user'])->orderBy('updated_at', 'desc')->get(),
+            'jobs' => Job::with(['inspectors', 'documents', 'unitsTracking', 'historyLogs.user'])->orderBy('updated_at', 'desc')->get(),
         ];
     }
 

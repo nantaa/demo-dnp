@@ -100,11 +100,18 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'next_stage' => 'required|integer|min:1|max:12',
-            'notes'      => 'nullable|string',
+            'next_stage'    => 'required|integer|min:1|max:12',
+            'notes'         => 'nullable|string',
+            'inspector_ids' => 'nullable|array',
+            'inspector_ids.*' => 'exists:users,id',
         ]);
 
         $nextStage = $validated['next_stage'];
+
+        // If moving from Stage 3 to Stage 4, sync the selected inspectors
+        if ($currentStage == 3) {
+            $job->inspectors()->sync($validated['inspector_ids'] ?? []);
+        }
 
         // If moving to Stage 8 (Disnaker), set the 30-day EWS deadline
         if ($nextStage == 8 && $currentStage != 8) {

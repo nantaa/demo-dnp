@@ -33,15 +33,34 @@ class UserController extends Controller
         if (Auth::user()->role !== 'superadmin') abort(403);
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'role' => 'required|string',
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|string|email|max:255|unique:users',
+            'password'       => 'required|string|min:8',
+            'role'           => 'required|string',
+            'skp'            => 'nullable|string|max:100',
+            'skp_expired_at' => 'nullable|date',
+            'spesialisasi'   => 'nullable|array',
+            'domisili'       => 'nullable|string|max:100',
+            'senior_level'   => 'nullable|boolean',
         ]);
 
-        $validated['password'] = Hash::make($validated['password']);
-        
-        $user = User::create($validated);
+        $user = User::create([
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role'     => $validated['role'],
+        ]);
+
+        if ($user->role === 'inspektur') {
+            $user->inspectorProfile()->create([
+                'skp'            => $validated['skp'] ?? '',
+                'skp_expired_at' => $validated['skp_expired_at'] ?? null,
+                'spesialisasi'   => $validated['spesialisasi'] ?? [],
+                'domisili'       => $validated['domisili'] ?? '',
+                'senior_level'   => $validated['senior_level'] ?? false,
+                'active'         => true,
+            ]);
+        }
 
         return back()->with('success', 'User created successfully.');
     }

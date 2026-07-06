@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\Api\InspectorRecommendationController;
 use Inertia\Inertia;
 
@@ -38,6 +39,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::post('/users/{user}/permissions', [UserController::class, 'updatePermissions'])->name('users.permissions.update');
+
+    // Feature 5: Inventory CRUD (Admin / Manager / Superadmin)
+    Route::post('/inventory/alat', [InventoryController::class, 'storeAlat'])->name('inventory.alat.store');
+    Route::put('/inventory/alat/{alatUji}', [InventoryController::class, 'updateAlat'])->name('inventory.alat.update');
+    Route::delete('/inventory/alat/{alatUji}', [InventoryController::class, 'destroyAlat'])->name('inventory.alat.destroy');
+
+    Route::post('/inventory/inspector', [InventoryController::class, 'storeInspector'])->name('inventory.inspector.store');
+    Route::put('/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'updateInspector'])->name('inventory.inspector.update');
+    Route::delete('/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'destroyInspector'])->name('inventory.inspector.destroy');
+
+    Route::post('/inventory/sertifikat', [InventoryController::class, 'storeSertifikat'])->name('inventory.sertifikat.store');
+    Route::put('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'updateSertifikat'])->name('inventory.sertifikat.update');
+    Route::delete('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'destroySertifikat'])->name('inventory.sertifikat.destroy');
 });
 
 require __DIR__.'/auth.php'; // Keep Breeze Auth routes

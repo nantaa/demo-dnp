@@ -23,6 +23,14 @@ class JobHistory extends Model
     }
 
     /**
+     * Get the user who performed the action (alias for actionBy).
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'action_by_user_id');
+    }
+
+    /**
      * Get the user who performed the action.
      */
     public function actionBy(): BelongsTo

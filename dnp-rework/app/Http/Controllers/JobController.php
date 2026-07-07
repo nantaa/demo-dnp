@@ -118,7 +118,7 @@ class JobController extends Controller
         }
 
         $validationRules = [
-            'next_stage'    => 'required|integer|min:1|max:12',
+            'next_stage'    => 'required|integer|min:1|max:13',
             'notes'         => 'nullable|string',
             'inspector_ids' => 'nullable|array',
             'inspector_ids.*' => 'exists:users,id',
@@ -170,12 +170,12 @@ class JobController extends Controller
             $validationRules['cert_ids']           = 'nullable|array';
         }
 
-        // Stage 4 → 5: unit count must match
+        // Stage 4: unit count must match if moving to Stage 5
         if ($currentStage == 4) {
             $actualUnits = $job->actual_units;
-            if ($actualUnits !== null && (int)$actualUnits !== (int)$job->units) {
+            if ($request->input('next_stage') == 5 && $actualUnits !== null && (int)$actualUnits !== (int)$job->units) {
                 return back()->withErrors([
-                    'unit_count' => 'Jumlah alat yang diperiksa (' . $actualUnits . ') tidak sesuai dengan jumlah alat di Job (' . $job->units . '). Lanjutkan hanya jika jumlah sudah dikoreksi atau kembalikan ke Stage 1.',
+                    'unit_count' => 'Jumlah alat yang diperiksa (' . $actualUnits . ') tidak sesuai dengan jumlah alat di Job (' . $job->units . '). Lanjutkan ke Aktualisasi Unit (MKT).',
                 ]);
             }
         }

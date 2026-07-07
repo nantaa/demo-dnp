@@ -1,4 +1,4 @@
-NEW!!!!
+NEW!
 
 [NEW] Due date pelaksanaan RU [hari H / it become d-day on the scheduled RU date]
 [NEW] export file sesuai bagian

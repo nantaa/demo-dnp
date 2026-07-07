@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Link, usePage, router } from '@inertiajs/react';
+import { showError, showSuccess } from '../swal';
 import { 
     LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X
 } from 'lucide-react';
@@ -10,6 +11,31 @@ export default function AppLayout({ header, children }) {
     const { user } = auth;
     const currentRoute = window.location.pathname;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        // Intercept global inertia events
+        const removeErrorListener = router.on('error', (event) => {
+            const errs = event.detail.errors;
+            if (errs && Object.keys(errs).length > 0) {
+                const msgs = Object.values(errs).flat().join('\n');
+                showError('Validasi Gagal', msgs);
+            }
+        });
+        
+        const removeExceptionListener = router.on('exception', (event) => {
+            event.preventDefault(); // Prevent default modal
+            let msg = event.detail.exception?.message || 'Terjadi kesalahan sistem.';
+            if (event.detail.response?.status === 403) {
+                msg = event.detail.response.data?.message || 'Akses Ditolak (403).';
+            }
+            showError('Server Error', msg);
+        });
+
+        return () => {
+            removeErrorListener();
+            removeExceptionListener();
+        };
+    }, []);
 
     const navItems = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },

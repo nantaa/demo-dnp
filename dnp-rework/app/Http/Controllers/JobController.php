@@ -24,13 +24,21 @@ class JobController extends Controller
      * Check if the current user can act on a stage.
      * Managers can act on any stage except MKT and FIN stages.
      */
-    private function canActOnStage(int $stage): bool
+    private function canActOnStage(int $stage, Job $job = null): bool
     {
         $user = Auth::user();
         if ($user->isSuperadmin()) return true;
         if ($user->role === 'manager' && !in_array($stage, array_merge(self::MKT_STAGES, self::FIN_STAGES))) {
             return true;
         }
+        
+        // If it's an inspector stage, check if user is assigned to the specific job
+        if ($job && ($stage === 4 || $stage === 6) && $user->role === 'inspektur') {
+            if ($job->inspectors()->where('users.id', $user->id)->exists()) {
+                return true;
+            }
+        }
+        
         return $user->canOwnStage($stage);
     }
 
@@ -97,7 +105,7 @@ class JobController extends Controller
      */
     public function update(Request $request, Job $job)
     {
-        if (!$this->canActOnStage($job->stage)) {
+        if (!$this->canActOnStage($job->stage, $job)) {
             abort(403, 'You do not have permission to edit this job at its current stage.');
         }
 
@@ -113,7 +121,7 @@ class JobController extends Controller
     {
         $currentStage = $job->stage;
 
-        if (!$this->canActOnStage($currentStage)) {
+        if (!$this->canActOnStage($currentStage, $job)) {
             abort(403, 'Only the designated owner of Stage ' . $currentStage . ' can move this job forward.');
         }
 
@@ -227,7 +235,7 @@ class JobController extends Controller
     {
         $currentStage = $job->stage;
 
-        if (!$this->canActOnStage($currentStage)) {
+        if (!$this->canActOnStage($currentStage, $job)) {
             abort(403, 'Only the designated owner of Stage ' . $currentStage . ' can reject this job.');
         }
 
@@ -388,7 +396,7 @@ class JobController extends Controller
      */
     public function saveStage7Data(Request $request, Job $job)
     {
-        if (!$this->canActOnStage(7)) {
+        if (!$this->canActOnStage(7, $job)) {
             abort(403, 'Only MGR can update Stage 7 data.');
         }
 
@@ -406,7 +414,7 @@ class JobController extends Controller
      */
     public function saveStage8Data(Request $request, Job $job)
     {
-        if (!$this->canActOnStage(8)) {
+        if (!$this->canActOnStage(8, $job)) {
             abort(403, 'Only Admin can update Stage 8 data.');
         }
 
@@ -439,7 +447,7 @@ class JobController extends Controller
      */
     public function saveStage9Data(Request $request, Job $job)
     {
-        if (!$this->canActOnStage(9)) {
+        if (!$this->canActOnStage(9, $job)) {
             abort(403, 'Only Admin can update Stage 9 data.');
         }
 

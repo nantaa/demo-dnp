@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { STAGES } from '@/Constants';
 import JobDetailSheet from '@/Components/JobDetailSheet';
+import { showSuccess } from '../swal';
 import { 
     Activity, Plus, CheckCircle2, Bell, FileCheck, Calendar, AlertTriangle, 
     Wrench, Hourglass, ClipboardList, Upload, Banknote, Package, Eye, 
@@ -691,7 +692,7 @@ function InsDashboard({ stats, user, onSelectJob }) {
 
     const handleFileChange = () => {
         if (!activeJob) return;
-        alert(`Shortcut HP Upload berhasil dipicu. Silakan upload file pada detail sheet di tab Lapangan.`);
+        showSuccess('Shortcut Aktif', 'Shortcut HP Upload berhasil dipicu. Silakan upload file pada detail sheet di tab Lapangan.');
         onSelectJob(activeJob);
     };
 

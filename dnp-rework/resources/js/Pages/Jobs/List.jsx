@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
+import { showWarning } from '../swal';
 
 export default function JobList({ jobs, auth }) {
     const { permissions } = auth;
@@ -26,7 +27,7 @@ export default function JobList({ jobs, auth }) {
     );
 
     const handleExportCSV = () => {
-        if (filteredJobs.length === 0) return alert('Tidak ada data untuk diexport');
+        if (filteredJobs.length === 0) return showWarning('Ekspor Gagal', 'Tidak ada data untuk diexport');
         
         const headers = ['Kode', 'Klien', 'Pesawat', 'Unit', 'Lokasi', 'Stage', 'Marketing', 'Tgl Pelaksanaan'];
         const rows = filteredJobs.map(job => [

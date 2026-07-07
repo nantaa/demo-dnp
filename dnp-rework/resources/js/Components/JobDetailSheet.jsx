@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
+import { showError, showSuccess, showConfirm, showWarning } from '../swal';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS
@@ -154,11 +155,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // ── Handlers ─────────────────────────────────────────────────────────────
     const handleMoveStage = (e) => {
         e.preventDefault();
-        if (job.stage === 1 && !stage1DocOk) return alert('Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
-        if (job.stage === 2 && !stage2CanMove) return alert('Dokumen belum lengkap. Lengkapi dokumen atau minta persetujuan Kadiv/MGR.');
+        if (job.stage === 1 && !stage1DocOk) return showError('Upload Dokumen', 'Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
+        if (job.stage === 2 && !stage2CanMove) return showError('Dokumen Belum Lengkap', 'Lengkapi dokumen atau minta persetujuan Kadiv/MGR.');
         if (job.stage === 3) {
-            if (!data.tgl_pelaksanaan) return alert('Tanggal Pelaksanaan wajib diisi!');
-            if (!data.inspector_ids?.length) return alert('Pilih minimal satu inspektur!');
+            if (!data.tgl_pelaksanaan) return showError('Validasi', 'Tanggal Pelaksanaan wajib diisi!');
+            if (!data.inspector_ids?.length) return showError('Validasi', 'Pilih minimal satu inspektur!');
         }
         
         post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
@@ -169,37 +170,40 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/move`, { ...data, next_stage: 13 }, { onSuccess: () => onClose() });
     };
 
-    const handleRejectStage = () => {
-        if (!data.notes?.trim()) return alert('Isi catatan penolakan terlebih dahulu!');
-        if (!confirm(`Kembalikan ke Stage ${job.stage - 1}?`)) return;
+    const handleRejectStage = async () => {
+        if (!data.notes?.trim()) return showError('Validasi', 'Isi catatan penolakan terlebih dahulu!');
+        const res = await showConfirm('Tolak Job', `Kembalikan ke Stage ${job.stage - 1}?`);
+        if (!res.isConfirmed) return;
         post(`/jobs/${job.id}/reject`, { onSuccess: () => onClose() });
     };
 
-    const handleAskApproval = () => {
-        if (!confirm('Kirim permintaan persetujuan ke Kadiv/MGR?')) return;
+    const handleAskApproval = async () => {
+        const res = await showConfirm('Minta Persetujuan', 'Kirim permintaan persetujuan ke Kadiv/MGR?');
+        if (!res.isConfirmed) return;
         router.post(`/jobs/${job.id}/ask-approval`, {}, { onSuccess: () => onClose() });
     };
 
-    const handleApproveAsManager = () => {
-        if (!confirm('Setujui permintaan ini? Admin dapat melanjutkan tanpa dokumen lengkap.')) return;
+    const handleApproveAsManager = async () => {
+        const res = await showConfirm('Setujui Permintaan', 'Setujui permintaan ini? Admin dapat melanjutkan tanpa dokumen lengkap.');
+        if (!res.isConfirmed) return;
         router.post(`/jobs/${job.id}/approve`, {}, { onSuccess: () => onClose() });
     };
 
     const handleReturnToStage1 = (e) => {
         e.preventDefault();
-        if (!returnNotes.trim()) return alert('Isi alasan pengembalian!');
+        if (!returnNotes.trim()) return showError('Validasi', 'Isi alasan pengembalian!');
         router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
     };
 
-    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => alert('Tersimpan.') });
+    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS5  = () => {
-        if (!s5.s5_review_decision) return alert('Pilih keputusan review!');
-        router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => alert('Keputusan disimpan.') });
+        if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
+        router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.') });
     };
-    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => alert('Tersimpan.') });
-    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => alert('Tersimpan.') });
-    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => alert('Tersimpan.') });
-    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => alert('Tersimpan.') });
+    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -241,8 +245,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         input.click();
     };
 
-    const deleteDoc = (docId) => {
-        if (!confirm('Hapus dokumen ini?')) return;
+    const deleteDoc = async (docId) => {
+        const res = await showConfirm('Hapus Dokumen', 'Hapus dokumen ini?');
+        if (!res.isConfirmed) return;
         router.delete(`/jobs/${job.id}/documents/${docId}`);
     };
 

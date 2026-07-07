@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { ROLES, STAGES } from '@/Constants';
 import { Trash2, Shield, Plus, X } from 'lucide-react';
 import ErrorBoundary from '@/Components/ErrorBoundary';
+import { showConfirm } from '../swal';
 
 export default function UsersIndexWrapper(props) {
     return (
@@ -43,8 +44,9 @@ function UsersIndex({ users = [], auth = {} }) {
         });
     };
 
-    const deleteUser = (user) => {
-        if (confirm(`Hapus user ${user.name}?`)) {
+    const deleteUser = async (user) => {
+        const res = await showConfirm('Hapus User', `Hapus user ${user.name}?`);
+        if (res.isConfirmed) {
             router.delete(`/users/${user.id}`);
         }
     };

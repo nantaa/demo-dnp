@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import ErrorBoundary from '@/Components/ErrorBoundary';
 import { Wrench, AlertCircle, Clock, User, Award, BriefcaseBusiness, ClipboardList, Download, Plus, Pencil, Trash } from 'lucide-react';
 import { STAGES } from '@/Constants';
+import { showConfirm } from '../swal';
 
 export default function AlatSkpWrapper(props) {
     return (
@@ -204,8 +205,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         setShowAlatModal(true);
     };
 
-    const deleteAlat = (id) => {
-        if (confirm('Hapus alat uji ini dari database?')) {
+    const deleteAlat = async (id) => {
+        const res = await showConfirm('Hapus Alat Uji', 'Hapus alat uji ini dari database?');
+        if (res.isConfirmed) {
             router.delete(`/inventory/alat/${id}`);
         }
     };
@@ -250,8 +252,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         setShowInspectorModal(true);
     };
 
-    const deleteInspector = (id) => {
-        if (confirm('Hapus profil inspektur ini?')) {
+    const deleteInspector = async (id) => {
+        const res = await showConfirm('Hapus Inspektur', 'Hapus profil inspektur ini?');
+        if (res.isConfirmed) {
             router.delete(`/inventory/inspector/${id}`);
         }
     };
@@ -291,8 +294,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         setShowSertifikatModal(true);
     };
 
-    const deleteSertifikat = (id) => {
-        if (confirm('Hapus sertifikat PJK3 ini?')) {
+    const deleteSertifikat = async (id) => {
+        const res = await showConfirm('Hapus Sertifikat', 'Hapus sertifikat PJK3 ini?');
+        if (res.isConfirmed) {
             router.delete(`/inventory/sertifikat/${id}`);
         }
     };
@@ -333,8 +337,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         setShowRegulasiModal(true);
     };
 
-    const deleteRegulasi = (id) => {
-        if (confirm('Hapus regulasi K3 ini?')) {
+    const deleteRegulasi = async (id) => {
+        const res = await showConfirm('Hapus Regulasi', 'Hapus regulasi K3 ini?');
+        if (res.isConfirmed) {
             router.delete(`/inventory/regulasi/${id}`);
         }
     };
@@ -374,8 +379,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         setShowFormDisnakerModal(true);
     };
 
-    const deleteFormDisnaker = (id) => {
-        if (confirm('Hapus form disnaker ini?')) {
+    const deleteFormDisnaker = async (id) => {
+        const res = await showConfirm('Hapus Form', 'Hapus form disnaker ini?');
+        if (res.isConfirmed) {
             router.delete(`/inventory/form-disnaker/${id}`);
         }
     };

@@ -28,6 +28,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
     Route::post('/jobs/{job}/move', [JobController::class, 'updateStage'])->name('jobs.move');
     Route::post('/jobs/{job}/reject', [JobController::class, 'rejectStage'])->name('jobs.reject');
+    Route::post('/jobs/{job}/ask-approval', [JobController::class, 'askApproval'])->name('jobs.ask-approval');
+    Route::post('/jobs/{job}/approve', [JobController::class, 'approveAsManager'])->name('jobs.approve');
+    Route::post('/jobs/{job}/return-to-stage1', [JobController::class, 'returnToStage1'])->name('jobs.return-to-stage1');
+    Route::post('/jobs/{job}/stage4-data', [JobController::class, 'saveStage4Data'])->name('jobs.stage4-data');
+    Route::post('/jobs/{job}/stage5-review', [JobController::class, 'saveStage5Review'])->name('jobs.stage5-review');
+    Route::post('/jobs/{job}/stage7-data', [JobController::class, 'saveStage7Data'])->name('jobs.stage7-data');
+    Route::post('/jobs/{job}/stage8-data', [JobController::class, 'saveStage8Data'])->name('jobs.stage8-data');
+    Route::post('/jobs/{job}/stage9-data', [JobController::class, 'saveStage9Data'])->name('jobs.stage9-data');
+    Route::post('/jobs/{job}/stage10-data', [JobController::class, 'saveStage10Data'])->name('jobs.stage10-data');
     Route::post('/jobs/{job}/documents', [JobController::class, 'uploadDocument'])->name('jobs.documents.upload');
     Route::delete('/jobs/{job}/documents/{document}', [JobController::class, 'deleteDocument'])->name('jobs.documents.delete');
 

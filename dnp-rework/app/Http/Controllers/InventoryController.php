@@ -78,6 +78,7 @@ class InventoryController extends Controller
             'spesialisasi'  => 'nullable|array',
             'domisili'      => 'nullable|string|max:100',
             'senior_level'  => 'nullable|boolean',
+            'subrole'       => 'nullable|in:tenaga_ahli,teknisi',
         ]);
 
         // Prevent duplicate profile
@@ -99,6 +100,7 @@ class InventoryController extends Controller
             'spesialisasi'  => 'nullable|array',
             'domisili'      => 'nullable|string|max:100',
             'senior_level'  => 'nullable|boolean',
+            'subrole'       => 'nullable|in:tenaga_ahli,teknisi',
         ]);
 
         $inspectorProfile->update($validated);

@@ -1,794 +1,978 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
-import { DOC_TYPES_BY_STAGE, STAGES } from '@/Constants';
+import {
+    DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
+    PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS
+} from '@/Constants';
 
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const parseJsonArray = (v) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v;
+    try { return JSON.parse(v); } catch { return []; }
+};
+
+const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) =>
+    d ? new Date(d).toLocaleDateString('id-ID', opts) : 'â€”';
+
+const fmtCurrency = (n) =>
+    n != null ? 'Rp ' + Number(n).toLocaleString('id-ID') : 'â€”';
+
+const fmtSize = (bytes) => {
+    if (!bytes) return '';
+    const k = 1024, s = ['B','KB','MB','GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
+};
+
+const daysElapsed = (from) => {
+    if (!from) return null;
+    return Math.ceil((new Date() - new Date(from)) / 86400000);
+};
+
+const getSlaTag = (days, slaLimit) => {
+    if (days == null || !slaLimit) return null;
+    if (days > slaLimit)  return { label: 'OVERDUE',  cls: 'bg-red-100 text-red-800 font-bold' };
+    if (days >= slaLimit) return { label: 'LAST DAY', cls: 'bg-orange-100 text-orange-800 font-bold' };
+    return                        { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
+};
+
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
-    const parseJsonArray = (val) => {
-        if (!val) return [];
-        if (Array.isArray(val)) return val;
-        try {
-            return JSON.parse(val);
-        } catch (e) {
-            return [];
-        }
-    };
-
+    // â”€â”€ Forms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { data, setData, post, processing, errors } = useForm({
-        next_stage: job.stage + 1,
-        notes: '',
-        inspector_ids: job.inspectors ? job.inspectors.map(i => i.id) : [],
+        next_stage:      job.stage + 1,
+        notes:           '',
+        inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
         tgl_pelaksanaan: job.tgl_pelaksanaan || '',
-        jam_mulai: job.jam_mulai || '08:00',
-        durasi_hari: job.durasi_hari || 1,
+        jam_mulai:       job.jam_mulai || '08:00',
+        durasi_hari:     job.durasi_hari || 1,
         disnaker_tujuan: job.disnaker_tujuan || '',
-        alat_ids: parseJsonArray(job.alat_ids),
-        cert_ids: parseJsonArray(job.cert_ids)
+        alat_ids:        parseJsonArray(job.alat_ids),
+        cert_ids:        parseJsonArray(job.cert_ids),
     });
 
-    const [activeTab, setActiveTab] = useState('overview');
-    const [uploadStage, setUploadStage] = useState(null);
-    const [uploadType, setUploadType] = useState('');
-    const fileInputRef = useRef(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
+    const editForm = useForm({
+        klien:   job.klien   || '',
+        pesawat: job.pesawat || '',
+        lokasi:  job.lokasi  || '',
+        nilai:   job.nilai   || '',
+        units:   job.units   || 1,
+    });
 
-    const [masterData, setMasterData] = useState({ alat_uji: [], sertifikat_pjk3: [] });
-    const [recommendations, setRecommendations] = useState({ recommended: [], eliminated: [] });
+    // â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const [activeTab,    setActiveTab]    = useState('timeline');
+    const [isEditing,    setIsEditing]    = useState(false);
+    const [isUploading,  setIsUploading]  = useState(false);
+    const [uploadStage,  setUploadStage]  = useState(null);
+    const [uploadType,   setUploadType]   = useState('');
+    const [photoNotes,   setPhotoNotes]   = useState({});   // key: photo type
+    const [returnNotes,  setReturnNotes]  = useState('');
+    const fileInputRef = useRef(null);
+
+    // Stage-specific form state
+    const [s4, setS4] = useState({
+        actual_units:     job.actual_units     ?? job.units,
+        unit_count_notes: job.unit_count_notes ?? '',
+    });
+    const [s5, setS5] = useState({
+        s5_review_decision: job.s5_review_decision ?? '',
+        s5_review_notes:    job.s5_review_notes    ?? '',
+    });
+    const [s7, setS7] = useState({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
+    const [s8, setS8] = useState({
+        tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
+        tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
+    });
+    const [s9,  setS9]  = useState({ s9_progress_status: job.s9_progress_status  ?? '' });
+    const [s10, setS10] = useState({
+        total_invoice_amount: job.total_invoice_amount ?? '',
+        tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
+        s10_progress_status:  job.s10_progress_status  ?? '',
+    });
+
+    // Master data & recommendations (Stage 3)
+    const [masterData,       setMasterData]       = useState({ alat_uji: [], sertifikat_pjk3: [] });
+    const [recommendations,  setRecommendations]  = useState({ recommended: [], eliminated: [] });
 
     useEffect(() => {
         if (job.stage === 3) {
-            fetch('/api/master-data')
-                .then(res => res.json())
-                .then(json => setMasterData(json))
-                .catch(err => console.error("Error fetching master data:", err));
-
-            fetch(`/api/jobs/${job.id}/recommendations`)
-                .then(res => res.json())
-                .then(json => setRecommendations(json))
-                .catch(err => console.error("Error fetching recommendations:", err));
+            fetch('/api/master-data').then(r => r.json()).then(setMasterData).catch(console.error);
+            fetch(`/api/jobs/${job.id}/recommendations`).then(r => r.json()).then(setRecommendations).catch(console.error);
         }
     }, [job.id, job.stage]);
 
-    const editForm = useForm({
-        klien: job.klien || '',
-        pesawat: job.pesawat || '',
-        lokasi: job.lokasi || '',
-        nilai: job.nilai || '',
-        units: job.units || 1,
-    });
-
+    // â”€â”€ Permissions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { permissions, user } = auth || {};
+    const isInspector = job.inspectors?.some(i => i.id === user?.id);
+    const isMGR = user?.role === 'manager';
+
+    const canSeeNilai = user?.role === 'superadmin'
+        || user?.role === 'finance'
+        || (user?.role === 'marketing' && job.owner_marketing === user?.name);
+
     const canManage = (() => {
         if (propCanManage !== undefined) return propCanManage;
         if (!permissions) return false;
         if (permissions === 'superadmin') return true;
-        const perm = permissions[job.stage];
-        return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
+        if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
+        const p = permissions[job.stage];
+        return p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1');
     })();
 
+    const canViewStageDocs = (sid) => {
+        if (['superadmin','admin','manager'].includes(user?.role)) return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name) return true;
+        if (isInspector) return true;
+        const p = permissions?.[sid];
+        return p && (p.can_view || p.is_owner);
+    };
+
+    const canManageStageDocs = (sid) => {
+        if (['superadmin','manager'].includes(user?.role)) return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11].includes(sid)) return true;
+        if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return true;
+        const p = permissions?.[sid];
+        return p && p.is_owner;
+    };
+
+    // Stage 1 gate: at least one required doc uploaded
+    const stage1DocOk = STAGE1_REQUIRED_DOCS.some(t =>
+        (job.documents || []).some(d => d.stage === 1 && d.type === t));
+
+    // Stage 2 gate: all required docs OR Kadiv approved
+    const stage2DocOk = STAGE2_REQUIRED_DOCS.every(t =>
+        (job.documents || []).some(d => d.stage === 2 && d.type === t));
+    const stage2Bypass = job.peer_review_status === 'approved';
+    const stage2CanMove = stage2DocOk || stage2Bypass;
+
+    // Stage 4: unit mismatch
+    const s4UnitMismatch = s4.actual_units != null && parseInt(s4.actual_units) !== parseInt(job.units);
+
+    // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const handleMoveStage = (e) => {
         e.preventDefault();
+        if (job.stage === 1 && !stage1DocOk) return alert('Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
+        if (job.stage === 2 && !stage2CanMove) return alert('Dokumen belum lengkap. Lengkapi dokumen atau minta persetujuan Kadiv/MGR.');
         if (job.stage === 3) {
-            if (!data.tgl_pelaksanaan) {
-                alert('Tanggal Pelaksanaan wajib diisi!');
-                return;
-            }
-            if (!data.jam_mulai) {
-                alert('Jam Mulai wajib diisi!');
-                return;
-            }
-            if (!data.durasi_hari || data.durasi_hari < 1) {
-                alert('Durasi (hari) wajib diisi dan minimal 1!');
-                return;
-            }
-            if (!data.disnaker_tujuan) {
-                alert('Disnaker Tujuan wajib diisi!');
-                return;
-            }
-            if (!data.inspector_ids || data.inspector_ids.length === 0) {
-                alert('Silakan pilih minimal satu ahli K3 / inspektur!');
-                return;
-            }
+            if (!data.tgl_pelaksanaan) return alert('Tanggal Pelaksanaan wajib diisi!');
+            if (!data.inspector_ids?.length) return alert('Pilih minimal satu inspektur!');
         }
-        post(`/jobs/${job.id}/move`, {
-            onSuccess: () => onClose()
-        });
+        if (job.stage === 4 && s4UnitMismatch) return alert('Selesaikan ketidakcocokan jumlah alat terlebih dahulu!');
+        post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
     };
 
     const handleRejectStage = () => {
-        if (!confirm(`Tolak dan kembalikan ke Stage ${job.stage - 1}? Pastikan notes sudah diisi.`)) return;
-        if (!data.notes) {
-            alert('Notes / Alasan penolakan wajib diisi!');
-            return;
-        }
-        post(`/jobs/${job.id}/reject`, {
-            onSuccess: () => onClose()
-        });
+        if (!data.notes?.trim()) return alert('Isi catatan penolakan terlebih dahulu!');
+        if (!confirm(`Kembalikan ke Stage ${job.stage - 1}?`)) return;
+        post(`/jobs/${job.id}/reject`, { onSuccess: () => onClose() });
     };
+
+    const handleAskApproval = () => {
+        if (!confirm('Kirim permintaan persetujuan ke Kadiv/MGR?')) return;
+        router.post(`/jobs/${job.id}/ask-approval`, {}, { onSuccess: () => onClose() });
+    };
+
+    const handleApproveAsManager = () => {
+        if (!confirm('Setujui permintaan ini? Admin dapat melanjutkan tanpa dokumen lengkap.')) return;
+        router.post(`/jobs/${job.id}/approve`, {}, { onSuccess: () => onClose() });
+    };
+
+    const handleReturnToStage1 = (e) => {
+        e.preventDefault();
+        if (!returnNotes.trim()) return alert('Isi alasan pengembalian!');
+        router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
+    };
+
+    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => alert('Tersimpan.') });
+    const handleSaveS5  = () => {
+        if (!s5.s5_review_decision) return alert('Pilih keputusan review!');
+        router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => alert('Keputusan disimpan.') });
+    };
+    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => alert('Tersimpan.') });
+    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => alert('Tersimpan.') });
+    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => alert('Tersimpan.') });
+    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => alert('Tersimpan.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
-        editForm.put(`/jobs/${job.id}`, {
-            preserveScroll: true,
-            onSuccess: () => setIsEditing(false),
-        });
+        editForm.put(`/jobs/${job.id}`, { onSuccess: () => setIsEditing(false) });
     };
 
-    const handleVerifikasiOK = () => {
-        if (!confirm('Tandai dokumen LENGKAP dan lanjut ke Penjadwalan?')) return;
-        post(`/jobs/${job.id}/move`, {
-            onSuccess: () => onClose()
-        });
+    // Generic document upload (for most stages)
+    const triggerUpload = (stage, type) => {
+        setUploadStage(stage); setUploadType(type);
+        setTimeout(() => fileInputRef.current?.click(), 50);
     };
 
-    const handleFileSelect = (e) => {
+    const onFileChange = (e) => {
         const file = e.target.files[0];
         if (!file || !uploadStage || !uploadType) return;
-        
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('stage', uploadStage);
-        formData.append('type', uploadType);
-
-        router.post(`/jobs/${job.id}/documents`, formData, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setUploadStage(null);
-                setUploadType('');
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                setIsUploading(false);
-            },
-            onError: (errors) => {
-                alert(Object.values(errors).join('\n'));
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                setIsUploading(false);
-            }
+        const fd = new FormData();
+        fd.append('file', file); fd.append('type', uploadType); fd.append('stage', uploadStage);
+        router.post(`/jobs/${job.id}/documents`, fd, {
+            forceFormData: true,
+            onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
+            onError:   () => setIsUploading(false),
         });
+        e.target.value = '';
     };
 
-    const deleteDoc = (doc) => {
-        if (!confirm(`Hapus dokumen ${doc.name}?`)) return;
-        router.delete(`/jobs/${job.id}/documents/${doc.id}`, {
-            preserveScroll: true,
-        });
+    // Photo upload (Stage 4, with per-photo notes)
+    const uploadPhoto = (type) => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const fd = new FormData();
+            fd.append('file', file); fd.append('type', type); fd.append('stage', 4);
+            const note = photoNotes[type] || '';
+            if (note) fd.append('photo_notes', note);
+            router.post(`/jobs/${job.id}/documents`, fd, { forceFormData: true });
+        };
+        input.click();
     };
 
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const deleteDoc = (docId) => {
+        if (!confirm('Hapus dokumen ini?')) return;
+        router.delete(`/jobs/${job.id}/documents/${docId}`);
     };
-    
-    const isInspector = job.inspectors && job.inspectors.some(i => i.id === user?.id);
 
-    const canViewStageDocs = (stageId) => {
-        if (user?.role === 'superadmin' || user?.role === 'admin' || user?.role === 'manager') return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name) return true;
-        if (isInspector) return true;
-        const perm = permissions?.[stageId];
-        return perm && (
-            perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
-            perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1'
+    // Get docs for a stage+type
+    const getDocs = (stage, type = null) => {
+        const docs = (job.documents || []).filter(d => d.stage === stage);
+        return type ? docs.filter(d => d.type === type) : docs;
+    };
+
+    // Render a document download chip
+    const DocChip = ({ doc }) => (
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
+            <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer"
+               className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
+                ðŸ“Ž {doc.name}
+            </a>
+            {canManageStageDocs(doc.stage) && (
+                <button onClick={() => deleteDoc(doc.id)}
+                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">âœ•</button>
+            )}
+        </div>
+    );
+
+    // Compute SLA for current stage
+    const currentStageInfo = STAGES.find(s => s.id === job.stage);
+    const daysInStage = daysElapsed(job.stage_started_at);
+    const slaTag = getSlaTag(daysInStage, currentStageInfo?.sla);
+
+// â•â• END PART A â•â• (DO NOT ADD MORE CODE BELOW THIS LINE â€” combine with part_b then part_c)
+
+// â•â• BEGIN PART B â•â•
+
+    // â”€â”€ Stage Action Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const renderStageAction = () => {
+        if (!canManage) return null;
+        const s = job.stage;
+
+        // Common move/reject row
+        const MoveRow = ({ disabled = false, disabledMsg = '' }) => (
+            <div className="mt-4 flex flex-col gap-2">
+                {disabledMsg && (
+                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                        âš ï¸ {disabledMsg}
+                    </div>
+                )}
+                <div className="flex gap-2">
+                    {[2,5,9].includes(s) && (
+                        <button type="button" onClick={handleRejectStage} disabled={processing}
+                            className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                            Tolak / Kembalikan
+                        </button>
+                    )}
+                    <button type="submit" disabled={processing || disabled}
+                        className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
+                        {processing ? '...' : `Lanjut ke Stage ${s + 1} â†’`}
+                    </button>
+                </div>
+            </div>
+        );
+
+        const NoteField = () => (
+            <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Catatan / Keterangan</label>
+                <textarea rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)}
+                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-400" />
+            </div>
+        );
+
+        // Upload slot for a doc type in current stage
+        const UploadSlot = ({ type, stageId }) => {
+            const existing = getDocs(stageId, type);
+            return (
+                <div className="border border-dashed border-gray-200 rounded-lg p-2">
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-gray-600 truncate">{type}</span>
+                        <button type="button" onClick={() => triggerUpload(stageId, type)}
+                            className="text-xs text-blue-600 hover:underline ml-2 flex-shrink-0">
+                            + Upload
+                        </button>
+                    </div>
+                    {existing.length > 0
+                        ? <div className="flex flex-wrap gap-1">{existing.map(d => <DocChip key={d.id} doc={d} />)}</div>
+                        : <p className="text-xs text-gray-400 italic">Belum ada dokumen</p>
+                    }
+                </div>
+            );
+        };
+
+        return (
+            <form onSubmit={handleMoveStage}>
+                {/* â”€â”€ STAGE 1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 1 && (
+                    <div className="space-y-3">
+                        <p className="text-xs text-gray-500">Upload minimal salah satu dokumen berikut untuk melanjutkan:</p>
+                        {STAGE1_REQUIRED_DOCS.map(t => <UploadSlot key={t} type={t} stageId={1} />)}
+                        <p className="text-xs text-gray-400 mt-1">Dokumen opsional tambahan:</p>
+                        {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t)).map(t =>
+                            <UploadSlot key={t} type={t} stageId={1} />
+                        )}
+                        <NoteField />
+                        <MoveRow disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 2 && (
+                    <div className="space-y-3">
+                        {!stage2DocOk && !stage2Bypass && (
+                            <div className="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800">
+                                âš ï¸ Dokumen belum lengkap. Upload semua dokumen wajib, atau minta persetujuan Kadiv/MGR.
+                            </div>
+                        )}
+                        {stage2Bypass && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded p-3 text-xs text-emerald-800 font-medium">
+                                âœ… Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
+                            </div>
+                        )}
+                        {job.peer_review_status === 'requested' && isMGR && (
+                            <div className="bg-blue-50 border border-blue-300 rounded p-3 flex items-center justify-between">
+                                <span className="text-sm text-blue-800 font-medium">Admin meminta persetujuan Anda.</span>
+                                <button type="button" onClick={handleApproveAsManager}
+                                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700">
+                                    Setujui
+                                </button>
+                            </div>
+                        )}
+                        {(DOC_TYPES_BY_STAGE[2] || []).map(t => <UploadSlot key={t} type={t} stageId={2} />)}
+                        <NoteField />
+                        <div className="flex gap-2 mt-3">
+                            <button type="button" onClick={handleRejectStage} disabled={processing}
+                                className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                                Tolak
+                            </button>
+                            {!stage2DocOk && !stage2Bypass && job.peer_review_status !== 'requested' && !isMGR && (
+                                <button type="button" onClick={handleAskApproval}
+                                    className="px-3 py-2 rounded text-sm bg-orange-500 text-white font-semibold hover:bg-orange-600">
+                                    Minta Persetujuan MGR
+                                </button>
+                            )}
+                            {job.peer_review_status === 'requested' && !isMGR && (
+                                <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
+                                    ðŸ”” Menunggu persetujuan Kadiv/MGRâ€¦
+                                </div>
+                            )}
+                            <button type="submit" disabled={processing || !stage2CanMove}
+                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
+                                {processing ? '...' : 'Lanjut ke Stage 3 â†’'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 3 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 3 && (
+                    <div className="space-y-4">
+                        {/* Scheduling fields */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Pelaksanaan *</label>
+                                <input type="date" value={data.tgl_pelaksanaan} onChange={e => setData('tgl_pelaksanaan', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Jam Mulai *</label>
+                                <input type="time" value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Durasi (hari) *</label>
+                                <input type="number" min="1" value={data.durasi_hari} onChange={e => setData('durasi_hari', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Disnaker Tujuan *</label>
+                                <input type="text" value={data.disnaker_tujuan} onChange={e => setData('disnaker_tujuan', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="Contoh: Disnaker Kab. Bekasi" />
+                            </div>
+                        </div>
+                        {/* Smart Recommendation */}
+                        <SmartRecommendation
+                            job={job}
+                            selectedInspectorIds={data.inspector_ids}
+                            onSelectInspector={(insUser) => {
+                                const ids = data.inspector_ids.includes(insUser.id)
+                                    ? data.inspector_ids.filter(id => id !== insUser.id)
+                                    : [...data.inspector_ids, insUser.id];
+                                setData('inspector_ids', ids);
+                            }}
+                        />
+                        {/* Alat & Sertifikat */}
+                        {masterData.alat_uji.length > 0 && (
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Alat Uji yang Digunakan</label>
+                                <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto border rounded p-2">
+                                    {masterData.alat_uji.map(a => (
+                                        <label key={a.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                            <input type="checkbox" checked={data.alat_ids.includes(a.id)}
+                                                onChange={() => {
+                                                    const ids = data.alat_ids.includes(a.id) ? data.alat_ids.filter(x => x !== a.id) : [...data.alat_ids, a.id];
+                                                    setData('alat_ids', ids);
+                                                }} className="rounded" />
+                                            {a.nama}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <NoteField />
+                        <MoveRow disabled={!data.tgl_pelaksanaan || !data.inspector_ids?.length}
+                            disabledMsg={!data.inspector_ids?.length ? 'Pilih minimal satu inspektur' : ''} />
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 4 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 4 && (
+                    <div className="space-y-4">
+                        {/* Unit Count */}
+                        <div className="bg-gray-50 border rounded-lg p-3">
+                            <p className="text-xs font-semibold text-gray-700 mb-2">Jumlah Alat yang Benar-benar Diperiksa</p>
+                            <div className="flex items-center gap-3">
+                                <input type="number" min="0" value={s4.actual_units}
+                                    onChange={e => setS4({ ...s4, actual_units: e.target.value })}
+                                    className="w-24 text-sm border rounded px-2 py-1.5" />
+                                <span className="text-xs text-gray-500">dari {job.units} unit dalam Job</span>
+                                {s4UnitMismatch && (
+                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">TIDAK COCOK</span>
+                                )}
+                            </div>
+                            {s4UnitMismatch && (
+                                <div className="mt-2">
+                                    <label className="block text-xs text-gray-600 mb-1">Alasan / Catatan *</label>
+                                    <textarea rows={2} value={s4.unit_count_notes}
+                                        onChange={e => setS4({ ...s4, unit_count_notes: e.target.value })}
+                                        className="w-full text-sm border rounded px-2 py-1.5"
+                                        placeholder="Jelaskan mengapa jumlah berbedaâ€¦" />
+                                </div>
+                            )}
+                            <button type="button" onClick={handleSaveS4}
+                                className="mt-2 px-3 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded font-medium">
+                                Simpan Data Lapangan
+                            </button>
+                        </div>
+                        {/* Photo Uploads */}
+                        <div>
+                            <p className="text-xs font-semibold text-gray-700 mb-2">Foto Dokumentasi Wajib</p>
+                            <div className="space-y-2">
+                                {STAGE4_PHOTO_TYPES.map(type => {
+                                    const existing = getDocs(4, type);
+                                    return (
+                                        <div key={type} className="border border-dashed rounded-lg p-3">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-xs font-medium text-gray-700">{type}</span>
+                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">âœ“ Terupload</span>}
+                                            </div>
+                                            {existing.length > 0
+                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} />)}</div>
+                                                : null
+                                            }
+                                            <input type="text" placeholder="Catatan foto (opsional)"
+                                                value={photoNotes[type] || ''}
+                                                onChange={e => setPhotoNotes({ ...photoNotes, [type]: e.target.value })}
+                                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 mb-1" />
+                                            <button type="button" onClick={() => uploadPhoto(type)}
+                                                className="text-xs px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100">
+                                                ðŸ“· Upload Foto
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <NoteField />
+                        {/* Move or Return to S1 */}
+                        {s4UnitMismatch ? (
+                            <form onSubmit={handleReturnToStage1} className="border border-red-200 rounded-lg p-3 bg-red-50">
+                                <p className="text-sm font-semibold text-red-800 mb-2">
+                                    âš ï¸ Jumlah tidak sesuai. Kembalikan ke Stage 1 agar Marketing merevisi.
+                                </p>
+                                <textarea rows={2} value={returnNotes} onChange={e => setReturnNotes(e.target.value)}
+                                    className="w-full text-sm border rounded px-2 py-1.5 mb-2"
+                                    placeholder="Alasan pengembalian ke Stage 1 POâ€¦" required />
+                                <button type="submit" className="w-full py-2 rounded text-sm font-bold bg-red-600 text-white hover:bg-red-700">
+                                    Kembalikan ke Stage 1 PO
+                                </button>
+                            </form>
+                        ) : (
+                            <MoveRow />
+                        )}
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 5 (Review Laporan Teknis â€” MGR) â”€â”€â”€â”€â”€ */}
+                {s === 5 && (
+                    <div className="space-y-3">
+                        <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
+                        {job.s5_review_decision && (
+                            <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
+                                Keputusan sebelumnya: <strong>{STAGE5_DECISIONS.find(d => d.value === job.s5_review_decision)?.label}</strong>
+                                {job.s5_review_notes && <span> â€” {job.s5_review_notes}</span>}
+                            </div>
+                        )}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Keputusan Review *</label>
+                            <select value={s5.s5_review_decision} onChange={e => setS5({ ...s5, s5_review_decision: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                                <option value="">-- Pilih Keputusan --</option>
+                                {STAGE5_DECISIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Catatan MGR</label>
+                            <textarea rows={3} value={s5.s5_review_notes} onChange={e => setS5({ ...s5, s5_review_notes: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                placeholder="Catatan kondisi, syarat, atau alasan penolakanâ€¦" />
+                        </div>
+                        <button type="button" onClick={handleSaveS5}
+                            className="w-full py-2 rounded text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
+                            Simpan Keputusan Review
+                        </button>
+                        <NoteField />
+                        <div className="flex gap-2">
+                            <button type="button" onClick={handleRejectStage}
+                                className="px-4 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                                Tolak / Kembalikan
+                            </button>
+                            <button type="submit" disabled={processing || !s5.s5_review_decision || s5.s5_review_decision === 'rejected'}
+                                className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
+                                {processing ? '...' : 'Lanjut ke Stage 6 LHPP â†’'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 6 (Penyusunan LHPP â€” INS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 6 && (
+                    <div className="space-y-3">
+                        {(DOC_TYPES_BY_STAGE[6] || []).map(t => <UploadSlot key={t} type={t} stageId={6} />)}
+                        <NoteField />
+                        <MoveRow />
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 7 (Penyerahan ke Dinas â€” MGR) â”€â”€â”€â”€â”€â”€ */}
+                {s === 7 && (
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Penyerahan ke Disnaker *</label>
+                            <input type="date" value={s7.tgl_submit_disnaker}
+                                onChange={e => setS7({ tgl_submit_disnaker: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                        </div>
+                        <button type="button" onClick={handleSaveS7}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                            Simpan Tanggal Penyerahan
+                        </button>
+                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} />
+                        <NoteField />
+                        <MoveRow disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 8 (Proses Disnaker â€” Admin) â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 8 && (
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Dokumen Diserahkan ke Disnaker</label>
+                                <input type="date" value={s8.tgl_doc_submitted_disnaker}
+                                    onChange={e => setS8({ ...s8, tgl_doc_submitted_disnaker: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Dokumen Diterima Kembali</label>
+                                <input type="date" value={s8.tgl_doc_received_disnaker}
+                                    onChange={e => setS8({ ...s8, tgl_doc_received_disnaker: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
+                        </div>
+                        {/* SLA indicator */}
+                        {s8.tgl_doc_submitted_disnaker && (() => {
+                            const d = daysElapsed(s8.tgl_doc_submitted_disnaker);
+                            const tag = getSlaTag(d, 30);
+                            return (
+                                <div className={`rounded p-2 text-xs font-semibold ${tag?.cls}`}>
+                                    {d} hari dari penyerahan dokumen (SLA: 30 hari) â€” {tag?.label}
+                                </div>
+                            );
+                        })()}
+                        <button type="button" onClick={handleSaveS8}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                            Simpan Data Disnaker
+                        </button>
+                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} />)}
+                        <NoteField />
+                        <MoveRow />
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 9 (Pengurusan Suket â€” Admin) â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 9 && (
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
+                            <select value={s9.s9_progress_status} onChange={e => setS9({ s9_progress_status: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                                <option value="">-- Pilih Status --</option>
+                                {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                            </select>
+                        </div>
+                        <button type="button" onClick={handleSaveS9}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                            Simpan Status
+                        </button>
+                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} />)}
+                        <NoteField />
+                        <div className="flex gap-2 mt-2">
+                            <button type="button" onClick={handleRejectStage}
+                                className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200">Tolak</button>
+                            <button type="submit" disabled={processing}
+                                className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
+                                {processing ? '...' : 'Lanjut ke Stage 10 â†’'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 10 (Penagihan â€” Finance) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 10 && (
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Total Invoice (Rp)</label>
+                                <input type="number" value={s10.total_invoice_amount}
+                                    onChange={e => setS10({ ...s10, total_invoice_amount: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan</label>
+                                <input type="date" value={s10.tgl_invoice_issued}
+                                    onChange={e => setS10({ ...s10, tgl_invoice_issued: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
+                                <select value={s10.s10_progress_status} onChange={e => setS10({ ...s10, s10_progress_status: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                                    <option value="">-- Pilih Status --</option>
+                                    {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" onClick={handleSaveS10}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                            Simpan Data Penagihan
+                        </button>
+                        {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} />)}
+                        <NoteField />
+                        <MoveRow />
+                    </div>
+                )}
+
+                {/* â”€â”€ STAGE 11 (Pengiriman SUKET â€” MKT) â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {s === 11 && (
+                    <div className="space-y-3">
+                        <p className="text-xs text-gray-500">Upload bukti pengiriman SUKET ke klien, kemudian tandai selesai.</p>
+                        {(DOC_TYPES_BY_STAGE[11] || []).map(t => <UploadSlot key={t} type={t} stageId={11} />)}
+                        <NoteField />
+                        <MoveRow />
+                    </div>
+                )}
+            </form>
         );
     };
 
-    const canManageStageDocs = (stageId) => {
-        if (user?.role === 'superadmin' || user?.role === 'manager') return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name && (stageId === 1 || stageId === 11)) return true;
-        if (isInspector && stageId >= 4 && stageId <= 10) return true;
-        const perm = permissions?.[stageId];
-        return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
-    };
+// â•â• END PART B â•â•
 
-    const getH5Status = () => {
-        if (!data.tgl_pelaksanaan) return null;
-        const targetDate = new Date(data.tgl_pelaksanaan);
-        const h5Date = new Date(targetDate.getTime() - (5 * 24 * 60 * 60 * 1000));
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        h5Date.setHours(0, 0, 0, 0);
-        
-        const diffDays = Math.ceil((h5Date.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-        
-        return {
-            dateStr: h5Date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-            daysRemaining: diffDays,
-            isOverdue: diffDays < 0
-        };
-    };
-    const h5Status = getH5Status();
+// â•â• BEGIN PART C â•â•
 
-    return (
-        <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
-            <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
-            <div className="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-                <div className="relative w-screen max-w-md md:max-w-xl">
-                    <div className="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
-                        
-                        {/* Header */}
-                        <div className="px-6 py-6 bg-blue-700 sm:px-6">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-bold text-white" id="slide-over-title">
-                                    {job.klien}
-                                </h2>
-                                <button type="button" className="text-blue-200 hover:text-white" onClick={onClose}>
-                                    <span className="sr-only">Close panel</span>
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="mt-1">
-                                <p className="text-sm text-blue-200">{job.kode} &bull; {job.pesawat}</p>
+    // â”€â”€ Timeline Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const renderTimeline = () => (
+        <div className="space-y-6 py-2">
+            <h3 className="font-bold text-gray-800 border-b pb-2">Status Pekerjaan: Stage {job.stage} ({currentStageInfo?.name})</h3>
+            
+            {/* SLA Badge for current stage */}
+            {slaTag && (
+                <div className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold ${slaTag.cls}`}>
+                    â± {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} â€” {slaTag.label}
+                </div>
+            )}
+
+            <div className="relative border-l-2 border-gray-200 ml-4 pl-6 space-y-8">
+                {STAGES.map(stage => {
+                    const isPast = job.stage > stage.id;
+                    const isCurrent = job.stage === stage.id;
+                    const isFuture = job.stage < stage.id;
+                    
+                    let iconBg = 'bg-gray-100 border-gray-300';
+                    if (isPast) iconBg = 'bg-emerald-500 border-emerald-500 text-white';
+                    if (isCurrent) iconBg = 'bg-blue-500 border-blue-500 text-white ring-4 ring-blue-100';
+
+                    const stageDocs = (job.documents || []).filter(d => d.stage === stage.id);
+                    
+                    return (
+                        <div key={stage.id} className={`relative ${isFuture ? 'opacity-50' : ''}`}>
+                            {/* Connector Node */}
+                            <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${iconBg}`}>
+                                {isPast ? 'âœ“' : stage.id}
                             </div>
                             
-                            {/* Tabs */}
-                            <div className="flex mt-6 space-x-4 border-b border-blue-600 pb-2">
-                                <button 
-                                    className={`text-sm font-medium ${activeTab === 'overview' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
-                                    onClick={() => setActiveTab('overview')}
-                                >
-                                    Timeline
-                                </button>
-                                <button 
-                                    className={`text-sm font-medium ${activeTab === 'documents' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
-                                    onClick={() => setActiveTab('documents')}
-                                >
-                                    Dokumen ({job.documents?.length || 0})
-                                </button>
-                                <button 
-                                    className={`text-sm font-medium ${activeTab === 'riwayat' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
-                                    onClick={() => setActiveTab('riwayat')}
-                                >
-                                    Riwayat ({job.history_logs?.length || 0})
-                                </button>
-                                <button 
-                                    className={`text-sm font-medium ${activeTab === 'edit' ? 'text-white border-b-2 border-white pb-1' : 'text-blue-200 hover:text-white'}`}
-                                    onClick={() => setActiveTab('edit')}
-                                >
-                                    Info & Edit
-                                </button>
+                            <div className="bg-white border rounded-lg shadow-sm p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className={`font-bold ${isCurrent ? 'text-blue-700' : 'text-gray-800'}`}>
+                                        Stage {stage.id}: {stage.name}
+                                    </h4>
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                                        PIC: {stage.role.toUpperCase()}
+                                    </span>
+                                </div>
+                                
+                                {isCurrent && (
+                                    <div className="mt-4 pt-4 border-t border-blue-100">
+                                        {renderStageAction()}
+                                    </div>
+                                )}
+
+                                {!isCurrent && stageDocs.length > 0 && (
+                                    <div className="mt-3 space-y-1">
+                                        <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} />)}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
 
-                        {/* Content */}
-                        <div className="relative flex-1 px-4 py-6 sm:px-6 space-y-6 bg-gray-50">
-                            
-                            {activeTab === 'overview' && (
-                                <>
-                                    {!canManage && (
-                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                                            <div className="flex">
-                                                <div className="ml-3 text-sm text-yellow-700">
-                                                    <p>You have <strong>View-Only</strong> access to this stage. Editing is locked.</p>
-                                                </div>
-                                            </div>
+    // â”€â”€ Documents Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const renderDocuments = () => (
+        <div className="space-y-4">
+            {STAGES.map(stage => {
+                if (!canViewStageDocs(stage.id)) return null;
+                const docs = getDocs(stage.id);
+                if (docs.length === 0) return null;
+                return (
+                    <div key={stage.id} className="border rounded-lg p-4">
+                        <h4 className="font-bold text-sm text-gray-700 mb-3 pb-2 border-b">
+                            Stage {stage.id}: {stage.name}
+                        </h4>
+                        <div className="grid grid-cols-1 gap-2">
+                            {docs.map(doc => (
+                                <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
+                                    <div>
+                                        <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
+                                            <span>ðŸ“„</span> {doc.name}
+                                        </a>
+                                        <div className="text-xs text-gray-500 mt-1 ml-6">
+                                            {doc.type} â€¢ Uploaded by {doc.uploaded_by_user_id} â€¢ {fmt(doc.created_at)}
                                         </div>
-                                    )}
-
-                                    {job.stage === 2 && canManage && (
-                                        <div className="bg-white p-4 rounded shadow-sm border border-blue-200">
-                                            <h3 className="font-semibold text-blue-900 border-b pb-2 mb-3">Verifikasi Dokumen Klien</h3>
-                                            <div className="mb-4">
-                                                <label className="block text-sm font-medium text-gray-700">Catatan Verifikasi / Kekurangan</label>
-                                                <textarea 
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" 
-                                                    rows="3"
-                                                    value={data.notes}
-                                                    onChange={e => setData('notes', e.target.value)}
-                                                    placeholder="Tuliskan catatan jika ada dokumen yang kurang, atau 'Lengkap' jika OK."
-                                                ></textarea>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button 
-                                                    type="button" 
-                                                    onClick={handleRejectStage}
-                                                    disabled={processing}
-                                                    className="w-1/2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-                                                >
-                                                    {processing ? '...' : 'TIDAK (Kembalikan ke PO)'}
-                                                </button>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={handleVerifikasiOK}
-                                                    disabled={processing}
-                                                    className="w-1/2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-                                                >
-                                                    {processing ? '...' : 'LENGKAP (Lanjut ke Stage 3)'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {canManage && job.stage !== 2 && job.stage < 12 && (
-                                        <div className="mt-4 bg-white p-4 rounded shadow-sm border">
-                                            <h3 className="font-semibold text-gray-900 mb-3">Move to Next Stage</h3>
-                                            <form onSubmit={handleMoveStage}>
-                                                {job.stage === 3 && (
-                                                    <div className="space-y-6 mb-6">
-                                                        {/* Section 1: Jadwal Pelaksanaan */}
-                                                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                                            <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-3 flex items-center gap-1.5 border-b pb-1.5">
-                                                                <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
-                                                                Jadwal Pelaksanaan & Disnaker
-                                                            </h4>
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div>
-                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Tanggal Pelaksanaan</label>
-                                                                    <input 
-                                                                        type="date" 
-                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                                                        value={data.tgl_pelaksanaan}
-                                                                        onChange={e => setData('tgl_pelaksanaan', e.target.value)}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Jam Mulai</label>
-                                                                    <input 
-                                                                        type="time" 
-                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                                                        value={data.jam_mulai}
-                                                                        onChange={e => setData('jam_mulai', e.target.value)}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Durasi Pelaksanaan (Hari)</label>
-                                                                    <input 
-                                                                        type="number" 
-                                                                        min="1"
-                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                                                        value={data.durasi_hari}
-                                                                        onChange={e => setData('durasi_hari', parseInt(e.target.value) || 1)}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Disnaker Tujuan</label>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        className="w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                                                                        placeholder="Contoh: UPTD Pengawasan Ketenagakerjaan Wilayah II Karawang"
-                                                                        value={data.disnaker_tujuan}
-                                                                        onChange={e => setData('disnaker_tujuan', e.target.value)}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            {h5Status && (
-                                                                <div className={`mt-3 p-2.5 rounded text-xs border ${
-                                                                    h5Status.isOverdue 
-                                                                        ? 'bg-red-50 text-red-800 border-red-200' 
-                                                                        : 'bg-green-50 text-green-800 border-green-200'
-                                                                }`}>
-                                                                    {h5Status.isOverdue ? (
-                                                                        <span>⚠️ <strong>Batas Waktu H-5 Terlewati!</strong> Harus dikirim paling lambat pada {h5Status.dateStr}.</span>
-                                                                    ) : (
-                                                                        <span>✅ <strong>Jadwal Aman.</strong> Batas waktu notifikasi H-5: {h5Status.dateStr} (tersisa {h5Status.daysRemaining} hari).</span>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Section 2: Smart Recommendations Scorecard */}
-                                                        <div>
-                                                            <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                                                                <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
-                                                                Rekomendasi & Kecocokan Sistem
-                                                            </h4>
-                                                            <div className="mb-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        if (recommendations.recommended && recommendations.recommended.length >= 2) {
-                                                                            const top2Ids = recommendations.recommended.slice(0, 2).map(r => r.user.id);
-                                                                            setData('inspector_ids', top2Ids);
-                                                                        }
-                                                                    }}
-                                                                    className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-xs font-semibold shadow-sm transition-colors"
-                                                                >
-                                                                    Pilih 2 Teratas (Cross-check Ideal)
-                                                                </button>
-                                                            </div>
-                                                            <SmartRecommendation 
-                                                                job={job} 
-                                                                selectedInspectorIds={data.inspector_ids}
-                                                                onSelectInspector={(insUser) => {
-                                                                    let ids = [...data.inspector_ids];
-                                                                    if (ids.includes(insUser.id)) {
-                                                                        ids = ids.filter(id => id !== insUser.id);
-                                                                    } else {
-                                                                        ids.push(insUser.id);
-                                                                    }
-                                                                    setData('inspector_ids', ids);
-                                                                }} 
-                                                            />
-                                                        </div>
-
-                                                        {/* Section 3: Checkbox Grid of All Qualified Inspectors */}
-                                                        <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                                            <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-2 flex items-center gap-1.5 border-b pb-1.5">
-                                                                <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
-                                                                Delegasikan Ahli K3 (Pilihan Multiple)
-                                                            </h4>
-                                                            <p className="text-xs text-gray-500 mb-3">Pilih minimal 1 inspektur. Direkomendasikan 2 orang untuk cross-check silang di lapangan.</p>
-                                                            
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                                                {recommendations.recommended && recommendations.recommended.map(rec => {
-                                                                    const isChecked = data.inspector_ids.includes(rec.user.id);
-                                                                    return (
-                                                                        <label 
-                                                                            key={rec.user.id} 
-                                                                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:bg-gray-50 ${
-                                                                                isChecked 
-                                                                                    ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' 
-                                                                                    : 'border-gray-200'
-                                                                            }`}
-                                                                        >
-                                                                            <input 
-                                                                                type="checkbox" 
-                                                                                className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
-                                                                                checked={isChecked}
-                                                                                onChange={() => {
-                                                                                    let ids = [...data.inspector_ids];
-                                                                                    if (ids.includes(rec.user.id)) {
-                                                                                        ids = ids.filter(id => id !== rec.user.id);
-                                                                                    } else {
-                                                                                        ids.push(rec.user.id);
-                                                                                    }
-                                                                                    setData('inspector_ids', ids);
-                                                                                }}
-                                                                            />
-                                                                            <div className="text-xs">
-                                                                                <div className="font-bold text-gray-900">{rec.user.name}</div>
-                                                                                <div className="text-gray-500 mt-0.5">Spesialis: {(rec.profile.spesialisasi || []).slice(0, 2).join(', ')}</div>
-                                                                                <div className="text-gray-500">Domisili: {rec.profile.domisili}</div>
-                                                                                <div className="mt-1 inline-block bg-teal-100 text-teal-800 font-bold px-1 rounded text-[10px]">
-                                                                                    Skor: {rec.score}
-                                                                                </div>
-                                                                            </div>
-                                                                        </label>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Section 4: Alat Uji & Sertifikat PJK3 Checklist */}
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            {/* Column 1: Alat Uji */}
-                                                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                                                <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-2 flex items-center gap-1.5 border-b pb-1.5">
-                                                                    <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
-                                                                    Pilih Alat Uji Lampiran
-                                                                </h4>
-                                                                <div className="max-h-48 overflow-y-auto space-y-2 text-xs pr-1">
-                                                                    {masterData.alat_uji && masterData.alat_uji.length === 0 ? (
-                                                                        <div className="text-gray-400 italic">Memuat master alat uji...</div>
-                                                                    ) : (
-                                                                        masterData.alat_uji.map(alat => {
-                                                                            const isChecked = data.alat_ids.includes(alat.id);
-                                                                            return (
-                                                                                <label key={alat.id} className="flex items-center gap-2 cursor-pointer py-0.5 hover:bg-gray-50">
-                                                                                    <input 
-                                                                                        type="checkbox" 
-                                                                                        className="rounded text-blue-600 focus:ring-blue-500 border-gray-300"
-                                                                                        checked={isChecked}
-                                                                                        onChange={() => {
-                                                                                            let ids = [...data.alat_ids];
-                                                                                            if (ids.includes(alat.id)) {
-                                                                                                ids = ids.filter(id => id !== alat.id);
-                                                                                            } else {
-                                                                                                ids.push(alat.id);
-                                                                                            }
-                                                                                            setData('alat_ids', ids);
-                                                                                        }}
-                                                                                    />
-                                                                                    <span className="text-gray-700">{alat.nama} {alat.kode_alat ? `(${alat.kode_alat})` : ''}</span>
-                                                                                </label>
-                                                                            );
-                                                                        })
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Column 2: Sertifikat PJK3 */}
-                                                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                                                <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wide mb-2 flex items-center gap-1.5 border-b pb-1.5">
-                                                                    <span className="w-1.5 h-3 bg-blue-600 rounded-full inline-block"></span>
-                                                                    Pilih SKP / Sertifikat PJK3
-                                                                </h4>
-                                                                <div className="max-h-48 overflow-y-auto space-y-2 text-xs pr-1">
-                                                                    {masterData.sertifikat_pjk3 && masterData.sertifikat_pjk3.length === 0 ? (
-                                                                        <div className="text-gray-400 italic">Memuat master sertifikat...</div>
-                                                                    ) : (
-                                                                        masterData.sertifikat_pjk3.map(cert => {
-                                                                            const isChecked = data.cert_ids.includes(cert.id);
-                                                                            return (
-                                                                                <label key={cert.id} className="flex items-center gap-2 cursor-pointer py-0.5 hover:bg-gray-50">
-                                                                                    <input 
-                                                                                        type="checkbox" 
-                                                                                        className="rounded text-blue-600 focus:ring-blue-500 border-gray-300"
-                                                                                        checked={isChecked}
-                                                                                        onChange={() => {
-                                                                                            let ids = [...data.cert_ids];
-                                                                                            if (ids.includes(cert.id)) {
-                                                                                                ids = ids.filter(id => id !== cert.id);
-                                                                                            } else {
-                                                                                                ids.push(cert.id);
-                                                                                            }
-                                                                                            setData('cert_ids', ids);
-                                                                                        }}
-                                                                                    />
-                                                                                    <span className="text-gray-700">{cert.nama} {cert.nomor_skp ? `(${cert.nomor_skp})` : ''}</span>
-                                                                                </label>
-                                                                            );
-                                                                        })
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className="mb-4">
-                                                    <label className="block text-sm font-medium text-gray-700">Notes / Keterangan</label>
-                                                    <textarea 
-                                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" 
-                                                        rows="3"
-                                                        value={data.notes}
-                                                        onChange={e => setData('notes', e.target.value)}
-                                                    ></textarea>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    {(job.stage === 5 || job.stage === 9) && (
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={handleRejectStage}
-                                                            disabled={processing}
-                                                            className="w-1/3 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                                        >
-                                                            {processing ? '...' : `Tolak (ke S${job.stage - 1})`}
-                                                        </button>
-                                                    )}
-                                                    <button 
-                                                        type="submit" 
-                                                        disabled={processing}
-                                                        className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                                    >
-                                                        {processing ? 'Processing...' : `Lanjut ke Stage ${job.stage + 1}`}
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                            
-                            {activeTab === 'riwayat' && (
-                                <div className="space-y-4">
-                                    <h3 className="font-semibold text-gray-900 border-b pb-2">Riwayat Aktivitas</h3>
-                                    {(!job.history_logs || job.history_logs.length === 0) ? (
-                                        <div className="text-sm text-gray-400 italic">Belum ada riwayat aktivitas.</div>
-                                    ) : (
-                                        <div className="relative border-l border-gray-200 ml-3 space-y-6">
-                                            {job.history_logs.map(log => (
-                                                <div key={log.id} className="relative pl-6">
-                                                    <span className="absolute -left-2 top-1.5 w-4 h-4 rounded-full bg-blue-100 border-2 border-white ring-1 ring-blue-500 flex items-center justify-center">
-                                                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-                                                    </span>
-                                                    <div className="text-xs text-gray-500 mb-1">
-                                                        {new Date(log.created_at).toLocaleString('id-ID')} &bull; Stage {log.stage} &bull; <span className="font-medium text-gray-700">{log.user?.name || 'Sistem'}</span>
-                                                    </div>
-                                                    <div className="text-sm font-medium text-gray-900">{log.action}</div>
-                                                    {log.notes && <div className="text-sm text-gray-600 mt-1 bg-gray-50 p-2 rounded border border-gray-100">{log.notes}</div>}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {activeTab === 'edit' && (
-                                <div className="bg-white p-4 rounded shadow-sm border">
-                                    <div className="flex justify-between items-center border-b pb-2 mb-4">
-                                        <h3 className="font-semibold text-gray-900">Info & Edit Job</h3>
-                                        {!isEditing && canManage && (
-                                            <button 
-                                                onClick={() => setIsEditing(true)} 
-                                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                                            >
-                                                Edit Data
-                                            </button>
-                                        )}
                                     </div>
-                                    
-                                    {!isEditing ? (
-                                        <dl className="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <dt className="text-gray-500">Marketing PIC</dt>
-                                                <dd className="font-medium text-gray-900">{job.owner_marketing}</dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-gray-500">Klien</dt>
-                                                <dd className="font-medium text-gray-900">{job.klien}</dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-gray-500">Pesawat</dt>
-                                                <dd className="font-medium text-gray-900">{job.pesawat}</dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-gray-500">Lokasi</dt>
-                                                <dd className="font-medium text-gray-900">{job.lokasi}</dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-gray-500">Nilai Kontrak</dt>
-                                                <dd className="font-medium text-gray-900">
-                                                    {canManage || user.role === 'finance' ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '*** HIDDEN ***'}
-                                                </dd>
-                                            </div>
-                                            <div>
-                                                <dt className="text-gray-500">Units</dt>
-                                                <dd className="font-medium text-gray-900">{job.units}</dd>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <dt className="text-gray-500">Inspektur / Ahli K3 Ditugaskan</dt>
-                                                <dd className="font-medium text-blue-700 bg-blue-50 p-2 rounded border border-blue-100 mt-0.5">
-                                                    {job.inspectors && job.inspectors.length > 0 
-                                                        ? job.inspectors.map(i => i.name).join(', ') 
-                                                        : 'Belum ditugaskan'}
-                                                </dd>
-                                            </div>
-                                        </dl>
-                                    ) : (
-                                        <form onSubmit={handleUpdateJob} className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Klien</label>
-                                                <input type="text" value={editForm.data.klien} onChange={e => editForm.setData('klien', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Pesawat</label>
-                                                <input type="text" value={editForm.data.pesawat} onChange={e => editForm.setData('pesawat', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Lokasi</label>
-                                                <input type="text" value={editForm.data.lokasi} onChange={e => editForm.setData('lokasi', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Nilai Kontrak (Rp)</label>
-                                                    <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700">Jumlah Unit</label>
-                                                    <input type="number" value={editForm.data.units} onChange={e => editForm.setData('units', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required min="1" />
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2 pt-2">
-                                                <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                                    Batal
-                                                </button>
-                                                <button type="submit" disabled={editForm.processing} className="flex-1 py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                                                    Simpan Perubahan
-                                                </button>
-                                            </div>
-                                        </form>
+                                    {canManageStageDocs(doc.stage) && (
+                                        <button onClick={() => deleteDoc(doc.id)} className="text-red-500 hover:text-red-700 font-medium px-2 py-1 sm:mt-0 mt-2 text-xs border border-red-200 rounded">
+                                            Hapus
+                                        </button>
                                     )}
                                 </div>
-                            )}
-                            
-                            {activeTab === 'documents' && (
-                                <div className="space-y-4">
-                                    {STAGES.map(s => {
-                                        const types = DOC_TYPES_BY_STAGE[s.id] || [];
-                                        const docs = (job.documents || []).filter(d => d.stage === s.id);
-                                        const isViewable = canViewStageDocs(s.id);
-                                        const isManageable = canManageStageDocs(s.id) && s.id === job.stage;
-                                        
-                                        if (!isViewable && docs.length === 0) return null; // hide if can't view and empty
-                                        
-                                        return (
-                                            <div key={s.id} className="bg-white p-4 rounded shadow-sm border">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <div className="text-xs font-mono text-gray-500 font-bold">STAGE {String(s.id).padStart(2, '0')}</div>
-                                                        <div className="font-medium text-gray-900">{s.name}</div>
-                                                    </div>
-                                                    
-                                                    {isManageable && (
-                                                        uploadStage === s.id ? (
-                                                            <div className="flex gap-2 items-center bg-gray-50 p-2 rounded border">
-                                                                <select 
-                                                                    className="text-sm border-gray-300 rounded py-1 px-2"
-                                                                    value={uploadType}
-                                                                    onChange={e => setUploadType(e.target.value)}
-                                                                >
-                                                                    <option value="">Pilih jenis dokumen...</option>
-                                                                    {types.map(t => <option key={t} value={t}>{t}</option>)}
-                                                                </select>
-                                                                <button 
-                                                                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
-                                                                    disabled={!uploadType || isUploading}
-                                                                    onClick={() => fileInputRef.current?.click()}
-                                                                >
-                                                                    {isUploading ? '...' : 'Pilih File'}
-                                                                </button>
-                                                                <button 
-                                                                    className="text-gray-500 hover:text-gray-800 p-1"
-                                                                    onClick={() => { setUploadStage(null); setUploadType(''); }}
-                                                                >
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <button 
-                                                                className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded flex items-center gap-1"
-                                                                onClick={() => setUploadStage(s.id)}
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                                                Upload
-                                                            </button>
-                                                        )
-                                                    )}
-                                                </div>
-                                                
-                                                {docs.length === 0 ? (
-                                                    <div className="text-sm text-gray-400 italic py-2 border-t border-dashed">Belum ada dokumen.</div>
-                                                ) : (
-                                                    <div className="space-y-2 mt-3 pt-3 border-t">
-                                                        {docs.map(doc => (
-                                                            <div key={doc.id} className="flex items-center gap-3 p-2 bg-gray-50 border rounded text-sm">
-                                                                <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="font-medium text-gray-900 truncate">{doc.type}</div>
-                                                                    <div className="text-xs text-gray-500 truncate">{doc.name}</div>
-                                                                </div>
-                                                                <a 
-                                                                    href={`/storage/${doc.path}`} 
-                                                                    target="_blank" 
-                                                                    rel="noreferrer"
-                                                                    className="text-blue-600 hover:text-blue-800 p-1"
-                                                                    title="Download"
-                                                                >
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                                </a>
-                                                                {isManageable && (
-                                                                    <button 
-                                                                        onClick={() => deleteDoc(doc)}
-                                                                        className="text-red-500 hover:text-red-700 p-1"
-                                                                        title="Hapus"
-                                                                    >
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                
-                                                <div className="mt-3 text-xs text-gray-400">
-                                                    Wajib: {types.join(', ')}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    
-                                    <input 
-                                        ref={fileInputRef} 
-                                        type="file" 
-                                        className="hidden" 
-                                        onChange={handleFileSelect} 
-                                        accept=".pdf,.jpg,.jpeg,.png,.zip,.docx,.xlsx"
-                                    />
-                                </div>
-                            )}
+                            ))}
                         </div>
                     </div>
+                );
+            })}
+            {(!job.documents || job.documents.length === 0) && (
+                <div className="text-center py-10 text-gray-400">Belum ada dokumen yang diunggah.</div>
+            )}
+            
+            {/* Hidden generic file input for non-photo uploads */}
+            <input type="file" ref={fileInputRef} className="hidden" onChange={onFileChange} />
+        </div>
+    );
+
+    // â”€â”€ History Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const renderHistory = () => (
+        <div className="space-y-4">
+            {(job.historyLogs || job.history_logs || []).slice().reverse().map(log => (
+                <div key={log.id} className="border-l-2 border-gray-200 pl-4 py-1 relative">
+                    <div className="absolute w-2 h-2 bg-gray-400 rounded-full -left-[5px] top-3"></div>
+                    <div className="bg-gray-50 rounded p-3">
+                        <div className="flex justify-between items-start mb-1">
+                            <span className="text-xs font-bold text-gray-700">{log.user?.name || 'System'}</span>
+                            <span className="text-xs text-gray-500">{fmt(log.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="text-sm text-gray-800">{log.action}</p>
+                        {log.notes && (
+                            <p className="text-xs text-gray-600 mt-1 italic border-l-2 border-gray-300 pl-2">"{log.notes}"</p>
+                        )}
+                        {log.returned_from_stage && (
+                            <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
+                                ðŸ”„ DIKEMBALIKAN dari Stage {log.returned_from_stage}
+                            </span>
+                        )}
+                        <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
+                            Stage {log.stage}
+                        </span>
+                    </div>
                 </div>
+            ))}
+        </div>
+    );
+
+    // â”€â”€ Edit Info Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const renderEditInfo = () => (
+        <div className="space-y-4">
+            {isEditing ? (
+                <form onSubmit={handleUpdateJob} className="space-y-4 bg-gray-50 p-4 rounded-lg border">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">Klien</label>
+                            <input type="text" value={editForm.data.klien} onChange={e => editForm.setData('klien', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">Jenis Alat</label>
+                            <input type="text" value={editForm.data.pesawat} onChange={e => editForm.setData('pesawat', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="block text-xs font-bold text-gray-700">Lokasi</label>
+                            <textarea value={editForm.data.lokasi} onChange={e => editForm.setData('lokasi', e.target.value)} rows="2" className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">Jumlah Unit</label>
+                            <input type="number" min="1" value={editForm.data.units} onChange={e => editForm.setData('units', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        {canSeeNilai && (
+                            <div className="col-span-2 sm:col-span-1">
+                                <label className="block text-xs font-bold text-gray-700">Nilai Kontrak</label>
+                                <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                        <button type="button" onClick={() => setIsEditing(false)} className="px-3 py-1.5 text-sm bg-gray-200 rounded">Batal</button>
+                        <button type="submit" disabled={editForm.processing} className="px-3 py-1.5 text-sm bg-blue-600 text-white font-bold rounded hover:bg-blue-700">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            ) : (
+                <div className="bg-white p-4 rounded-lg border space-y-3">
+                    <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-gray-800 border-b w-full pb-2 mb-2">Informasi Pekerjaan</h4>
+                        {canManage && (
+                            <button onClick={() => setIsEditing(true)} className="text-xs font-medium text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 ml-2">
+                                âœï¸ Edit
+                            </button>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                        <div><p className="text-xs text-gray-500">Kode Job</p><p className="font-semibold">{job.kode}</p></div>
+                        <div><p className="text-xs text-gray-500">Marketing</p><p className="font-medium">{job.owner_marketing}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-gray-500">Klien</p><p className="font-semibold text-base">{job.klien}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-gray-500">PIC Klien</p><p className="font-medium">{job.pic_klien || 'â€”'} {job.pic_klien_phone ? `(${job.pic_klien_phone})` : ''}</p></div>
+                        <div><p className="text-xs text-gray-500">Jenis Alat</p><p className="font-medium">{job.pesawat}</p></div>
+                        <div><p className="text-xs text-gray-500">Jumlah Unit</p><p className="font-bold">{job.units} Unit</p></div>
+                        <div className="col-span-2"><p className="text-xs text-gray-500">Lokasi</p><p>{job.lokasi}</p></div>
+                        {canSeeNilai && (
+                            <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200">
+                                <p className="text-xs text-yellow-800 font-bold">Nilai Kontrak</p>
+                                <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
+    // â”€â”€ Main Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
+            <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-full">
+                
+                {/* Header */}
+                <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50 rounded-t-xl sticky top-0 z-10">
+                    <div>
+                        <h2 className="text-xl font-black text-gray-800">{job.klien}</h2>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-600">
+                            <span className="font-mono bg-white px-2 py-0.5 rounded border shadow-sm">{job.kode}</span>
+                            <span className="font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
+                                Stage {job.stage}
+                            </span>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex px-6 border-b bg-white sticky top-[76px] z-10 shadow-sm overflow-x-auto">
+                    {[
+                        { id: 'timeline',  label: 'Timeline & Status' },
+                        { id: 'docs',      label: 'Dokumen' },
+                        { id: 'history',   label: 'Riwayat' },
+                        { id: 'info',      label: 'Info & Edit' },
+                    ].map(t => (
+                        <button key={t.id} onClick={() => setActiveTab(t.id)}
+                            className={`py-3 px-4 font-semibold text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Content Area */}
+                <div className="p-6 overflow-y-auto bg-white flex-1">
+                    {activeTab === 'timeline' && renderTimeline()}
+                    {activeTab === 'docs'     && renderDocuments()}
+                    {activeTab === 'history'  && renderHistory()}
+                    {activeTab === 'info'     && renderEditInfo()}
+                </div>
+
+                {/* Global Loader Overlay */}
+                {(processing || isUploading) && (
+                    <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">
+                        <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                            <span className="font-semibold text-gray-700">Memproses...</span>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
+
+// â•â• END PART C â•â•
+

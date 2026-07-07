@@ -17,6 +17,7 @@ class InspectorProfile extends Model
         'spesialisasi',
         'domisili',
         'senior_level',
+        'subrole',  // tenaga_ahli | teknisi
         'active',
     ];
 

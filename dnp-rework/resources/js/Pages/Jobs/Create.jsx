@@ -56,13 +56,15 @@ export default function JobCreate({ auth }) {
                                     className="w-full px-3 py-2 border rounded"
                                     required
                                 >
-                                    <option value="Boiler">Boiler</option>
-                                    <option value="Bejana Tekan (PV)">Bejana Tekan (PV)</option>
-                                    <option value="Instalasi Listrik">Instalasi Listrik</option>
-                                    <option value="Instalasi Petir">Instalasi Petir</option>
-                                    <option value="Lift / Escalator">Lift / Escalator</option>
-                                    <option value="Pesawat Angkat Angkut">Pesawat Angkat Angkut</option>
-                                    <option value="Proteksi Kebakaran">Proteksi Kebakaran</option>
+                                    <option value="">-- Pilih Jenis Alat --</option>
+                                    <option value="Proteksi Kebakaran (Form 65 K)">Proteksi Kebakaran (Form 65 K)</option>
+                                    <option value="Lift / Dumbwaiter (Form 36/38/39)">Lift / Dumbwaiter (Form 36/38/39)</option>
+                                    <option value="Eskalator / Travelator (Form 52)">Eskalator / Travelator (Form 52)</option>
+                                    <option value="PAPA (Crane/Forklift/dll) (Form A 52)">PAPA (Crane/Forklift/dll) (Form A 52)</option>
+                                    <option value="Instalasi Listrik & PP (Form 55 L)">Instalasi Listrik &amp; PP (Form 55 L)</option>
+                                    <option value="Pesawat Uap (Boiler) (Form 6)">Pesawat Uap (Boiler) (Form 6)</option>
+                                    <option value="Bejana Tekan (Form 45 A.1)">Bejana Tekan (Form 45 A.1)</option>
+                                    <option value="PTP (Compressor/Genset) (Form 54 A)">PTP (Compressor/Genset) (Form 54 A)</option>
                                 </select>
                                 {errors.pesawat && <div className="text-red-500 text-xs mt-1">{errors.pesawat}</div>}
                             </div>

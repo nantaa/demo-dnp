@@ -68,6 +68,8 @@ class JobController extends Controller
             'pic_klien_phone' => 'nullable|string',
             'units'           => 'integer|min:1',
             'nilai'           => 'numeric|min:0',
+            'no_po'           => 'required|string|max:255',
+            'tgl_po'          => 'nullable|date',
         ]);
 
         if (Auth::user()->role === 'marketing') {

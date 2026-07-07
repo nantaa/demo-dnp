@@ -90,6 +90,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         total_invoice_amount: job.total_invoice_amount ?? '',
         tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
         s10_progress_status:  job.s10_progress_status  ?? '',
+        tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
     });
 
     // Master data & recommendations (Stage 3)
@@ -159,8 +160,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             if (!data.tgl_pelaksanaan) return alert('Tanggal Pelaksanaan wajib diisi!');
             if (!data.inspector_ids?.length) return alert('Pilih minimal satu inspektur!');
         }
-        if (job.stage === 4 && s4UnitMismatch) return alert('Selesaikan ketidakcocokan jumlah alat terlebih dahulu!');
+        
         post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
+    };
+
+    const handleRouteTo13 = (e) => {
+        e.preventDefault();
+        router.post(`/jobs/${job.id}/move`, { ...data, next_stage: 13 }, { onSuccess: () => onClose() });
     };
 
     const handleRejectStage = () => {
@@ -509,17 +515,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                         </div>
                         <NoteField />
-                        {/* Move or Return to S1 */}
+                        {/* Move to Stage 13 */}
                         {s4UnitMismatch ? (
-                            <form onSubmit={handleReturnToStage1} className="border border-red-200 rounded-lg p-3 bg-red-50">
+                            <form onSubmit={handleRouteTo13} className="border border-red-200 rounded-lg p-3 bg-red-50">
                                 <p className="text-sm font-semibold text-red-800 mb-2">
-                                    ⚠️ Jumlah tidak sesuai. Kembalikan ke Stage 1 agar Marketing merevisi.
+                                    ⚠️ Jumlah alat tidak sesuai. Lanjutkan ke Stage Perubahan Unit agar Marketing dapat merevisi PO/Invoice.
                                 </p>
-                                <textarea rows={2} value={returnNotes} onChange={e => setReturnNotes(e.target.value)}
+                                <textarea rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)}
                                     className="w-full text-sm border rounded px-2 py-1.5 mb-2"
-                                    placeholder="Alasan pengembalian ke Stage 1 PO…" required />
+                                    placeholder="Catatan untuk Marketing (opsional)…" />
                                 <button type="submit" className="w-full py-2 rounded text-sm font-bold bg-red-600 text-white hover:bg-red-700">
-                                    Kembalikan ke Stage 1 PO
+                                    Lanjut ke Perubahan Unit (MKT)
                                 </button>
                             </form>
                         ) : (
@@ -687,6 +693,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                 </select>
                             </div>
+                            <div className="col-span-2">
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Submit ke MKT</label>
+                                <input type="date" value={s10.tgl_submit_mkt}
+                                    onChange={e => setS10({ ...s10, tgl_submit_mkt: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                            </div>
                         </div>
                         <button type="button" onClick={handleSaveS10}
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
@@ -701,8 +713,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 11 (Pengiriman SUKET — MKT) ──────── */}
                 {s === 11 && (
                     <div className="space-y-3">
-                        <p className="text-xs text-gray-500">Upload bukti pengiriman SUKET ke klien, kemudian tandai selesai.</p>
-                        {(DOC_TYPES_BY_STAGE[11] || []).map(t => <UploadSlot key={t} type={t} stageId={11} />)}
+                        <p className="text-xs text-gray-500">Upload dokumen (Opsional), kemudian tandai selesai.</p>
+                        {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
+                            <div key={t} className="relative">
+                                <span className="absolute top-1 right-2 text-[10px] text-gray-400 font-bold bg-white px-1 border rounded z-10">OPSIONAL</span>
+                                <UploadSlot type={t} stageId={11} />
+                            </div>
+                        ))}
                         <NoteField />
                         <MoveRow />
                     </div>
@@ -906,7 +923,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="col-span-2"><p className="text-xs text-gray-500">Lokasi</p><p>{job.lokasi}</p></div>
                         {canSeeNilai && (
                             <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200">
-                                <p className="text-xs text-yellow-800 font-bold">Nilai Kontrak</p>
+                                <p className="text-xs text-yellow-800 font-bold">
+                                    Nilai Kontrak <span className="font-normal opacity-80">(belum termasuk PPN)</span>
+                                </p>
                                 <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
                             </div>
                         )}

@@ -25,7 +25,51 @@ export default function JobList({ jobs, auth }) {
         j.klien.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleExportCSV = () => {
+        if (filteredJobs.length === 0) return alert('Tidak ada data untuk diexport');
+        
+        const headers = ['Kode', 'Klien', 'Pesawat', 'Unit', 'Lokasi', 'Stage', 'Marketing', 'Tgl Pelaksanaan'];
+        const rows = filteredJobs.map(job => [
+            job.kode,
+            `"${job.klien}"`,
+            `"${job.pesawat}"`,
+            job.units,
+            `"${job.lokasi}"`,
+            job.stage,
+            `"${job.owner_marketing}"`,
+            job.tgl_pelaksanaan || ''
+        ]);
+        
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + headers.join(",") + "\n"
+            + rows.map(e => e.join(",")).join("\n");
+            
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `jobs_export_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const getSlaBadge = (job) => {
+        if (job.stage === 4 && job.tgl_pelaksanaan) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const pelDate = new Date(job.tgl_pelaksanaan);
+            pelDate.setHours(0,0,0,0);
+            const diffDays = Math.round((today - pelDate) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-blue-100 text-blue-800 font-bold border border-blue-300">HARI H</span>;
+            } else if (diffDays > 0) {
+                return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-red-100 text-red-800 font-bold border border-red-300">OVERDUE</span>;
+            } else {
+                return <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-yellow-100 text-yellow-800 font-bold border border-yellow-300">H {diffDays}</span>;
+            }
+        }
+
         const stageInfo = STAGES.find(s => s.id === job.stage);
         let slaDays = stageInfo?.sla;
         if (!slaDays) return null;
@@ -57,6 +101,9 @@ export default function JobList({ jobs, auth }) {
                             + Job Baru
                         </Link>
                     )}
+                    <button onClick={handleExportCSV} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded text-sm font-medium whitespace-nowrap">
+                        Export CSV
+                    </button>
                 </div>
             </div>
 

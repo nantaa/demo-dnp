@@ -466,6 +466,7 @@ class JobController extends Controller
             'total_invoice_amount' => 'nullable|numeric|min:0',
             'tgl_invoice_issued'   => 'nullable|date',
             's10_progress_status'  => 'nullable|in:not_started,delayed,in_progress,almost_done,done',
+            'tgl_submit_mkt'       => 'nullable|date',
         ]);
 
         $job->update($validated);

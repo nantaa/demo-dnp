@@ -84,7 +84,7 @@ export default function JobCreate({ auth }) {
                                 {errors.units && <div className="text-red-500 text-xs mt-1">{errors.units}</div>}
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Nilai Kontrak (Rp)</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Nilai Kontrak (Rp) <span className="font-normal text-xs text-gray-500">(belum termasuk PPN)</span></label>
                                 <input
                                     type="number"
                                     min="0"

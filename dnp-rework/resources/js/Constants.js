@@ -3,6 +3,7 @@ export const STAGES = [
     { id: 2,  name: 'Verifikasi Dokumen',          short: 'Verifikasi',  role: 'admin',      sla: 1    },
     { id: 3,  name: 'Penjadwalan & Surat Tugas',   short: 'Jadwal',      role: 'admin',      sla: 1    },
     { id: 4,  name: 'Pelaksanaan RU',              short: 'Inspeksi',    role: 'inspektur',  sla: null },
+    { id: 13, name: 'Perubahan Unit',              short: 'Perubahan',   role: 'marketing',  sla: 1    },
     { id: 5,  name: 'Review Laporan Teknis',       short: 'Rev. Laporan',role: 'manager',    sla: 1    },
     { id: 6,  name: 'Penyusunan LHPP',             short: 'LHPP',        role: 'inspektur',  sla: 3    },
     { id: 7,  name: 'Penyerahan ke Dinas',         short: 'Penyerahan',  role: 'manager',    sla: 1    },
@@ -23,7 +24,7 @@ export const ROLES = {
 };
 
 // Marketing-only stages (locked for MGR intercept)
-export const MKT_STAGES = [1, 11];
+export const MKT_STAGES = [1, 11, 13];
 // Finance-only stages (locked for MGR intercept)
 export const FIN_STAGES = [10, 12];
 
@@ -43,7 +44,7 @@ export const PESAWAT_TYPES = [
 export const STAGE4_PHOTO_TYPES = [
     'Foto Keberangkatan',
     'Foto Sampai Lokasi Riksauji',
-    'Foto Alat yang di RiksaUji',
+    'Foto Kepulangan',
 ];
 
 // INS subroles (Task 8) — informational only for now
@@ -73,15 +74,16 @@ export const DOC_TYPES_BY_STAGE = {
     1:  ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama'],
     2:  ['Pengesahan Gambar Kemnaker', 'Catatan Verifikasi'],
     3:  ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
-    4:  ['Foto Keberangkatan', 'Foto Sampai Lokasi Riksauji', 'Foto Alat yang di RiksaUji', 'Data Pengukuran', 'Checklist Lapangan'],
+    4:  ['Foto Keberangkatan', 'Foto Sampai Lokasi Riksauji', 'Foto Kepulangan', 'Data Pengukuran', 'Checklist Lapangan'],
     5:  ['LHPP Draft', 'BAP', 'Catatan Review MGR'],        // Stage 5 = Review Laporan Teknis (was stage 6)
     6:  ['LHPP Final', 'BAP Final', 'Bundel Dokumen'],      // Stage 6 = Penyusunan LHPP (was stage 5)
     7:  ['Bukti Penyerahan ke Disnaker'],
     8:  ['Bukti Penerimaan Dokumen Disnaker', 'Suket dari Disnaker'],
     9:  ['Suket (Asli) dari Disnaker', 'Bukti Submit ke FIN'],
-    10: ['Invoice (PDF)', 'Faktur Pajak', 'Bukti Submit ke MKT'],
-    11: ['Tanda Terima Pengiriman SUKET ke Klien', 'Bukti Kirim (Ekspedisi/Foto)'],
+    10: ['Invoice (PDF)', 'Faktur Pajak'],
+    11: ['Proposal', 'Suket', 'Kwitansi'],
     12: ['Arsip Final'],
+    13: [],
 };
 
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)

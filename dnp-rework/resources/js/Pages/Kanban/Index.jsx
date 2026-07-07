@@ -71,6 +71,22 @@ export default function KanbanIndex({ jobs, auth }) {
                                     <div className="mt-3 flex justify-between items-center text-[10px] text-gray-400">
                                         <span>Marketing: {job.owner_marketing}</span>
                                         {(() => {
+                                            if (job.stage === 4 && job.tgl_pelaksanaan) {
+                                                const today = new Date();
+                                                today.setHours(0,0,0,0);
+                                                const pelDate = new Date(job.tgl_pelaksanaan);
+                                                pelDate.setHours(0,0,0,0);
+                                                const diffDays = Math.round((today - pelDate) / (1000 * 60 * 60 * 24));
+                                                
+                                                if (diffDays === 0) {
+                                                    return <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold border border-blue-300">HARI H</span>;
+                                                } else if (diffDays > 0) {
+                                                    return <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 font-bold border border-red-300">OVERDUE</span>;
+                                                } else {
+                                                    return <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 font-bold border border-yellow-300">H {diffDays}</span>;
+                                                }
+                                            }
+
                                             const stageInfo = STAGES.find(s => s.id === job.stage);
                                             if (!stageInfo?.sla) return null;
                                             

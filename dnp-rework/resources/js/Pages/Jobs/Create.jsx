@@ -28,7 +28,7 @@ export default function JobCreate({ auth }) {
         <AppLayout>
             <Head title="Buat Job Baru (PO/SPK)" />
 
-            <div className="max-w-2xl mx-auto mt-8">
+            <div className="max-w-2xl mx-auto sm:mt-8">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">Buat Job Baru</h1>
                     <p className="text-gray-500 text-sm mt-1">Stage 1: Pendaftaran PO/SPK Baru oleh Marketing.</p>

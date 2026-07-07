@@ -918,42 +918,42 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Main Render ──────────────────────────────────────────────────────────
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
-            <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-full">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
+            <div className="relative w-full sm:max-w-4xl bg-white sm:rounded-xl shadow-2xl flex flex-col h-full sm:max-h-[95vh] sm:h-auto">
                 
                 {/* Header */}
-                <div className="px-6 py-5 border-b flex items-center justify-between bg-gray-50 rounded-t-xl sticky top-0 z-10">
-                    <div>
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">{job.klien}</h2>
-                        <div className="flex items-center gap-3 mt-1.5 text-sm text-gray-600">
-                            <span className="font-mono bg-white px-2.5 py-1 rounded border shadow-sm text-sm font-semibold">{job.kode}</span>
-                            <span className="font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                <div className="px-4 sm:px-6 py-3 sm:py-5 border-b flex items-center justify-between bg-gray-50 sm:rounded-t-xl sticky top-0 z-10">
+                    <div className="min-w-0 flex-1 mr-3">
+                        <h2 className="text-base sm:text-2xl font-black text-gray-900 tracking-tight truncate">{job.klien}</h2>
+                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                            <span className="font-mono bg-white px-2 py-0.5 rounded border shadow-sm text-xs font-semibold">{job.kode}</span>
+                            <span className="font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
                                 Stage {job.stage}
                             </span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2.5 hover:bg-gray-200 rounded-full transition-colors">
-                        <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0">
+                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex px-6 border-b bg-white sticky top-[88px] z-10 shadow-sm overflow-x-auto">
+                <div className="flex px-2 sm:px-6 border-b bg-white sticky top-[62px] sm:top-[88px] z-10 shadow-sm overflow-x-auto scrollbar-hide">
                     {[
-                        { id: 'timeline',  label: 'Timeline & Status' },
+                        { id: 'timeline',  label: 'Status' },
                         { id: 'docs',      label: 'Dokumen' },
                         { id: 'history',   label: 'Riwayat' },
-                        { id: 'info',      label: 'Info & Edit' },
+                        { id: 'info',      label: 'Info' },
                     ].map(t => (
                         <button key={t.id} onClick={() => setActiveTab(t.id)}
-                            className={`py-4 px-6 font-bold text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                            className={`py-3 px-3 sm:py-4 sm:px-6 font-bold text-sm sm:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
                             {t.label}
                         </button>
                     ))}
                 </div>
 
                 {/* Content Area */}
-                <div className="p-6 overflow-y-auto bg-white flex-1">
+                <div className="p-3 sm:p-6 overflow-y-auto bg-white flex-1">
                     {activeTab === 'timeline' && renderTimeline()}
                     {activeTab === 'docs'     && renderDocuments()}
                     {activeTab === 'history'  && renderHistory()}

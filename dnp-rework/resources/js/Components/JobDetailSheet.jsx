@@ -922,23 +922,23 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-full">
                 
                 {/* Header */}
-                <div className="px-6 py-4 border-b flex items-center justify-between bg-gray-50 rounded-t-xl sticky top-0 z-10">
+                <div className="px-6 py-5 border-b flex items-center justify-between bg-gray-50 rounded-t-xl sticky top-0 z-10">
                     <div>
-                        <h2 className="text-xl font-black text-gray-800">{job.klien}</h2>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-600">
-                            <span className="font-mono bg-white px-2 py-0.5 rounded border shadow-sm">{job.kode}</span>
-                            <span className="font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">{job.klien}</h2>
+                        <div className="flex items-center gap-3 mt-1.5 text-sm text-gray-600">
+                            <span className="font-mono bg-white px-2.5 py-1 rounded border shadow-sm text-sm font-semibold">{job.kode}</span>
+                            <span className="font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
                                 Stage {job.stage}
                             </span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2.5 hover:bg-gray-200 rounded-full transition-colors">
                         <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex px-6 border-b bg-white sticky top-[76px] z-10 shadow-sm overflow-x-auto">
+                <div className="flex px-6 border-b bg-white sticky top-[88px] z-10 shadow-sm overflow-x-auto">
                     {[
                         { id: 'timeline',  label: 'Timeline & Status' },
                         { id: 'docs',      label: 'Dokumen' },
@@ -946,7 +946,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         { id: 'info',      label: 'Info & Edit' },
                     ].map(t => (
                         <button key={t.id} onClick={() => setActiveTab(t.id)}
-                            className={`py-3 px-4 font-semibold text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                            className={`py-4 px-6 font-bold text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
                             {t.label}
                         </button>
                     ))}

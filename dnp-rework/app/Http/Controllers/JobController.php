@@ -196,7 +196,8 @@ class JobController extends Controller
                 'alat_ids'         => json_encode($validated['alat_ids'] ?? []),
                 'cert_ids'         => json_encode($validated['cert_ids'] ?? []),
             ]);
-            $this->generateSuratTugas($job);
+            // Disabled: Word Surat Tugas generator is not working/required
+            // $this->generateSuratTugas($job);
         }
 
         // Stage 7 → 8: set 30-day Disnaker EWS deadline

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import {
@@ -6,7 +6,7 @@ import {
     PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS
 } from '@/Constants';
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Helpers ──────────────────────────────────────────────────────────────────
 const parseJsonArray = (v) => {
     if (!v) return [];
     if (Array.isArray(v)) return v;
@@ -14,10 +14,10 @@ const parseJsonArray = (v) => {
 };
 
 const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) =>
-    d ? new Date(d).toLocaleDateString('id-ID', opts) : 'â€”';
+    d ? new Date(d).toLocaleDateString('id-ID', opts) : '—';
 
 const fmtCurrency = (n) =>
-    n != null ? 'Rp ' + Number(n).toLocaleString('id-ID') : 'â€”';
+    n != null ? 'Rp ' + Number(n).toLocaleString('id-ID') : '—';
 
 const fmtSize = (bytes) => {
     if (!bytes) return '';
@@ -38,9 +38,9 @@ const getSlaTag = (days, slaLimit) => {
     return                        { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
 };
 
-// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
-    // â”€â”€ Forms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Forms ────────────────────────────────────────────────────────────────
     const { data, setData, post, processing, errors } = useForm({
         next_stage:      job.stage + 1,
         notes:           '',
@@ -61,7 +61,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         units:   job.units   || 1,
     });
 
-    // â”€â”€ UI State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── UI State ─────────────────────────────────────────────────────────────
     const [activeTab,    setActiveTab]    = useState('timeline');
     const [isEditing,    setIsEditing]    = useState(false);
     const [isUploading,  setIsUploading]  = useState(false);
@@ -103,7 +103,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
     }, [job.id, job.stage]);
 
-    // â”€â”€ Permissions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};
     const isInspector = job.inspectors?.some(i => i.id === user?.id);
     const isMGR = user?.role === 'manager';
@@ -150,7 +150,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // Stage 4: unit mismatch
     const s4UnitMismatch = s4.actual_units != null && parseInt(s4.actual_units) !== parseInt(job.units);
 
-    // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Handlers ─────────────────────────────────────────────────────────────
     const handleMoveStage = (e) => {
         e.preventDefault();
         if (job.stage === 1 && !stage1DocOk) return alert('Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
@@ -251,11 +251,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
             <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer"
                className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
-                ðŸ“Ž {doc.name}
+                📎 {doc.name}
             </a>
             {canManageStageDocs(doc.stage) && (
                 <button onClick={() => deleteDoc(doc.id)}
-                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">âœ•</button>
+                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
             )}
         </div>
     );
@@ -265,11 +265,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const daysInStage = daysElapsed(job.stage_started_at);
     const slaTag = getSlaTag(daysInStage, currentStageInfo?.sla);
 
-// â•â• END PART A â•â• (DO NOT ADD MORE CODE BELOW THIS LINE â€” combine with part_b then part_c)
+// ══ END PART A ══ (DO NOT ADD MORE CODE BELOW THIS LINE — combine with part_b then part_c)
 
-// â•â• BEGIN PART B â•â•
+// ══ BEGIN PART B ══
 
-    // â”€â”€ Stage Action Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Stage Action Panel ────────────────────────────────────────────────────
     const renderStageAction = () => {
         if (!canManage) return null;
         const s = job.stage;
@@ -279,7 +279,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             <div className="mt-4 flex flex-col gap-2">
                 {disabledMsg && (
                     <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                        âš ï¸ {disabledMsg}
+                        ⚠️ {disabledMsg}
                     </div>
                 )}
                 <div className="flex gap-2">
@@ -291,7 +291,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     )}
                     <button type="submit" disabled={processing || disabled}
                         className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                        {processing ? '...' : `Lanjut ke Stage ${s + 1} â†’`}
+                        {processing ? '...' : `Lanjut ke Stage ${s + 1} →`}
                     </button>
                 </div>
             </div>
@@ -327,7 +327,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
         return (
             <form onSubmit={handleMoveStage}>
-                {/* â”€â”€ STAGE 1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 1 ─────────────────────────────────── */}
                 {s === 1 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Upload minimal salah satu dokumen berikut untuk melanjutkan:</p>
@@ -341,17 +341,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 2 ─────────────────────────────────── */}
                 {s === 2 && (
                     <div className="space-y-3">
                         {!stage2DocOk && !stage2Bypass && (
                             <div className="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800">
-                                âš ï¸ Dokumen belum lengkap. Upload semua dokumen wajib, atau minta persetujuan Kadiv/MGR.
+                                ⚠️ Dokumen belum lengkap. Upload semua dokumen wajib, atau minta persetujuan Kadiv/MGR.
                             </div>
                         )}
                         {stage2Bypass && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded p-3 text-xs text-emerald-800 font-medium">
-                                âœ… Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
+                                ✅ Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
                             </div>
                         )}
                         {job.peer_review_status === 'requested' && isMGR && (
@@ -378,18 +378,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             )}
                             {job.peer_review_status === 'requested' && !isMGR && (
                                 <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
-                                    ðŸ”” Menunggu persetujuan Kadiv/MGRâ€¦
+                                    🔔 Menunggu persetujuan Kadiv/MGR…
                                 </div>
                             )}
                             <button type="submit" disabled={processing || !stage2CanMove}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 3 â†’'}
+                                {processing ? '...' : 'Lanjut ke Stage 3 →'}
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 3 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 3 ─────────────────────────────────── */}
                 {s === 3 && (
                     <div className="space-y-4">
                         {/* Scheduling fields */}
@@ -450,7 +450,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 4 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 4 ─────────────────────────────────── */}
                 {s === 4 && (
                     <div className="space-y-4">
                         {/* Unit Count */}
@@ -471,7 +471,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     <textarea rows={2} value={s4.unit_count_notes}
                                         onChange={e => setS4({ ...s4, unit_count_notes: e.target.value })}
                                         className="w-full text-sm border rounded px-2 py-1.5"
-                                        placeholder="Jelaskan mengapa jumlah berbedaâ€¦" />
+                                        placeholder="Jelaskan mengapa jumlah berbeda…" />
                                 </div>
                             )}
                             <button type="button" onClick={handleSaveS4}
@@ -489,7 +489,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div key={type} className="border border-dashed rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-xs font-medium text-gray-700">{type}</span>
-                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">âœ“ Terupload</span>}
+                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">✓ Terupload</span>}
                                             </div>
                                             {existing.length > 0
                                                 ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} />)}</div>
@@ -501,7 +501,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 className="w-full text-xs border border-gray-200 rounded px-2 py-1 mb-1" />
                                             <button type="button" onClick={() => uploadPhoto(type)}
                                                 className="text-xs px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100">
-                                                ðŸ“· Upload Foto
+                                                📷 Upload Foto
                                             </button>
                                         </div>
                                     );
@@ -513,11 +513,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {s4UnitMismatch ? (
                             <form onSubmit={handleReturnToStage1} className="border border-red-200 rounded-lg p-3 bg-red-50">
                                 <p className="text-sm font-semibold text-red-800 mb-2">
-                                    âš ï¸ Jumlah tidak sesuai. Kembalikan ke Stage 1 agar Marketing merevisi.
+                                    ⚠️ Jumlah tidak sesuai. Kembalikan ke Stage 1 agar Marketing merevisi.
                                 </p>
                                 <textarea rows={2} value={returnNotes} onChange={e => setReturnNotes(e.target.value)}
                                     className="w-full text-sm border rounded px-2 py-1.5 mb-2"
-                                    placeholder="Alasan pengembalian ke Stage 1 POâ€¦" required />
+                                    placeholder="Alasan pengembalian ke Stage 1 PO…" required />
                                 <button type="submit" className="w-full py-2 rounded text-sm font-bold bg-red-600 text-white hover:bg-red-700">
                                     Kembalikan ke Stage 1 PO
                                 </button>
@@ -528,14 +528,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 5 (Review Laporan Teknis â€” MGR) â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 5 (Review Laporan Teknis — MGR) ───── */}
                 {s === 5 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
                         {job.s5_review_decision && (
                             <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
                                 Keputusan sebelumnya: <strong>{STAGE5_DECISIONS.find(d => d.value === job.s5_review_decision)?.label}</strong>
-                                {job.s5_review_notes && <span> â€” {job.s5_review_notes}</span>}
+                                {job.s5_review_notes && <span> — {job.s5_review_notes}</span>}
                             </div>
                         )}
                         <div>
@@ -550,7 +550,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <label className="block text-xs font-medium text-gray-600 mb-1">Catatan MGR</label>
                             <textarea rows={3} value={s5.s5_review_notes} onChange={e => setS5({ ...s5, s5_review_notes: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
-                                placeholder="Catatan kondisi, syarat, atau alasan penolakanâ€¦" />
+                                placeholder="Catatan kondisi, syarat, atau alasan penolakan…" />
                         </div>
                         <button type="button" onClick={handleSaveS5}
                             className="w-full py-2 rounded text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
@@ -564,13 +564,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </button>
                             <button type="submit" disabled={processing || !s5.s5_review_decision || s5.s5_review_decision === 'rejected'}
                                 className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 6 LHPP â†’'}
+                                {processing ? '...' : 'Lanjut ke Stage 6 LHPP →'}
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 6 (Penyusunan LHPP â€” INS) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 6 (Penyusunan LHPP — INS) ────────── */}
                 {s === 6 && (
                     <div className="space-y-3">
                         {(DOC_TYPES_BY_STAGE[6] || []).map(t => <UploadSlot key={t} type={t} stageId={6} />)}
@@ -579,7 +579,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 7 (Penyerahan ke Dinas â€” MGR) â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 7 (Penyerahan ke Dinas — MGR) ────── */}
                 {s === 7 && (
                     <div className="space-y-3">
                         <div>
@@ -598,7 +598,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 8 (Proses Disnaker â€” Admin) â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 8 (Proses Disnaker — Admin) ──────── */}
                 {s === 8 && (
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
@@ -621,7 +621,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             const tag = getSlaTag(d, 30);
                             return (
                                 <div className={`rounded p-2 text-xs font-semibold ${tag?.cls}`}>
-                                    {d} hari dari penyerahan dokumen (SLA: 30 hari) â€” {tag?.label}
+                                    {d} hari dari penyerahan dokumen (SLA: 30 hari) — {tag?.label}
                                 </div>
                             );
                         })()}
@@ -635,7 +635,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 9 (Pengurusan Suket â€” Admin) â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 9 (Pengurusan Suket — Admin) ──────── */}
                 {s === 9 && (
                     <div className="space-y-3">
                         <div>
@@ -657,13 +657,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200">Tolak</button>
                             <button type="submit" disabled={processing}
                                 className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 10 â†’'}
+                                {processing ? '...' : 'Lanjut ke Stage 10 →'}
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 10 (Penagihan â€” Finance) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 10 (Penagihan — Finance) ──────────── */}
                 {s === 10 && (
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
@@ -698,7 +698,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* â”€â”€ STAGE 11 (Pengiriman SUKET â€” MKT) â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                {/* ── STAGE 11 (Pengiriman SUKET — MKT) ──────── */}
                 {s === 11 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Upload bukti pengiriman SUKET ke klien, kemudian tandai selesai.</p>
@@ -711,11 +711,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         );
     };
 
-// â•â• END PART B â•â•
+// ══ END PART B ══
 
-// â•â• BEGIN PART C â•â•
+// ══ BEGIN PART C ══
 
-    // â”€â”€ Timeline Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Timeline Tab ─────────────────────────────────────────────────────────
     const renderTimeline = () => (
         <div className="space-y-6 py-2">
             <h3 className="font-bold text-gray-800 border-b pb-2">Status Pekerjaan: Stage {job.stage} ({currentStageInfo?.name})</h3>
@@ -723,7 +723,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             {/* SLA Badge for current stage */}
             {slaTag && (
                 <div className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold ${slaTag.cls}`}>
-                    â± {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} â€” {slaTag.label}
+                    ⏱ {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} — {slaTag.label}
                 </div>
             )}
 
@@ -743,7 +743,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div key={stage.id} className={`relative ${isFuture ? 'opacity-50' : ''}`}>
                             {/* Connector Node */}
                             <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${iconBg}`}>
-                                {isPast ? 'âœ“' : stage.id}
+                                {isPast ? '✓' : stage.id}
                             </div>
                             
                             <div className="bg-white border rounded-lg shadow-sm p-4">
@@ -778,7 +778,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         </div>
     );
 
-    // â”€â”€ Documents Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Documents Tab ────────────────────────────────────────────────────────
     const renderDocuments = () => (
         <div className="space-y-4">
             {STAGES.map(stage => {
@@ -795,10 +795,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
                                     <div>
                                         <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
-                                            <span>ðŸ“„</span> {doc.name}
+                                            <span>📄</span> {doc.name}
                                         </a>
                                         <div className="text-xs text-gray-500 mt-1 ml-6">
-                                            {doc.type} â€¢ Uploaded by {doc.uploaded_by_user_id} â€¢ {fmt(doc.created_at)}
+                                            {doc.type} • Uploaded by {doc.uploaded_by_user_id} • {fmt(doc.created_at)}
                                         </div>
                                     </div>
                                     {canManageStageDocs(doc.stage) && (
@@ -821,7 +821,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         </div>
     );
 
-    // â”€â”€ History Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── History Tab ──────────────────────────────────────────────────────────
     const renderHistory = () => (
         <div className="space-y-4">
             {(job.historyLogs || job.history_logs || []).slice().reverse().map(log => (
@@ -838,7 +838,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                         {log.returned_from_stage && (
                             <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
-                                ðŸ”„ DIKEMBALIKAN dari Stage {log.returned_from_stage}
+                                🔄 DIKEMBALIKAN dari Stage {log.returned_from_stage}
                             </span>
                         )}
                         <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
@@ -850,7 +850,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         </div>
     );
 
-    // â”€â”€ Edit Info Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Edit Info Tab ────────────────────────────────────────────────────────
     const renderEditInfo = () => (
         <div className="space-y-4">
             {isEditing ? (
@@ -892,7 +892,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <h4 className="font-bold text-gray-800 border-b w-full pb-2 mb-2">Informasi Pekerjaan</h4>
                         {canManage && (
                             <button onClick={() => setIsEditing(true)} className="text-xs font-medium text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 ml-2">
-                                âœï¸ Edit
+                                ✏️ Edit
                             </button>
                         )}
                     </div>
@@ -900,7 +900,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><p className="text-xs text-gray-500">Kode Job</p><p className="font-semibold">{job.kode}</p></div>
                         <div><p className="text-xs text-gray-500">Marketing</p><p className="font-medium">{job.owner_marketing}</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Klien</p><p className="font-semibold text-base">{job.klien}</p></div>
-                        <div className="col-span-2"><p className="text-xs text-gray-500">PIC Klien</p><p className="font-medium">{job.pic_klien || 'â€”'} {job.pic_klien_phone ? `(${job.pic_klien_phone})` : ''}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-gray-500">PIC Klien</p><p className="font-medium">{job.pic_klien || '—'} {job.pic_klien_phone ? `(${job.pic_klien_phone})` : ''}</p></div>
                         <div><p className="text-xs text-gray-500">Jenis Alat</p><p className="font-medium">{job.pesawat}</p></div>
                         <div><p className="text-xs text-gray-500">Jumlah Unit</p><p className="font-bold">{job.units} Unit</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Lokasi</p><p>{job.lokasi}</p></div>
@@ -916,7 +916,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         </div>
     );
 
-    // â”€â”€ Main Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Main Render ──────────────────────────────────────────────────────────
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
             <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col max-h-full">
@@ -974,5 +974,4 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     );
 }
 
-// â•â• END PART C â•â•
-
+// ══ END PART C ══

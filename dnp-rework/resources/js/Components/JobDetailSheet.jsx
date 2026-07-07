@@ -960,6 +960,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     {activeTab === 'info'     && renderEditInfo()}
                 </div>
 
+                {/* Hidden File Input for triggerUpload */}
+                <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
+
                 {/* Global Loader Overlay */}
                 {(processing || isUploading) && (
                     <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">

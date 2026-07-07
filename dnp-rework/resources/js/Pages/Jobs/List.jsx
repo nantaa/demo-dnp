@@ -121,7 +121,7 @@ export default function JobList({ jobs, auth }) {
                                 <span className="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{job.kode}</span>
                                 <div className="flex items-center gap-1.5">
                                     {getSlaBadge(job)}
-                                    <span className="text-xs bg-gray-100 border px-2 py-0.5 rounded font-medium">S{job.stage}</span>
+                                    <span className="text-xs bg-gray-100 border px-2 py-0.5 rounded font-medium">S{stageInfo?.displayId || job.stage}</span>
                                 </div>
                             </div>
                             <h3 className="font-bold text-gray-900 text-sm leading-tight">{job.klien}</h3>
@@ -164,7 +164,7 @@ export default function JobList({ jobs, auth }) {
                                     <td className="px-4 py-3 text-gray-600">{job.pesawat} ({job.units} unit)</td>
                                     <td className="px-4 py-3">
                                         <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-gray-100 border text-xs font-medium">
-                                            <span className="text-[10px] text-gray-500">{job.stage}</span>
+                                            <span className="text-[10px] text-gray-500">{stageInfo?.displayId || job.stage}</span>
                                             {stageInfo?.name}
                                         </span>
                                         <span className="ml-2">{getSlaBadge(job)}</span>

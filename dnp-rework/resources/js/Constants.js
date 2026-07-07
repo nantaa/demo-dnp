@@ -3,7 +3,7 @@ export const STAGES = [
     { id: 2,  name: 'Verifikasi Dokumen',          short: 'Verifikasi',  role: 'admin',      sla: 1    },
     { id: 3,  name: 'Penjadwalan & Surat Tugas',   short: 'Jadwal',      role: 'admin',      sla: 1    },
     { id: 4,  name: 'Pelaksanaan RU',              short: 'Inspeksi',    role: 'inspektur',  sla: null },
-    { id: 13, name: 'Perubahan Unit',              short: 'Perubahan',   role: 'marketing',  sla: 1    },
+    { id: 13, name: 'Aktualisasi Unit',            short: 'Aktualisasi', role: 'marketing',  sla: 1, displayId: '4b' },
     { id: 5,  name: 'Review Laporan Teknis',       short: 'Rev. Laporan',role: 'manager',    sla: 1    },
     { id: 6,  name: 'Penyusunan LHPP',             short: 'LHPP',        role: 'inspektur',  sla: 3    },
     { id: 7,  name: 'Penyerahan ke Dinas',         short: 'Penyerahan',  role: 'manager',    sla: 1    },

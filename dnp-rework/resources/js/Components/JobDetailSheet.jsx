@@ -735,7 +735,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // ── Timeline Tab ─────────────────────────────────────────────────────────
     const renderTimeline = () => (
         <div className="space-y-6 py-2">
-            <h3 className="font-bold text-gray-800 border-b pb-2">Status Pekerjaan: Stage {job.stage} ({currentStageInfo?.name})</h3>
+            <h3 className="font-bold text-gray-800 border-b pb-2">Status Pekerjaan: Stage {currentStageInfo?.displayId || job.stage} ({currentStageInfo?.name})</h3>
             
             {/* SLA Badge for current stage */}
             {slaTag && (
@@ -760,13 +760,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div key={stage.id} className={`relative ${isFuture ? 'opacity-50' : ''}`}>
                             {/* Connector Node */}
                             <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${iconBg}`}>
-                                {isPast ? '✓' : stage.id}
+                                {isPast ? '✓' : (stage.displayId || stage.id)}
                             </div>
                             
                             <div className="bg-white border rounded-lg shadow-sm p-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <h4 className={`font-bold ${isCurrent ? 'text-blue-700' : 'text-gray-800'}`}>
-                                        Stage {stage.id}: {stage.name}
+                                        Stage {stage.displayId || stage.id}: {stage.name}
                                     </h4>
                                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                                         PIC: {stage.role.toUpperCase()}
@@ -805,7 +805,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 return (
                     <div key={stage.id} className="border rounded-lg p-4">
                         <h4 className="font-bold text-sm text-gray-700 mb-3 pb-2 border-b">
-                            Stage {stage.id}: {stage.name}
+                            Stage {stage.displayId || stage.id}: {stage.name}
                         </h4>
                         <div className="grid grid-cols-1 gap-2">
                             {docs.map(doc => (
@@ -859,7 +859,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </span>
                         )}
                         <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
-                            Stage {log.stage}
+                            Stage {STAGES.find(s => s.id === log.stage)?.displayId || log.stage}
                         </span>
                     </div>
                 </div>

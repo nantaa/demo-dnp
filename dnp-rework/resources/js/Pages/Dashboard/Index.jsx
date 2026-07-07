@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { STAGES } from '@/Constants';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { showSuccess } from '../swal';
+import { showSuccess } from '@/swal';
 import { 
     Activity, Plus, CheckCircle2, Bell, FileCheck, Calendar, AlertTriangle, 
     Wrench, Hourglass, ClipboardList, Upload, Banknote, Package, Eye, 

@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { ROLES, STAGES } from '@/Constants';
 import { Trash2, Shield, Plus, X } from 'lucide-react';
 import ErrorBoundary from '@/Components/ErrorBoundary';
-import { showConfirm } from '../swal';
+import { showConfirm } from '@/swal';
 
 export default function UsersIndexWrapper(props) {
     return (

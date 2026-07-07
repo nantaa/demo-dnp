@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
-import { showError, showSuccess, showConfirm, showWarning } from '../swal';
+import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS

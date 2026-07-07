@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
-import { showWarning } from '../swal';
+import { showWarning } from '@/swal';
 
 export default function JobList({ jobs, auth }) {
     const { permissions } = auth;

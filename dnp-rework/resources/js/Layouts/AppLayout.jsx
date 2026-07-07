@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { showError, showSuccess } from '../swal';
+import { showError, showSuccess } from '@/swal';
 import { 
     LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X
 } from 'lucide-react';

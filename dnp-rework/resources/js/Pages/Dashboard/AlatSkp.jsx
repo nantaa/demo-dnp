@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import ErrorBoundary from '@/Components/ErrorBoundary';
 import { Wrench, AlertCircle, Clock, User, Award, BriefcaseBusiness, ClipboardList, Download, Plus, Pencil, Trash } from 'lucide-react';
 import { STAGES } from '@/Constants';
-import { showConfirm } from '../swal';
+import { showConfirm } from '@/swal';
 
 export default function AlatSkpWrapper(props) {
     return (

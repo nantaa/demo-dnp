@@ -16,6 +16,15 @@ const parseJsonArray = (v) => {
     try { return JSON.parse(v); } catch { return []; }
 };
 
+const parseJsonObject = (v) => {
+    if (!v) return {};
+    if (typeof v === 'object' && !Array.isArray(v) && v !== null) return v;
+    try {
+        const parsed = JSON.parse(v);
+        return (typeof parsed === 'object' && parsed !== null) ? parsed : {};
+    } catch { return {}; }
+};
+
 const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) =>
     d ? new Date(d).toLocaleDateString('id-ID', opts) : '—';
 
@@ -98,7 +107,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // Stage 2 per-item verification status: { [type]: 'ok' | 'tidak' | 'na' | '' }
     const [s2Verify, setS2Verify] = useState(() => {
-        const saved = job.s2_verify_data || {};
+        const saved = parseJsonObject(job.s2_verify_data);
         const init = {};
         STAGE2_VERIFY_CHECKLIST.forEach(item => {
             init[item.type] = saved[item.type] || '';
@@ -911,7 +920,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                     (d.stage === 1 || d.stage === 2) && d.type === item.type
                                                 );
                                                 const hasFile = docs.length > 0;
-                                                const status = (job.s2_verify_data && job.s2_verify_data[item.type]) || s2Verify[item.type];
+                                                const savedData = parseJsonObject(job.s2_verify_data);
+                                                const status = savedData[item.type] || s2Verify[item.type];
                                                 return (
                                                     <div key={item.type} className="flex items-center justify-between px-3 py-1.5 hover:bg-white transition-colors">
                                                         <div className="flex items-center gap-2 min-w-0 pr-2">

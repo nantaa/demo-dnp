@@ -15,11 +15,14 @@ class AlatUji extends Model
         'kode_alat',
         'nama',
         'merk',
+        'tipe',
         'serial',
         'kategori',
         'kalibrasi_terakhir',
         'kalibrasi_expired',
         'lab',
+        'pemilik',
+        'jumlah',
         'status',
     ];
 

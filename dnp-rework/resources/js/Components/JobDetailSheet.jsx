@@ -154,7 +154,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // Stage 2 gate: all required docs OR Kadiv approved
     const stage2DocOk = STAGE2_REQUIRED_DOCS.every(t =>
-        (job.documents || []).some(d => d.stage === 2 && d.type === t));
+        (job.documents || []).some(d => (d.stage === 1 || d.stage === 2) && d.type === t));
     const stage2Bypass = job.peer_review_status === 'approved';
     const stage2CanMove = stage2DocOk || stage2Bypass;
 

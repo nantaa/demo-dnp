@@ -143,12 +143,12 @@ class JobController extends Controller
             }
         }
 
-        // Stage 2 → 3: require all Stage 2 docs OR Kadiv approval
+        // Stage 2 → 3: require mandatory Stage 2 docs OR Kadiv approval
         if ($currentStage == 2) {
-            $stage2Docs = ['Pengesahan Gambar Kemnaker', 'Catatan Verifikasi'];
+            $stage2Docs = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built'];
             $allDocsPresent = true;
             foreach ($stage2Docs as $docType) {
-                if (!$job->documents()->where('stage', 2)->where('type', $docType)->exists()) {
+                if (!$job->documents()->whereIn('stage', [1, 2])->where('type', $docType)->exists()) {
                     $allDocsPresent = false;
                     break;
                 }

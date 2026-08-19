@@ -103,5 +103,5 @@ export const DOC_TYPES_BY_STAGE = {
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)
 export const STAGE1_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'];
 
-// Stage 2 docs ALL required (can be bypassed by Kadiv approval — Task 6)
-export const STAGE2_REQUIRED_DOCS = ['Pengesahan Gambar Kemnaker', 'Catatan Verifikasi'];
+// Stage 2 mandatory docs (can be bypassed by Kadiv approval — Task 6)
+export const STAGE2_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built'];

@@ -687,6 +687,10 @@ class JobController extends Controller
     {
         return response()->json([
             'alat_uji'        => AlatUji::orderBy('nama')->get(),
+            'sertifikat_pjk3' => SertifikatPjk3::orderBy('nama')->get(),
+        ]);
+    }
+
     /**
      * Save Stage 2 per-item verification checklist status (json).
      */

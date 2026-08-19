@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import IndonesiaLocationSelect from '@/Components/IndonesiaLocationSelect';
 
 export default function JobCreate({ auth }) {
     const isMkt = auth?.user?.role === 'marketing';
@@ -122,18 +123,12 @@ export default function JobCreate({ auth }) {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Lokasi Pemeriksaan</label>
-                            <input
-                                type="text"
-                                value={data.lokasi}
-                                onChange={e => setData('lokasi', e.target.value)}
-                                className="w-full px-3 py-2 border rounded"
-                                placeholder="Kota / Wilayah"
-                                required
-                            />
-                            {errors.lokasi && <div className="text-red-500 text-xs mt-1">{errors.lokasi}</div>}
-                        </div>
+                        <IndonesiaLocationSelect
+                            value={data.lokasi}
+                            onChange={val => setData('lokasi', val)}
+                            required
+                            error={errors.lokasi}
+                        />
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>

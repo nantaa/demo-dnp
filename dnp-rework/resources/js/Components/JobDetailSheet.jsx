@@ -4,7 +4,8 @@ import SmartRecommendation from './SmartRecommendation';
 import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
-    PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS
+    PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
+    STAGE2_VERIFY_CHECKLIST
 } from '@/Constants';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -92,6 +93,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
         s10_progress_status:  job.s10_progress_status  ?? '',
         tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+    });
+
+    // Stage 2 per-item verification status: { [type]: 'ok' | 'tidak' | 'na' | '' }
+    const [s2Verify, setS2Verify] = useState(() => {
+        const init = {};
+        STAGE2_VERIFY_CHECKLIST.forEach(item => { init[item.type] = ''; });
+        return init;
     });
 
     // Master data & recommendations (Stage 3)
@@ -355,11 +363,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 2 ─────────────────────────────────── */}
                 {s === 2 && (
                     <div className="space-y-3">
-                        {!stage2DocOk && !stage2Bypass && (
-                            <div className="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800">
-                                ⚠️ Dokumen belum lengkap. Upload semua dokumen wajib, atau minta persetujuan Kadiv/MGR.
-                            </div>
-                        )}
+                        {/* Status banners */}
                         {stage2Bypass && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded p-3 text-xs text-emerald-800 font-medium">
                                 ✅ Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
@@ -374,12 +378,117 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </button>
                             </div>
                         )}
-                        {(DOC_TYPES_BY_STAGE[2] || []).map(t => <UploadSlot key={t} type={t} stageId={2} />)}
+                        {job.peer_review_status === 'requested' && !isMGR && (
+                            <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
+                                🔔 Menunggu persetujuan Kadiv/MGR…
+                            </div>
+                        )}
+
+                        {/* ── Verification Checklist Table ── */}
+                        <div className="border border-gray-200 rounded-lg overflow-hidden text-xs">
+                            {/* Table Header */}
+                            <div className="grid bg-gray-100 border-b border-gray-200 font-bold text-gray-600 uppercase tracking-wide"
+                                style={{ gridTemplateColumns: '2.5rem 1fr 7rem 8.5rem' }}>
+                                <div className="px-2 py-2 text-center">NO</div>
+                                <div className="px-3 py-2">DOKUMEN</div>
+                                <div className="px-2 py-2 text-center">FILE</div>
+                                <div className="px-2 py-2 text-center">STATUS VERIFIKASI</div>
+                            </div>
+
+                            {/* Rows */}
+                            {STAGE2_VERIFY_CHECKLIST.map((item) => {
+                                const docs = getDocs(2, item.type);
+                                const hasFile = docs.length > 0;
+                                const status = s2Verify[item.type];
+                                const setStatus = (v) => setS2Verify(prev => ({ ...prev, [item.type]: v }));
+
+                                return (
+                                    <div key={item.type}
+                                        className="grid border-b border-gray-100 hover:bg-gray-50 transition-colors items-start"
+                                        style={{ gridTemplateColumns: '2.5rem 1fr 7rem 8.5rem' }}>
+
+                                        {/* NO */}
+                                        <div className="px-2 py-3 text-center font-bold text-gray-400">{item.no}</div>
+
+                                        {/* DOKUMEN */}
+                                        <div className="px-3 py-3">
+                                            <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                                                <span className="font-medium text-gray-800">{item.label}</span>
+                                                <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold ${
+                                                    item.badge === 'WAJIB'
+                                                        ? 'border-red-400 text-red-600'
+                                                        : 'border-gray-400 text-gray-500'
+                                                }`}>{item.badge}</span>
+                                                {item.badge2 && (
+                                                    <span className="px-1.5 py-0.5 rounded border border-blue-400 text-blue-600 text-[10px] font-bold">
+                                                        {item.badge2}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {item.hint && (
+                                                <p className="text-[10px] text-gray-400 italic mt-0.5">{item.hint}</p>
+                                            )}
+                                        </div>
+
+                                        {/* FILE */}
+                                        <div className="px-2 py-3 flex flex-col items-center gap-1">
+                                            {item.isManual ? (
+                                                <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
+                                            ) : hasFile ? (
+                                                docs.map(d => (
+                                                    <a key={d.id} href={`/storage/${d.path}`} target="_blank" rel="noopener noreferrer"
+                                                        className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
+                                                        📎 {d.name.split('.').pop().toUpperCase()}
+                                                    </a>
+                                                ))
+                                            ) : (
+                                                <button type="button"
+                                                    onClick={() => triggerUpload(2, item.type)}
+                                                    className="px-2 py-1 rounded bg-red-50 border border-red-300 text-red-600 font-semibold text-[10px] hover:bg-red-100 flex items-center gap-1">
+                                                    <span>✕</span> KOSONG
+                                                </button>
+                                            )}
+                                            {hasFile && canManageStageDocs(2) && (
+                                                <button type="button" onClick={() => triggerUpload(2, item.type)}
+                                                    className="text-[10px] text-blue-500 hover:underline">+ ganti</button>
+                                            )}
+                                        </div>
+
+                                        {/* STATUS VERIFIKASI */}
+                                        <div className="px-2 py-3 flex items-center justify-center gap-1">
+                                            <button type="button" onClick={() => setStatus('ok')}
+                                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
+                                                    status === 'ok'
+                                                        ? 'bg-green-500 text-white border-green-500'
+                                                        : 'border-green-400 text-green-600 hover:bg-green-50'
+                                                }`}>✓ OK</button>
+                                            <button type="button" onClick={() => setStatus('tidak')}
+                                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
+                                                    status === 'tidak'
+                                                        ? 'bg-red-500 text-white border-red-500'
+                                                        : 'border-red-400 text-red-600 hover:bg-red-50'
+                                                }`}>✕ Tidak</button>
+                                            {item.hasNa && (
+                                                <button type="button" onClick={() => setStatus('na')}
+                                                    className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
+                                                        status === 'na'
+                                                            ? 'bg-gray-500 text-white border-gray-500'
+                                                            : 'border-gray-400 text-gray-500 hover:bg-gray-50'
+                                                    }`}>N/A</button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
                         <NoteField />
-                        <div className="flex gap-2 mt-3">
+
+                        {/* Action row */}
+                        <div className="flex gap-2 mt-1 flex-wrap">
                             <button type="button" onClick={handleRejectStage} disabled={processing}
-                                className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
-                                Tolak
+                                className="px-3 py-2 rounded text-sm bg-red-600 text-white font-semibold hover:bg-red-700">
+                                Kembalikan ke Marketing
                             </button>
                             {!stage2DocOk && !stage2Bypass && job.peer_review_status !== 'requested' && !isMGR && (
                                 <button type="button" onClick={handleAskApproval}
@@ -387,14 +496,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     Minta Persetujuan MGR
                                 </button>
                             )}
-                            {job.peer_review_status === 'requested' && !isMGR && (
-                                <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
-                                    🔔 Menunggu persetujuan Kadiv/MGR…
-                                </div>
-                            )}
                             <button type="submit" disabled={processing || !stage2CanMove}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 3 →'}
+                                {processing ? '...' : '✓ Verifikasi Selesai — Lanjut Penjadwalan →'}
                             </button>
                         </div>
                     </div>
@@ -945,32 +1049,32 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
             <div className="relative w-full sm:max-w-4xl bg-white sm:rounded-xl shadow-2xl flex flex-col h-full sm:max-h-[95vh] sm:h-auto">
                 
-                {/* Header */}
-                <div className="px-4 sm:px-6 py-3 sm:py-5 border-b flex items-center justify-between bg-gray-50 sm:rounded-t-xl sticky top-0 z-10">
+                {/* Header — compact to keep tabs visible above the fold */}
+                <div className="px-4 sm:px-5 py-2 sm:py-3 border-b flex items-center justify-between bg-gray-50 sm:rounded-t-xl sticky top-0 z-10">
                     <div className="min-w-0 flex-1 mr-3">
-                        <h2 className="text-base sm:text-2xl font-black text-gray-900 tracking-tight truncate">{job.klien}</h2>
-                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                            <span className="font-mono bg-white px-2 py-0.5 rounded border shadow-sm text-xs font-semibold">{job.kode}</span>
-                            <span className="font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
+                        <h2 className="text-sm sm:text-lg font-black text-gray-900 tracking-tight truncate leading-tight">{job.klien}</h2>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-mono bg-white px-1.5 py-0.5 rounded border shadow-sm text-[11px] font-semibold text-gray-600">{job.kode}</span>
+                            <span className="font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px]">
                                 Stage {job.stage}
                             </span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0">
+                    <button onClick={onClose} className="p-1.5 hover:bg-gray-200 rounded-full transition-colors flex-shrink-0">
                         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex px-2 sm:px-6 border-b bg-white sticky top-[62px] sm:top-[88px] z-10 shadow-sm overflow-x-auto scrollbar-hide">
+                {/* Tabs — sticky immediately below header */}
+                <div className="flex px-1 sm:px-4 border-b bg-white sticky top-[52px] sm:top-[60px] z-10 shadow-sm overflow-x-auto scrollbar-hide">
                     {[
                         { id: 'timeline',  label: 'Status' },
                         { id: 'docs',      label: 'Dokumen' },
                         { id: 'history',   label: 'Riwayat' },
-                        { id: 'info',      label: 'Info' },
+                        { id: 'info',      label: 'Info & Edit' },
                     ].map(t => (
                         <button key={t.id} onClick={() => setActiveTab(t.id)}
-                            className={`py-3 px-3 sm:py-4 sm:px-6 font-bold text-sm sm:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                            className={`py-2.5 px-3 sm:py-3 sm:px-5 font-bold text-xs sm:text-sm whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
                             {t.label}
                         </button>
                     ))}

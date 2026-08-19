@@ -69,10 +69,24 @@ export const PROGRESS_STATUSES = [
     { value: 'done',          label: 'Done'          },
 ];
 
+// Stage 2 verification checklist (Task 6)
+export const STAGE2_VERIFY_CHECKLIST = [
+    { no: '01', type: 'PO/SPK',                   label: 'PO / SPK dari Klien',                         badge: 'WAJIB',    hasNa: false, hint: null },
+    { no: '02', type: 'Surat Permohonan',          label: 'Surat Permohonan Riksa Uji (bermaterai)',      badge: 'WAJIB',    hasNa: false, hint: null },
+    { no: '03', type: 'Surat Kuasa',               label: 'Surat Kuasa dari Pemilik (bermaterai)',        badge: 'WAJIB',    hasNa: false, hint: null },
+    { no: '04', type: 'Pernyataan Keabsahan',      label: 'Surat Pernyataan Keabsahan Data',              badge: 'WAJIB',    hasNa: false, hint: null },
+    { no: '05', type: 'Form Checklist Klien',      label: 'Form Checklist Disnaker (diisi klien)',        badge: 'WAJIB',    hasNa: false, hint: null },
+    { no: '06', type: 'Drawing/As-Built',          label: 'Drawing / Gambar Teknis (as-built)',           badge: 'WAJIB',    badge2: 'WAJIB UTK PAPA', hasNa: false, hint: 'Wajib untuk: Lift, PTP, Boiler, Bejana Tekan, PAPA' },
+    { no: '07', type: 'Manual Book',               label: 'Manual Book / Spesifikasi Teknis',             badge: 'OPSIONAL', hasNa: true,  hint: 'Wajib untuk: Lift, PTP, Boiler, Bejana Tekan' },
+    { no: '08', type: 'Pengesahan Gambar Kemnaker',label: 'Pengesahan Gambar dari Kemnaker',              badge: 'OPSIONAL', hasNa: true,  hint: 'Wajib utk Disnaker: Jateng, Sumsel, Lampung, Jambi, Bengkulu, Riau, Kepri, NTB/Lombok, Bali' },
+    { no: '09', type: 'Copy Suket Lama',           label: 'Copy Suket Lama (perpanjangan)',               badge: 'OPSIONAL', hasNa: true,  hint: null },
+    { no: '10', type: 'Catatan Verifikasi',        label: 'Verifikasi: Drawing SESUAI dengan Nameplate (cek visual foto)', badge: 'OPSIONAL', badge2: 'CEK VISUAL', hasNa: true, hint: 'Cek manual oleh Admin — bandingkan gambar teknis dengan foto nameplate dari lapangan/klien', isManual: true },
+];
+
 // Required document types per stage
 export const DOC_TYPES_BY_STAGE = {
     1:  ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama'],
-    2:  ['Pengesahan Gambar Kemnaker', 'Catatan Verifikasi'],
+    2:  ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
     3:  ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
     4:  ['Foto Keberangkatan', 'Foto Sampai Lokasi Riksauji', 'Foto Kepulangan', 'Data Pengukuran', 'Checklist Lapangan'],
     5:  ['LHPP Draft', 'BAP', 'Catatan Review MGR'],        // Stage 5 = Review Laporan Teknis (was stage 6)

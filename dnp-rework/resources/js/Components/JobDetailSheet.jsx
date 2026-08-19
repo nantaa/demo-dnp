@@ -397,7 +397,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                             {/* Rows */}
                             {STAGE2_VERIFY_CHECKLIST.map((item) => {
-                                const docs = getDocs(2, item.type);
+                                // Check stage 1 AND 2 — docs are uploaded by Marketing at Stage 1,
+                                // but Admin can also add/replace them at Stage 2 during verification.
+                                const docs = (job.documents || []).filter(d =>
+                                    (d.stage === 1 || d.stage === 2) && d.type === item.type
+                                );
                                 const hasFile = docs.length > 0;
                                 const status = s2Verify[item.type];
                                 const setStatus = (v) => setS2Verify(prev => ({ ...prev, [item.type]: v }));

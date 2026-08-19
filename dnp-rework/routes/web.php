@@ -39,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/stage10-data', [JobController::class, 'saveStage10Data'])->name('jobs.stage10-data');
     Route::post('/jobs/{job}/documents', [JobController::class, 'uploadDocument'])->name('jobs.documents.upload');
     Route::delete('/jobs/{job}/documents/{document}', [JobController::class, 'deleteDocument'])->name('jobs.documents.delete');
+    Route::post('/jobs/{job}/s2-verify', [JobController::class, 'saveS2Verify'])->name('jobs.s2-verify');
 
     // Smart Recommendation API
     Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');

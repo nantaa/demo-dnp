@@ -687,7 +687,19 @@ class JobController extends Controller
     {
         return response()->json([
             'alat_uji'        => AlatUji::orderBy('nama')->get(),
-            'sertifikat_pjk3' => SertifikatPjk3::orderBy('nama')->get(),
+    /**
+     * Save Stage 2 per-item verification checklist status (json).
+     */
+    public function saveS2Verify(Request $request, Job $job)
+    {
+        $validated = $request->validate([
+            's2_verify_data' => 'required|array',
         ]);
+
+        $job->update([
+            's2_verify_data' => $validated['s2_verify_data'],
+        ]);
+
+        return back()->with('success', 'Status verifikasi berhasil disimpan.');
     }
 }

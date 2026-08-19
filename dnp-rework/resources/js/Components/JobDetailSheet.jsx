@@ -98,10 +98,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // Stage 2 per-item verification status: { [type]: 'ok' | 'tidak' | 'na' | '' }
     const [s2Verify, setS2Verify] = useState(() => {
+        const saved = job.s2_verify_data || {};
         const init = {};
-        STAGE2_VERIFY_CHECKLIST.forEach(item => { init[item.type] = ''; });
+        STAGE2_VERIFY_CHECKLIST.forEach(item => {
+            init[item.type] = saved[item.type] || '';
+        });
         return init;
     });
+
+    const handleSetS2Status = (type, val) => {
+        const updated = { ...s2Verify, [type]: val };
+        setS2Verify(updated);
+        router.post(`/jobs/${job.id}/s2-verify`, { s2_verify_data: updated }, { preserveScroll: true });
+    };
 
     // Master data & recommendations (Stage 3)
     const [masterData,       setMasterData]       = useState({ alat_uji: [], sertifikat_pjk3: [] });
@@ -405,7 +414,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 );
                                 const hasFile = docs.length > 0;
                                 const status = s2Verify[item.type];
-                                const setStatus = (v) => setS2Verify(prev => ({ ...prev, [item.type]: v }));
+                                const setStatus = (v) => handleSetS2Status(item.type, v);
 
                                 return (
                                     <div key={item.type}
@@ -893,7 +902,49 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     </div>
                                 )}
 
-                                {!isCurrent && stageDocs.length > 0 && (
+                                {!isCurrent && stage.id === 2 && (
+                                    <div className="mt-3 space-y-2 pt-2 border-t border-gray-100">
+                                        <p className="text-xs font-bold text-gray-700">Hasil Verifikasi Dokumen (Stage 2):</p>
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden text-xs bg-gray-50/50 divide-y divide-gray-100">
+                                            {STAGE2_VERIFY_CHECKLIST.map((item) => {
+                                                const docs = (job.documents || []).filter(d =>
+                                                    (d.stage === 1 || d.stage === 2) && d.type === item.type
+                                                );
+                                                const hasFile = docs.length > 0;
+                                                const status = (job.s2_verify_data && job.s2_verify_data[item.type]) || s2Verify[item.type];
+                                                return (
+                                                    <div key={item.type} className="flex items-center justify-between px-3 py-1.5 hover:bg-white transition-colors">
+                                                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                                                            <span className="font-mono text-gray-400 text-[10px] w-4">{item.no}</span>
+                                                            <span className="font-medium text-gray-800 truncate">{item.label}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                            {item.isManual ? (
+                                                                <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Manual</span>
+                                                            ) : hasFile ? (
+                                                                <span className="text-[10px] text-green-700 font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+                                                                    📎 Ada File
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Kosong</span>
+                                                            )}
+                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                                status === 'ok' ? 'bg-green-600 text-white' :
+                                                                status === 'tidak' ? 'bg-red-600 text-white' :
+                                                                status === 'na' ? 'bg-gray-500 text-white' :
+                                                                'bg-gray-200 text-gray-600'
+                                                            }`}>
+                                                                {status === 'ok' ? '✓ OK' : status === 'tidak' ? '✕ Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!isCurrent && stageDocs.length > 0 && stage.id !== 2 && (
                                     <div className="mt-3 space-y-1">
                                         <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
                                         <div className="flex flex-wrap gap-1">

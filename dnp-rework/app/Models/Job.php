@@ -53,6 +53,7 @@ class Job extends Model
         'total_invoice_amount'        => 'decimal:2',
         'alat_ids'                    => 'array',
         'cert_ids'                    => 'array',
+        's2_verify_data'              => 'array',
     ];
 
     /**

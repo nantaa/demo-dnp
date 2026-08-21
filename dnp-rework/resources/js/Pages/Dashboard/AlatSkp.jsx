@@ -165,8 +165,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     // Handle Alat Submit
     const submitAlat = (e) => {
         e.preventDefault();
-        if (selectedAlat) {
-            alatForm.put(`/inventory/alat/${selectedAlat.id}`, {
+        if (selectedAlat && selectedAlat.id) {
+            alatForm.post(`/inventory/alat/${selectedAlat.id}`, {
                 onSuccess: () => {
                     setShowAlatModal(false);
                     setSelectedAlat(null);
@@ -215,8 +215,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     // Handle Inspector Submit
     const submitInspector = (e) => {
         e.preventDefault();
-        if (selectedInspector) {
-            inspectorForm.put(`/inventory/inspector/${selectedInspector.id}`, {
+        if (selectedInspector && selectedInspector.id) {
+            inspectorForm.post(`/inventory/inspector/${selectedInspector.id}`, {
                 onSuccess: () => {
                     setShowInspectorModal(false);
                     setSelectedInspector(null);
@@ -262,7 +262,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     // Handle Sertifikat Submit
     const submitSertifikat = (e) => {
         e.preventDefault();
-        if (selectedSertifikat) {
+        if (selectedSertifikat && selectedSertifikat.id) {
             sertifikatForm.post(`/inventory/sertifikat/${selectedSertifikat.id}`, {
                 onSuccess: () => {
                     setShowSertifikatModal(false);
@@ -304,7 +304,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     // Handle Regulasi Submit
     const submitRegulasi = (e) => {
         e.preventDefault();
-        if (selectedRegulasi) {
+        if (selectedRegulasi && selectedRegulasi.id) {
             regulasiForm.post(`/inventory/regulasi/${selectedRegulasi.id}`, {
                 onSuccess: () => {
                     setShowRegulasiModal(false);
@@ -347,7 +347,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     // Handle FormDisnaker Submit
     const submitFormDisnaker = (e) => {
         e.preventDefault();
-        if (selectedFormDisnaker) {
+        if (selectedFormDisnaker && selectedFormDisnaker.id) {
             formDisnakerForm.post(`/inventory/form-disnaker/${selectedFormDisnaker.id}`, {
                 onSuccess: () => {
                     setShowFormDisnakerModal(false);

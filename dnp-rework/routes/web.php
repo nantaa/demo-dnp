@@ -59,23 +59,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Feature 5: Inventory CRUD (Admin / Manager / Superadmin)
     Route::post('/inventory/alat', [InventoryController::class, 'storeAlat'])->name('inventory.alat.store');
-    Route::put('/inventory/alat/{alatUji}', [InventoryController::class, 'updateAlat'])->name('inventory.alat.update');
+    Route::match(['put', 'post'], '/inventory/alat/{alatUji}', [InventoryController::class, 'updateAlat'])->name('inventory.alat.update');
     Route::delete('/inventory/alat/{alatUji}', [InventoryController::class, 'destroyAlat'])->name('inventory.alat.destroy');
 
     Route::post('/inventory/inspector', [InventoryController::class, 'storeInspector'])->name('inventory.inspector.store');
-    Route::put('/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'updateInspector'])->name('inventory.inspector.update');
+    Route::match(['put', 'post'], '/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'updateInspector'])->name('inventory.inspector.update');
     Route::delete('/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'destroyInspector'])->name('inventory.inspector.destroy');
 
     Route::post('/inventory/sertifikat', [InventoryController::class, 'storeSertifikat'])->name('inventory.sertifikat.store');
-    Route::post('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'updateSertifikat'])->name('inventory.sertifikat.update');
+    Route::match(['put', 'post'], '/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'updateSertifikat'])->name('inventory.sertifikat.update');
     Route::delete('/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'destroySertifikat'])->name('inventory.sertifikat.destroy');
 
     Route::post('/inventory/regulasi', [InventoryController::class, 'storeRegulasi'])->name('inventory.regulasi.store');
-    Route::post('/inventory/regulasi/{regulasiK3}', [InventoryController::class, 'updateRegulasi'])->name('inventory.regulasi.update');
+    Route::match(['put', 'post'], '/inventory/regulasi/{regulasiK3}', [InventoryController::class, 'updateRegulasi'])->name('inventory.regulasi.update');
     Route::delete('/inventory/regulasi/{regulasiK3}', [InventoryController::class, 'destroyRegulasi'])->name('inventory.regulasi.destroy');
 
     Route::post('/inventory/form-disnaker', [InventoryController::class, 'storeFormDisnaker'])->name('inventory.form-disnaker.store');
-    Route::post('/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'updateFormDisnaker'])->name('inventory.form-disnaker.update');
+    Route::match(['put', 'post'], '/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'updateFormDisnaker'])->name('inventory.form-disnaker.update');
     Route::delete('/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'destroyFormDisnaker'])->name('inventory.form-disnaker.destroy');
 });
 

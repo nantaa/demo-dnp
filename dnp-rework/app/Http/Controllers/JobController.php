@@ -188,6 +188,42 @@ class JobController extends Controller
             }
         }
 
+        // Stage 5 → 6: require MGR review decision (approved or approved_conditional)
+        if ($currentStage == 5) {
+            if (empty($job->s5_review_decision) || $job->s5_review_decision === 'rejected') {
+                return back()->withErrors([
+                    'review' => 'Keputusan review MGR wajib diisi dan disetujui (Approved / Approved Conditional) sebelum melanjutkan ke Stage 6.',
+                ]);
+            }
+        }
+
+        // Stage 6 → 7: require LHPP + BAP uploaded AND all contracted units evaluated
+        if ($currentStage == 6) {
+            $hasLhpp = $job->documents()->whereIn('stage', [5, 6])->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final'])->exists();
+            $hasBap  = $job->documents()->whereIn('stage', [5, 6])->whereIn('type', ['BAP', 'BAP (PDF)', 'BAP Final'])->exists();
+            if (!$hasLhpp || !$hasBap) {
+                return back()->withErrors([
+                    'documents' => 'LHPP dan BAP wajib diunggah sebelum melanjutkan ke Stage 7 (Penyerahan ke Dinas).',
+                ]);
+            }
+            $evaluatedCount = $job->evaluations()->count();
+            if ($evaluatedCount < $job->units) {
+                return back()->withErrors([
+                    'evaluations' => 'Semua unit harus dievaluasi terlebih dahulu sebelum melanjutkan ('
+                        . $evaluatedCount . '/' . $job->units . ' unit selesai).',
+                ]);
+            }
+        }
+
+        // Stage 7 → 8: tgl_submit_disnaker must be filled
+        if ($currentStage == 7) {
+            if (empty($job->tgl_submit_disnaker)) {
+                return back()->withErrors([
+                    'tgl_submit_disnaker' => 'Tanggal penyerahan ke Disnaker wajib diisi sebelum melanjutkan ke Stage 8.',
+                ]);
+            }
+        }
+
         $validated = $request->validate($validationRules);
         $nextStage = $validated['next_stage'];
 
@@ -333,7 +369,7 @@ class JobController extends Controller
     }
 
     /**
-     * Save Stage 4 field data (actual units + photos with notes — Tasks 9, 10).
+     * Save Stage 4 field data (actual units, field checklist, photo notes — Tasks 9, 10).
      */
     public function saveStage4Data(Request $request, Job $job)
     {
@@ -346,11 +382,55 @@ class JobController extends Controller
         $validated = $request->validate([
             'actual_units'     => 'required|integer|min:0',
             'unit_count_notes' => 'nullable|string',
+            's4_checklist'     => 'nullable|array',  // {nameplate,visual,dimensi,...}: {status,catatan}
         ]);
 
         $job->update($validated);
 
         return back()->with('success', 'Data lapangan berhasil disimpan.');
+    }
+
+    /**
+     * Save or update a per-unit evaluation entry (Stage 5 — Penyusunan LHPP).
+     */
+    public function saveEvaluation(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        // Admin (stage 5 owner), Inspector (stage 6 owner), or Manager can save
+        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists();
+        if (!$this->canActOnStage(5, $job) && !$isInspector && !$user->isSuperadmin() && $user->role !== 'manager') {
+            abort(403, 'Only the LHPP stage owner can submit unit evaluations.');
+        }
+
+        $validated = $request->validate([
+            'unit_no'        => 'required|integer|min:1',
+            'unit_label'     => 'required|string|max:255',
+            'status'         => 'required|in:laik,laik_bersyarat,tidak_laik',
+            'findings'       => 'nullable|string',
+            'recommendation' => 'nullable|string',
+        ]);
+
+        $job->evaluations()->updateOrCreate(
+            ['unit_no' => $validated['unit_no']],
+            $validated
+        );
+
+        return back()->with('success', 'Evaluasi unit berhasil disimpan.');
+    }
+
+    /**
+     * Delete a per-unit evaluation.
+     */
+    public function deleteEvaluation(Job $job, \App\Models\JobEvaluation $evaluation)
+    {
+        if ($evaluation->job_id !== $job->id) {
+            abort(403, 'Evaluation does not belong to this job.');
+        }
+        if (!$this->canActOnStage($job->stage, $job) && Auth::user()->role !== 'manager' && !Auth::user()->isSuperadmin()) {
+            abort(403, 'Unauthorized.');
+        }
+        $evaluation->delete();
+        return back()->with('success', 'Evaluasi unit dihapus.');
     }
 
     /**
@@ -392,7 +472,7 @@ class JobController extends Controller
     }
 
     /**
-     * Save Stage 7 data (tgl_submit_disnaker — Task 15).
+     * Save Stage 7 data (tgl_submit_disnaker + s7_bundel_checklist — Task 15).
      */
     public function saveStage7Data(Request $request, Job $job)
     {
@@ -401,12 +481,13 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'tgl_submit_disnaker' => 'required|date',
+            'tgl_submit_disnaker'  => 'required|date',
+            's7_bundel_checklist'  => 'nullable|array',  // {grupA:[...],grupB:[...],grupC:[...]}
         ]);
 
         $job->update($validated);
 
-        return back()->with('success', 'Tanggal penyerahan ke Disnaker disimpan.');
+        return back()->with('success', 'Data penyerahan ke Disnaker disimpan.');
     }
 
     /**
@@ -443,6 +524,35 @@ class JobController extends Controller
     }
 
     /**
+     * Add a Disnaker follow-up log entry (Stage 8 — every 7 days).
+     */
+    public function saveDisnakerFollowup(Request $request, Job $job)
+    {
+        if (!$this->canActOnStage(8, $job)) {
+            abort(403, 'Only Admin can add Disnaker follow-up entries.');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:progress,stuck,ready',
+            'notes'  => 'required|string|max:2000',
+        ]);
+
+        $job->disnakerFollowups()->create([
+            'status'            => $validated['status'],
+            'notes'             => $validated['notes'],
+            'action_by_user_id' => Auth::id(),
+        ]);
+
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => 'Follow-up Disnaker dicatat: [' . strtoupper($validated['status']) . '] ' . $validated['notes'],
+            'action_by_user_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Follow-up Disnaker berhasil dicatat.');
+    }
+
+    /**
      * Save Stage 9 data (progress status — Task 17).
      */
     public function saveStage9Data(Request $request, Job $job)
@@ -461,7 +571,60 @@ class JobController extends Controller
     }
 
     /**
+     * Save or update per-unit Suket tracking data (Stage 9).
+     * Auto-advances job to Stage 10 when ALL units reach `issued` status.
+     */
+    public function saveUnitTracking(Request $request, Job $job)
+    {
+        if (!$this->canActOnStage(9, $job)) {
+            abort(403, 'Only Admin can update unit tracking data.');
+        }
+
+        $validated = $request->validate([
+            'unit_no'               => 'required|integer|min:1',
+            'unit_label'            => 'required|string|max:255',
+            'laik_status'           => 'required|in:laik,laik_bersyarat,tidak_laik',
+            'no_suket'              => 'nullable|string|max:255',
+            'tgl_suket'             => 'nullable|date',
+            'suket_validity_months' => 'nullable|integer|min:1|max:120',
+            'status'                => 'required|in:pending,issued,submitted,progress,rejected',
+            'notes'                 => 'nullable|string|max:1000',
+        ]);
+
+        // Auto-calculate expiry date
+        $validated['suket_expired_at'] = null;
+        if (!empty($validated['tgl_suket']) && !empty($validated['suket_validity_months'])) {
+            $validated['suket_expired_at'] = Carbon::parse($validated['tgl_suket'])
+                ->addMonths((int) $validated['suket_validity_months'])
+                ->toDateString();
+        }
+
+        $job->unitsTracking()->updateOrCreate(
+            ['unit_no' => $validated['unit_no']],
+            $validated
+        );
+
+        // Auto-advance to Stage 10 if every contracted unit is now `issued`
+        $totalExpected = (int) $job->units;
+        $issuedCount   = $job->unitsTracking()->where('status', 'issued')->count();
+        $totalTracked  = $job->unitsTracking()->count();
+
+        if ($totalTracked >= $totalExpected && $issuedCount >= $totalExpected) {
+            $job->update(['stage' => 10, 'stage_started_at' => now()]);
+            $job->historyLogs()->create([
+                'stage'             => 10,
+                'action'            => 'Auto-advanced ke Stage 10: Semua ' . $totalExpected . ' unit Suket berstatus Issued.',
+                'action_by_user_id' => Auth::id(),
+            ]);
+            return back()->with('success', 'Data Suket disimpan. Semua unit issued — job otomatis maju ke Stage 10 (Penagihan).');
+        }
+
+        return back()->with('success', 'Data Suket unit berhasil disimpan.');
+    }
+
+    /**
      * Save Stage 10 data (Finance billing — Task 18).
+     * Saves all invoice fields: amount, no, date, top, payment_status, progress.
      */
     public function saveStage10Data(Request $request, Job $job)
     {
@@ -472,14 +635,84 @@ class JobController extends Controller
 
         $validated = $request->validate([
             'total_invoice_amount' => 'nullable|numeric|min:0',
+            'invoice_no'           => 'nullable|string|max:255',
+            'invoice_date'         => 'nullable|date',
             'tgl_invoice_issued'   => 'nullable|date',
+            'top_days'             => 'nullable|integer|min:1|max:365',
+            'payment_status'       => 'nullable|in:pending,sent,paid',
             's10_progress_status'  => 'nullable|in:not_started,delayed,in_progress,almost_done,done',
             'tgl_submit_mkt'       => 'nullable|date',
         ]);
 
+        // Auto-calculate payment due date
+        $invDate = $validated['invoice_date'] ?? $validated['tgl_invoice_issued'] ?? null;
+        if (!empty($invDate) && !empty($validated['top_days'])) {
+            $validated['payment_due_date'] = Carbon::parse($invDate)
+                ->addDays((int) $validated['top_days'])
+                ->toDateString();
+        }
+
         $job->update($validated);
 
         return back()->with('success', 'Data penagihan berhasil disimpan.');
+    }
+
+    /**
+     * Save Stage 11 data — Marketing records delivery of Suket to client.
+     */
+    public function saveStage11Data(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'marketing' && !$user->isSuperadmin()) {
+            abort(403, 'Only Marketing can update Stage 11 data.');
+        }
+
+        $validated = $request->validate([
+            'tgl_submit_mkt' => 'required|date',
+        ]);
+
+        $job->update($validated);
+
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => 'Suket diserahkan ke klien pada ' . Carbon::parse($validated['tgl_submit_mkt'])->format('d M Y'),
+            'action_by_user_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Tanggal penyerahan Suket ke klien berhasil disimpan.');
+    }
+
+    /**
+     * Save Stage 12 data — Finance confirms full payment received and closes job.
+     */
+    public function saveStage12Data(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+            abort(403, 'Only Finance can close a job.');
+        }
+
+        $validated = $request->validate([
+            'paid'                    => 'required|boolean',
+            'payment_amount_received' => 'required|numeric|min:0',
+            'payment_paid_at'         => 'required|date',
+            'payment_status'          => 'required|in:pending,sent,paid',
+            'tanda_terima_kembali'    => 'nullable|boolean',
+        ]);
+
+        $job->update($validated);
+
+        $action = $validated['paid']
+            ? 'Job DITUTUP — Pembayaran LUNAS dikonfirmasi Finance. Jumlah: Rp ' . number_format($validated['payment_amount_received'], 0, ',', '.')
+            : 'Data pembayaran Stage 12 diperbarui oleh Finance.';
+
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => $action,
+            'action_by_user_id' => Auth::id(),
+        ]);
+
+        return back()->with('success', $validated['paid'] ? 'Job berhasil ditutup sebagai LUNAS.' : 'Data pembayaran berhasil disimpan.');
     }
 
     /**

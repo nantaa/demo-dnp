@@ -37,9 +37,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/stage8-data', [JobController::class, 'saveStage8Data'])->name('jobs.stage8-data');
     Route::post('/jobs/{job}/stage9-data', [JobController::class, 'saveStage9Data'])->name('jobs.stage9-data');
     Route::post('/jobs/{job}/stage10-data', [JobController::class, 'saveStage10Data'])->name('jobs.stage10-data');
+    Route::post('/jobs/{job}/stage11-data', [JobController::class, 'saveStage11Data'])->name('jobs.stage11-data');
+    Route::post('/jobs/{job}/stage12-data', [JobController::class, 'saveStage12Data'])->name('jobs.stage12-data');
     Route::post('/jobs/{job}/documents', [JobController::class, 'uploadDocument'])->name('jobs.documents.upload');
     Route::delete('/jobs/{job}/documents/{document}', [JobController::class, 'deleteDocument'])->name('jobs.documents.delete');
     Route::post('/jobs/{job}/s2-verify', [JobController::class, 'saveS2Verify'])->name('jobs.s2-verify');
+    Route::post('/jobs/{job}/evaluations', [JobController::class, 'saveEvaluation'])->name('jobs.evaluations.save');
+    Route::delete('/jobs/{job}/evaluations/{evaluation}', [JobController::class, 'deleteEvaluation'])->name('jobs.evaluations.delete');
+    Route::post('/jobs/{job}/disnaker-followup', [JobController::class, 'saveDisnakerFollowup'])->name('jobs.disnaker-followup');
+    Route::post('/jobs/{job}/unit-tracking', [JobController::class, 'saveUnitTracking'])->name('jobs.unit-tracking');
 
     // Smart Recommendation API
     Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');

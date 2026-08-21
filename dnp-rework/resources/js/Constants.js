@@ -88,15 +88,15 @@ export const DOC_TYPES_BY_STAGE = {
     1:  ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama'],
     2:  ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
     3:  ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
-    4:  ['Foto Keberangkatan', 'Foto Sampai Lokasi Riksauji', 'Foto Kepulangan', 'Data Pengukuran', 'Checklist Lapangan'],
-    5:  ['LHPP Draft', 'BAP', 'Catatan Review MGR'],        // Stage 5 = Review Laporan Teknis (was stage 6)
-    6:  ['LHPP Final', 'BAP Final', 'Bundel Dokumen'],      // Stage 6 = Penyusunan LHPP (was stage 5)
+    4:  ['Foto Nameplate', 'Foto Kondisi Fisik', 'BAP', 'Foto Hasil Pengukuran', 'Foto Alat Pengaman', 'Foto APD & Tim di Lokasi', 'Foto Dokumentasi Lapangan', 'Data Pengukuran'],
+    5:  ['LHPP', 'BAP', 'Laporan Teknis Tambahan'],         // Stage 5 = Penyusunan LHPP (Admin)
+    6:  ['LHPP Draft', 'BAP', 'Catatan Review MGR'],         // Stage 6 = Review Laporan Teknis (Manager)
     7:  ['Bukti Penyerahan ke Disnaker'],
-    8:  ['Bukti Penerimaan Dokumen Disnaker', 'Suket dari Disnaker'],
-    9:  ['Suket (Asli) dari Disnaker', 'Bukti Submit ke FIN'],
-    10: ['Invoice (PDF)', 'Faktur Pajak'],
-    11: ['Proposal', 'Suket', 'Kwitansi'],
-    12: ['Arsip Final'],
+    8:  ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker'],
+    9:  ['Suket (Asli) dari Disnaker'],
+    10: ['Invoice (PDF)', 'Kwitansi', 'Bukti Transfer'],
+    11: ['Tanda Terima Suket'],
+    12: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas'],
     13: [],
 };
 
@@ -105,3 +105,57 @@ export const STAGE1_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'
 
 // Stage 2 mandatory docs (can be bypassed by Kadiv approval — Task 6)
 export const STAGE2_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built'];
+
+// Stage 4 lapangan checklist items (saved as s4_checklist JSON on dnp_jobs)
+// Each item key matches the id; stored as { [id]: { status: 'checked'|'unchecked', catatan: string } }
+export const STAGE4_CHECKLIST_ITEMS = [
+    { id: 'nameplate',   label: 'Verifikasi Nameplate',                                        kritis: true  },
+    { id: 'visual',      label: 'Pemeriksaan Visual (korosi, retak, kebocoran, deformasi)',     kritis: true  },
+    { id: 'dimensi',     label: 'Pengukuran Dimensi & Ketebalan Material',                      kritis: false },
+    { id: 'kelistrikan', label: 'Pemeriksaan Sistem Kelistrikan & Grounding',                   kritis: false },
+    { id: 'pengaman',    label: 'Test Fungsi Alat Pengaman (safety valve, limit switch)',       kritis: true  },
+    { id: 'fungsi',      label: 'Test Fungsi Operasional (load/pressure/functional test)',      kritis: true  },
+    { id: 'apd',         label: 'APD lengkap digunakan selama pengujian',                       kritis: false },
+    { id: 'bap',         label: 'BAP ditandatangani PIC Klien di lapangan',                     kritis: true  },
+];
+
+// Stage 7 bundel fisik checklist items (saved as s7_bundel_checklist JSON on dnp_jobs)
+// Stored as { grupA: [...], grupB: [...], grupC: [...] } where each item is { id, status, catatan }
+export const STAGE7_BUNDEL_GRUP_A = [
+    { id: 'surat_permohonan_disnaker', label: 'Surat Permohonan ke Disnaker (asli, bermaterai)' },
+    { id: 'surat_kuasa',               label: 'Surat Kuasa dari Pemilik ke PJK3 (asli, bermaterai)' },
+    { id: 'pernyataan_keabsahan',      label: 'Pernyataan Keabsahan Data (asli, bermaterai)' },
+    { id: 'form_checklist_disnaker',   label: 'Form Checklist Disnaker (TTD klien)' },
+    { id: 'drawing_as_built',          label: 'Drawing / As-Built' },
+    { id: 'manual_book',               label: 'Manual Book / Spesifikasi Pabrik' },
+    { id: 'pengesahan_gambar',         label: 'Pengesahan Gambar Kemnaker (kondisional)' },
+    { id: 'copy_suket_lama',           label: 'Copy Suket Lama (perpanjangan saja)' },
+];
+
+export const STAGE7_BUNDEL_GRUP_B = [
+    { id: 'lhpp',                    label: 'LHPP (dari Upload Stage 5)' },
+    { id: 'bap',                     label: 'BAP (dari Upload Stage 5)' },
+    { id: 'copy_skp_ak3',            label: 'Copy SKP Ahli K3 Inspektur' },
+    { id: 'sertifikat_pjk3',         label: 'Copy Sertifikat PJK3 (SK Kemnaker)' },
+    { id: 'foto_dokumentasi',        label: 'Foto Dokumentasi Pemeriksaan (dari Upload Stage 4)' },
+    { id: 'sertifikat_kalibrasi',    label: 'Copy Sertifikat Kalibrasi Alat Ukur' },
+];
+
+export const STAGE7_BUNDEL_GRUP_C = [
+    { id: 'cover_bundel',      label: 'Cover bundel (nama klien & jenis pesawat)' },
+    { id: 'daftar_isi',        label: 'Daftar isi bundel' },
+    { id: 'dijilid',           label: 'Dokumen dijilid / distaples rapi' },
+    { id: 'salinan_arsip',     label: 'Salinan bundel untuk arsip internal' },
+];
+
+// Default Suket validity in months per pesawat type (Stage 9)
+export const SUKET_VALIDITY_DEFAULTS = {
+    'Bejana Tekan (Form 45 A.1)':            24,  // Luar — 24 bln; Hydrotest — 60 bln
+    'Pesawat Uap (Boiler) (Form 6)':         24,
+    'Proteksi Kebakaran (Form 65 K)':        12,
+    'PAPA (Crane/Forklift/dll) (Form A 52)': 12,
+    'Lift / Dumbwaiter (Form 36/38/39)':     12,
+    'Eskalator / Travelator (Form 52)':      12,
+    'Instalasi Listrik & PP (Form 55 L)':    12,
+    'PTP (Compressor/Genset) (Form 54 A)':   12,
+};

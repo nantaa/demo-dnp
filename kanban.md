@@ -1,7 +1,7 @@
 # DNP Riksa Uji Monitor — Kanban Data Requirements
 > **Source:** `dnp-rework/` (12-Stage Production System)
-> **Last Updated:** 2026-08-19
-> **Ref Schema:** `2026_01_01_000010_create_dnp_monitor_schema.php` + all subsequent migrations
+> **Last Updated:** 2026-08-19 (v1.1 — Stage 2 Verification Persistence & 23 Seed Alat Uji)
+> **Ref Schema:** `2026_01_01_000010_create_dnp_monitor_schema.php` + `2026_08_19_000001_add_s2_verify_data_to_dnp_jobs_table.php` + `2026_08_19_000003_update_alat_ujis_calibration_data.php`
 
 ---
 
@@ -47,7 +47,7 @@ Marketing menerima PO/SPK dari klien dan membuat job baru di sistem.
 | Field | DB Column | Type | Required | Notes |
 |---|---|---|---|---|
 | Nama Klien | `klien` | string | ✅ | Index, searchable |
-| Lokasi | `lokasi` | text | ✅ | Kota/area pelaksanaan |
+| Lokasi | `lokasi` | text | ✅ | Format: `"Kota/Kab, Provinsi"` via `IndonesiaLocationSelect` (auto-match dropdown dengan fallback offline & manual input) |
 | Owner Marketing | `owner_marketing` | string | ✅ | Auto-fill dari user login |
 | PIC Klien | `pic_klien` | string | — | Nama + Jabatan |
 | Telepon PIC | `pic_klien_phone` | string | — | Format: 081x-xxxx |
@@ -89,23 +89,29 @@ job.documents WHERE stage=1 AND type IN ('PO/SPK','Surat Permohonan','Surat Kuas
 ### Purpose
 Admin memverifikasi kelengkapan dokumen persyaratan dari klien sebelum penjadwalan.
 
-### No New Input Fields
-Stage ini tidak menambah field baru ke `dnp_jobs`. Admin melakukan verifikasi dokumen yang sudah ada dari Stage 1.
+### Form Fields / Persistent State
+Stage 2 menyimpan status verifikasi item kelengkapan dokumen ke kolom JSON `s2_verify_data`:
+
+| Field | DB Column | Type | Notes |
+|---|---|---|---|
+| Data Verifikasi S2 | `s2_verify_data` | JSON | Key-value status (`"ok"`, `"tidak"`, `"na"`) per item checklist |
+
+> **API Endpoint:** `POST /jobs/{job}/s2-verify` — Menyimpan status checklist verifikasi secara real-time.
 
 ### Checklist Verifikasi (Ref: FM-PJK3-RIKU-009)
-Admin memverifikasi keberadaan dokumen berikut (upload jika belum ada):
+Admin memverifikasi keberadaan dokumen berikut (uploaded pada Stage 1 maupun Stage 2):
 
-| # | Dokumen | Type String | Wajib | Kondisional |
+| # | Dokumen | Type String | Wajib | Kondisional / Status |
 |---|---|---|---|---|
-| 1 | Surat Permohonan Riksa Uji | `Surat Permohonan` | ✅ | |
-| 2 | Surat Kuasa dari Pemilik ke PJK3 | `Surat Kuasa` | ✅ | |
-| 3 | Pernyataan Keabsahan Data | `Pernyataan Keabsahan` | ✅ | |
-| 4 | Form Checklist Disnaker | `Form Checklist Klien` | ✅ | |
+| 1 | Surat Permohonan Riksa Uji | `Surat Permohonan` | ✅ | `ok` \| `tidak` \| `na` |
+| 2 | Surat Kuasa dari Pemilik ke PJK3 | `Surat Kuasa` | ✅ | `ok` \| `tidak` \| `na` |
+| 3 | Pernyataan Keabsahan Data | `Pernyataan Keabsahan` | ✅ | `ok` \| `tidak` \| `na` |
+| 4 | Form Checklist Disnaker | `Form Checklist Klien` | ✅ | `ok` \| `tidak` \| `na` |
 | 5 | Drawing / As-Built | `Drawing/As-Built` | ✅ | Wajib untuk PESAWAT tertentu |
 | 6 | Manual Book / Spesifikasi Teknis | `Manual Book` | ✅ | Wajib untuk PESAWAT tertentu |
 | 7 | Pengesahan Gambar dari Kemnaker | `Pengesahan Gambar Kemnaker` | Kondisional | Pesawat tertentu + regional |
 | 8 | Copy Suket / Sertifikat Lama | `Copy Suket Lama` | — | Untuk perpanjangan |
-| 9 | Catatan Verifikasi Admin | `Catatan Verifikasi` | ✅ | Wajib ada sebelum lanjut |
+| 9 | Catatan Verifikasi Admin | `Catatan Verifikasi` | ✅ | Catatan ringkasan verifikasi |
 
 ### Approval Flow (Bypass Mechanism)
 Jika dokumen belum lengkap, Admin dapat meminta persetujuan Kadiv/MGR:
@@ -121,12 +127,12 @@ Jika dokumen belum lengkap, Admin dapat meminta persetujuan Kadiv/MGR:
 ### Advance Condition (Stage 2 → 3)
 ```
 EITHER:
-  job.documents WHERE stage=2 AND type='Pengesahan Gambar Kemnaker' EXISTS
-  AND job.documents WHERE stage=2 AND type='Catatan Verifikasi' EXISTS
+  All mandatory documents ('PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built') 
+  are present in job.documents (from Stage 1 or Stage 2) AND s2_verify_data checklist completed
 OR:
   job.peer_review_status = 'approved'
 ```
-> `peer_review_status` di-reset ke `null` setelah advance ke Stage 3.
+> `peer_review_status` di-reset ke `null` setelah advance ke Stage 3. Status verifikasi tersimpan di `s2_verify_data` untuk audit trail timeline.
 
 ---
 
@@ -159,18 +165,21 @@ Admin menjadwalkan tanggal pelaksanaan, menugaskan inspektur, memilih alat uji, 
 
 ### Related Master Data Tables
 
-**`alat_ujis`** — Inventaris alat uji:
+**`alat_ujis`** — Inventaris alat uji (23 seed items terdaftar):
 
 | Field | Type | Notes |
 |---|---|---|
-| `kode_alat` | string unique | |
+| `kode_alat` | string unique | Format: `[KATEGORI]-[SINGKATAN]-[URUTAN]` (e.g. `LIS-CM-01`, `UMM-DMB-01`) |
 | `nama` | string | Nama alat |
-| `merk` | string | |
-| `serial` | string | |
-| `kategori` | json | Array kategori |
-| `kalibrasi_terakhir` | date | |
-| `kalibrasi_expired` | date | ⚠ Hard block jika expired |
-| `lab` | string | Laboratorium kalibrasi |
+| `merk` | string | Merk produsen (e.g. `KYORITSU`, `Lutron`, `Fluke`, `Bosch`) |
+| `tipe` | string | Model / Tipe spesifik (e.g. `GLM 50 PRO`, `4105 A`, `TG 165`) |
+| `serial` | string | Serial number unik alat |
+| `kategori` | json | Array kategori (`["Listrik"]` \| `["Umum"]`) |
+| `kalibrasi_terakhir` | date | Tanggal pelaksanaan kalibrasi terakhir |
+| `kalibrasi_expired` | date | ⚠ Hard block jika expired (dikalkulasi countdown H-x hari) |
+| `lab` | string | Laboratorium kalibrasi (e.g. `B4T`, `Sucofindo`, `Carsurin`) |
+| `pemilik` | string | Default: `'PT Delta Nusantara Persada'` |
+| `jumlah` | integer | Jumlah unit (default: 1) |
 | `status` | string | `tersedia` \| `dipakai` |
 
 **`sertifikat_pjk3s`** — Sertifikat PJK3:

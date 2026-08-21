@@ -54,6 +54,8 @@ class Job extends Model
         'alat_ids'                    => 'array',
         'cert_ids'                    => 'array',
         's2_verify_data'              => 'array',
+        's4_checklist'                => 'array',
+        's7_bundel_checklist'         => 'array',
     ];
 
     /**

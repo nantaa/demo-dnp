@@ -5,7 +5,7 @@ import IndonesiaLocationSelect from './IndonesiaLocationSelect';
 import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
-    PROGRESS_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
+    PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
     STAGE2_VERIFY_CHECKLIST
 } from '@/Constants';
 
@@ -161,6 +161,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [s8, setS8] = useState({
         tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
         tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
+        s8_progress_status:         job.s8_progress_status         ?? '',
     });
     const [s9,  setS9]  = useState({ s9_progress_status: job.s9_progress_status  ?? '' });
     const [s10, setS10] = useState({
@@ -269,9 +270,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const handleRejectStage = async () => {
         if (!data.notes?.trim()) return showError('Validasi', 'Isi catatan penolakan terlebih dahulu!');
-        const res = await showConfirm('Tolak Job', `Kembalikan ke Stage ${job.stage - 1}?`);
+        const targetStage = job.stage === 8 ? 6 : Math.max(1, job.stage - 1);
+        const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
-        post(`/jobs/${job.id}/reject`, { onSuccess: () => onClose() });
+        post(`/jobs/${job.id}/reject`, {
+            data: { notes: data.notes, target_stage: targetStage },
+            onSuccess: () => onClose()
+        });
     };
 
     const handleAskApproval = async () => {
@@ -752,6 +757,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 8 (Proses Disnaker — Admin) ──────── */}
                 {s === 8 && (
                     <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Status Disnaker (Progress)</label>
+                            <select value={s8.s8_progress_status} onChange={e => setS8({ ...s8, s8_progress_status: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 font-medium">
+                                <option value="">-- Pilih Status Disnaker --</option>
+                                {STAGE8_DISNAKER_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                            </select>
+                        </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Dokumen Diserahkan ke Disnaker</label>

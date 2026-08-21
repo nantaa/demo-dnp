@@ -269,9 +269,15 @@ class JobController extends Controller
             abort(403, 'Only the designated owner of Stage ' . $currentStage . ' can reject this job.');
         }
 
-        $validated = $request->validate(['notes' => 'required|string']);
+        $validated = $request->validate([
+            'notes'        => 'required|string',
+            'target_stage' => 'nullable|integer',
+        ]);
 
         $prevStage = max(1, $currentStage - 1);
+        if (!empty($validated['target_stage'])) {
+            $prevStage = max(1, (int)$validated['target_stage']);
+        }
 
         $job->update([
             'stage'           => $prevStage,
@@ -496,6 +502,7 @@ class JobController extends Controller
         $validated = $request->validate([
             'tgl_doc_submitted_disnaker' => 'nullable|date',
             'tgl_doc_received_disnaker'  => 'nullable|date',
+            's8_progress_status'         => 'nullable|in:progress,stuck,ready',
         ]);
 
         // Auto-calculate SLA status

@@ -87,6 +87,18 @@ export default function KanbanIndex({ jobs, auth }) {
                                                 }
                                             }
 
+                                            if (job.stage === 8 && job.s8_progress_status) {
+                                                const sMap = {
+                                                    progress: { label: 'PROGRESS', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
+                                                    stuck:    { label: 'STUCK',    cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                    ready:    { label: 'READY',    cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                };
+                                                const badge = sMap[job.s8_progress_status];
+                                                if (badge) {
+                                                    return <span className={`px-2 py-0.5 rounded border ${badge.cls}`}>{badge.label}</span>;
+                                                }
+                                            }
+
                                             const stageInfo = STAGES.find(s => s.id === job.stage);
                                             if (!stageInfo?.sla) return null;
                                             

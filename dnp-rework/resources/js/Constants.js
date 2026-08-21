@@ -6,8 +6,8 @@ export const STAGES = [
     { id: 13, name: 'Aktualisasi Unit', short: 'Aktualisasi', role: 'marketing', sla: 1, displayId: '4b' },
     { id: 5, name: 'Review Laporan Teknis', short: 'Rev. Laporan', role: 'manager', sla: 1 },
     { id: 6, name: 'Penyusunan LHPP', short: 'LHPP', role: 'inspektur', sla: 3 },
-    { id: 7, name: 'Penyerahan ke Dinas', short: 'Penyerahan', role: 'manager', sla: 1 },
-    { id: 8, name: 'Verifikasi Dinas', short: 'Disnaker', role: 'admin', sla: 30 },
+    { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'manager', sla: 1 },
+    { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30 },
     { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
     { id: 10, name: 'Penagihan', short: 'Tagihan', role: 'finance', sla: 1 },
     { id: 11, name: 'Pengiriman SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null },
@@ -60,6 +60,13 @@ export const STAGE5_DECISIONS = [
     { value: 'rejected', label: 'Tolak' },
 ];
 
+// Stage 8 progress / disnaker status
+export const STAGE8_DISNAKER_STATUSES = [
+    { value: 'progress', label: 'Progress (Dalam Proses)' },
+    { value: 'stuck', label: 'Stuck (Terkendala)' },
+    { value: 'ready', label: 'Ready (Selesai Disnaker)' },
+];
+
 // Stage 9 progress statuses (Task 17)
 export const PROGRESS_STATUSES = [
     { value: 'not_started', label: 'Not Started' },
@@ -92,7 +99,7 @@ export const DOC_TYPES_BY_STAGE = {
     5: ['LHPP', 'BAP', 'Laporan Teknis Tambahan'],         // Stage 5 = Penyusunan LHPP (Admin)
     6: ['LHPP Draft', 'BAP', 'Catatan Review MGR'],         // Stage 6 = Review Laporan Teknis (Manager)
     7: ['Bukti Penyerahan ke Disnaker'],
-    8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker'],
+    8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],
     9: ['Suket (Asli) dari Disnaker'],
     10: ['Invoice (PDF)', 'Kwitansi', 'Bukti Transfer'],
     11: ['Tanda Terima Suket'],

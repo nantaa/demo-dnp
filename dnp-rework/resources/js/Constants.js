@@ -11,6 +11,7 @@ export const STAGES = [
     { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
     { id: 10, name: 'Penagihan', short: 'Tagihan', role: 'finance', sla: 1 },
     { id: 11, name: 'Pengiriman SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null },
+    { id: 14, name: 'Pembayaran / Pelunasan', short: 'Pembayaran', role: 'finance', sla: 1, displayId: '11b' },
     { id: 12, name: 'Selesai / Closed', short: 'Closed', role: 'finance', sla: null },
 ];
 
@@ -26,7 +27,7 @@ export const ROLES = {
 // Marketing-only stages (locked for MGR intercept)
 export const MKT_STAGES = [1, 11, 13];
 // Finance-only stages (locked for MGR intercept)
-export const FIN_STAGES = [10, 12];
+export const FIN_STAGES = [10, 14, 12];
 
 // Jenis alat yang di RiksaUji (Task 3)
 export const PESAWAT_TYPES = [
@@ -81,13 +82,13 @@ export const STAGE2_VERIFY_CHECKLIST = [
     { no: '01', type: 'PO/SPK', label: 'PO / SPK dari Klien', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '02', type: 'Surat Permohonan', label: 'Surat Permohonan Riksa Uji (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '03', type: 'Surat Kuasa', label: 'Surat Kuasa dari Pemilik (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
-    { no: '04', type: 'Pernyataan Keabsahan', label: 'Surat Pernyataan Keabsahan Data', badge: 'WAJIB', hasNa: false, hint: null },
-    { no: '05', type: 'Form Checklist Klien', label: 'Form Checklist Disnaker (diisi klien)', badge: 'WAJIB', hasNa: false, hint: null },
-    { no: '06', type: 'Drawing/As-Built', label: 'Drawing / Gambar Teknis (as-built)', badge: 'WAJIB', badge2: 'WAJIB UTK PAPA', hasNa: false, hint: 'Wajib untuk: Lift, PTP, Boiler, Bejana Tekan, PAPA' },
-    { no: '07', type: 'Manual Book', label: 'Manual Book / Spesifikasi Teknis', badge: 'OPSIONAL', hasNa: true, hint: 'Wajib untuk: Lift, PTP, Boiler, Bejana Tekan' },
-    { no: '08', type: 'Pengesahan Gambar Kemnaker', label: 'Pengesahan Gambar dari Kemnaker', badge: 'OPSIONAL', hasNa: true, hint: 'Wajib utk Disnaker: Jateng, Sumsel, Lampung, Jambi, Bengkulu, Riau, Kepri, NTB/Lombok, Bali' },
+    { no: '04', type: 'Pernyataan Keabsahan', label: 'Surat Pernyataan Keabsahan Data', badge: 'OPSIONAL', hasNa: true, hint: null },
+    { no: '05', type: 'Form Checklist Klien', label: 'Form Checklist Disnaker (diisi klien)', badge: 'OPSIONAL', hasNa: true, hint: null },
+    { no: '06', type: 'Drawing/As-Built', label: 'Drawing / Gambar Teknis (as-built)', badge: 'OPSIONAL', hasNa: true, hint: 'Opsional' },
+    { no: '07', type: 'Manual Book', label: 'Manual Book / Spesifikasi Teknis', badge: 'OPSIONAL', hasNa: true, hint: 'Opsional' },
+    { no: '08', type: 'Pengesahan Gambar Kemnaker', label: 'Pengesahan Gambar dari Kemnaker', badge: 'OPSIONAL', hasNa: true, hint: 'Opsional' },
     { no: '09', type: 'Copy Suket Lama', label: 'Copy Suket Lama (perpanjangan)', badge: 'OPSIONAL', hasNa: true, hint: null },
-    { no: '10', type: 'Catatan Verifikasi', label: 'Verifikasi: Drawing SESUAI dengan Nameplate (cek visual foto)', badge: 'OPSIONAL', badge2: 'CEK VISUAL', hasNa: true, hint: 'Cek manual oleh Admin — bandingkan gambar teknis dengan foto nameplate dari lapangan/klien', isManual: true },
+    { no: '10', type: 'Catatan Verifikasi', label: 'Verifikasi: Drawing SESUAI dengan Nameplate (cek visual foto)', badge: 'OPSIONAL', badge2: 'CEK VISUAL', hasNa: true, hint: 'Cek manual oleh Admin', isManual: true },
 ];
 
 // Required document types per stage
@@ -105,13 +106,14 @@ export const DOC_TYPES_BY_STAGE = {
     11: ['Tanda Terima Suket'],
     12: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas'],
     13: [],
+    14: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
 };
 
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)
 export const STAGE1_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'];
 
 // Stage 2 mandatory docs (can be bypassed by Kadiv approval — Task 6)
-export const STAGE2_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built'];
+export const STAGE2_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'];
 
 // Stage 4 lapangan checklist items (saved as s4_checklist JSON on dnp_jobs)
 // Each item key matches the id; stored as { [id]: { status: 'checked'|'unchecked', catatan: string } }

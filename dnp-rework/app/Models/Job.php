@@ -59,6 +59,14 @@ class Job extends Model
     ];
 
     /**
+     * The user designated to prepare the report/document (Assigned in Stage 3)
+     */
+    public function reportWriter()
+    {
+        return $this->belongsTo(User::class, 'report_writer_id');
+    }
+
+    /**
      * The inspectors assigned to this job (Pivot relation)
      */
     public function inspectors(): BelongsToMany

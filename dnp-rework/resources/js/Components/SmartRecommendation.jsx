@@ -76,8 +76,11 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                         </div>
                                     </div>
                                     <div className="text-center">
-                                        <div className={`text-3xl font-bold ${idx === 0 ? 'text-green-600' : idx === 1 ? 'text-amber-500' : 'text-teal-600'}`}>{rec.score}</div>
-                                        <div className="text-[10px] uppercase tracking-wider text-gray-400">Skor</div>
+                                        {(rec.bonuses || []).some(b => b.includes('Overload')) || rec.isEliminated ? (
+                                            <span className="inline-block bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded">⚠️ OVERLOAD</span>
+                                        ) : (
+                                            <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-extrabold px-2.5 py-1 rounded">✓ AVAILABLE</span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -141,8 +144,10 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                 </div>
                                 <div className="flex flex-wrap gap-1 mt-0.5">
                                     <SubroleBadge profile={ins.profile} />
-                                    {ins.score != null && (
-                                        <span className="text-[9px] bg-teal-100 text-teal-700 px-1.5 rounded font-bold">Skor: {ins.score}</span>
+                                    {ins.isEliminated || (ins.bonuses || []).some(b => b.includes('Overload')) ? (
+                                        <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">⚠️ OVERLOAD</span>
+                                    ) : (
+                                        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold">✓ AVAILABLE</span>
                                     )}
                                 </div>
                                 {ins.isEliminated && ins.eliminatedReason && (

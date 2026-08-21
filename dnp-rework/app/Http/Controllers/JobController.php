@@ -185,6 +185,7 @@ class JobController extends Controller
             $validationRules['durasi_hari']        = 'required|integer|min:1';
             $validationRules['disnaker_tujuan']    = 'required|string';
             $validationRules['inspector_ids']      = 'required|array|min:1';
+            $validationRules['report_writer_id']   = 'nullable|exists:users,id';
             $validationRules['alat_ids']           = 'nullable|array';
             $validationRules['cert_ids']           = 'nullable|array';
         }
@@ -240,6 +241,7 @@ class JobController extends Controller
                 'jam_mulai'        => $validated['jam_mulai'],
                 'durasi_hari'      => $validated['durasi_hari'],
                 'disnaker_tujuan'  => $validated['disnaker_tujuan'],
+                'report_writer_id' => $validated['report_writer_id'] ?? null,
                 'tgl_h5'           => $tgl_pelaksanaan->copy()->subDays(5),
                 'alat_ids'         => json_encode($validated['alat_ids'] ?? []),
                 'cert_ids'         => json_encode($validated['cert_ids'] ?? []),
@@ -694,6 +696,37 @@ class JobController extends Controller
     }
 
     /**
+     * Save Stage 14 (11b) data — Finance confirms payment / settlement status.
+     */
+    public function saveStage14Data(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+            abort(403, 'Only Finance can update payment status.');
+        }
+
+        $validated = $request->validate([
+            's14_payment_status' => 'required|in:pending,partial,paid',
+            's14_payment_notes'  => 'nullable|string',
+        ]);
+
+        $job->update([
+            's14_payment_status' => $validated['s14_payment_status'],
+            's14_payment_notes'  => $validated['s14_payment_notes'] ?? null,
+            'paid'               => $validated['s14_payment_status'] === 'paid',
+        ]);
+
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => 'Status Pembayaran (11b) diperbarui: ' . strtoupper($validated['s14_payment_status']),
+            'action_by_user_id' => Auth::id(),
+            'notes'             => $validated['s14_payment_notes'] ?? null,
+        ]);
+
+        return back()->with('success', 'Status pembayaran berhasil disimpan.');
+    }
+
+    /**
      * Save Stage 12 data — Finance confirms full payment received and closes job.
      */
     public function saveStage12Data(Request $request, Job $job)
@@ -827,7 +860,7 @@ class JobController extends Controller
             ? 'superadmin'
             : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
-        $jobs = Job::with(['inspectors', 'documents', 'unitsTracking', 'historyLogs.user'])
+        $jobs = Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])
                    ->orderBy('created_at', 'desc')
                    ->get();
 

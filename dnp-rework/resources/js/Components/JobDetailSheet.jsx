@@ -61,27 +61,40 @@ const DocChip = ({ doc, canManage, onDelete }) => (
     </div>
 );
 
-const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => (
-    <div className="mt-4 flex flex-col gap-2">
-        {disabledMsg && (
-            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                ⚠️ {disabledMsg}
-            </div>
-        )}
-        <div className="flex gap-2">
-            {[2,4,5,9].includes(stage) && (
-                <button type="button" onClick={onReject} disabled={processing}
-                    className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
-                    Tolak / Kembalikan
-                </button>
+const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => {
+    const getNextLabel = () => {
+        if (stage === 11) return 'Lanjut ke Stage 11b (Pembayaran) →';
+        if (stage === 14) return 'Lanjut ke Stage 12 (Closed) →';
+        const currIdx = STAGES.findIndex(s => s.id === stage);
+        if (currIdx !== -1 && currIdx < STAGES.length - 1) {
+            const next = STAGES[currIdx + 1];
+            return `Lanjut ke Stage ${next.displayId || next.id} (${next.short}) →`;
+        }
+        return `Lanjut ke Stage ${stage + 1} →`;
+    };
+
+    return (
+        <div className="mt-4 flex flex-col gap-2">
+            {disabledMsg && (
+                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                    ⚠️ {disabledMsg}
+                </div>
             )}
-            <button type="submit" disabled={processing || disabled}
-                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                {processing ? '...' : `Lanjut ke Stage ${stage + 1} →`}
-            </button>
+            <div className="flex gap-2">
+                {[2,4,5,8,9].includes(stage) && (
+                    <button type="button" onClick={onReject} disabled={processing}
+                        className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                        Tolak / Kembalikan
+                    </button>
+                )}
+                <button type="submit" disabled={processing || disabled}
+                    className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
+                    {processing ? '...' : getNextLabel()}
+                </button>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 const NoteField = ({ value, onChange }) => (
     <div className="mt-3">
@@ -117,11 +130,22 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, canManageStageDocs, de
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
+    const getNextStageId = (currentStageId) => {
+        if (currentStageId === 11) return 14;
+        if (currentStageId === 14) return 12;
+        const currIdx = STAGES.findIndex(s => s.id === currentStageId);
+        if (currIdx !== -1 && currIdx < STAGES.length - 1) {
+            return STAGES[currIdx + 1].id;
+        }
+        return currentStageId + 1;
+    };
+
     // ── Forms ────────────────────────────────────────────────────────────────
     const { data, setData, post, processing, errors } = useForm({
-        next_stage:      job.stage + 1,
+        next_stage:      getNextStageId(job.stage),
         notes:           '',
         inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
+        report_writer_id: job.report_writer_id || '',
         tgl_pelaksanaan: job.tgl_pelaksanaan || '',
         jam_mulai:       job.jam_mulai || '08:00',
         durasi_hari:     job.durasi_hari || 1,
@@ -169,6 +193,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
         s10_progress_status:  job.s10_progress_status  ?? '',
         tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+    });
+    const [s14, setS14] = useState({
+        s14_payment_status: job.s14_payment_status ?? 'pending',
+        s14_payment_notes:  job.s14_payment_notes  ?? '',
     });
 
     // Stage 2 per-item verification status: { [type]: 'ok' | 'tidak' | 'na' | '' }
@@ -306,6 +334,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -576,6 +605,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 setData('inspector_ids', ids);
                             }}
                         />
+
+                        {/* Penanggung Jawab Laporan / Penyusun LHPP */}
+                        <div className="bg-white border rounded-lg p-3">
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                📝 Penanggung Jawab Laporan / Penyusun LHPP
+                            </label>
+                            <select
+                                value={data.report_writer_id || ''}
+                                onChange={e => setData('report_writer_id', e.target.value)}
+                                className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400"
+                            >
+                                <option value="">-- Pilih Penanggung Jawab Laporan (Opsional) --</option>
+                                {[
+                                    ...(recommendations.recommended || []),
+                                    ...(recommendations.eliminated || [])
+                                ].map(item => (
+                                    <option key={item.user.id} value={item.user.id}>
+                                        {item.user.name} ({item.user.role})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         {/* Alat & Sertifikat */}
                         {masterData.alat_uji.length > 0 && (
                             <div>
@@ -880,6 +931,73 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         ))}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                    </div>
+                )}
+
+                {/* ── STAGE 14 (Pembayaran / Pelunasan — 11b FIN) ── */}
+                {s === 14 && (
+                    <div className="space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <h4 className="text-xs font-bold text-blue-900 mb-1">
+                                💳 Verifikasi Pembayaran / Pelunasan (Finance)
+                            </h4>
+                            <p className="text-xs text-blue-700">
+                                Verifikasi status pelunasan pembayaran dari klien sebelum proyek ditutup (Closed).
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">Status Pembayaran 11b *</label>
+                            <select
+                                value={s14.s14_payment_status || 'pending'}
+                                onChange={e => setS14({ ...s14, s14_payment_status: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 font-medium"
+                            >
+                                <option value="pending">⏳ Pending (Belum Lunas)</option>
+                                <option value="partial">🌗 Partial (Dibayar Sebagian)</option>
+                                <option value="paid">✅ Paid (Lunas Sempurna)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">Catatan Pembayaran / Transfer</label>
+                            <textarea
+                                rows={2}
+                                value={s14.s14_payment_notes || ''}
+                                onChange={e => setS14({ ...s14, s14_payment_notes: e.target.value })}
+                                className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
+                                placeholder="Contoh: Transfer via BCA tgl 20 Aug, lunas 100%..."
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleSaveS14}
+                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm"
+                        >
+                            💾 Simpan Status Pembayaran 11b
+                        </button>
+
+                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran (Opsional)</p>
+                        {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
+                            <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                        ))}
+
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                    </div>
+                )}
+
+                {/* ── STAGE 12 (Selesai / Closed) ────────── */}
+                {s === 12 && (
+                    <div className="space-y-4">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+                            <span className="text-2xl">🎉</span>
+                            <h4 className="text-sm font-bold text-emerald-900 mt-1">Pekerjaan Selesai & Ditutup (Closed)</h4>
+                            <p className="text-xs text-emerald-700 mt-0.5">
+                                Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai.
+                            </p>
+                        </div>
                     </div>
                 )}
             </form>

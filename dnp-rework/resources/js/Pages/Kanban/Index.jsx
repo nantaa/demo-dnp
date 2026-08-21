@@ -17,6 +17,7 @@ export default function KanbanIndex({ jobs, auth }) {
 
     const canViewStage = (stageId) => {
         if (permissions === 'superadmin' || auth.user.role === 'admin' || auth.user.role === 'manager') return true;
+        if (auth.user.role === 'inspektur') return true;
         const perm = permissions?.[stageId];
         return perm && (
             perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
@@ -36,6 +37,9 @@ export default function KanbanIndex({ jobs, auth }) {
                         if (permissions === 'superadmin') return true;
                         if (auth.user.role === 'marketing' && j.owner_marketing === auth.user.name) {
                             return true;
+                        }
+                        if (auth.user.role === 'inspektur') {
+                            return (j.inspectors || []).some(ins => ins.id === auth.user.id || ins.user_id === auth.user.id) || (j.report_writer_id === auth.user.id);
                         }
                         return hasViewPermission;
                     });

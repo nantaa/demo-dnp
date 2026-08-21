@@ -125,7 +125,7 @@ class InventoryController extends Controller
             'no_sk'     => 'nullable|string|max:255',
             'terbit'    => 'nullable|date',
             'expired'   => 'nullable|date',
-            'file'      => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'file'      => 'nullable|file|max:20480',
             'kategori'  => 'nullable|string|max:100',
         ]);
 
@@ -147,7 +147,7 @@ class InventoryController extends Controller
             'no_sk'     => 'nullable|string|max:255',
             'terbit'    => 'nullable|date',
             'expired'   => 'nullable|date',
-            'file'      => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'file'      => 'nullable|file|max:20480',
             'kategori'  => 'nullable|string|max:100',
         ]);
 
@@ -185,7 +185,7 @@ class InventoryController extends Controller
             'tentang'         => 'nullable|string',
             'terbit'          => 'nullable|date',
             'status'          => 'nullable|string|max:50',
-            'file'            => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'file'            => 'nullable|file|max:20480',
             'revisi_terakhir' => 'nullable|string|max:100',
         ]);
 
@@ -208,7 +208,7 @@ class InventoryController extends Controller
             'tentang'         => 'nullable|string',
             'terbit'          => 'nullable|date',
             'status'          => 'nullable|string|max:50',
-            'file'            => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'file'            => 'nullable|file|max:20480',
             'revisi_terakhir' => 'nullable|string|max:100',
         ]);
 
@@ -246,7 +246,7 @@ class InventoryController extends Controller
             'pesawat'       => 'nullable|string|max:255',
             'revisi'        => 'nullable|string|max:100',
             'last_updated'  => 'nullable|date',
-            'file'          => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'file'          => 'nullable|file|max:20480',
         ]);
 
         if ($request->hasFile('file')) {
@@ -268,7 +268,7 @@ class InventoryController extends Controller
             'pesawat'       => 'nullable|string|max:255',
             'revisi'        => 'nullable|string|max:100',
             'last_updated'  => 'nullable|date',
-            'file'          => 'nullable|file|max:5120|mimes:pdf,jpg,jpeg,png,zip,doc,docx,xls,xlsx',
+            'file'          => 'nullable|file|max:20480',
         ]);
 
         if ($request->hasFile('file')) {

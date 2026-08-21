@@ -766,15 +766,10 @@ class JobController extends Controller
     {
         $request->validate([
             'type'  => 'required|string|max:100',
-            'stage' => 'required|integer|min:1|max:12',
-            'file'  => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,zip,docx,xlsx',
+            'stage' => 'required|integer|min:1|max:14',
+            'file'  => 'required|file|max:20480',
             'photo_notes' => 'nullable|string|max:500',
         ]);
-
-        // Stage 10 invoice must be PDF only
-        if ((int)$request->stage === 10 && $request->type === 'Invoice (PDF)') {
-            $request->validate(['file' => 'mimes:pdf']);
-        }
 
         if ((int)$request->stage !== (int)$job->stage) {
             abort(403, 'You can only upload documents for the job\'s current stage.');

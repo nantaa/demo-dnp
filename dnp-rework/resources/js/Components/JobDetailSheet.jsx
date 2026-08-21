@@ -364,7 +364,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // Photo upload (Stage 4, with per-photo notes)
     const uploadPhoto = (type) => {
         const input = document.createElement('input');
-        input.type = 'file'; input.accept = 'image/*';
+        input.type = 'file'; input.accept = '*';
         input.onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const fd = new FormData();

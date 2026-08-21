@@ -938,7 +938,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">File Sertifikat (PDF/Image)</label>
-                                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" onChange={e => sertifikatForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
+                                <input type="file" accept="*" onChange={e => sertifikatForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
                                 {selectedSertifikat?.file && (
                                     <div className="text-xs text-gray-500 mt-1">
                                         File saat ini: <a href={`/storage/${selectedSertifikat.file}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>
@@ -1000,7 +1000,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Upload File Regulasi</label>
-                                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" onChange={e => regulasiForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
+                                <input type="file" accept="*" onChange={e => regulasiForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
                                 {selectedRegulasi?.source && (
                                     <div className="text-xs text-gray-500 mt-1">
                                         File saat ini: <a href={`/storage/${selectedRegulasi.source}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>
@@ -1053,7 +1053,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Upload File Form</label>
-                                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.png,.jpg,.jpeg" onChange={e => formDisnakerForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
+                                <input type="file" accept="*" onChange={e => formDisnakerForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
                                 {selectedFormDisnaker?.file && (
                                     <div className="text-xs text-gray-500 mt-1">
                                         File saat ini: <a href={`/storage/${selectedFormDisnaker.file}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>

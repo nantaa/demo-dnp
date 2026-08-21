@@ -742,8 +742,8 @@ function InsDashboard({ stats, user, onSelectJob }) {
                             className="bg-white border-2 border-dashed border-orange-400 rounded-xl p-8 text-center cursor-pointer hover:bg-orange-50/50 transition-colors">
                             <Upload className="mx-auto h-8 w-8 text-orange-500 opacity-60 mb-2" />
                             <div className="text-sm font-bold text-gray-700">Drag & drop foto / BAP di sini</div>
-                            <div className="text-xs text-gray-400 mt-1">atau klik untuk pilih file · max 10MB/file</div>
-                            <input ref={fileRef} type="file" multiple className="hidden" accept="image/*,application/pdf" onChange={handleFileChange} />
+                            <div className="text-xs text-gray-400 mt-1">atau klik untuk pilih file · max 20MB/file</div>
+                            <input ref={fileRef} type="file" multiple className="hidden" accept="*" onChange={handleFileChange} />
                         </div>
                         <div className="text-[10px] text-gray-400 mt-3 leading-relaxed">
                             💡 Widget ini shortcut. Setelah diklik/file dipilih, detail job akan terbuka untuk mengarahkan Anda ke tab Lapangan dan melengkapi dokumen.

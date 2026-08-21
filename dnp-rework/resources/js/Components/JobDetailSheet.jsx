@@ -69,7 +69,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
             </div>
         )}
         <div className="flex gap-2">
-            {[2,5,9].includes(stage) && (
+            {[2,4,5,9].includes(stage) && (
                 <button type="button" onClick={onReject} disabled={processing}
                     className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                     Tolak / Kembalikan
@@ -199,8 +199,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};
-    const isInspector = job.inspectors?.some(i => i.id === user?.id);
+    const isInspector = user?.role === 'inspektur';
     const isMGR = user?.role === 'manager';
+    const isAssignedInspector = (job.inspectors || []).some(ins => ins.id === user?.id || ins.user_id === user?.id);
 
     const canSeeNilai = user?.role === 'superadmin'
         || user?.role === 'finance'
@@ -211,6 +212,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (!permissions) return false;
         if (permissions === 'superadmin') return true;
         if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
+        if (isInspector) {
+            return [4, 6].includes(job.stage) && isAssignedInspector;
+        }
         const p = permissions[job.stage];
         return p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1');
     })();
@@ -226,7 +230,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const canManageStageDocs = (sid) => {
         if (['superadmin','manager'].includes(user?.role)) return true;
         if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11].includes(sid)) return true;
-        if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return true;
+        if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return isAssignedInspector;
+        if (isInspector) return false;
         const p = permissions?.[sid];
         return p && p.is_owner;
     };
@@ -658,9 +663,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <textarea rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)}
                                     className="w-full text-sm border rounded px-2 py-1.5 mb-2"
                                     placeholder="Catatan untuk Marketing (opsional)…" />
-                                <button type="submit" className="w-full py-2 rounded text-sm font-bold bg-red-600 text-white hover:bg-red-700">
-                                    Lanjut ke Perubahan Unit (MKT)
-                                </button>
+                                <div className="flex gap-2">
+                                    <button type="button" onClick={handleRejectStage} disabled={processing}
+                                        className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                                        Tolak / Kembalikan
+                                    </button>
+                                    <button type="submit" className="flex-1 py-2 rounded text-sm font-bold bg-red-600 text-white hover:bg-red-700">
+                                        Lanjut ke Perubahan Unit (MKT)
+                                    </button>
+                                </div>
                             </form>
                         ) : (
                             <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />

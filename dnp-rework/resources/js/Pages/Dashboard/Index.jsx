@@ -344,7 +344,6 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                     job={selectedJob} 
                     onClose={() => setSelectedJob(null)} 
                     auth={auth} 
-                    canManage={true} 
                 />
             )}
         </AppLayout>

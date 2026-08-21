@@ -32,11 +32,12 @@ class JobController extends Controller
             return true;
         }
         
-        // If it's an inspector stage, check if user is assigned to the specific job
-        if ($job && ($stage === 4 || $stage === 6) && $user->role === 'inspektur') {
-            if ($job->inspectors()->where('users.id', $user->id)->exists()) {
-                return true;
+        // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 6)
+        if ($user->role === 'inspektur') {
+            if ($job && ($stage === 4 || $stage === 6)) {
+                return $job->inspectors()->where('users.id', $user->id)->exists();
             }
+            return false;
         }
         
         return $user->canOwnStage($stage);
@@ -197,20 +198,13 @@ class JobController extends Controller
             }
         }
 
-        // Stage 6 → 7: require LHPP + BAP uploaded AND all contracted units evaluated
+        // Stage 6 → 7: require LHPP + BAP uploaded
         if ($currentStage == 6) {
-            $hasLhpp = $job->documents()->whereIn('stage', [5, 6])->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final'])->exists();
-            $hasBap  = $job->documents()->whereIn('stage', [5, 6])->whereIn('type', ['BAP', 'BAP (PDF)', 'BAP Final'])->exists();
+            $hasLhpp = $job->documents()->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'])->exists();
+            $hasBap  = $job->documents()->whereIn('type', ['BAP', 'BAP (PDF)', 'BAP Final'])->exists();
             if (!$hasLhpp || !$hasBap) {
                 return back()->withErrors([
                     'documents' => 'LHPP dan BAP wajib diunggah sebelum melanjutkan ke Stage 7 (Penyerahan ke Dinas).',
-                ]);
-            }
-            $evaluatedCount = $job->evaluations()->count();
-            if ($evaluatedCount < $job->units) {
-                return back()->withErrors([
-                    'evaluations' => 'Semua unit harus dievaluasi terlebih dahulu sebelum melanjutkan ('
-                        . $evaluatedCount . '/' . $job->units . ' unit selesai).',
                 ]);
             }
         }
@@ -743,7 +737,7 @@ class JobController extends Controller
             || $user->role === 'manager'
             || ($user->role === 'marketing' && $job->owner_marketing === $user->name && in_array($request->stage, [1, 11]))
             || ($isInspector && in_array($request->stage, [4, 5, 6]))
-            || $user->canOwnStage($request->stage);
+            || ($user->role !== 'inspektur' && $user->canOwnStage($request->stage));
 
         if (!$canUpload) {
             abort(403, 'You do not have permission to upload documents for this stage.');
@@ -794,7 +788,7 @@ class JobController extends Controller
             || $user->role === 'manager'
             || $document->uploaded_by_user_id === $user->id
             || ($isInspector && in_array($document->stage, [4, 5, 6]))
-            || $user->canOwnStage($document->stage);
+            || ($user->role !== 'inspektur' && $user->canOwnStage($document->stage));
 
         if (!$canDelete) {
             abort(403, 'You do not have permission to delete this document.');

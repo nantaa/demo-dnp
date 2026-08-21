@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { CheckSquare } from 'lucide-react';
 import { INS_SUBROLES } from '@/Constants';
 
+const SubroleBadge = ({ profile }) => {
+    if (!profile?.subrole) return null;
+    const label = INS_SUBROLES[profile.subrole] || profile.subrole;
+    const cls = profile.subrole === 'tenaga_ahli'
+        ? 'bg-indigo-100 text-indigo-700'
+        : 'bg-sky-100 text-sky-700';
+    return (
+        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${cls}`}>{label}</span>
+    );
+};
+
 export default function SmartRecommendation({ job, onSelectInspector, selectedInspectorIds = [] }) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({ recommended: [], eliminated: [] });
@@ -23,17 +34,6 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
         ...data.recommended.map(r => ({ ...r, isEliminated: false })),
         ...data.eliminated.map(e => ({ user: e.user, profile: e.profile || {}, score: null, details: {}, bonuses: [], klien_exp: 0, pesawat_exp: 0, isEliminated: true, eliminatedReason: e.reason })),
     ];
-
-    const SubroleBadge = ({ profile }) => {
-        if (!profile?.subrole) return null;
-        const label = INS_SUBROLES[profile.subrole] || profile.subrole;
-        const cls = profile.subrole === 'tenaga_ahli'
-            ? 'bg-indigo-100 text-indigo-700'
-            : 'bg-sky-100 text-sky-700';
-        return (
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${cls}`}>{label}</span>
-        );
-    };
 
     return (
         <div className="bg-[#F2EFE8] p-4 rounded-lg border border-[#E8E4DA] text-sm text-gray-800 font-sans">

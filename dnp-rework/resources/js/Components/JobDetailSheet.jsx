@@ -47,7 +47,72 @@ const getSlaTag = (days, slaLimit) => {
     if (days == null || !slaLimit) return null;
     if (days > slaLimit)  return { label: 'OVERDUE',  cls: 'bg-red-100 text-red-800 font-bold' };
     if (days >= slaLimit) return { label: 'LAST DAY', cls: 'bg-orange-100 text-orange-800 font-bold' };
-    return                        { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
+// ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
+const DocChip = ({ doc, canManage, onDelete }) => (
+    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
+        <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer"
+           className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
+            📎 {doc.name}
+        </a>
+        {canManage && (
+            <button onClick={() => onDelete(doc.id)}
+                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
+        )}
+    </div>
+);
+
+const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => (
+    <div className="mt-4 flex flex-col gap-2">
+        {disabledMsg && (
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                ⚠️ {disabledMsg}
+            </div>
+        )}
+        <div className="flex gap-2">
+            {[2,5,9].includes(stage) && (
+                <button type="button" onClick={onReject} disabled={processing}
+                    className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
+                    Tolak / Kembalikan
+                </button>
+            )}
+            <button type="submit" disabled={processing || disabled}
+                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
+                {processing ? '...' : `Lanjut ke Stage ${stage + 1} →`}
+            </button>
+        </div>
+    </div>
+);
+
+const NoteField = ({ value, onChange }) => (
+    <div className="mt-3">
+        <label className="block text-xs font-medium text-gray-600 mb-1">Catatan / Keterangan</label>
+        <textarea
+            rows={2}
+            value={value || ''}
+            onChange={onChange}
+            className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-400"
+            placeholder="Tulis catatan atau keterangan..."
+        />
+    </div>
+);
+
+const UploadSlot = ({ type, stageId, docs, triggerUpload, canManageStageDocs, deleteDoc }) => {
+    const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));
+    return (
+        <div className="border border-dashed border-gray-200 rounded-lg p-2">
+            <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-gray-600 truncate">{type}</span>
+                <button type="button" onClick={() => triggerUpload(stageId, type)}
+                    className="text-xs text-blue-600 hover:underline ml-2 flex-shrink-0">
+                    + Upload
+                </button>
+            </div>
+            {existing.length > 0
+                ? <div className="flex flex-wrap gap-1">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs ? canManageStageDocs(d.stage) : true} onDelete={deleteDoc} />)}</div>
+                : <p className="text-xs text-gray-400 italic">Belum ada dokumen</p>
+            }
+        </div>
+    );
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -284,20 +349,6 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         return type ? docs.filter(d => d.type === type) : docs;
     };
 
-    // Render a document download chip
-    const DocChip = ({ doc }) => (
-        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
-            <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer"
-               className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
-                📎 {doc.name}
-            </a>
-            {canManageStageDocs(doc.stage) && (
-                <button onClick={() => deleteDoc(doc.id)}
-                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
-            )}
-        </div>
-    );
-
     // Compute SLA for current stage
     const currentStageInfo = STAGES.find(s => s.id === job.stage);
     const daysInStage = daysElapsed(job.stage_started_at);
@@ -312,70 +363,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (!canManage) return null;
         const s = job.stage;
 
-        // Common move/reject row
-        const MoveRow = ({ disabled = false, disabledMsg = '' }) => (
-            <div className="mt-4 flex flex-col gap-2">
-                {disabledMsg && (
-                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                        ⚠️ {disabledMsg}
-                    </div>
-                )}
-                <div className="flex gap-2">
-                    {[2,5,9].includes(s) && (
-                        <button type="button" onClick={handleRejectStage} disabled={processing}
-                            className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
-                            Tolak / Kembalikan
-                        </button>
-                    )}
-                    <button type="submit" disabled={processing || disabled}
-                        className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                        {processing ? '...' : `Lanjut ke Stage ${s + 1} →`}
-                    </button>
-                </div>
-            </div>
-        );
-
-        const NoteField = () => (
-            <div className="mt-3">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Catatan / Keterangan</label>
-                <textarea rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)}
-                    className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-400" />
-            </div>
-        );
-
-        // Upload slot for a doc type in current stage
-        const UploadSlot = ({ type, stageId }) => {
-            const existing = getDocs(stageId, type);
-            return (
-                <div className="border border-dashed border-gray-200 rounded-lg p-2">
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-gray-600 truncate">{type}</span>
-                        <button type="button" onClick={() => triggerUpload(stageId, type)}
-                            className="text-xs text-blue-600 hover:underline ml-2 flex-shrink-0">
-                            + Upload
-                        </button>
-                    </div>
-                    {existing.length > 0
-                        ? <div className="flex flex-wrap gap-1">{existing.map(d => <DocChip key={d.id} doc={d} />)}</div>
-                        : <p className="text-xs text-gray-400 italic">Belum ada dokumen</p>
-                    }
-                </div>
-            );
-        };
-
         return (
             <form onSubmit={handleMoveStage}>
                 {/* ── STAGE 1 ─────────────────────────────────── */}
                 {s === 1 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Upload minimal salah satu dokumen berikut untuk melanjutkan:</p>
-                        {STAGE1_REQUIRED_DOCS.map(t => <UploadSlot key={t} type={t} stageId={1} />)}
+                        {STAGE1_REQUIRED_DOCS.map(t => (
+                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                        ))}
                         <p className="text-xs text-gray-400 mt-1">Dokumen opsional tambahan:</p>
-                        {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t)).map(t =>
-                            <UploadSlot key={t} type={t} stageId={1} />
-                        )}
-                        <NoteField />
-                        <MoveRow disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
+                        {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t)).map(t => (
+                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                        ))}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
                     </div>
                 )}
 
@@ -505,7 +507,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             })}
                         </div>
 
-                        <NoteField />
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
 
                         {/* Action row */}
                         <div className="flex gap-2 mt-1 flex-wrap">
@@ -582,8 +584,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </div>
                             </div>
                         )}
-                        <NoteField />
-                        <MoveRow disabled={!data.tgl_pelaksanaan || !data.inspector_ids?.length}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!data.tgl_pelaksanaan || !data.inspector_ids?.length}
                             disabledMsg={!data.inspector_ids?.length ? 'Pilih minimal satu inspektur' : ''} />
                     </div>
                 )}
@@ -630,7 +632,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 {existing.length > 0 && <span className="text-xs text-green-600 font-bold">✓ Terupload</span>}
                                             </div>
                                             {existing.length > 0
-                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} />)}</div>
+                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}</div>
                                                 : null
                                             }
                                             <input type="text" placeholder="Catatan foto (opsional)"
@@ -646,7 +648,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 })}
                             </div>
                         </div>
-                        <NoteField />
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         {/* Move to Stage 13 */}
                         {s4UnitMismatch ? (
                             <form onSubmit={handleRouteTo13} className="border border-red-200 rounded-lg p-3 bg-red-50">
@@ -661,7 +663,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </button>
                             </form>
                         ) : (
-                            <MoveRow />
+                            <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                         )}
                     </div>
                 )}
@@ -694,7 +696,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="w-full py-2 rounded text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
                             Simpan Keputusan Review
                         </button>
-                        <NoteField />
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <div className="flex gap-2">
                             <button type="button" onClick={handleRejectStage}
                                 className="px-4 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
@@ -711,9 +713,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 6 (Penyusunan LHPP — INS) ────────── */}
                 {s === 6 && (
                     <div className="space-y-3">
-                        {(DOC_TYPES_BY_STAGE[6] || []).map(t => <UploadSlot key={t} type={t} stageId={6} />)}
-                        <NoteField />
-                        <MoveRow />
+                        {(DOC_TYPES_BY_STAGE[6] || []).map(t => <UploadSlot key={t} type={t} stageId={6} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
                 )}
 
@@ -730,9 +732,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Tanggal Penyerahan
                         </button>
-                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} />
-                        <NoteField />
-                        <MoveRow disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
+                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
                     </div>
                 )}
 
@@ -767,9 +769,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Data Disnaker
                         </button>
-                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} />)}
-                        <NoteField />
-                        <MoveRow />
+                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
                 )}
 
@@ -788,8 +790,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Status
                         </button>
-                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} />)}
-                        <NoteField />
+                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <div className="flex gap-2 mt-2">
                             <button type="button" onClick={handleRejectStage}
                                 className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200">Tolak</button>
@@ -836,9 +838,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Data Penagihan
                         </button>
-                        {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} />)}
-                        <NoteField />
-                        <MoveRow />
+                        {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
                 )}
 
@@ -849,11 +851,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
                             <div key={t} className="relative">
                                 <span className="absolute top-1 right-2 text-[10px] text-gray-400 font-bold bg-white px-1 border rounded z-10">OPSIONAL</span>
-                                <UploadSlot type={t} stageId={11} />
+                                <UploadSlot type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
                             </div>
                         ))}
-                        <NoteField />
-                        <MoveRow />
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
                 )}
             </form>
@@ -958,7 +960,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     <div className="mt-3 space-y-1">
                                         <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
                                         <div className="flex flex-wrap gap-1">
-                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} />)}
+                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}
                                         </div>
                                     </div>
                                 )}

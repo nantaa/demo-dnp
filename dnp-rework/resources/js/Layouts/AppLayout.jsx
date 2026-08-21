@@ -66,9 +66,7 @@ export default function AppLayout({ header, children }) {
                             <Menu size={20} />
                         </button>
 
-                        <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded flex-shrink-0">
-                            <HardHat size={18} />
-                        </div>
+                        <img src="/images/logo.png" alt="PT Delta Nusantara Persada" className="h-9 w-auto object-contain shrink-0" />
                         <div>
                             <div className="hidden sm:block text-[10px] tracking-widest uppercase text-gray-500 font-bold leading-none">
                                 PT Delta Nusantara Persada
@@ -110,9 +108,7 @@ export default function AppLayout({ header, children }) {
             <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="flex items-center justify-between px-4 py-4 border-b">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded">
-                            <HardHat size={18} />
-                        </div>
+                        <img src="/images/logo.png" alt="DNP Logo" className="h-8 w-auto object-contain shrink-0" />
                         <span className="font-bold text-sm">DNP Monitor</span>
                     </div>
                     <button onClick={() => setSidebarOpen(false)} className="p-2 rounded hover:bg-gray-100">

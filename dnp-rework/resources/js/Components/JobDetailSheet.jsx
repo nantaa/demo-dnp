@@ -230,7 +230,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const canManageStageDocs = (sid) => {
         if (['superadmin','manager'].includes(user?.role)) return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11].includes(sid)) return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sid)) return true;
         if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return isAssignedInspector;
         if (isInspector) return false;
         const p = permissions?.[sid];

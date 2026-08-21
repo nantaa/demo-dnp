@@ -31,7 +31,17 @@ class JobController extends Controller
         if ($user->role === 'manager' && !in_array($stage, array_merge(self::MKT_STAGES, self::FIN_STAGES))) {
             return true;
         }
-        
+
+        if ($user->role === 'marketing') {
+            if (in_array($stage, [1, 11, 13])) {
+                if ($job && !empty($job->owner_marketing) && $job->owner_marketing === $user->name) {
+                    return true;
+                }
+                return $user->canOwnStage($stage);
+            }
+            return false;
+        }
+
         // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 6)
         if ($user->role === 'inspektur') {
             if ($job && ($stage === 4 || $stage === 6)) {
@@ -39,7 +49,7 @@ class JobController extends Controller
             }
             return false;
         }
-        
+
         return $user->canOwnStage($stage);
     }
 

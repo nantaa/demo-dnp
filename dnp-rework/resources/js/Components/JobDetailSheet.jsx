@@ -1035,7 +1035,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penjadwalan:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600">
-                        <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-medium text-gray-800">{fmtDate(job.tgl_pelaksanaan) || '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-medium text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
                         <div><span className="text-gray-400">Jam:</span> <span className="font-medium text-gray-800">{job.jam_mulai || '-'}</span></div>
                         <div><span className="text-gray-400">Durasi:</span> <span className="font-medium text-gray-800">{job.durasi_hari ? `${job.durasi_hari} Hari` : '-'}</span></div>
                         <div><span className="text-gray-400">Disnaker Tujuan:</span> <span className="font-medium text-gray-800">{job.disnaker_tujuan || '-'}</span></div>
@@ -1050,7 +1050,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <p className="font-bold text-gray-700">Detail Disnaker:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600">
                         <div><span className="text-gray-400">Status Progress:</span> <span className="font-medium text-gray-800">{job.s8_progress_status || '-'}</span></div>
-                        <div><span className="text-gray-400">Tgl Selesai:</span> <span className="font-medium text-gray-800">{fmtDate(job.disnaker_deadline_at) || '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl Selesai:</span> <span className="font-medium text-gray-800">{fmt(job.disnaker_deadline_at) || '-'}</span></div>
                     </div>
                 </div>
             );
@@ -1061,7 +1061,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <p className="font-bold text-gray-700">Suket Info:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600">
                         <div><span className="text-gray-400">No Suket:</span> <span className="font-medium text-gray-800">{job.s9_no_suket || '-'}</span></div>
-                        <div><span className="text-gray-400">Berlaku Sampai:</span> <span className="font-medium text-gray-800">{fmtDate(job.s9_suket_berlaku_sampai) || '-'}</span></div>
+                        <div><span className="text-gray-400">Berlaku Sampai:</span> <span className="font-medium text-gray-800">{fmt(job.s9_suket_berlaku_sampai) || '-'}</span></div>
                     </div>
                 </div>
             );

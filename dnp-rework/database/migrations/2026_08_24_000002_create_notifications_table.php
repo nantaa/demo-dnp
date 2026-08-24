@@ -15,7 +15,7 @@ return new class extends Migration
             Schema::create('notifications', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-                $table->foreignId('job_id')->nullable()->constrained('dnp_jobs')->onDelete('set null');
+                $table->foreignUuid('job_id')->nullable()->constrained('dnp_jobs')->nullOnDelete();
                 $table->string('type', 60); // stage_moved, assigned, rejected, ask_approval, etc.
                 $table->string('title');
                 $table->text('body');

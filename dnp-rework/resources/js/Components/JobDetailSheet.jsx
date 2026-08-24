@@ -1176,52 +1176,255 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Completed Stage Summary ────────────────────────────────────────────────
     const renderCompletedStageSummary = (s) => {
+        const logs = (job.historyLogs || job.history_logs || []);
+        const stageLog = logs.find(l => l.from_stage === s || l.to_stage === s);
+        const stageNotes = stageLog?.notes;
+
+        if (s === 1) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Ringkasan Order Masuk:</p>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Klien:</span> <span className="font-semibold text-gray-800">{job.klien || '-'}</span></div>
+                        <div><span className="text-gray-400">Pesawat / Alat:</span> <span className="font-semibold text-gray-800">{job.pesawat || '-'}</span></div>
+                        <div><span className="text-gray-400">Lokasi:</span> <span className="font-semibold text-gray-800">{job.lokasi || '-'}</span></div>
+                        <div><span className="text-gray-400">Jumlah Unit:</span> <span className="font-semibold text-gray-800">{job.units || 1} Unit</span></div>
+                        <div><span className="text-gray-400">Nilai Kontrak:</span> <span className="font-semibold text-gray-800">{job.nilai ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '-'}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         if (s === 3) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penjadwalan:</p>
-                    <div className="grid grid-cols-2 gap-2 text-gray-600">
-                        <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-medium text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
-                        <div><span className="text-gray-400">Jam:</span> <span className="font-medium text-gray-800">{job.jam_mulai || '-'}</span></div>
-                        <div><span className="text-gray-400">Durasi:</span> <span className="font-medium text-gray-800">{job.durasi_hari ? `${job.durasi_hari} Hari` : '-'}</span></div>
-                        <div><span className="text-gray-400">Disnaker Tujuan:</span> <span className="font-medium text-gray-800">{job.disnaker_tujuan || '-'}</span></div>
-                        <div><span className="text-gray-400">Inspektur:</span> <span className="font-medium text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
+                        <div><span className="text-gray-400">Jam:</span> <span className="font-semibold text-gray-800">{job.jam_mulai || '-'}</span></div>
+                        <div><span className="text-gray-400">Durasi:</span> <span className="font-semibold text-gray-800">{job.durasi_hari ? `${job.durasi_hari} Hari` : '-'}</span></div>
+                        <div><span className="text-gray-400">Disnaker Tujuan:</span> <span className="font-semibold text-gray-800">{job.disnaker_tujuan || '-'}</span></div>
+                        <div className="col-span-2"><span className="text-gray-400">Inspektur Bertugas:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
                     </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
                 </div>
             );
         }
-        if (s === 8) {
+
+        if (s === 4) {
+            const s4Checklist = parseJsonObject(job.s4_checklist);
+            const checkedCount = Object.values(s4Checklist).filter(Boolean).length;
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Detail Disnaker:</p>
-                    <div className="grid grid-cols-2 gap-2 text-gray-600">
-                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-medium text-gray-800">{job.s8_progress_status || '-'}</span></div>
-                        <div><span className="text-gray-400">Tgl Selesai:</span> <span className="font-medium text-gray-800">{fmt(job.disnaker_deadline_at) || '-'}</span></div>
+                    <p className="font-bold text-gray-700">Detail Pelaksanaan RU:</p>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
+                        <div><span className="text-gray-400">Tim Inspektur:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
+                        <div><span className="text-gray-400">Report Writer:</span> <span className="font-semibold text-gray-800">{job.report_writer ? job.report_writer.name : '-'}</span></div>
+                        <div><span className="text-gray-400">Checklist Lapangan:</span> <span className="font-semibold text-emerald-700">{checkedCount > 0 ? `✓ ${checkedCount} Item Terverifikasi` : '-'}</span></div>
                     </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Inspeksi: </span> {stageNotes}
+                        </div>
+                    )}
                 </div>
             );
         }
+
+        if (s === 42) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Detail Aktualisasi Unit:</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div><span className="text-gray-400">Status Update Unit:</span> <span className="font-semibold text-gray-800">Selesai diperbarui</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 5) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Detail Penyusunan LHPP:</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div><span className="text-gray-400">Status LHPP & BAP:</span> <span className="font-semibold text-emerald-700">✓ Dokumen Selesai Diunggah & Disusun</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Penyusunan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 6) {
+            const decisionObj = STAGE5_DECISIONS.find(d => d.value === job.s5_review_decision);
+            const decisionLabel = decisionObj ? decisionObj.label : job.s5_review_decision;
+            const badgeCls = job.s5_review_decision === 'approved' 
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                : job.s5_review_decision === 'conditional' 
+                    ? 'bg-amber-100 text-amber-800 border-amber-300' 
+                    : 'bg-red-100 text-red-800 border-red-300';
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Hasil Review Manager:</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-gray-400">Keputusan Review:</span>
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${badgeCls}`}>
+                                {decisionLabel || 'Approved'}
+                            </span>
+                        </div>
+                        {job.s5_review_notes && (
+                            <div>
+                                <span className="text-gray-400">Catatan Reviewer:</span>{' '}
+                                <span className="font-medium text-gray-800">{job.s5_review_notes}</span>
+                            </div>
+                        )}
+                    </div>
+                    {stageNotes && !job.s5_review_notes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 7) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Detail Penyerahan ke Dinas:</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div><span className="text-gray-400">Tgl Penyerahan ke Disnaker:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_submit_disnaker) || '-'}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Penyerahan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 8) {
+            const statusObj = STAGE8_DISNAKER_STATUSES.find(p => p.value === job.s8_progress_status);
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Detail Proses Disnaker:</p>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{statusObj ? statusObj.label : (job.s8_progress_status || '-')}</span></div>
+                        <div><span className="text-gray-400">Tgl Diserahkan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_doc_submitted_disnaker) || '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl Diterima Kembali:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_doc_received_disnaker) || '-'}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         if (s === 9) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Suket Info:</p>
-                    <div className="grid grid-cols-2 gap-2 text-gray-600">
-                        <div><span className="text-gray-400">No Suket:</span> <span className="font-medium text-gray-800">{job.s9_no_suket || '-'}</span></div>
-                        <div><span className="text-gray-400">Berlaku Sampai:</span> <span className="font-medium text-gray-800">{fmt(job.s9_suket_berlaku_sampai) || '-'}</span></div>
+                    <p className="font-bold text-gray-700">Informasi Suket:</p>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{job.s9_progress_status || '-'}</span></div>
+                        <div><span className="text-gray-400">No Suket:</span> <span className="font-semibold text-gray-800">{job.s9_no_suket || '-'}</span></div>
+                        <div><span className="text-gray-400">Masa Berlaku:</span> <span className="font-semibold text-gray-800">{fmt(job.s9_suket_berlaku_sampai) || '-'}</span></div>
                     </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
                 </div>
             );
         }
-        if (s === 14 || s === 12) {
+
+        if (s === 10) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Status Pembayaran:</p>
-                    <div className="text-gray-600">
-                        <span className="text-gray-400">Status:</span> <span className="font-medium text-gray-800">{job.s14_payment_status || job.payment_status || '-'}</span>
+                    <p className="font-bold text-gray-700">Detail Penagihan / Invoice:</p>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Total Invoice:</span> <span className="font-semibold text-gray-800">{job.total_invoice_amount ? `Rp ${Number(job.total_invoice_amount).toLocaleString('id-ID')}` : '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl Invoice Diterbitkan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_invoice_issued) || '-'}</span></div>
+                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{job.s10_progress_status || '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl Submit MKT:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_submit_mkt) || '-'}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Penagihan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 11) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Pengiriman Suket ke Klien:</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">✓ Suket telah diserahkan ke Klien</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Pengiriman: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 14 || s === 12) {
+            const statusLabel = job.s14_payment_status === 'paid' ? '✅ Paid (Lunas Sempurna)' : job.s14_payment_status === 'partial' ? '🌗 Partial (Dibayar Sebagian)' : '⏳ Pending';
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Status Pelunasan Pembayaran:</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1">
+                        <div><span className="text-gray-400">Status Pembayaran 11b:</span> <span className="font-bold text-gray-800">{statusLabel}</span></div>
+                        {job.s14_payment_notes && (
+                            <div><span className="text-gray-400">Catatan Pembayaran:</span> <span className="font-medium text-gray-800">{job.s14_payment_notes}</span></div>
+                        )}
+                    </div>
+                    {stageNotes && !job.s14_payment_notes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (stageNotes) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                        <span className="font-semibold text-amber-800">Catatan Stage: </span> {stageNotes}
                     </div>
                 </div>
             );
         }
+
         return null;
     };
 

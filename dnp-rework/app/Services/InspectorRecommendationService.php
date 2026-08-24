@@ -34,21 +34,16 @@ class InspectorRecommendationService
                 continue;
             }
 
-            // Pesawat mapping simplified (e.g. Instalasi Listrik -> Listrik)
+            // Pesawat mapping (Score weight: 30)
             $isMatch = false;
-            foreach ((array)$profile->spesialisasi as $spec) {
-                if (stripos($targetJob->pesawat, $spec) !== false) {
-                    $isMatch = true;
-                    break;
+            if (!empty($profile->spesialisasi)) {
+                $specs = is_array($profile->spesialisasi) ? $profile->spesialisasi : json_decode($profile->spesialisasi, true) ?? [];
+                foreach ((array)$specs as $spec) {
+                    if ($spec && (stripos($targetJob->pesawat, $spec) !== false || stripos($spec, $targetJob->pesawat) !== false)) {
+                        $isMatch = true;
+                        break;
+                    }
                 }
-            }
-
-            if (!$isMatch) {
-                $eliminated[] = [
-                    'user' => $inspector, 
-                    'reason' => 'Spesialisasi tidak sesuai (Butuh: ' . $targetJob->pesawat . ')'
-                ];
-                continue;
             }
 
             // Score Calculation
@@ -56,8 +51,12 @@ class InspectorRecommendationService
             $details = [];
 
             // 1. Spesialisasi (30)
-            $score += 30; // Passed hard filter
-            $details['Spesialisasi'] = '30/30';
+            if ($isMatch) {
+                $score += 30;
+                $details['Spesialisasi'] = '30/30';
+            } else {
+                $details['Spesialisasi'] = '0/30';
+            }
 
             // 2. Workload (25)
             // Mocking active jobs for now

@@ -176,14 +176,6 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                     })}
                 </div>
             </div>
-
-            {/* Formula reference */}
-            <div className="border border-teal-600 p-4 bg-white text-xs text-gray-600">
-                <div className="font-bold text-teal-800 mb-1">FORMULA SKOR (Max 100 poin)</div>
-                <div className="font-bold mb-1">Score = Spesialisasi (30) + Workload (25) + Pengalaman Klien (15) + Pengalaman Pesawat (15) + Availability (15)</div>
-                <div>Bonuses: +5 SKP ≥1 thn · +5 Domisili match · +10 Senior untuk critical · -10 Overload (≥4 job) · -5 Junior untuk critical</div>
-                <div className="mt-1 text-gray-400 italic">Inspektur di luar top 3 tetap dapat dipilih manual dari grid di atas.</div>
-            </div>
         </div>
     );
 }

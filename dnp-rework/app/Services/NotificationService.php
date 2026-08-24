@@ -13,7 +13,7 @@ class NotificationService
     /**
      * Send in-app notification to target user IDs.
      */
-    public static function send(array|int $userIds, string $type, string $title, string $body, ?int $jobId = null): void
+    public static function send(array|int $userIds, string $type, string $title, string $body, string|int|null $jobId = null): void
     {
         $ids = is_array($userIds) ? $userIds : [$userIds];
         $uniqueIds = array_unique(array_filter($ids));

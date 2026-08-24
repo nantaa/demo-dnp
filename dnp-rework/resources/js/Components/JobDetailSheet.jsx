@@ -100,22 +100,12 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
 };
 
 const NoteField = React.memo(function NoteField({ value, onChange }) {
-    const ref = useRef(null);
-    // Sync external value only when it differs from DOM value AND textarea is not focused
-    useEffect(() => {
-        const el = ref.current;
-        if (el && document.activeElement !== el) {
-            el.value = value || '';
-        }
-    }, [value]);
-
     return (
         <div className="mt-3">
             <label className="block text-xs font-medium text-gray-600 mb-1">Catatan / Keterangan</label>
             <textarea
-                ref={ref}
                 rows={2}
-                defaultValue={value || ''}
+                value={value || ''}
                 onChange={onChange}
                 className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-400"
                 placeholder="Tulis catatan atau keterangan..."

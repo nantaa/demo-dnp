@@ -10,10 +10,14 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
         return Inertia::render('Pelaporan/Index', [
-            // Passing default dates to start the filter
+            'auth' => [
+                'user' => $user,
+                'permissions' => $user ? ($user->isSuperadmin() ? 'superadmin' : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray()) : null,
+            ],
             'defaultStartDate' => now()->startOfMonth()->format('Y-m-d'),
-            'defaultEndDate' => now()->endOfMonth()->format('Y-m-d'),
+            'defaultEndDate'   => now()->endOfMonth()->format('Y-m-d'),
         ]);
     }
 

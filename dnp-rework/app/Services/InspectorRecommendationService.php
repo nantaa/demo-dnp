@@ -10,7 +10,8 @@ class InspectorRecommendationService
 {
     public function getRecommendations(Job $targetJob)
     {
-        $inspectors = User::where('role', 'inspektur')
+        $inspectors = User::whereIn('role', ['inspektur', 'manager'])
+            ->orWhereHas('inspectorProfile')
             ->with(['inspectorProfile'])
             ->get();
 
@@ -21,7 +22,15 @@ class InspectorRecommendationService
             $profile = $inspector->inspectorProfile;
             
             if (!$profile) {
-                continue;
+                // Fallback for managers/users without formal inspector profile record
+                $profile = (object)[
+                    'active' => true,
+                    'skp_expired_at' => null,
+                    'spesialisasi' => [],
+                    'domisili' => 'Bekasi',
+                    'senior_level' => 1,
+                    'subrole' => 'inspektur',
+                ];
             }
 
             // Hard Filters

@@ -9,8 +9,8 @@ import { ROLES } from '../Constants';
 import logoImg from '../../images/logo.png';
 
 export default function AppLayout({ header, children }) {
-    const { auth } = usePage().props;
-    const { user } = auth;
+    const { auth = {} } = usePage().props || {};
+    const user = auth?.user || {};
     const currentRoute = window.location.pathname;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 

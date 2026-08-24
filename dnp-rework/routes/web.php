@@ -21,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Reminder Suket & SKP
     Route::get('/reminder-suket', [DashboardController::class, 'reminderSuket'])->name('reminder.suket');
     Route::get('/inventory', [DashboardController::class, 'inventory'])->name('inventory');
+    
+    // Pelaporan / Reports
+    Route::get('/pelaporan', [\App\Http\Controllers\ReportController::class, 'index'])->name('pelaporan.index');
+    Route::post('/pelaporan/export', [\App\Http\Controllers\ReportController::class, 'export'])->name('pelaporan.export');
 
     // API/Actions
     Route::get('/jobs/create', [JobController::class, 'create'])->name('jobs.create');

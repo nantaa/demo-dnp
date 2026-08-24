@@ -235,7 +235,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const { permissions, user } = auth || {};
     const isInspector = user?.role === 'inspektur';
     const isMGR = user?.role === 'manager';
-    const isAssignedInspector = (job.inspectors || []).some(ins => ins.id === user?.id || ins.user_id === user?.id);
+    const isAssignedInspector = (job.inspectors || []).some(ins => 
+        String(ins.id) === String(user?.id) || 
+        String(ins.user_id) === String(user?.id) || 
+        String(ins.pivot?.user_id) === String(user?.id)
+    ) || String(job.report_writer_id) === String(user?.id);
 
     const canSeeNilai = user?.role === 'superadmin'
         || user?.role === 'finance'

@@ -52,7 +52,12 @@ export default function KanbanIndex({ jobs, auth }) {
                             return true;
                         }
                         if (auth.user.role === 'inspektur') {
-                            return (j.inspectors || []).some(ins => ins.id === auth.user.id || ins.user_id === auth.user.id) || (j.report_writer_id === auth.user.id);
+                            const uId = String(auth.user.id);
+                            return (j.inspectors || []).some(ins => 
+                                String(ins.id) === uId || 
+                                String(ins.user_id) === uId || 
+                                String(ins.pivot?.user_id) === uId
+                            ) || String(j.report_writer_id) === uId;
                         }
                         return hasViewPermission;
                     });

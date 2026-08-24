@@ -52,6 +52,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/disnaker-followup', [JobController::class, 'saveDisnakerFollowup'])->name('jobs.disnaker-followup');
     Route::post('/jobs/{job}/unit-tracking', [JobController::class, 'saveUnitTracking'])->name('jobs.unit-tracking');
 
+    // Master data & Smart Recommendations API
+    Route::get('/api/master-data', [JobController::class, 'getMasterData'])->name('api.master-data');
+    Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');
+
     // Notification API
     Route::get('/api/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('api.notifications.index');
     Route::post('/api/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('api.notifications.read');

@@ -158,6 +158,7 @@ export default function KanbanIndex({ jobs, auth }) {
 
             {selectedJob && (
                 <JobDetailSheet 
+                    key={selectedJob.id}
                     job={jobs.find(j => j.id === selectedJob.id) || selectedJob} 
                     onClose={() => setSelectedJob(null)} 
                     auth={auth} 

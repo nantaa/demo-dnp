@@ -8,6 +8,7 @@ import axios from 'axios';
 export default function Index({ defaultStartDate, defaultEndDate }) {
     const [startDate, setStartDate] = useState(defaultStartDate);
     const [endDate, setEndDate] = useState(defaultEndDate);
+    const [filterBy, setFilterBy] = useState('created_at');
     const [loading, setLoading] = useState(false);
     const [previewData, setPreviewData] = useState([]);
 
@@ -17,6 +18,7 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
             const res = await axios.post('/pelaporan/export', {
                 start_date: startDate,
                 end_date: endDate,
+                filter_by: filterBy,
             });
             if (res.data.success) {
                 setPreviewData(res.data.data);
@@ -123,13 +125,24 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
                                 <Calendar size={24} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-800">Filter Laporan (Berdasarkan Tanggal Dibuat)</h3>
-                                <p className="text-sm text-gray-500">Pilih rentang tanggal untuk melihat dan mengunduh laporan pekerjaan.</p>
+                                <h3 className="text-lg font-bold text-gray-800">Filter Laporan & Rekapitulasi</h3>
+                                <p className="text-sm text-gray-500">Pilih dasar periode dan rentang tanggal untuk melihat dan mengunduh laporan pekerjaan.</p>
                             </div>
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-4 items-end">
-                            <div className="w-full md:w-64">
+                            <div className="w-full md:w-56">
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Berdasarkan Tanggal</label>
+                                <select 
+                                    className="w-full rounded border-gray-300 shadow-sm text-sm"
+                                    value={filterBy}
+                                    onChange={e => setFilterBy(e.target.value)}
+                                >
+                                    <option value="created_at">Tanggal Dibuat (Job Entry)</option>
+                                    <option value="tgl_pelaksanaan">Tanggal Riksa Uji (Pelaksanaan)</option>
+                                </select>
+                            </div>
+                            <div className="w-full md:w-48">
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Dari Tanggal</label>
                                 <input 
                                     type="date" 
@@ -138,7 +151,7 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
                                     onChange={e => setStartDate(e.target.value)}
                                 />
                             </div>
-                            <div className="w-full md:w-64">
+                            <div className="w-full md:w-48">
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">Sampai Tanggal</label>
                                 <input 
                                     type="date" 
@@ -161,7 +174,7 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
                                     className="flex-1 md:flex-none px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 font-bold rounded-md shadow-sm text-sm transition-colors flex items-center justify-center gap-2"
                                 >
                                     <FileSpreadsheet size={16} />
-                                    Export Excel (.xlsx)
+                                    Export Excel (.xls)
                                 </button>
                                 <button 
                                     onClick={exportToCSV}

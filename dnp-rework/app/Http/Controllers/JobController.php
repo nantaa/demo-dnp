@@ -232,6 +232,55 @@ class JobController extends Controller
             }
         }
 
+        // Stage 10 → 11: require Invoice details + Invoice (PDF) document
+        if ($currentStage == 10) {
+            if (empty($job->invoice_no)) {
+                return back()->withErrors([
+                    'invoice_no' => 'Nomor Invoice wajib diisi sebelum melanjutkan ke Stage 11.',
+                ]);
+            }
+            if (empty($job->total_invoice_amount) || $job->total_invoice_amount <= 0) {
+                return back()->withErrors([
+                    'total_invoice_amount' => 'Jumlah Tagihan (Nilai Invoice) wajib diisi dengan benar.',
+                ]);
+            }
+            if (empty($job->tgl_invoice_issued)) {
+                return back()->withErrors([
+                    'tgl_invoice_issued' => 'Tanggal Invoice Diterbitkan wajib diisi.',
+                ]);
+            }
+            $hasInvoiceDoc = $job->documents()->where('stage', 10)->where('type', 'Invoice (PDF)')->exists();
+            if (!$hasInvoiceDoc) {
+                return back()->withErrors([
+                    'documents' => 'Dokumen "Invoice (PDF)" wajib diunggah sebelum melanjutkan ke Stage 11.',
+                ]);
+            }
+        }
+
+        // Stage 11 → 14: require delivery date + Tanda Terima Suket document
+        if ($currentStage == 11) {
+            if (empty($job->tgl_submit_mkt)) {
+                return back()->withErrors([
+                    'tgl_submit_mkt' => 'Tanggal Pengiriman Suket (tgl_submit_mkt) wajib diisi.',
+                ]);
+            }
+            $hasTandaTerima = $job->documents()->where('stage', 11)->where('type', 'Tanda Terima Suket')->exists();
+            if (!$hasTandaTerima) {
+                return back()->withErrors([
+                    'documents' => 'Dokumen "Tanda Terima Suket" wajib diunggah sebelum melanjutkan ke Stage 11b (Pembayaran).',
+                ]);
+            }
+        }
+
+        // Stage 14 → 12: require paid status
+        if ($currentStage == 14) {
+            if (!$job->paid && $job->payment_status !== 'paid') {
+                return back()->withErrors([
+                    'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum menutup (Close) pekerjaan ini.',
+                ]);
+            }
+        }
+
         $validated = $request->validate($validationRules);
         $nextStage = $validated['next_stage'];
 

@@ -223,13 +223,88 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // Master data & recommendations (Stage 3)
     const [masterData,       setMasterData]       = useState({ alat_uji: [], sertifikat_pjk3: [] });
     const [recommendations,  setRecommendations]  = useState({ recommended: [], eliminated: [] });
-
     useEffect(() => {
         if (job.stage === 3) {
-            fetch('/api/master-data').then(r => r.json()).then(setMasterData).catch(console.error);
-            fetch(`/api/jobs/${job.id}/recommendations`).then(r => r.json()).then(setRecommendations).catch(console.error);
+            fetch('/api/master-data')
+                .then(r => {
+                    if (!r.ok) throw new Error('Master data request failed');
+                    return r.json();
+                })
+                .then(data => {
+                    if (data && Array.isArray(data.alat_uji) && Array.isArray(data.sertifikat_pjk3)) {
+                        setMasterData(data);
+                    }
+                })
+                .catch(console.error);
+
+            fetch(`/api/jobs/${job.id}/recommendations`)
+                .then(r => {
+                    if (!r.ok) throw new Error('Recommendations request failed');
+                    return r.json();
+                })
+                .then(data => {
+                    if (data && Array.isArray(data.recommended) && Array.isArray(data.eliminated)) {
+                        setRecommendations(data);
+                    }
+                })
+                .catch(console.error);
         }
     }, [job.id, job.stage]);
+
+    // Keep local form states synchronized when job prop updates
+    useEffect(() => {
+        setData({
+            next_stage:      getNextStageId(job.stage),
+            notes:           '',
+            inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
+            report_writer_id: job.report_writer_id || '',
+            tgl_pelaksanaan: job.tgl_pelaksanaan || '',
+            jam_mulai:       job.jam_mulai || '08:00',
+            durasi_hari:     job.durasi_hari || 1,
+            disnaker_tujuan: job.disnaker_tujuan || '',
+            alat_ids:        parseJsonArray(job.alat_ids),
+            cert_ids:        parseJsonArray(job.cert_ids),
+        });
+        editForm.setData({
+            klien:   job.klien   || '',
+            pesawat: job.pesawat || '',
+            lokasi:  job.lokasi  || '',
+            nilai:   job.nilai   || '',
+            units:   job.units   || 1,
+        });
+        setS4({
+            actual_units:     job.actual_units     ?? job.units,
+            unit_count_notes: job.unit_count_notes ?? '',
+        });
+        setS5({
+            s5_review_decision: job.s5_review_decision ?? '',
+            s5_review_notes:    job.s5_review_notes    ?? '',
+        });
+        setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
+        setS8({
+            tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
+            tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
+            s8_progress_status:         job.s8_progress_status         ?? '',
+        });
+        setS9({ s9_progress_status: job.s9_progress_status ?? '' });
+        setS10({
+            total_invoice_amount: job.total_invoice_amount ?? '',
+            tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
+            s10_progress_status:  job.s10_progress_status  ?? '',
+            tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+        });
+        setS14({
+            s14_payment_status: job.s14_payment_status ?? 'pending',
+            s14_payment_notes:  job.s14_payment_notes  ?? '',
+        });
+
+        const saved = parseJsonObject(job.s2_verify_data);
+        const init = {};
+        STAGE2_VERIFY_CHECKLIST.forEach(item => {
+            init[item.type] = saved[item.type] || '';
+        });
+        setS2Verify(init);
+    }, [job.id]);
 
     // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};

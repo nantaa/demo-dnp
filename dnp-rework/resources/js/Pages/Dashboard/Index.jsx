@@ -341,6 +341,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
             {selectedJob && (
                 <JobDetailSheet 
+                    key={selectedJob.id}
                     job={selectedJob} 
                     onClose={() => setSelectedJob(null)} 
                     auth={auth} 

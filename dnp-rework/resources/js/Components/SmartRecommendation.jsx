@@ -19,9 +19,22 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
 
     useEffect(() => {
         fetch(`/api/jobs/${job.id}/recommendations`)
-            .then(res => res.json())
-            .then(json => { setData(json); setLoading(false); })
-            .catch(err => { console.error('Failed to fetch recommendations', err); setLoading(false); });
+            .then(res => {
+                if (!res.ok) throw new Error('API returned error status');
+                return res.json();
+            })
+            .then(json => {
+                if (json && Array.isArray(json.recommended) && Array.isArray(json.eliminated)) {
+                    setData(json);
+                } else {
+                    console.error('Invalid recommendations format:', json);
+                }
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to fetch recommendations', err);
+                setLoading(false);
+            });
     }, [job.id]);
 
     if (loading) {
@@ -31,8 +44,8 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
     // Merge recommended + eliminated into one flat list for the selector grid
     // Eliminated inspectors are shown with neutral styling (no red badge)
     const allInspectors = [
-        ...data.recommended.map(r => ({ ...r, isEliminated: false })),
-        ...data.eliminated.map(e => ({ user: e.user, profile: e.profile || {}, score: null, details: {}, bonuses: [], klien_exp: 0, pesawat_exp: 0, isEliminated: true, eliminatedReason: e.reason })),
+        ...(data?.recommended || []).map(r => ({ ...r, isEliminated: false })),
+        ...(data?.eliminated || []).map(e => ({ user: e.user, profile: e.profile || {}, score: null, details: {}, bonuses: [], klien_exp: 0, pesawat_exp: 0, isEliminated: true, eliminatedReason: e.reason })),
     ];
 
     return (
@@ -48,17 +61,17 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
             </div>
 
             {/* Top 3 scorecards (recommended only) */}
-            {data.recommended.length > 0 && (
+            {(data?.recommended || []).length > 0 && (
                 <>
                     <div className="bg-teal-700 text-white p-2.5 flex justify-between items-center mb-3 text-xs font-medium">
                         <div className="flex items-center gap-2">
-                            <CheckSquare size={16} /> REKOMENDASI SISTEM — Top {Math.min(3, data.recommended.length)} Terbaik
+                            <CheckSquare size={16} /> REKOMENDASI SISTEM — Top {Math.min(3, (data?.recommended || []).length)} Terbaik
                         </div>
                         <div className="opacity-80">Bobot: Spesialisasi · Workload · Pengalaman · Availability · Bonus</div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        {data.recommended.slice(0, 3).map((rec, idx) => (
+                        {(data?.recommended || []).slice(0, 3).map((rec, idx) => (
                             <div key={rec.user.id} className={`bg-white border-2 p-4 relative ${idx === 0 ? 'border-green-600 shadow-md' : idx === 1 ? 'border-amber-500' : 'border-teal-600'}`}>
                                 <div className={`absolute -top-3 left-4 px-2 py-0.5 text-[10px] font-bold text-white uppercase ${idx === 0 ? 'bg-green-600' : idx === 1 ? 'bg-amber-500' : 'bg-teal-600'}`}>
                                     Top {idx + 1}

@@ -114,21 +114,75 @@ const NoteField = React.memo(function NoteField({ value, onChange }) {
     );
 });
 
-const UploadSlot = ({ type, stageId, docs, triggerUpload, canManageStageDocs, deleteDoc }) => {
+const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional }) => {
+    const [isDragging, setIsDragging] = useState(false);
     const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isDragging) setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (uploadFileDirectly) {
+                uploadFileDirectly(file, stageId, type);
+            }
+        }
+    };
+
     return (
-        <div className="border border-dashed border-gray-200 rounded-lg p-2">
-            <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-gray-600 truncate">{type}</span>
+        <div 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-2.5 transition-all duration-200 ${
+                isDragging 
+                    ? 'border-blue-500 bg-blue-50/80 shadow-md scale-[1.01]' 
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+            }`}
+        >
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span className="text-xs font-semibold text-gray-700 truncate">{type}</span>
+                    {isOptional && (
+                        <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 flex-shrink-0">
+                            OPSIONAL
+                        </span>
+                    )}
+                </div>
                 <button type="button" onClick={() => triggerUpload(stageId, type)}
-                    className="text-xs text-blue-600 hover:underline ml-2 flex-shrink-0">
-                    + Upload
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded transition-colors flex-shrink-0">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span>+ Upload</span>
                 </button>
             </div>
-            {existing.length > 0
-                ? <div className="flex flex-wrap gap-1">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs ? canManageStageDocs(d.stage) : true} onDelete={deleteDoc} />)}</div>
-                : <p className="text-xs text-gray-400 italic">Belum ada dokumen</p>
-            }
+            {existing.length > 0 ? (
+                <div className="flex flex-wrap gap-1 mt-1">
+                    {existing.map(d => (
+                        <DocChip key={d.id} doc={d} canManage={canManageStageDocs ? canManageStageDocs(d.stage) : true} onDelete={deleteDoc} />
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-1.5 px-2 bg-gray-50/50 rounded border border-dashed border-gray-100">
+                    <p className="text-[11px] text-gray-400 italic">
+                        {isDragging ? '📂 Lepaskan file di sini untuk upload' : 'Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload'}
+                    </p>
+                </div>
+            )}
         </div>
     );
 };
@@ -452,6 +506,25 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         e.target.value = '';
     };
 
+    const uploadFileDirectly = (file, stageId, type, extraNotes = '') => {
+        if (!file || !stageId || !type) return;
+        if (file.size > MAX_FILE_SIZE) {
+            showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB. Silakan kompres file Anda terlebih dahulu.');
+            return;
+        }
+        setIsUploading(true);
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('type', type);
+        fd.append('stage', stageId);
+        if (extraNotes) fd.append('photo_notes', extraNotes);
+        router.post(`/jobs/${job.id}/documents`, fd, {
+            forceFormData: true,
+            onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
+            onError:   () => setIsUploading(false),
+        });
+    };
+
     // Photo upload (Stage 4, with per-photo notes)
     const uploadPhoto = (type) => {
         const input = document.createElement('input');
@@ -504,11 +577,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Upload minimal salah satu dokumen berikut untuk melanjutkan:</p>
                         {STAGE1_REQUIRED_DOCS.map(t => (
-                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
                         ))}
                         <p className="text-xs text-gray-400 mt-1">Dokumen opsional tambahan:</p>
                         {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t)).map(t => (
-                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
@@ -834,7 +907,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {s === 5 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Unggah dokumen LHPP dan BAP untuk penyusunan laporan teknis.</p>
-                        {(DOC_TYPES_BY_STAGE[5] || []).map(t => <UploadSlot key={t} type={t} stageId={5} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        {(DOC_TYPES_BY_STAGE[5] || []).map(t => <UploadSlot key={t} type={t} stageId={5} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
@@ -895,7 +968,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Tanggal Penyerahan
                         </button>
-                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
                     </div>
@@ -940,7 +1013,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Data Disnaker
                         </button>
-                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
@@ -961,7 +1034,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Status
                         </button>
-                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <div className="flex gap-2 mt-2">
                             <button type="button" onClick={handleRejectStage}
@@ -1009,7 +1082,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Data Penagihan
                         </button>
-                        {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
@@ -1020,10 +1093,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Upload dokumen (Opsional), kemudian tandai selesai.</p>
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
-                            <div key={t} className="relative">
-                                <span className="absolute top-1 right-2 text-[10px] text-gray-400 font-bold bg-white px-1 border rounded z-10">OPSIONAL</span>
-                                <UploadSlot type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
-                            </div>
+                            <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
@@ -1076,7 +1146,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran (Opsional)</p>
                         {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
-                            <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                            <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />

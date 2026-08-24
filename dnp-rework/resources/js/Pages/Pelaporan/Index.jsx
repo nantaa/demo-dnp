@@ -69,12 +69,12 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', `Laporan_Riksa_Uji_${startDate}_sd_${endDate}.xls`);
+        link.setAttribute('download', `Laporan_Riksa_Uji_${startDate}_sd_${endDate}.xlsx`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showSuccess('Berhasil', 'File Excel (.xls) berhasil diunduh.');
+        showSuccess('Berhasil', 'File Excel (.xlsx) berhasil diunduh.');
     };
 
     const exportToCSV = async () => {

@@ -8,8 +8,17 @@ use App\Models\Job;
 
 class ReportController extends Controller
 {
+    private function checkAccess()
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user || !in_array($user->role, ['superadmin', 'manager'])) {
+            abort(403, 'Akses Ditolak. Menu pelaporan hanya dapat diakses oleh Superadmin dan Manager.');
+        }
+    }
+
     public function index(Request $request)
     {
+        $this->checkAccess();
         $user = \Illuminate\Support\Facades\Auth::user();
         return Inertia::render('Pelaporan/Index', [
             'auth' => [
@@ -23,6 +32,7 @@ class ReportController extends Controller
 
     public function export(Request $request)
     {
+        $this->checkAccess();
         $validated = $request->validate([
             'start_date' => 'required|date',
             'end_date'   => 'required|date|after_or_equal:start_date',

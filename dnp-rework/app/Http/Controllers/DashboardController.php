@@ -21,7 +21,9 @@ class DashboardController extends Controller
                 'permissions' => $stagePermissions,
             ],
             'jobs' => Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])->orderBy('updated_at', 'desc')->get(),
-            'inspectors' => \App\Models\InspectorProfile::with('user')->get(),
+            'inspectors' => \App\Models\InspectorProfile::whereHas('user', function($q) {
+                $q->where('name', 'NOT LIKE', '%Diba Aini%');
+            })->with('user')->get(),
         ];
     }
 

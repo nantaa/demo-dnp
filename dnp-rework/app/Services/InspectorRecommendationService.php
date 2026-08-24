@@ -11,7 +11,12 @@ class InspectorRecommendationService
     public function getRecommendations(Job $targetJob)
     {
         $inspectors = User::whereIn('role', ['inspektur', 'manager'])
-            ->orWhereHas('inspectorProfile')
+            ->where('name', 'NOT LIKE', '%Diba Aini%')
+            ->orWhereHas('inspectorProfile', function($q) {
+                $q->whereHas('user', function($u) {
+                    $u->where('name', 'NOT LIKE', '%Diba Aini%');
+                });
+            })
             ->with(['inspectorProfile'])
             ->get();
 
@@ -19,6 +24,9 @@ class InspectorRecommendationService
         $eliminated = [];
 
         foreach ($inspectors as $inspector) {
+            if (stripos($inspector->name, 'Diba Aini') !== false) {
+                continue;
+            }
             $profile = $inspector->inspectorProfile;
             
             if (!$profile) {

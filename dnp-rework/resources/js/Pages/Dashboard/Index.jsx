@@ -593,7 +593,6 @@ function H5BlinkKPI({ count }) {
 function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
     const [refDate, setRefDate] = useState(new Date());
     const [selectedInspectorId, setSelectedInspectorId] = useState('all');
-    const [selectedPosition, setSelectedPosition] = useState('all'); // 'all', '1', '2', '3+'
 
     const year = refDate.getFullYear();
     const month = refDate.getMonth();
@@ -602,7 +601,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
     const startWeekday = firstDay.getDay(); // 0=Sunday
     const daysInMonth = lastDay.getDate();
 
-    // Dynamically compile list of all unique inspectors for dropdown
+    // Dynamically compile list of all unique inspectors for dropdown (excluding Diba Aini)
     const inspectorOptions = useMemo(() => {
         const list = [];
         const seen = new Set();
@@ -610,6 +609,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
         (inspectors || []).forEach(ins => {
             const u = ins.user || ins;
             if (u && u.id && !seen.has(u.id)) {
+                if (u.name && u.name.toLowerCase().includes('diba aini')) return;
                 seen.add(u.id);
                 list.push({ id: u.id, name: u.name });
             }
@@ -620,6 +620,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
             if (j.inspectors && Array.isArray(j.inspectors)) {
                 j.inspectors.forEach(u => {
                     if (u && u.id && !seen.has(u.id)) {
+                        if (u.name && u.name.toLowerCase().includes('diba aini')) return;
                         seen.add(u.id);
                         list.push({ id: u.id, name: u.name });
                     }
@@ -630,7 +631,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
         return list.sort((a, b) => a.name.localeCompare(b.name));
     }, [inspectors, jobs]);
 
-    // Map inspections by date with selected inspector & position slot filter
+    // Map inspections by date with selected inspector filter
     const jobsByDate = useMemo(() => {
         const map = {};
         jobs.forEach(j => {
@@ -640,19 +641,9 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                 // Filter by inspector if specific inspector selected
                 if (selectedInspectorId !== 'all') {
                     const targetId = Number(selectedInspectorId);
-                    const inspectorIndex = assigned.findIndex(u => u.id === targetId);
+                    const isAssigned = assigned.some(u => u.id === targetId);
 
-                    if (inspectorIndex === -1) return; // Selected inspector is not assigned to this job
-
-                    // Filter by position slot if position is specified
-                    if (selectedPosition === '1' && inspectorIndex !== 0) return;
-                    if (selectedPosition === '2' && inspectorIndex !== 1) return;
-                    if (selectedPosition === '3+' && inspectorIndex < 2) return;
-                } else if (selectedPosition !== 'all') {
-                    // Position filter active for all inspectors
-                    if (selectedPosition === '1' && assigned.length < 1) return;
-                    if (selectedPosition === '2' && assigned.length < 2) return;
-                    if (selectedPosition === '3+' && assigned.length < 3) return;
+                    if (!isAssigned) return; // Selected inspector is not assigned to this job
                 }
 
                 // Format YYYY-MM-DD
@@ -662,7 +653,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
             }
         });
         return map;
-    }, [jobs, selectedInspectorId, selectedPosition]);
+    }, [jobs, selectedInspectorId]);
 
     const goPrev = () => setRefDate(new Date(year, month - 1, 1));
     const goNext = () => setRefDate(new Date(year, month + 1, 1));
@@ -739,21 +730,6 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                             {inspectorOptions.map(ins => (
                                 <option key={ins.id} value={ins.id}>{ins.name}</option>
                             ))}
-                        </select>
-                    </div>
-
-                    {/* Position Slot Dropdown */}
-                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
-                        <Briefcase size={14} className="text-blue-600" />
-                        <select 
-                            value={selectedPosition} 
-                            onChange={e => setSelectedPosition(e.target.value)}
-                            className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer border-none focus:ring-0 text-xs py-0 pl-0 pr-6"
-                        >
-                            <option value="all">Semua Peran / Position</option>
-                            <option value="1">Inspektur 1 (Lead)</option>
-                            <option value="2">Inspektur 2</option>
-                            <option value="3+">Inspektur 3+</option>
                         </select>
                     </div>
 

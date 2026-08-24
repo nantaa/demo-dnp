@@ -4,7 +4,6 @@ import { Head } from '@inertiajs/react';
 import { Download, FileSpreadsheet, FileText, Loader2, Calendar } from 'lucide-react';
 import { showError, showSuccess } from '@/swal';
 import axios from 'axios';
-import * as XLSX from 'xlsx';
 
 export default function Index({ defaultStartDate, defaultEndDate }) {
     const [startDate, setStartDate] = useState(defaultStartDate);
@@ -40,38 +39,40 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
     };
 
     const exportToExcel = async () => {
-        const data = await fetchReportData();
+        const data = previewData.length > 0 ? previewData : await fetchReportData();
         if (!data || data.length === 0) return;
 
-        // Create worksheet
-        const ws = XLSX.utils.json_to_sheet(data);
+        const headers = Object.keys(data[0]);
+        let tableHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Laporan Pekerjaan</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+        <body><table border="1"><thead><tr style="background-color:#1e3a8a;color:#ffffff;font-weight:bold;">`;
+        
+        headers.forEach(h => {
+            tableHtml += `<th style="background-color:#1e3a8a;color:#ffffff;padding:8px;">${h}</th>`;
+        });
+        tableHtml += `</tr></thead><tbody>`;
 
-        // Customize header styles (basic width auto-fit)
-        const colWidths = [
-            { wch: 5 },  // No
-            { wch: 30 }, // Nama Client (Perusahaan)
-            { wch: 15 }, // Marketing
-            { wch: 30 }, // Client
-            { wch: 25 }, // Jenis Alat
-            { wch: 8 },  // Jmlh
-            { wch: 35 }, // Lokasi Alat
-            { wch: 20 }, // Tanggal Riksa Uji
-            { wch: 25 }, // Inspektur Riksa
-            { wch: 20 }, // PIC
-            { wch: 25 }, // Surat Tugas
-            { wch: 20 }, // SUKET SELESAI
-            { wch: 20 }, // Status Pelunasan
-        ];
-        ws['!cols'] = colWidths;
+        data.forEach(row => {
+            tableHtml += `<tr>`;
+            headers.forEach(h => {
+                const val = row[h] !== null && row[h] !== undefined ? row[h] : '';
+                tableHtml += `<td style="padding:6px;">${val}</td>`;
+            });
+            tableHtml += `</tr>`;
+        });
 
-        // Create workbook
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Laporan Pekerjaan");
+        tableHtml += `</tbody></table></body></html>`;
 
-        // Generate and download file
-        const fileName = `Laporan_Riksa_Uji_${startDate}_sd_${endDate}.xlsx`;
-        XLSX.writeFile(wb, fileName);
-        showSuccess('Berhasil', 'File Excel berhasil diunduh.');
+        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Laporan_Riksa_Uji_${startDate}_sd_${endDate}.xls`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showSuccess('Berhasil', 'File Excel (.xls) berhasil diunduh.');
     };
 
     const exportToCSV = async () => {

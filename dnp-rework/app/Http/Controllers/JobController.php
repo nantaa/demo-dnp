@@ -11,6 +11,8 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use App\Services\NotificationService;
+use App\Models\UserStagePermission;
 use Carbon\Carbon;
 
 class JobController extends Controller
@@ -137,7 +139,7 @@ class JobController extends Controller
         }
 
         $validationRules = [
-            'next_stage'    => 'required|integer|min:1|max:13',
+            'next_stage'    => 'required|integer|min:1|max:14',
             'notes'         => 'nullable|string',
             'inspector_ids' => 'nullable|array',
             'inspector_ids.*' => 'exists:users,id',
@@ -156,7 +158,8 @@ class JobController extends Controller
 
         // Stage 2 → 3: require mandatory Stage 2 docs OR Kadiv approval
         if ($currentStage == 2) {
-            $stage2Docs = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built'];
+            // Only PO/SPK, Surat Permohonan, and Surat Kuasa are required — the rest are optional
+            $stage2Docs = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'];
             $allDocsPresent = true;
             foreach ($stage2Docs as $docType) {
                 if (!$job->documents()->whereIn('stage', [1, 2])->where('type', $docType)->exists()) {
@@ -166,7 +169,7 @@ class JobController extends Controller
             }
             if (!$allDocsPresent && $job->peer_review_status !== 'approved') {
                 return back()->withErrors([
-                    'documents' => 'Semua dokumen Stage 2 wajib ada. Atau minta persetujuan Kadiv/MGR untuk melanjutkan tanpa dokumen lengkap.',
+                    'documents' => 'Dokumen wajib (PO/SPK, Surat Permohonan, Surat Kuasa) harus ada sebelum melanjutkan, atau minta persetujuan Kadiv/MGR.',
                 ]);
             }
             // Reset peer_review after moving through
@@ -267,6 +270,23 @@ class JobController extends Controller
             'notes'             => $validated['notes'] ?? null,
         ]);
 
+        // Send notifications to next stage owners & assigned inspectors
+        $nextOwners = NotificationService::getStageOwnerUserIds($nextStage);
+        if ($nextStage === 4 || $nextStage === 6) {
+            $inspectorUserIds = $job->inspectors()->pluck('users.id')->toArray();
+            $nextOwners = array_unique(array_merge($nextOwners, $inspectorUserIds));
+            if ($job->report_writer_id) {
+                $nextOwners[] = $job->report_writer_id;
+            }
+        }
+        NotificationService::send(
+            $nextOwners,
+            'stage_moved',
+            "Job {$job->kode} masuk ke Stage {$nextStage}",
+            "{$job->klien} — {$job->pesawat} telah dilanjutkan ke Stage {$nextStage} oleh " . Auth::user()->name,
+            $job->id
+        );
+
         return back()->with('success', 'Job moved to Stage ' . $nextStage . ' successfully.');
     }
 
@@ -304,6 +324,16 @@ class JobController extends Controller
             'notes'                => $validated['notes'],
         ]);
 
+        // Send notification to previous stage owner(s)
+        $prevOwners = NotificationService::getStageOwnerUserIds($prevStage);
+        NotificationService::send(
+            $prevOwners,
+            'rejected',
+            "⚠️ Job {$job->kode} dikembalikan ke Stage {$prevStage}",
+            "Catatan penolakan: {$validated['notes']} (oleh " . Auth::user()->name . ")",
+            $job->id
+        );
+
         return back()->with('success', 'Job berhasil dikembalikan ke Stage ' . $prevStage . '.');
     }
 
@@ -327,6 +357,16 @@ class JobController extends Controller
             'action'            => 'Meminta persetujuan Kadiv/MGR (bypass kelengkapan dokumen)',
             'action_by_user_id' => Auth::id(),
         ]);
+
+        // Notify managers
+        $managers = NotificationService::getManagerUserIds();
+        NotificationService::send(
+            $managers,
+            'ask_approval',
+            "🔔 Permintaan Persetujuan Kadiv/MGR: {$job->kode}",
+            "Admin " . Auth::user()->name . " meminta persetujuan bypass kelengkapan dokumen pada {$job->klien}.",
+            $job->id
+        );
 
         return back()->with('success', 'Permintaan persetujuan telah dikirim ke Kadiv/MGR.');
     }
@@ -352,6 +392,16 @@ class JobController extends Controller
             'action'            => 'Kadiv/MGR menyetujui bypass dokumen. Admin dapat melanjutkan ke stage berikutnya.',
             'action_by_user_id' => Auth::id(),
         ]);
+
+        // Notify stage owner
+        $owners = NotificationService::getStageOwnerUserIds($job->stage);
+        NotificationService::send(
+            $owners,
+            'approved',
+            "✅ Job {$job->kode} Disetujui oleh Kadiv/MGR",
+            "Kadiv/MGR {$user->name} menyetujui bypass dokumen. Anda dapat melanjutkan job.",
+            $job->id
+        );
 
         return back()->with('success', 'Job telah disetujui. Admin dapat melanjutkan.');
     }

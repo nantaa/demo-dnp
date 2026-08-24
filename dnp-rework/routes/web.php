@@ -48,15 +48,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/disnaker-followup', [JobController::class, 'saveDisnakerFollowup'])->name('jobs.disnaker-followup');
     Route::post('/jobs/{job}/unit-tracking', [JobController::class, 'saveUnitTracking'])->name('jobs.unit-tracking');
 
-    // Smart Recommendation API
-    Route::get('/api/jobs/{job}/recommendations', [InspectorRecommendationController::class, 'getForJob'])->name('api.jobs.recommendations');
-    Route::get('/api/master-data', [JobController::class, 'getMasterData'])->name('api.master-data');
+    // Notification API
+    Route::get('/api/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('api.notifications.index');
+    Route::post('/api/notifications/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markRead'])->name('api.notifications.read');
+    Route::post('/api/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllRead'])->name('api.notifications.read-all');
+
+    // User Self-Service Profile Routes
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Feature 4: User Management (Superadmin Only)
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::post('/users/{user}/permissions', [UserController::class, 'updatePermissions'])->name('users.permissions.update');
+    Route::post('/users/{user}/phone', [UserController::class, 'updatePhone'])->name('users.phone.update');
 
     // Feature 5: Inventory CRUD (Admin / Manager / Superadmin)
     Route::post('/inventory/alat', [InventoryController::class, 'storeAlat'])->name('inventory.alat.store');

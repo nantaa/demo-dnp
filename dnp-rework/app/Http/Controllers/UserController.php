@@ -35,6 +35,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'email'          => 'required|string|email|max:255|unique:users',
+            'phone'          => 'nullable|string|max:30',
             'password'       => 'required|string|min:8',
             'role'           => 'required|string',
             'skp'            => 'nullable|string|max:100',
@@ -47,6 +48,7 @@ class UserController extends Controller
         $user = User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
+            'phone'    => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
             'role'     => $validated['role'],
         ]);
@@ -63,6 +65,19 @@ class UserController extends Controller
         }
 
         return back()->with('success', 'User created successfully.');
+    }
+
+    public function updatePhone(Request $request, User $user)
+    {
+        if (Auth::user()->role !== 'superadmin') abort(403);
+
+        $validated = $request->validate([
+            'phone' => 'nullable|string|max:30',
+        ]);
+
+        $user->update(['phone' => $validated['phone'] ?? null]);
+
+        return back()->with('success', 'Nomor telepon WhatsApp berhasil diperbarui.');
     }
 
     public function updatePermissions(Request $request, User $user)

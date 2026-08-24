@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
         'role', // superadmin, marketing, admin, inspektur, manager, finance
     ];
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
@@ -8,6 +8,19 @@ import { STAGES } from '@/Constants';
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
     const [selectedJob, setSelectedJob] = useState(null);
+
+    // Live background polling sync to keep Kanban updated across all active users
+    useEffect(() => {
+        const syncInterval = setInterval(() => {
+            router.reload({
+                only: ['jobs'],
+                preserveScroll: true,
+                preserveState: true,
+            });
+        }, 10000); // 10 seconds background refresh
+
+        return () => clearInterval(syncInterval);
+    }, []);
 
     const canManageStage = (stageId) => {
         if (permissions === 'superadmin') return true;

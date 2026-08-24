@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { showError, showSuccess } from '@/swal';
 import { 
-    LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X
+    LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon
 } from 'lucide-react';
+import NotificationBell from '@/Components/NotificationBell';
 import { ROLES } from '../Constants';
 
 export default function AppLayout({ header, children }) {
@@ -77,20 +78,24 @@ export default function AppLayout({ header, children }) {
                         </div>
                     </div>
 
-                    {/* Right: User info + Logout */}
-                    <div className="flex items-center gap-2 sm:gap-4">
-                        <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-gray-50 border border-gray-200 rounded">
+                    {/* Right: User info + Notification Bell + Profile + Logout */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <NotificationBell />
+                        <Link href="/profile" className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors">
                             <div className="w-6 h-6 bg-black text-white flex items-center justify-center text-[10px] font-bold rounded flex-shrink-0">
                                 {ROLES[user.role]?.label || 'USR'}
                             </div>
-                            <div className="hidden sm:block">
+                            <div className="hidden sm:block text-left">
                                 <div className="text-xs font-bold leading-none">{user.name}</div>
                                 <div className="text-[10px] text-gray-500 mt-0.5">{ROLES[user.role]?.name || user.role}</div>
                             </div>
                             <div className="sm:hidden text-xs font-bold">{user.name.split(' ')[0]}</div>
-                        </div>
-                        <Link href={route('logout')} method="post" as="button" className="text-gray-500 hover:text-black p-1">
-                            <LogOut size={16} />
+                        </Link>
+                        <Link href="/profile" title="Pengaturan Akun" className="text-gray-500 hover:text-black p-1">
+                            <UserIcon size={18} />
+                        </Link>
+                        <Link href={route('logout')} method="post" as="button" title="Keluar" className="text-gray-500 hover:text-red-600 p-1">
+                            <LogOut size={18} />
                         </Link>
                     </div>
                 </div>

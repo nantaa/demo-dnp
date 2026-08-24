@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import IndonesiaLocationSelect from './IndonesiaLocationSelect';
@@ -47,6 +47,9 @@ const getSlaTag = (days, slaLimit) => {
     if (days == null || !slaLimit) return null;
     if (days > slaLimit)  return { label: 'OVERDUE',  cls: 'bg-red-100 text-red-800 font-bold' };
     if (days >= slaLimit) return { label: 'LAST DAY', cls: 'bg-orange-100 text-orange-800 font-bold' };
+    return { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
+};
+
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
 const DocChip = ({ doc, canManage, onDelete }) => (
     <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
@@ -96,18 +99,30 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
     );
 };
 
-const NoteField = ({ value, onChange }) => (
-    <div className="mt-3">
-        <label className="block text-xs font-medium text-gray-600 mb-1">Catatan / Keterangan</label>
-        <textarea
-            rows={2}
-            value={value || ''}
-            onChange={onChange}
-            className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-400"
-            placeholder="Tulis catatan atau keterangan..."
-        />
-    </div>
-);
+const NoteField = React.memo(function NoteField({ value, onChange }) {
+    const ref = useRef(null);
+    // Sync external value only when it differs from DOM value AND textarea is not focused
+    useEffect(() => {
+        const el = ref.current;
+        if (el && document.activeElement !== el) {
+            el.value = value || '';
+        }
+    }, [value]);
+
+    return (
+        <div className="mt-3">
+            <label className="block text-xs font-medium text-gray-600 mb-1">Catatan / Keterangan</label>
+            <textarea
+                ref={ref}
+                rows={2}
+                defaultValue={value || ''}
+                onChange={onChange}
+                className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-1 focus:ring-blue-400"
+                placeholder="Tulis catatan atau keterangan..."
+            />
+        </div>
+    );
+});
 
 const UploadSlot = ({ type, stageId, docs, triggerUpload, canManageStageDocs, deleteDoc }) => {
     const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
 import { ROLES } from '../Constants';
-import logoImg from '../images/logo.png';
+import logoImg from '../../images/logo.png';
 
 export default function AppLayout({ header, children }) {
     const { auth } = usePage().props;

@@ -50,7 +50,8 @@ export default function AppLayout({ header, children }) {
         { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'superadmin'] },
     ];
 
-    const visibleNav = navItems.filter(item => !item.roles || item.roles.includes(user.role));
+    const userRole = (user?.role || '').toLowerCase();
+    const visibleNav = navItems.filter(item => !item.roles || item.roles.includes(userRole));
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col text-gray-900 font-sans">

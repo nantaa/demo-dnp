@@ -11,7 +11,7 @@ class ReportController extends Controller
     private function checkAccess()
     {
         $user = \Illuminate\Support\Facades\Auth::user();
-        if (!$user || !in_array($user->role, ['superadmin', 'manager'])) {
+        if (!$user || !in_array(strtolower($user->role ?? ''), ['superadmin', 'manager'])) {
             abort(403, 'Akses Ditolak. Menu pelaporan hanya dapat diakses oleh Superadmin dan Manager.');
         }
     }

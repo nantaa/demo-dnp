@@ -830,8 +830,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* ── STAGE 5 (Review Laporan Teknis — MGR) ───── */}
+                {/* ── STAGE 5 (Penyusunan LHPP — INS) ────────── */}
                 {s === 5 && (
+                    <div className="space-y-3">
+                        <p className="text-xs text-gray-500">Unggah dokumen LHPP dan BAP untuk penyusunan laporan teknis.</p>
+                        {(DOC_TYPES_BY_STAGE[5] || []).map(t => <UploadSlot key={t} type={t} stageId={5} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                    </div>
+                )}
+
+                {/* ── STAGE 6 (Review Laporan Teknis — MGR) ───── */}
+                {s === 6 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
                         {job.s5_review_decision && (
@@ -866,18 +876,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </button>
                             <button type="submit" disabled={processing || !s5.s5_review_decision || s5.s5_review_decision === 'rejected'}
                                 className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 6 LHPP →'}
+                                {processing ? '...' : 'Lanjut ke Stage 7 Penyerahan →'}
                             </button>
                         </div>
-                    </div>
-                )}
-
-                {/* ── STAGE 6 (Penyusunan LHPP — INS) ────────── */}
-                {s === 6 && (
-                    <div className="space-y-3">
-                        {(DOC_TYPES_BY_STAGE[6] || []).map(t => <UploadSlot key={t} type={t} stageId={6} docs={job.documents} triggerUpload={triggerUpload} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
-                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
                 )}
 

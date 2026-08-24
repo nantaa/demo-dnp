@@ -44,9 +44,9 @@ class JobController extends Controller
             return false;
         }
 
-        // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 6)
+        // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 5)
         if ($user->role === 'inspektur') {
-            if ($job && ($stage === 4 || $stage === 6)) {
+            if ($job && ($stage === 4 || $stage === 5)) {
                 return $job->inspectors()->where('users.id', $user->id)->exists();
             }
             return false;
@@ -203,22 +203,22 @@ class JobController extends Controller
             }
         }
 
-        // Stage 5 → 6: require MGR review decision (approved or approved_conditional)
+        // Stage 5 → 6: require LHPP + BAP uploaded
         if ($currentStage == 5) {
-            if (empty($job->s5_review_decision) || $job->s5_review_decision === 'rejected') {
-                return back()->withErrors([
-                    'review' => 'Keputusan review MGR wajib diisi dan disetujui (Approved / Approved Conditional) sebelum melanjutkan ke Stage 6.',
-                ]);
-            }
-        }
-
-        // Stage 6 → 7: require LHPP + BAP uploaded
-        if ($currentStage == 6) {
             $hasLhpp = $job->documents()->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'])->exists();
             $hasBap  = $job->documents()->whereIn('type', ['BAP', 'BAP (PDF)', 'BAP Final'])->exists();
             if (!$hasLhpp || !$hasBap) {
                 return back()->withErrors([
-                    'documents' => 'LHPP dan BAP wajib diunggah sebelum melanjutkan ke Stage 7 (Penyerahan ke Dinas).',
+                    'documents' => 'LHPP dan BAP wajib diunggah sebelum melanjutkan ke Stage 6 (Review Laporan Teknis).',
+                ]);
+            }
+        }
+
+        // Stage 6 → 7: require MGR review decision (approved or approved_conditional)
+        if ($currentStage == 6) {
+            if (empty($job->s5_review_decision) || $job->s5_review_decision === 'rejected') {
+                return back()->withErrors([
+                    'review' => 'Keputusan review MGR wajib diisi dan disetujui (Approved / Approved Conditional) sebelum melanjutkan ke Stage 7.',
                 ]);
             }
         }

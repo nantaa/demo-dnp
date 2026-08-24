@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
 import { ROLES } from '../Constants';
+import logoImg from '../images/logo.png';
 
 export default function AppLayout({ header, children }) {
     const { auth } = usePage().props;
@@ -67,7 +68,7 @@ export default function AppLayout({ header, children }) {
                             <Menu size={20} />
                         </button>
 
-                        <img src="/images/logo.png" alt="PT Delta Nusantara Persada" className="h-9 w-auto object-contain shrink-0" />
+                        <img src={logoImg} alt="PT Delta Nusantara Persada" className="h-9 w-auto object-contain shrink-0" />
                         <div>
                             <div className="hidden sm:block text-[10px] tracking-widest uppercase text-gray-500 font-bold leading-none">
                                 PT Delta Nusantara Persada

@@ -1,14 +1,14 @@
 # Old React/Express Prototype (Hidden)
-src/
-server/
-public/
-node_modules/
-package.json
-package-lock.json
-vite.config.js
-eslint.config.js
-index.html
-dnp_monitor.html
+/src/
+/server/
+/public/
+/node_modules/
+/package.json
+/package-lock.json
+/vite.config.js
+/eslint.config.js
+/index.html
+/dnp_monitor.html
 *.db
 
 # Standard Ignores

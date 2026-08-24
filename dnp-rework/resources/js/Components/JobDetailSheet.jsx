@@ -356,9 +356,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         setTimeout(() => fileInputRef.current?.click(), 50);
     };
 
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+
     const onFileChange = (e) => {
         const file = e.target.files[0];
         if (!file || !uploadStage || !uploadType) return;
+        if (file.size > MAX_FILE_SIZE) {
+            showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB. Silakan kompres file Anda terlebih dahulu.');
+            e.target.value = '';
+            return;
+        }
         setIsUploading(true);
         const fd = new FormData();
         fd.append('file', file); fd.append('type', uploadType); fd.append('stage', uploadStage);
@@ -376,6 +383,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         input.type = 'file'; input.accept = '*';
         input.onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
+            if (file.size > MAX_FILE_SIZE) {
+                showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB.');
+                return;
+            }
             const fd = new FormData();
             fd.append('file', file); fd.append('type', type); fd.append('stage', 4);
             const note = photoNotes[type] || '';

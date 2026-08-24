@@ -817,7 +817,7 @@ class JobController extends Controller
         $request->validate([
             'type'  => 'required|string|max:100',
             'stage' => 'required|integer|min:1|max:14',
-            'file'  => 'required|file|max:20480',
+            'file'  => 'required|file|max:25600',
             'photo_notes' => 'nullable|string|max:500',
         ]);
 

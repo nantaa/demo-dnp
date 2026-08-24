@@ -265,7 +265,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
             {/* Role-Specific Components */}
             {isMKT && <MktDashboard stats={stats} onSelectJob={setSelectedJob} />}
-            {isADM && <AdmDashboard stats={stats} onSelectJob={setSelectedJob} jobs={jobs} />}
+            {isADM && <AdmDashboard stats={stats} onSelectJob={setSelectedJob} jobs={jobs} inspectors={inspectors} />}
             {isINS && <InsDashboard stats={stats} user={user} onSelectJob={setSelectedJob} />}
             {isMGR && <MgrDashboard stats={stats} onSelectJob={setSelectedJob} />}
             {isFIN && <FinDashboard stats={stats} onSelectJob={setSelectedJob} />}
@@ -504,7 +504,7 @@ function MktDashboard({ stats, onSelectJob }) {
 // ============================================================
 // ADMIN DASHBOARD
 // ============================================================
-function AdmDashboard({ stats, onSelectJob, jobs }) {
+function AdmDashboard({ stats, onSelectJob, jobs, inspectors }) {
     const { antrianVerifikasi, butuhJadwal, h5Pending, logistikPending } = stats;
 
     return (
@@ -518,7 +518,7 @@ function AdmDashboard({ stats, onSelectJob, jobs }) {
             </div>
 
             {/* Calendar */}
-            <AdmCalendar jobs={jobs} onSelectJob={onSelectJob} />
+            <AdmCalendar jobs={jobs} inspectors={inspectors} onSelectJob={onSelectJob} />
 
             {/* Tabel Status Logistik */}
             <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
@@ -590,8 +590,10 @@ function H5BlinkKPI({ count }) {
     );
 }
 
-function AdmCalendar({ jobs, onSelectJob }) {
+function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
     const [refDate, setRefDate] = useState(new Date());
+    const [selectedInspectorId, setSelectedInspectorId] = useState('all');
+    const [selectedPosition, setSelectedPosition] = useState('all'); // 'all', '1', '2', '3+'
 
     const year = refDate.getFullYear();
     const month = refDate.getMonth();
@@ -600,11 +602,59 @@ function AdmCalendar({ jobs, onSelectJob }) {
     const startWeekday = firstDay.getDay(); // 0=Sunday
     const daysInMonth = lastDay.getDate();
 
-    // Map inspections by date
+    // Dynamically compile list of all unique inspectors for dropdown
+    const inspectorOptions = useMemo(() => {
+        const list = [];
+        const seen = new Set();
+
+        (inspectors || []).forEach(ins => {
+            const u = ins.user || ins;
+            if (u && u.id && !seen.has(u.id)) {
+                seen.add(u.id);
+                list.push({ id: u.id, name: u.name });
+            }
+        });
+
+        // Also add any assigned inspectors from jobs payload
+        (jobs || []).forEach(j => {
+            if (j.inspectors && Array.isArray(j.inspectors)) {
+                j.inspectors.forEach(u => {
+                    if (u && u.id && !seen.has(u.id)) {
+                        seen.add(u.id);
+                        list.push({ id: u.id, name: u.name });
+                    }
+                });
+            }
+        });
+
+        return list.sort((a, b) => a.name.localeCompare(b.name));
+    }, [inspectors, jobs]);
+
+    // Map inspections by date with selected inspector & position slot filter
     const jobsByDate = useMemo(() => {
         const map = {};
         jobs.forEach(j => {
             if (j.tgl_pelaksanaan && (j.stage === 4 || j.stage === 3)) {
+                const assigned = j.inspectors || [];
+
+                // Filter by inspector if specific inspector selected
+                if (selectedInspectorId !== 'all') {
+                    const targetId = Number(selectedInspectorId);
+                    const inspectorIndex = assigned.findIndex(u => u.id === targetId);
+
+                    if (inspectorIndex === -1) return; // Selected inspector is not assigned to this job
+
+                    // Filter by position slot if position is specified
+                    if (selectedPosition === '1' && inspectorIndex !== 0) return;
+                    if (selectedPosition === '2' && inspectorIndex !== 1) return;
+                    if (selectedPosition === '3+' && inspectorIndex < 2) return;
+                } else if (selectedPosition !== 'all') {
+                    // Position filter active for all inspectors
+                    if (selectedPosition === '1' && assigned.length < 1) return;
+                    if (selectedPosition === '2' && assigned.length < 2) return;
+                    if (selectedPosition === '3+' && assigned.length < 3) return;
+                }
+
                 // Format YYYY-MM-DD
                 const d = typeof j.tgl_pelaksanaan === 'string' ? j.tgl_pelaksanaan.split('T')[0] : new Date(j.tgl_pelaksanaan).toISOString().split('T')[0];
                 if (!map[d]) map[d] = [];
@@ -612,7 +662,7 @@ function AdmCalendar({ jobs, onSelectJob }) {
             }
         });
         return map;
-    }, [jobs]);
+    }, [jobs, selectedInspectorId, selectedPosition]);
 
     const goPrev = () => setRefDate(new Date(year, month - 1, 1));
     const goNext = () => setRefDate(new Date(year, month + 1, 1));
@@ -633,19 +683,35 @@ function AdmCalendar({ jobs, onSelectJob }) {
         const isToday = cellDate.toDateString() === new Date().toDateString();
 
         cells.push(
-            <div key={`day-${day}`} className={`h-24 p-2 border border-gray-100 relative flex flex-col justify-between ${
-                isToday ? 'bg-orange-50 border-orange-200' : 'bg-white'
+            <div key={`day-${day}`} className={`min-h-24 p-2 border border-gray-100 relative flex flex-col justify-between ${
+                isToday ? 'bg-orange-50/60 border-orange-200' : 'bg-white'
             }`}>
-                <span className={`text-xs font-bold ${isToday ? 'text-orange-600' : 'text-gray-400'}`}>
+                <span className={`text-xs font-bold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-400'}`}>
                     {day} {isToday && '· Hari Ini'}
                 </span>
-                <div className="flex flex-col gap-1 overflow-y-auto max-h-16">
-                    {dayJobs.map(j => (
-                        <div key={j.id} onClick={() => onSelectJob(j)}
-                            className="text-[10px] font-bold truncate rounded bg-blue-100 text-blue-800 px-1 py-0.5 border border-blue-200 cursor-pointer hover:bg-blue-200 transition-colors">
-                            {j.kode} ({j.klien})
-                        </div>
-                    ))}
+                <div className="flex flex-col gap-1.5 overflow-y-auto max-h-20">
+                    {dayJobs.map(j => {
+                        const insList = j.inspectors || [];
+                        const leadIns = insList[0]?.name?.split(' ')[0] || '';
+                        const secondIns = insList[1]?.name?.split(' ')[0] || '';
+
+                        return (
+                            <div key={j.id} onClick={() => onSelectJob(j)}
+                                title={`${j.kode} - ${j.klien}\nInspektur: ${insList.map((u, idx) => `#${idx+1} ${u.name}`).join(', ') || 'Belum diassign'}`}
+                                className="text-[10px] font-bold rounded bg-blue-50 text-blue-900 p-1.5 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors flex flex-col gap-0.5 shadow-xs">
+                                <div className="truncate flex justify-between items-center">
+                                    <span className="truncate font-semibold text-blue-950">{j.kode}</span>
+                                    <span className="text-[9px] bg-blue-200 text-blue-800 px-1 rounded font-mono ml-1">S{j.stage}</span>
+                                </div>
+                                <div className="text-[9px] font-medium text-gray-600 truncate">{j.klien}</div>
+                                {insList.length > 0 && (
+                                    <div className="text-[8px] font-semibold text-teal-800 bg-teal-50 border border-teal-200/60 rounded px-1 py-0.5 truncate mt-0.5">
+                                        👷 {leadIns}{secondIns ? `, ${secondIns}` : ''}{insList.length > 2 ? ` +${insList.length - 2}` : ''}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         );
@@ -653,23 +719,56 @@ function AdmCalendar({ jobs, onSelectJob }) {
 
     return (
         <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b flex justify-between items-center bg-gray-50/50">
+            <div className="p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gray-50/50">
                 <div>
                     <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Kalender Inspeksi Lapangan</div>
                     <h3 className="text-xl font-bold text-gray-800 mt-0.5">
                         {refDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
                     </h3>
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={goPrev} className="p-2 border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                        <ChevronLeft size={16} />
-                    </button>
-                    <button onClick={() => setRefDate(new Date())} className="px-3 py-1 text-xs font-bold border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                        Hari Ini
-                    </button>
-                    <button onClick={goNext} className="p-2 border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                        <ChevronRight size={16} />
-                    </button>
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Inspector Filter Dropdown */}
+                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
+                        <User size={14} className="text-teal-600" />
+                        <select 
+                            value={selectedInspectorId} 
+                            onChange={e => setSelectedInspectorId(e.target.value)}
+                            className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer border-none focus:ring-0 text-xs py-0 pl-0 pr-6"
+                        >
+                            <option value="all">Semua Inspektur</option>
+                            {inspectorOptions.map(ins => (
+                                <option key={ins.id} value={ins.id}>{ins.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Position Slot Dropdown */}
+                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
+                        <Briefcase size={14} className="text-blue-600" />
+                        <select 
+                            value={selectedPosition} 
+                            onChange={e => setSelectedPosition(e.target.value)}
+                            className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer border-none focus:ring-0 text-xs py-0 pl-0 pr-6"
+                        >
+                            <option value="all">Semua Peran / Position</option>
+                            <option value="1">Inspektur 1 (Lead)</option>
+                            <option value="2">Inspektur 2</option>
+                            <option value="3+">Inspektur 3+</option>
+                        </select>
+                    </div>
+
+                    {/* Month Nav Buttons */}
+                    <div className="flex gap-1">
+                        <button onClick={goPrev} className="p-1.5 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button onClick={() => setRefDate(new Date())} className="px-2.5 py-1 text-xs font-bold border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                            Hari Ini
+                        </button>
+                        <button onClick={goNext} className="p-1.5 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
             <div className="grid grid-cols-7 border-b text-center font-bold text-xs uppercase tracking-wider text-gray-500 py-2 bg-gray-50">

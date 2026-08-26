@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import ErrorBoundary from '@/Components/ErrorBoundary';
-import { Wrench, AlertCircle, Clock, User, Award, BriefcaseBusiness, ClipboardList, Download, Plus, Pencil, Trash, FileText, FileCheck } from 'lucide-react';
+import { Wrench, AlertCircle, Clock, User, Award, BriefcaseBusiness, ClipboardList, Download, Plus, Pencil, Trash, FileText, FileCheck, FileSignature, FilePlus } from 'lucide-react';
 import { STAGES } from '@/Constants';
 import { showConfirm } from '@/swal';
 
@@ -215,11 +215,30 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         );
     }, [form_disnaker]);
 
+    const suratKuasaList = useMemo(() => {
+        return form_disnaker.filter(f => 
+            (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_KUASA') ||
+            (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('kuasa')) ||
+            (f.nama && f.nama.toLowerCase().includes('kuasa'))
+        );
+    }, [form_disnaker]);
+
+    const suratLainnyaList = useMemo(() => {
+        return form_disnaker.filter(f => 
+            (f.pesawat && f.pesawat.toUpperCase() === 'LAINNYA') ||
+            (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('lainnya')) ||
+            (f.nama && f.nama.toLowerCase().includes('lainnya')) ||
+            (f.kode_form && f.kode_form.startsWith('DOC-'))
+        );
+    }, [form_disnaker]);
+
     const formDisnakerList = useMemo(() => {
         const spIds = new Set(suratPermohonanList.map(p => p.id));
         const stIds = new Set(suratTugasList.map(t => t.id));
-        return form_disnaker.filter(f => !spIds.has(f.id) && !stIds.has(f.id));
-    }, [form_disnaker, suratPermohonanList, suratTugasList]);
+        const skIds = new Set(suratKuasaList.map(k => k.id));
+        const slIds = new Set(suratLainnyaList.map(l => l.id));
+        return form_disnaker.filter(f => !spIds.has(f.id) && !stIds.has(f.id) && !skIds.has(f.id) && !slIds.has(f.id));
+    }, [form_disnaker, suratPermohonanList, suratTugasList, suratKuasaList, suratLainnyaList]);
 
     // Handle Alat Submit
     const submitAlat = (e) => {
@@ -529,6 +548,16 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     <Plus size={16} /> Tambah Template Surat Tugas
                                 </button>
                             )}
+                            {tab === 'surat_kuasa' && (
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'SK-01', kode_disnaker: 'Surat Kuasa', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> Tambah Surat Kuasa
+                                </button>
+                            )}
+                            {tab === 'surat_lainnya' && (
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'DOC-01', kode_disnaker: 'Lainnya', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> Tambah Dokumen Lainnya
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -552,6 +581,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             { id: 'form', label: 'Form Standar Disnaker', icon: ClipboardList, count: formDisnakerList.length },
                             { id: 'surat_permohonan', label: 'Surat Permohonan', icon: FileText, count: suratPermohonanList.length },
                             { id: 'surat_tugas', label: 'Template Surat Tugas', icon: FileCheck, count: suratTugasList.length },
+                            { id: 'surat_kuasa', label: 'Surat Kuasa', icon: FileSignature, count: suratKuasaList.length },
+                            { id: 'surat_lainnya', label: 'Dokumen Lainnya', icon: FilePlus, count: suratLainnyaList.length },
                         ].map(t => {
                             const Icon = t.icon;
                             const active = tab === t.id;
@@ -1079,6 +1110,124 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </tbody>
                             </table>
                         )}
+
+                        {/* Surat Kuasa Tab */}
+                        {tab === 'surat_kuasa' && (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
+                                        <th className="p-4 font-semibold">Kode</th>
+                                        <th className="p-4 font-semibold">Kategori Surat</th>
+                                        <th className="p-4 font-semibold">Nama Template Surat Kuasa</th>
+                                        <th className="p-4 font-semibold">Kategori Pesawat</th>
+                                        <th className="p-4 font-semibold">Revisi</th>
+                                        <th className="p-4 font-semibold">Last Updated</th>
+                                        <th className="p-4 font-semibold">File Master Template</th>
+                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {suratKuasaList.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={canManage ? 8 : 7} className="p-8 text-center text-gray-500 text-sm">
+                                                Belum ada template Surat Kuasa. Klik <strong className="text-black">+ Tambah Surat Kuasa</strong> di atas untuk membuat template baru.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        suratKuasaList.map((f) => (
+                                            <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                                <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
+                                                <td className="p-4 font-mono font-semibold text-purple-600">{f.kode_disnaker}</td>
+                                                <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
+                                                <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Umum'}</td>
+                                                <td className="p-4 font-mono text-xs">{f.revisi}</td>
+                                                <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
+                                                <td className="p-4 font-medium">
+                                                    {f.file ? (
+                                                        <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                            <Download size={14} /> <span className="text-xs">Download Template</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                                {canManage && (
+                                                    <td className="p-4 text-center">
+                                                        <div className="flex justify-center gap-2">
+                                                            <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
+                                                                <Pencil size={15} />
+                                                            </button>
+                                                            <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                <Trash size={15} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {/* Dokumen Lainnya Tab */}
+                        {tab === 'surat_lainnya' && (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
+                                        <th className="p-4 font-semibold">Kode</th>
+                                        <th className="p-4 font-semibold">Kategori Surat</th>
+                                        <th className="p-4 font-semibold">Nama Template Dokumen</th>
+                                        <th className="p-4 font-semibold">Kategori Pesawat</th>
+                                        <th className="p-4 font-semibold">Revisi</th>
+                                        <th className="p-4 font-semibold">Last Updated</th>
+                                        <th className="p-4 font-semibold">File Master Template</th>
+                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {suratLainnyaList.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={canManage ? 8 : 7} className="p-8 text-center text-gray-500 text-sm">
+                                                Belum ada template Dokumen Lainnya. Klik <strong className="text-black">+ Tambah Dokumen Lainnya</strong> di atas untuk membuat template baru.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        suratLainnyaList.map((f) => (
+                                            <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                                <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
+                                                <td className="p-4 font-mono font-semibold text-amber-600">{f.kode_disnaker}</td>
+                                                <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
+                                                <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Umum'}</td>
+                                                <td className="p-4 font-mono text-xs">{f.revisi}</td>
+                                                <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
+                                                <td className="p-4 font-medium">
+                                                    {f.file ? (
+                                                        <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                            <Download size={14} /> <span className="text-xs">Download Template</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                                {canManage && (
+                                                    <td className="p-4 text-center">
+                                                        <div className="flex justify-center gap-2">
+                                                            <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
+                                                                <Pencil size={15} />
+                                                            </button>
+                                                            <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                <Trash size={15} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
                         
                         <div className="p-4 bg-gray-50 text-xs text-gray-500 border-t border-gray-200">
                             💡 Data sinkronisasi master inventory.
@@ -1481,8 +1630,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                     <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border">
                         <h2 className="text-lg font-bold text-gray-900 mb-4">
                             {selectedFormDisnaker
-                                ? (tab === 'surat_permohonan' ? 'Edit Template Surat Permohonan' : tab === 'surat_tugas' ? 'Edit Template Surat Tugas' : 'Edit Form Disnaker')
-                                : (tab === 'surat_permohonan' ? 'Tambah Surat Permohonan Baru' : tab === 'surat_tugas' ? 'Tambah Template Surat Tugas Baru' : 'Tambah Form Disnaker Baru')
+                                ? (tab === 'surat_permohonan' ? 'Edit Template Surat Permohonan' : tab === 'surat_tugas' ? 'Edit Template Surat Tugas' : tab === 'surat_kuasa' ? 'Edit Template Surat Kuasa' : tab === 'surat_lainnya' ? 'Edit Dokumen Lainnya' : 'Edit Form Disnaker')
+                                : (tab === 'surat_permohonan' ? 'Tambah Surat Permohonan Baru' : tab === 'surat_tugas' ? 'Tambah Template Surat Tugas Baru' : tab === 'surat_kuasa' ? 'Tambah Surat Kuasa Baru' : tab === 'surat_lainnya' ? 'Tambah Dokumen Lainnya Baru' : 'Tambah Form Disnaker Baru')
                             }
                         </h2>
                         <form onSubmit={submitFormDisnaker} className="space-y-4">
@@ -1494,14 +1643,14 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                                        {tab === 'surat_permohonan' || tab === 'surat_tugas' ? 'Kategori / Jenis Surat' : 'Form No (Disnaker)'}
+                                        {['surat_permohonan', 'surat_tugas', 'surat_kuasa', 'surat_lainnya'].includes(tab) ? 'Kategori / Jenis Surat' : 'Form No (Disnaker)'}
                                     </label>
-                                    <input type="text" placeholder={tab === 'surat_permohonan' ? 'e.g. Surat Permohonan' : tab === 'surat_tugas' ? 'e.g. Surat Tugas' : 'e.g. Form 6, Form 36'} value={formDisnakerForm.data.kode_disnaker} onChange={e => formDisnakerForm.setData('kode_disnaker', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                    <input type="text" placeholder={tab === 'surat_permohonan' ? 'e.g. Surat Permohonan' : tab === 'surat_tugas' ? 'e.g. Surat Tugas' : tab === 'surat_kuasa' ? 'e.g. Surat Kuasa' : tab === 'surat_lainnya' ? 'e.g. Dokumen Pendukung' : 'e.g. Form 6, Form 36'} value={formDisnakerForm.data.kode_disnaker} onChange={e => formDisnakerForm.setData('kode_disnaker', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                                    {tab === 'surat_permohonan' ? 'Nama Template Surat Permohonan' : tab === 'surat_tugas' ? 'Nama Template Surat Tugas' : 'Nama Form'}
+                                    {tab === 'surat_permohonan' ? 'Nama Template Surat Permohonan' : tab === 'surat_tugas' ? 'Nama Template Surat Tugas' : tab === 'surat_kuasa' ? 'Nama Template Surat Kuasa' : tab === 'surat_lainnya' ? 'Nama Template Dokumen' : 'Nama Form'}
                                 </label>
                                 <input type="text" required value={formDisnakerForm.data.nama} onChange={e => formDisnakerForm.setData('nama', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                             </div>
@@ -1530,7 +1679,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                                    {tab === 'surat_permohonan' || tab === 'surat_tugas' ? 'Upload Master Template File (.docx / .pdf)' : 'Upload File Form'}
+                                    {['surat_permohonan', 'surat_tugas', 'surat_kuasa', 'surat_lainnya'].includes(tab) ? 'Upload Master Template File (.docx / .pdf)' : 'Upload File Form'}
                                 </label>
                                 <input type="file" accept="*" onChange={e => formDisnakerForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
                                 {selectedFormDisnaker?.file && (

@@ -73,6 +73,8 @@ class MasterDataSeeder extends Seeder
             ['kode_form' => 'F008', 'kode_disnaker' => 'Form 65 K', 'nama' => 'Pemeriksaan Sistem Proteksi Kebakaran', 'pesawat' => 'FIRE', 'revisi' => 'Rev. 1980/1983', 'last_updated' => '2024-02-10', 'file' => 'Form-65K-Fire.pdf'],
             ['kode_form' => 'SP-01', 'kode_disnaker' => 'Surat Permohonan', 'nama' => 'Template Surat Permohonan Riksa Uji (Disnaker RI)', 'pesawat' => 'Umum', 'revisi' => 'Rev. 2026', 'last_updated' => '2026-01-01', 'file' => null],
             ['kode_form' => 'ST-01', 'kode_disnaker' => 'Surat Tugas', 'nama' => 'Template Official Surat Tugas Penugasan Riksa Uji (Word .docx)', 'pesawat' => 'Umum', 'revisi' => 'Rev. 2026', 'last_updated' => '2026-01-01', 'file' => null],
+            ['kode_form' => 'SK-01', 'kode_disnaker' => 'Surat Kuasa', 'nama' => 'Template Official Surat Kuasa Pengurusan Riksa Uji (Word .docx)', 'pesawat' => 'Umum', 'revisi' => 'Rev. 2026', 'last_updated' => '2026-01-01', 'file' => null],
+            ['kode_form' => 'DOC-01', 'kode_disnaker' => 'Lainnya', 'nama' => 'Template Dokumen Pendukung / Lainnya', 'pesawat' => 'Umum', 'revisi' => 'Rev. 2026', 'last_updated' => '2026-01-01', 'file' => null],
         ];
 
         foreach ($formChecklist as $form) {

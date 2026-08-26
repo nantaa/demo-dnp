@@ -28,13 +28,6 @@ export default function Login({ status, canResetPassword }) {
             </div>
 
             <div className="relative z-10 w-full max-w-md px-6 py-4">
-                {/* DNP Logo Box */}
-                <div className="flex flex-col items-center mb-6">
-                    <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 mb-3 flex items-center justify-center">
-                        <img src="/images/logo.png" alt="DNP Logo" className="h-14 w-auto object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
-                        <ApplicationLogo className="h-12 w-auto" showText={true} />
-                    </div>
-                </div>
 
                 {/* Login Card */}
                 <div className="bg-white/95 backdrop-blur-md px-8 py-8 shadow-xl rounded-2xl border border-slate-100">

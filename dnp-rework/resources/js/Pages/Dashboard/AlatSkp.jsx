@@ -236,9 +236,12 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     const suratLainnyaList = useMemo(() => {
         const filtered = form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'LAINNYA') ||
-            (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('lainnya')) ||
+            (f.kode_disnaker && (
+                f.kode_disnaker.toLowerCase().includes('lainnya') ||
+                f.kode_disnaker.toLowerCase().includes('dokumen')
+            )) ||
             (f.nama && f.nama.toLowerCase().includes('lainnya')) ||
-            (f.kode_form && f.kode_form.startsWith('DOC-'))
+            (f.kode_form && f.kode_form.toUpperCase().startsWith('DOC-'))
         );
         return sortByKode(filtered);
     }, [form_disnaker]);
@@ -488,8 +491,51 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         }
     };
 
+    const openCreateFormDisnaker = (targetTab) => {
+        setSelectedFormDisnaker(null);
+        formDisnakerForm.reset();
+        formDisnakerForm.clearErrors();
+
+        let prefix = 'F';
+        let defaultDisnaker = 'Form Disnaker';
+
+        if (targetTab === 'surat_permohonan') {
+            prefix = 'SP';
+            defaultDisnaker = 'Surat Permohonan';
+        } else if (targetTab === 'surat_tugas') {
+            prefix = 'ST';
+            defaultDisnaker = 'Surat Tugas';
+        } else if (targetTab === 'surat_kuasa') {
+            prefix = 'SK';
+            defaultDisnaker = 'Surat Kuasa';
+        } else if (targetTab === 'surat_lainnya') {
+            prefix = 'DOC';
+            defaultDisnaker = 'Dokumen Lainnya';
+        }
+
+        const existingCodes = (form_disnaker || []).map(f => (f.kode_form || '').toUpperCase());
+        let nextNum = 1;
+        let newCode = `${prefix}-${String(nextNum).padStart(2, '0')}`;
+        while (existingCodes.includes(newCode.toUpperCase())) {
+            nextNum++;
+            newCode = `${prefix}-${String(nextNum).padStart(2, '0')}`;
+        }
+
+        formDisnakerForm.setData({
+            kode_form: newCode,
+            kode_disnaker: defaultDisnaker,
+            nama: '',
+            pesawat: 'Umum',
+            revisi: 'Rev. 2026',
+            last_updated: todayStr,
+            file: null
+        });
+        setShowFormDisnakerModal(true);
+    };
+
     const openEditFormDisnaker = (f) => {
         setSelectedFormDisnaker(f);
+        formDisnakerForm.clearErrors();
         formDisnakerForm.setData({
             kode_form: f.kode_form,
             kode_disnaker: f.kode_disnaker || '',
@@ -546,27 +592,27 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </button>
                             )}
                             {tab === 'form' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.reset(); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => openCreateFormDisnaker('form')} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Form Disnaker
                                 </button>
                             )}
                             {tab === 'surat_permohonan' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'SP-01', kode_disnaker: 'Surat Permohonan', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => openCreateFormDisnaker('surat_permohonan')} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Surat Permohonan
                                 </button>
                             )}
                             {tab === 'surat_tugas' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'ST-01', kode_disnaker: 'Surat Tugas', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => openCreateFormDisnaker('surat_tugas')} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Template Surat Tugas
                                 </button>
                             )}
                             {tab === 'surat_kuasa' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'SK-01', kode_disnaker: 'Surat Kuasa', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => openCreateFormDisnaker('surat_kuasa')} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Surat Kuasa
                                 </button>
                             )}
                             {tab === 'surat_lainnya' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'DOC-01', kode_disnaker: 'Lainnya', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => openCreateFormDisnaker('surat_lainnya')} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Dokumen Lainnya
                                 </button>
                             )}

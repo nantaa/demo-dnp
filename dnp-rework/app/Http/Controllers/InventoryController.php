@@ -317,6 +317,18 @@ class InventoryController extends Controller
     {
         if (!$this->canManage()) abort(403);
 
+        // Auto-resolve duplicate kode_form to prevent unique constraint crashes
+        if ($request->filled('kode_form')) {
+            $baseCode = trim($request->input('kode_form'));
+            $kodeForm = $baseCode;
+            $counter = 1;
+            while (FormDisnaker::where('kode_form', $kodeForm)->exists()) {
+                $counter++;
+                $kodeForm = $baseCode . '-' . $counter;
+            }
+            $request->merge(['kode_form' => $kodeForm]);
+        }
+
         $validated = $request->validate([
             'kode_form'     => 'required|string|max:50|unique:form_disnakers,kode_form',
             'kode_disnaker' => 'nullable|string|max:50',

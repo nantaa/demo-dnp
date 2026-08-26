@@ -10,6 +10,7 @@
 /index.html
 /dnp_monitor.html
 *.db
+/sample/*
 
 # Standard Ignores
 .env

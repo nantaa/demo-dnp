@@ -257,18 +257,11 @@ class JobController extends Controller
             }
         }
 
-        // Stage 11 → 14: require delivery date + Tanda Terima Suket document
+        // Stage 11 → 14 (11b): document is optional, auto-set delivery date if empty
         if ($currentStage == 11) {
             if (empty($job->tgl_submit_mkt)) {
-                return back()->withErrors([
-                    'tgl_submit_mkt' => 'Tanggal Pengiriman Suket (tgl_submit_mkt) wajib diisi.',
-                ]);
-            }
-            $hasTandaTerima = $job->documents()->where('stage', 11)->where('type', 'Tanda Terima Suket')->exists();
-            if (!$hasTandaTerima) {
-                return back()->withErrors([
-                    'documents' => 'Dokumen "Tanda Terima Suket" wajib diunggah sebelum melanjutkan ke Stage 11b (Pembayaran).',
-                ]);
+                $job->tgl_submit_mkt = now()->toDateString();
+                $job->save();
             }
         }
 

@@ -71,10 +71,12 @@ class MasterDataSeeder extends Seeder
             ['kode_form' => 'F006', 'kode_disnaker' => 'Form 54 A', 'nama' => 'Pemeriksaan PTP (Compressor, Genset)', 'pesawat' => 'PTP', 'revisi' => 'Rev. 2020', 'last_updated' => '2020-05-10', 'file' => 'Form-54A-PTP.pdf'],
             ['kode_form' => 'F007', 'kode_disnaker' => 'Form 55 L', 'nama' => 'Pemeriksaan Instalasi Listrik & Penyalur Petir', 'pesawat' => 'LISTRIK', 'revisi' => 'Rev. 2015', 'last_updated' => '2015-12-30', 'file' => 'Form-55L-Listrik.pdf'],
             ['kode_form' => 'F008', 'kode_disnaker' => 'Form 65 K', 'nama' => 'Pemeriksaan Sistem Proteksi Kebakaran', 'pesawat' => 'FIRE', 'revisi' => 'Rev. 1980/1983', 'last_updated' => '2024-02-10', 'file' => 'Form-65K-Fire.pdf'],
+            ['kode_form' => 'SP-01', 'kode_disnaker' => 'Surat Permohonan', 'nama' => 'Template Surat Permohonan Riksa Uji (Disnaker RI)', 'pesawat' => 'Umum', 'revisi' => 'Rev. 2026', 'last_updated' => '2026-01-01', 'file' => null],
+            ['kode_form' => 'ST-01', 'kode_disnaker' => 'Surat Tugas', 'nama' => 'Template Official Surat Tugas Penugasan Riksa Uji (Word .docx)', 'pesawat' => 'Umum', 'revisi' => 'Rev. 2026', 'last_updated' => '2026-01-01', 'file' => null],
         ];
 
         foreach ($formChecklist as $form) {
-            FormDisnaker::create($form);
+            FormDisnaker::updateOrCreate(['kode_form' => $form['kode_form']], $form);
         }
     }
 }

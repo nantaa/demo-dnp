@@ -336,9 +336,15 @@ class InventoryController extends Controller
         return back()->with('success', 'Form Disnaker berhasil ditambahkan.');
     }
 
-    public function updateFormDisnaker(Request $request, FormDisnaker $formDisnaker)
+    public function updateFormDisnaker(Request $request, $id)
     {
         if (!$this->canManage()) abort(403);
+
+        if (!is_numeric($id) || !FormDisnaker::where('id', $id)->exists()) {
+            return $this->storeFormDisnaker($request);
+        }
+
+        $formDisnaker = FormDisnaker::findOrFail($id);
 
         $validated = $request->validate([
             'kode_disnaker' => 'nullable|string|max:50',
@@ -361,13 +367,22 @@ class InventoryController extends Controller
         return back()->with('success', 'Form Disnaker berhasil diperbarui.');
     }
 
-    public function destroyFormDisnaker(FormDisnaker $formDisnaker)
+    public function destroyFormDisnaker($id)
     {
         if (!$this->canManage()) abort(403);
-        if ($formDisnaker->file) {
-            Storage::disk('public')->delete($formDisnaker->file);
+
+        if (!is_numeric($id)) {
+            return back()->with('success', 'Form berhasil dihapus.');
         }
-        $formDisnaker->delete();
+
+        $formDisnaker = FormDisnaker::find($id);
+        if ($formDisnaker) {
+            if ($formDisnaker->file) {
+                Storage::disk('public')->delete($formDisnaker->file);
+            }
+            $formDisnaker->delete();
+        }
+
         return back()->with('success', 'Form Disnaker berhasil dihapus.');
     }
 }

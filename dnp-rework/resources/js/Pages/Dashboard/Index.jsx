@@ -72,15 +72,12 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
     const isFIN = user.role === 'finance';
     const isMGR = user.role === 'manager';
     const isSuper = user.role === 'superadmin';
-    const isPersonal = isMKT || isINS;
 
-    // Filtered jobs list based on personal scope / toggle
+    // Filtered jobs list based on personal scope / toggle (Only MGR has filter toggle)
     const personalFiltered = useMemo(() => {
-        if (!filterMine && !isMKT) return jobs;
-        if (isMKT) return jobs.filter(j => j.owner_marketing === user.name);
-        if (isINS) return jobs.filter(j => (j.inspectors || []).some(ins => ins.id === user.id));
-        return jobs;
-    }, [jobs, filterMine, isMKT, isINS, user.name, user.id]);
+        if (!isMGR || !filterMine) return jobs;
+        return jobs.filter(j => j.s5_reviewed_by === user.name || (j.inspectors || []).some(ins => ins.id === user.id));
+    }, [jobs, filterMine, isMGR, user.name, user.id]);
 
     const stats = useMemo(() => {
         const active = personalFiltered.filter(j => j.stage < 12);
@@ -219,7 +216,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
         };
     }, [personalFiltered, jobs, inspectors, isINS, isMGR, isSuper, isMKT, user.name, user.id]);
 
-    const titlePrefix = isPersonal && filterMine ? `Personal - ${user.name}` : `Overview`;
+    const titlePrefix = isMGR && filterMine ? `Personal - ${user.name}` : `Overview`;
     const titleRole = isMKT ? 'Dashboard Marketing' :
                       isINS ? 'Tugas Lapangan Saya' :
                       isADM ? 'Dashboard Admin' :
@@ -241,13 +238,13 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                     </h1>
                 </div>
                 <div className="flex items-center gap-4 self-end md:self-auto">
-                    {isPersonal && (
+                    {isMGR && (
                         <div className="flex rounded-lg border border-slate-200 shadow-2xs overflow-hidden bg-white p-1 gap-1">
                             <button onClick={() => setFilterMine(true)}
                                 className={`px-4 py-1.5 text-xs font-extrabold rounded-md flex items-center gap-2 transition-all ${
                                     filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                                 }`}>
-                                <User size={14} /> {isINS ? 'Tugas Saya' : 'Pekerjaan Saya'}
+                                <User size={14} /> Pekerjaan Saya
                             </button>
                             <button onClick={() => setFilterMine(false)}
                                 className={`px-4 py-1.5 text-xs font-extrabold rounded-md transition-all ${

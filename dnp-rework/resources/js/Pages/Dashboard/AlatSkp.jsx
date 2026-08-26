@@ -60,6 +60,16 @@ function StatusBadge({ status, children }) {
 
 const PESAWAT_CATEGORIES = ['PUBT / PV', 'Listrik & IPP', 'IPK', 'PAPA', 'PTP', 'Elevator & Eskalator', 'Lift', 'Umum', 'BOILER'];
 
+const PESAWAT_OPTIONS = [
+    { value: 'Umum', label: 'Umum' },
+    { value: 'PAPA', label: 'PAPA (Pesawat Angkat & Angkut)' },
+    { value: 'Listrik & IPP', label: 'Listrik & IPP (Instalasi Penyalur Petir)' },
+    { value: 'IPK', label: 'IPK (Instalasi Proteksi Kebakaran)' },
+    { value: 'PUBT / PV', label: 'PUBT / PV (Pesawat Uap & Bejana Tekan)' },
+    { value: 'PTP', label: 'PTP (Pesawat Tenaga & Produksi)' },
+    { value: 'Elevator & Eskalator', label: 'Elevator & Eskalator' }
+];
+
 function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulasi_k3 = [], form_disnaker = [], users = [], auth = {} }) {
     const [tab, setTab] = useState('alat');
     const [subTab, setSubTab] = useState('ahli');
@@ -202,10 +212,10 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                 kode_form: 'SP-DISNAKER-01',
                 kode_disnaker: 'Surat Permohonan',
                 nama: 'Template Surat Permohonan Riksa Uji (Disnaker RI)',
-                pesawat: 'Disnaker / Transmigrasi',
+                pesawat: 'Umum',
                 revisi: 'Rev. 2026',
                 last_updated: '2026-01-01',
-                file: 'templates/SuratPermohonan.docx'
+                file: null
             }
         ];
     }, [form_disnaker]);
@@ -223,10 +233,10 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                 kode_form: 'ST-OFFICIAL-01',
                 kode_disnaker: 'Surat Tugas',
                 nama: 'Template Official Surat Tugas Penugasan Riksa Uji (Word .docx)',
-                pesawat: 'Official DNP Template',
+                pesawat: 'Umum',
                 revisi: 'Rev. 2026',
                 last_updated: '2026-01-01',
-                file: 'templates/SuratTugas.docx'
+                file: null
             }
         ];
     }, [form_disnaker]);
@@ -535,12 +545,12 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </button>
                             )}
                             {tab === 'surat_permohonan' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'SP-01', kode_disnaker: 'Surat Permohonan', nama: '', pesawat: 'SURAT_PERMOHONAN', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'SP-01', kode_disnaker: 'Surat Permohonan', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Surat Permohonan
                                 </button>
                             )}
                             {tab === 'surat_tugas' && (
-                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'ST-01', kode_disnaker: 'Surat Tugas', nama: '', pesawat: 'SURAT_TUGAS', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'ST-01', kode_disnaker: 'Surat Tugas', nama: '', pesawat: 'Umum', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
                                     <Plus size={16} /> Tambah Template Surat Tugas
                                 </button>
                             )}
@@ -1013,16 +1023,12 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             {canManage && (
                                                 <td className="p-4 text-center">
                                                     <div className="flex justify-center gap-2">
-                                                        {typeof f.id === 'number' && (
-                                                            <>
-                                                                <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit">
-                                                                    <Pencil size={15} />
-                                                                </button>
-                                                                <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
-                                                                    <Trash size={15} />
-                                                                </button>
-                                                            </>
-                                                        )}
+                                                        <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                        <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                            <Trash size={15} />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             )}
@@ -1040,7 +1046,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                         <th className="p-4 font-semibold">Kode</th>
                                         <th className="p-4 font-semibold">Kategori Surat</th>
                                         <th className="p-4 font-semibold">Nama Template Surat Tugas</th>
-                                        <th className="p-4 font-semibold">Format</th>
+                                        <th className="p-4 font-semibold">Kategori Pesawat</th>
                                         <th className="p-4 font-semibold">Revisi</th>
                                         <th className="p-4 font-semibold">Last Updated</th>
                                         <th className="p-4 font-semibold">File Master Template</th>
@@ -1053,7 +1059,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
                                             <td className="p-4 font-mono font-semibold text-emerald-600">{f.kode_disnaker}</td>
                                             <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
-                                            <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Word (.docx)'}</td>
+                                            <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Umum'}</td>
                                             <td className="p-4 font-mono text-xs">{f.revisi}</td>
                                             <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
                                             <td className="p-4 font-medium">
@@ -1068,16 +1074,12 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             {canManage && (
                                                 <td className="p-4 text-center">
                                                     <div className="flex justify-center gap-2">
-                                                        {typeof f.id === 'number' && (
-                                                            <>
-                                                                <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit">
-                                                                    <Pencil size={15} />
-                                                                </button>
-                                                                <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
-                                                                    <Trash size={15} />
-                                                                </button>
-                                                            </>
-                                                        )}
+                                                        <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
+                                                            <Pencil size={15} />
+                                                        </button>
+                                                        <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                            <Trash size={15} />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             )}
@@ -1506,7 +1508,16 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Untuk Pesawat</label>
-                                    <input type="text" placeholder="e.g. Boiler, Crane" value={formDisnakerForm.data.pesawat} onChange={e => formDisnakerForm.setData('pesawat', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                    <select 
+                                        value={formDisnakerForm.data.pesawat} 
+                                        onChange={e => formDisnakerForm.setData('pesawat', e.target.value)} 
+                                        className="w-full border px-3 py-2 rounded text-sm bg-white"
+                                    >
+                                        <option value="">-- Pilih Kategori --</option>
+                                        {PESAWAT_OPTIONS.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Revisi</label>

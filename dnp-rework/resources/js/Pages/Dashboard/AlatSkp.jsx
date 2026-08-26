@@ -62,6 +62,7 @@ const PESAWAT_CATEGORIES = ['PUBT / PV', 'Listrik & IPP', 'IPK', 'PAPA', 'PTP', 
 
 function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulasi_k3 = [], form_disnaker = [], users = [], auth = {} }) {
     const [tab, setTab] = useState('alat');
+    const [subTab, setSubTab] = useState('ahli');
     const todayStr = new Date().toISOString().slice(0, 10);
     
     const { role } = auth.user || {};
@@ -104,7 +105,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         skp_details_input: {},
         skp_files_input: {},
         domisili: '',
-        senior_level: false
+        senior_level: false,
+        subrole: 'tenaga_ahli'
     });
 
     const sertifikatForm = useForm({
@@ -259,37 +261,53 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
     const openEditInspector = (i) => {
         setSelectedInspector(i);
-        let spec = [];
-        try {
-            spec = typeof i.spesialisasi === 'string' ? JSON.parse(i.spesialisasi) : (i.spesialisasi || []);
-        } catch(e) {
-            spec = Array.isArray(i.spesialisasi) ? i.spesialisasi : [];
-        }
-        let details = {};
-        try {
-            details = typeof i.skp_details === 'string' ? JSON.parse(i.skp_details) : (i.skp_details || {});
-        } catch(e) {
-            details = i.skp_details || {};
-        }
+        if (i) {
+            let spec = [];
+            try {
+                spec = typeof i.spesialisasi === 'string' ? JSON.parse(i.spesialisasi) : (i.spesialisasi || []);
+            } catch(e) {
+                spec = Array.isArray(i.spesialisasi) ? i.spesialisasi : [];
+            }
+            let details = {};
+            try {
+                details = typeof i.skp_details === 'string' ? JSON.parse(i.skp_details) : (i.skp_details || {});
+            } catch(e) {
+                details = i.skp_details || {};
+            }
 
-        const detailsInput = {};
-        spec.forEach(s => {
-            detailsInput[s] = {
-                no_skp: details[s]?.no_skp || i.skp || '',
-                expired_at: details[s]?.expired_at ? details[s].expired_at.substring(0, 10) : (i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '')
-            };
-        });
+            const detailsInput = {};
+            spec.forEach(s => {
+                detailsInput[s] = {
+                    no_skp: details[s]?.no_skp || i.skp || '',
+                    expired_at: details[s]?.expired_at ? details[s].expired_at.substring(0, 10) : (i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '')
+                };
+            });
 
-        inspectorForm.setData({
-            user_id: i.user_id,
-            skp: i.skp || '',
-            skp_expired_at: i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '',
-            spesialisasi: spec,
-            skp_details_input: detailsInput,
-            skp_files_input: {},
-            domisili: i.domisili || '',
-            senior_level: !!i.senior_level
-        });
+            inspectorForm.setData({
+                user_id: i.user_id,
+                skp: i.skp || '',
+                skp_expired_at: i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '',
+                spesialisasi: spec,
+                skp_details_input: detailsInput,
+                skp_files_input: {},
+                domisili: i.domisili || '',
+                senior_level: !!i.senior_level,
+                subrole: i.subrole || 'tenaga_ahli'
+            });
+        } else {
+            inspectorForm.reset();
+            inspectorForm.setData({
+                user_id: '',
+                skp: '',
+                skp_expired_at: '',
+                spesialisasi: [],
+                skp_details_input: {},
+                skp_files_input: {},
+                domisili: '',
+                senior_level: false,
+                subrole: subTab === 'petugas' ? 'teknisi' : 'tenaga_ahli'
+            });
+        }
         setShowInspectorModal(true);
     };
 
@@ -437,7 +455,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                         <div className="text-xs tracking-widest uppercase text-gray-500 font-bold">Master Data</div>
                         <h1 className="text-3xl font-bold text-gray-900 mt-1">Inventaris Alat & Sertifikat</h1>
                         <div className="text-sm text-gray-500 mt-1">
-                            Database alat uji terkalibrasi, SKP Ahli K3, dan Sertifikat PJK3 perusahaan
+                            Database alat uji terkalibrasi, Tim RU (SKP & Lisensi), dan Sertifikat PJK3 perusahaan
                         </div>
                     </div>
                     {canManage && (
@@ -448,8 +466,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </button>
                             )}
                             {tab === 'inspektur' && (
-                                <button onClick={() => { setSelectedInspector(null); inspectorForm.reset(); setShowInspectorModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
-                                    <Plus size={16} /> Tambah Ahli K3
+                                <button onClick={() => openEditInspector(null)} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> {subTab === 'petugas' ? 'Tambah Petugas / PIC' : 'Tambah Ahli K3'}
                                 </button>
                             )}
                             {tab === 'cert' && (
@@ -476,7 +494,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                     <KPICard label="Total Alat" value={alat_uji.length} sub="di inventaris" icon={Wrench} />
                     <KPICard label="Kal. Expired" value={alatStats.expired.length} sub={alatStats.expired.length > 0 ? 'Tidak boleh dipakai' : 'Semua valid'} icon={AlertCircle} accentClass={alatStats.expired.length > 0 ? 'text-red-600' : 'text-green-600'} />
                     <KPICard label="Kal. Akan Expire" value={alatStats.expiring.length} sub="<30 hari, re-kalibrasi" icon={Clock} accentClass={alatStats.expiring.length > 0 ? 'text-yellow-600' : 'text-gray-500'} />
-                    <KPICard label="SKP Akan Expire" value={inspekturStats.expiring.length} sub="<180 hari, perpanjangan" icon={User} accentClass={inspekturStats.expiring.length > 0 ? 'text-yellow-600' : 'text-gray-500'} />
+                    <KPICard label="SKP/Lisensi Expire" value={inspekturStats.expiring.length} sub="<180 hari, perpanjangan" icon={User} accentClass={inspekturStats.expiring.length > 0 ? 'text-yellow-600' : 'text-gray-500'} />
                 </div>
 
                 {/* Tabs */}
@@ -484,7 +502,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                     <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex gap-2 flex-wrap">
                         {[
                             { id: 'alat', label: 'Alat Uji Terkalibrasi', icon: Wrench, count: alat_uji.length },
-                            { id: 'inspektur', label: 'Ahli K3 (SKP)', icon: User, count: inspectors.length },
+                            { id: 'inspektur', label: 'Tim RU', icon: User, count: inspectors.length },
                             { id: 'cert', label: 'Sertifikat PJK3', icon: Award, count: sertifikat_pjk3.length },
                             { id: 'regulasi', label: 'Regulasi K3', icon: BriefcaseBusiness, count: regulasi_k3.length },
                             { id: 'form', label: 'Form Standar Disnaker', icon: ClipboardList, count: form_disnaker.length },
@@ -570,134 +588,170 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
                         {/* Inspektur Tab */}
                         {tab === 'inspektur' && (
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
-                                        <th className="p-4 font-semibold">ID</th>
-                                        <th className="p-4 font-semibold">Nama</th>
-                                        <th className="p-4 font-semibold">No. SKP</th>
-                                        <th className="p-4 font-semibold">Spesialisasi</th>
-                                        <th className="p-4 font-semibold">Berlaku sd</th>
-                                        <th className="p-4 font-semibold">Status</th>
-                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {inspectors.map((insp) => {
-                                        const days = insp.skp_expired_at ? daysBetween(todayStr, insp.skp_expired_at) : null;
-                                        let statObj = null;
-                                        if (days !== null) {
-                                            if (days < 0) statObj = { status: 'expired', label: 'EXPIRED' };
-                                            else if (days < 180) statObj = { status: 'expiring_soon', label: `${days} hari lagi` };
-                                            else statObj = { status: 'valid', label: 'Valid' };
-                                        }
-                                        let specs = [];
-                                        try {
-                                            specs = typeof insp.spesialisasi === 'string' ? JSON.parse(insp.spesialisasi) : (insp.spesialisasi || []);
-                                        } catch (e) {
-                                            specs = Array.isArray(insp.spesialisasi) ? insp.spesialisasi : [];
-                                        }
-                                        return (
-                                            <tr key={insp.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
-                                                <td className="p-4 font-mono font-semibold">{insp.id}</td>
-                                                <td className="p-4 font-semibold text-gray-900">{insp.user?.name || 'Unknown'}</td>
-                                                <td className="p-4 font-mono text-xs">
-                                                    {(() => {
-                                                        let skpDetails = {};
-                                                        try {
-                                                            skpDetails = typeof insp.skp_details === 'string' ? JSON.parse(insp.skp_details) : (insp.skp_details || {});
-                                                        } catch (e) {
-                                                            skpDetails = insp.skp_details || {};
-                                                        }
+                            <div>
+                                <div className="px-4 py-3 border-b border-gray-200 bg-white flex justify-between items-center flex-wrap gap-2">
+                                    <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSubTab('ahli')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
+                                                subTab === 'ahli' ? 'bg-black text-white shadow-sm' : 'text-gray-600 hover:text-black'
+                                            }`}
+                                        >
+                                            AHLI
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSubTab('petugas')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
+                                                subTab === 'petugas' ? 'bg-black text-white shadow-sm' : 'text-gray-600 hover:text-black'
+                                            }`}
+                                        >
+                                            Petugas / PIC
+                                        </button>
+                                    </div>
+                                    <div className="text-xs text-gray-500 font-medium">
+                                        Menampilkan: {subTab === 'ahli' ? 'Tenaga Ahli K3' : 'Petugas & PIC Lapangan'}
+                                    </div>
+                                </div>
 
-                                                        if (specs.length > 0) {
-                                                            return (
-                                                                <div className="flex flex-col gap-1">
-                                                                    {specs.map(s => {
-                                                                        const num = skpDetails[s]?.no_skp || insp.skp;
-                                                                        if (!num) return null;
-                                                                        return (
-                                                                            <div key={s} className="truncate max-w-[220px]" title={`AK3 ${s}: ${num}`}>
-                                                                                {specs.length > 1 && <span className="font-semibold text-gray-500 mr-1">{s}:</span>}
-                                                                                <span className="font-mono text-gray-900">{num}</span>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return insp.skp || '—';
-                                                    })()}
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="flex gap-1.5 flex-wrap">
-                                                        {specs.map(s => {
-                                                            let skpFiles = {};
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
+                                            <th className="p-4 font-semibold">ID</th>
+                                            <th className="p-4 font-semibold">Nama</th>
+                                            <th className="p-4 font-semibold">{subTab === 'petugas' ? 'No. Lisensi' : 'No. SKP'}</th>
+                                            <th className="p-4 font-semibold">Spesialisasi</th>
+                                            <th className="p-4 font-semibold">Berlaku sd</th>
+                                            <th className="p-4 font-semibold">Status</th>
+                                            {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {inspectors.filter((insp) => {
+                                            if (subTab === 'petugas') {
+                                                return insp.subrole === 'teknisi';
+                                            } else {
+                                                return !insp.subrole || insp.subrole === 'tenaga_ahli';
+                                            }
+                                        }).map((insp) => {
+                                            const days = insp.skp_expired_at ? daysBetween(todayStr, insp.skp_expired_at) : null;
+                                            let statObj = null;
+                                            if (days !== null) {
+                                                if (days < 0) statObj = { status: 'expired', label: 'EXPIRED' };
+                                                else if (days < 180) statObj = { status: 'expiring_soon', label: `${days} hari lagi` };
+                                                else statObj = { status: 'valid', label: 'Valid' };
+                                            }
+                                            let specs = [];
+                                            try {
+                                                specs = typeof insp.spesialisasi === 'string' ? JSON.parse(insp.spesialisasi) : (insp.spesialisasi || []);
+                                            } catch (e) {
+                                                specs = Array.isArray(insp.spesialisasi) ? insp.spesialisasi : [];
+                                            }
+                                            const isInspPetugas = insp.subrole === 'teknisi';
+                                            const prefixLabel = isInspPetugas ? 'Lisensi' : 'AK3';
+                                            return (
+                                                <tr key={insp.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                                    <td className="p-4 font-mono font-semibold">{insp.id}</td>
+                                                    <td className="p-4 font-semibold text-gray-900">{insp.user?.name || 'Unknown'}</td>
+                                                    <td className="p-4 font-mono text-xs">
+                                                        {(() => {
+                                                            let skpDetails = {};
                                                             try {
-                                                                skpFiles = typeof insp.skp_files === 'string' ? JSON.parse(insp.skp_files) : (insp.skp_files || {});
-                                                            } catch(e) {
-                                                                skpFiles = insp.skp_files || {};
+                                                                skpDetails = typeof insp.skp_details === 'string' ? JSON.parse(insp.skp_details) : (insp.skp_details || {});
+                                                            } catch (e) {
+                                                                skpDetails = insp.skp_details || {};
                                                             }
-                                                            const filePath = skpFiles[s];
-                                                            return (
-                                                                <span key={s} className="inline-flex items-center gap-1 bg-gray-100 border border-gray-200 text-gray-700 text-[10px] px-2 py-0.5 rounded font-bold tracking-wider">
-                                                                    <span>AK3 {s}</span>
-                                                                    {filePath && (
-                                                                        <a href={`/storage/${filePath}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 ml-0.5" title={`Download SKP ${s}`}>
-                                                                            <Download size={11} />
-                                                                        </a>
-                                                                    )}
-                                                                </span>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 font-mono text-xs">
-                                                    {(() => {
-                                                        let skpDetails = {};
-                                                        try {
-                                                            skpDetails = typeof insp.skp_details === 'string' ? JSON.parse(insp.skp_details) : (insp.skp_details || {});
-                                                        } catch (e) {
-                                                            skpDetails = insp.skp_details || {};
-                                                        }
-                                                        const hasSpecExp = specs.some(s => skpDetails[s]?.expired_at);
-                                                        if (hasSpecExp) {
-                                                            return (
-                                                                <div className="flex flex-col gap-1">
-                                                                    {specs.map(s => {
-                                                                        const exp = skpDetails[s]?.expired_at || insp.skp_expired_at;
-                                                                        if (!exp) return null;
-                                                                        return (
-                                                                            <div key={s} className="truncate" title={`AK3 ${s}: ${formatDate(exp)}`}>
-                                                                                {specs.length > 1 && <span className="font-semibold text-gray-500 mr-1">{s}:</span>}
-                                                                                <span>{formatDate(exp)}</span>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return insp.skp_expired_at ? formatDate(insp.skp_expired_at) : '—';
-                                                    })()}
-                                                </td>
-                                                <td className="p-4">{statObj ? <StatusBadge status={statObj.status}>{statObj.label}</StatusBadge> : '—'}</td>
-                                                {canManage && (
-                                                    <td className="p-4 text-center">
-                                                        <div className="flex justify-center gap-2">
-                                                            <button onClick={() => openEditInspector(insp)} className="text-gray-500 hover:text-black" title="Edit">
-                                                                <Pencil size={15} />
-                                                            </button>
-                                                            <button onClick={() => deleteInspector(insp.id)} className="text-red-500 hover:text-red-700" title="Hapus">
-                                                                <Trash size={15} />
-                                                            </button>
+
+                                                            if (specs.length > 0) {
+                                                                return (
+                                                                    <div className="flex flex-col gap-1">
+                                                                        {specs.map(s => {
+                                                                            const num = skpDetails[s]?.no_skp || insp.skp;
+                                                                            if (!num) return null;
+                                                                            return (
+                                                                                <div key={s} className="truncate max-w-[220px]" title={`${prefixLabel} ${s}: ${num}`}>
+                                                                                    {specs.length > 1 && <span className="font-semibold text-gray-500 mr-1">{s}:</span>}
+                                                                                    <span className="font-mono text-gray-900">{num}</span>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return insp.skp || '—';
+                                                        })()}
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex gap-1.5 flex-wrap">
+                                                            {specs.map(s => {
+                                                                let skpFiles = {};
+                                                                try {
+                                                                    skpFiles = typeof insp.skp_files === 'string' ? JSON.parse(insp.skp_files) : (insp.skp_files || {});
+                                                                } catch(e) {
+                                                                    skpFiles = insp.skp_files || {};
+                                                                }
+                                                                const filePath = skpFiles[s];
+                                                                return (
+                                                                    <span key={s} className="inline-flex items-center gap-1 bg-gray-100 border border-gray-200 text-gray-700 text-[10px] px-2 py-0.5 rounded font-bold tracking-wider">
+                                                                        <span>{prefixLabel} {s}</span>
+                                                                        {filePath && (
+                                                                            <a href={`/storage/${filePath}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 ml-0.5" title={`Download ${isInspPetugas ? 'Lisensi' : 'SKP'} ${s}`}>
+                                                                                <Download size={11} />
+                                                                            </a>
+                                                                        )}
+                                                                    </span>
+                                                                );
+                                                            })}
                                                         </div>
                                                     </td>
-                                                )}
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                                    <td className="p-4 font-mono text-xs">
+                                                        {(() => {
+                                                            let skpDetails = {};
+                                                            try {
+                                                                skpDetails = typeof insp.skp_details === 'string' ? JSON.parse(insp.skp_details) : (insp.skp_details || {});
+                                                            } catch (e) {
+                                                                skpDetails = insp.skp_details || {};
+                                                            }
+                                                            const hasSpecExp = specs.some(s => skpDetails[s]?.expired_at);
+                                                            if (hasSpecExp) {
+                                                                return (
+                                                                    <div className="flex flex-col gap-1">
+                                                                        {specs.map(s => {
+                                                                            const exp = skpDetails[s]?.expired_at || insp.skp_expired_at;
+                                                                            if (!exp) return null;
+                                                                            return (
+                                                                                <div key={s} className="truncate" title={`${prefixLabel} ${s}: ${formatDate(exp)}`}>
+                                                                                    {specs.length > 1 && <span className="font-semibold text-gray-500 mr-1">{s}:</span>}
+                                                                                    <span>{formatDate(exp)}</span>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return insp.skp_expired_at ? formatDate(insp.skp_expired_at) : '—';
+                                                        })()}
+                                                    </td>
+                                                    <td className="p-4">{statObj ? <StatusBadge status={statObj.status}>{statObj.label}</StatusBadge> : '—'}</td>
+                                                    {canManage && (
+                                                        <td className="p-4 text-center">
+                                                            <div className="flex justify-center gap-2">
+                                                                <button onClick={() => openEditInspector(insp)} className="text-gray-500 hover:text-black" title="Edit">
+                                                                    <Pencil size={15} />
+                                                                </button>
+                                                                <button onClick={() => deleteInspector(insp.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                    <Trash size={15} />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
 
                         {/* PJK3 Certs Tab */}
@@ -951,7 +1005,12 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
             {showInspectorModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">{selectedInspector ? 'Edit Ahli K3' : 'Tambah Ahli K3 Baru'}</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">
+                            {selectedInspector 
+                                ? (inspectorForm.data.subrole === 'teknisi' ? 'Edit Petugas / PIC' : 'Edit Ahli K3')
+                                : (inspectorForm.data.subrole === 'teknisi' ? 'Tambah Petugas / PIC Baru' : 'Tambah Ahli K3 Baru')
+                            }
+                        </h2>
                         <form onSubmit={submitInspector} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">User Account</label>
@@ -963,17 +1022,28 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </select>
                                 {inspectorForm.errors.user_id && <div className="text-red-500 text-xs mt-1">{inspectorForm.errors.user_id}</div>}
                             </div>
+                            
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Subrole / Posisi</label>
+                                <select value={inspectorForm.data.subrole} onChange={e => inspectorForm.setData('subrole', e.target.value)} className="w-full border px-3 py-2 rounded text-sm bg-white">
+                                    <option value="tenaga_ahli">Ahli K3</option>
+                                    <option value="teknisi">Petugas / PIC Lapangan</option>
+                                </select>
+                                {inspectorForm.errors.subrole && <div className="text-red-500 text-xs mt-1">{inspectorForm.errors.subrole}</div>}
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Spesialisasi</label>
                                 <div className="grid grid-cols-2 gap-2 border p-3 rounded max-h-32 overflow-y-auto">
                                     {['PUBT / PV', 'Listrik & IPP', 'IPK', 'PAPA', 'PTP', 'Elevator & Eskalator', 'Umum'].map(s => {
                                         const isChecked = inspectorForm.data.spesialisasi.includes(s);
+                                        const prefix = inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'AK3';
                                         return (
                                             <label key={s} className="flex items-center gap-1.5 text-xs cursor-pointer">
                                                 <input type="checkbox" checked={isChecked} onChange={() => {
                                                     inspectorForm.setData('spesialisasi', isChecked ? inspectorForm.data.spesialisasi.filter(x => x !== s) : [...inspectorForm.data.spesialisasi, s]);
                                                 }} />
-                                                AK3 {s}
+                                                {prefix} {s}
                                             </label>
                                         );
                                     })}
@@ -981,7 +1051,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             </div>
                             {inspectorForm.data.spesialisasi.length > 0 && (
                                 <div className="space-y-3 border-t pt-3">
-                                    <label className="block text-xs font-bold uppercase text-gray-700">Detail & File SKP Per Spesialisasi</label>
+                                    <label className="block text-xs font-bold uppercase text-gray-700">
+                                        Detail & File {inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'} Per Spesialisasi
+                                    </label>
                                     <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
                                         {inspectorForm.data.spesialisasi.map(s => {
                                             let skpFiles = {};
@@ -992,11 +1064,13 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             }
                                             const existingFile = skpFiles[s];
                                             const detail = inspectorForm.data.skp_details_input?.[s] || {};
+                                            const prefix = inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'AK3';
+                                            const docName = inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP';
 
                                             return (
                                                 <div key={s} className="bg-gray-50 p-3 rounded border border-gray-200 text-xs space-y-2">
                                                     <div className="font-bold text-gray-800 flex justify-between items-center border-b pb-1">
-                                                        <span>AK3 {s}</span>
+                                                        <span>{prefix} {s}</span>
                                                         {existingFile && (
                                                             <a href={`/storage/${existingFile}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 text-[11px] font-medium">
                                                                 <Download size={12} /> File saat ini
@@ -1005,10 +1079,10 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div>
-                                                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nomor SKP</label>
+                                                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nomor {docName}</label>
                                                             <input 
                                                                 type="text" 
-                                                                placeholder="Nomor SKP" 
+                                                                placeholder={`Nomor ${docName}`} 
                                                                 value={detail.no_skp || ''} 
                                                                 onChange={e => {
                                                                     const val = e.target.value;
@@ -1037,7 +1111,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Upload File SKP</label>
+                                                        <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Upload File {docName}</label>
                                                         <input type="file" accept="*" onChange={e => {
                                                             const file = e.target.files[0];
                                                             inspectorForm.setData('skp_files_input', {

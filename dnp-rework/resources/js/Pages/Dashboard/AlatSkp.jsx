@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import ErrorBoundary from '@/Components/ErrorBoundary';
-import { Wrench, AlertCircle, Clock, User, Award, BriefcaseBusiness, ClipboardList, Download, Plus, Pencil, Trash } from 'lucide-react';
+import { Wrench, AlertCircle, Clock, User, Award, BriefcaseBusiness, ClipboardList, Download, Plus, Pencil, Trash, FileText, FileCheck } from 'lucide-react';
 import { STAGES } from '@/Constants';
 import { showConfirm } from '@/swal';
 
@@ -187,6 +187,55 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
         return { expired: expiredList, expiring: expiringList };
     }, [inspectors, todayStr]);
+
+    // Filter master template items for Surat Permohonan, Surat Tugas, and Form Disnaker
+    const suratPermohonanList = useMemo(() => {
+        const filtered = form_disnaker.filter(f => 
+            (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_PERMOHONAN') ||
+            (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('permohonan')) ||
+            (f.nama && f.nama.toLowerCase().includes('permohonan'))
+        );
+        if (filtered.length > 0) return filtered;
+        return [
+            {
+                id: 'sp-default-1',
+                kode_form: 'SP-DISNAKER-01',
+                kode_disnaker: 'Surat Permohonan',
+                nama: 'Template Surat Permohonan Riksa Uji (Disnaker RI)',
+                pesawat: 'Disnaker / Transmigrasi',
+                revisi: 'Rev. 2026',
+                last_updated: '2026-01-01',
+                file: 'templates/SuratPermohonan.docx'
+            }
+        ];
+    }, [form_disnaker]);
+
+    const suratTugasList = useMemo(() => {
+        const filtered = form_disnaker.filter(f => 
+            (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_TUGAS') ||
+            (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('tugas')) ||
+            (f.nama && f.nama.toLowerCase().includes('tugas'))
+        );
+        if (filtered.length > 0) return filtered;
+        return [
+            {
+                id: 'st-default-1',
+                kode_form: 'ST-OFFICIAL-01',
+                kode_disnaker: 'Surat Tugas',
+                nama: 'Template Official Surat Tugas Penugasan Riksa Uji (Word .docx)',
+                pesawat: 'Official DNP Template',
+                revisi: 'Rev. 2026',
+                last_updated: '2026-01-01',
+                file: 'templates/SuratTugas.docx'
+            }
+        ];
+    }, [form_disnaker]);
+
+    const formDisnakerList = useMemo(() => {
+        const spIds = new Set(suratPermohonanList.map(p => p.id));
+        const stIds = new Set(suratTugasList.map(t => t.id));
+        return form_disnaker.filter(f => !spIds.has(f.id) && !stIds.has(f.id));
+    }, [form_disnaker, suratPermohonanList, suratTugasList]);
 
     // Handle Alat Submit
     const submitAlat = (e) => {
@@ -485,6 +534,16 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     <Plus size={16} /> Tambah Form Disnaker
                                 </button>
                             )}
+                            {tab === 'surat_permohonan' && (
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'SP-01', kode_disnaker: 'Surat Permohonan', nama: '', pesawat: 'SURAT_PERMOHONAN', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> Tambah Surat Permohonan
+                                </button>
+                            )}
+                            {tab === 'surat_tugas' && (
+                                <button onClick={() => { setSelectedFormDisnaker(null); formDisnakerForm.setData({ kode_form: 'ST-01', kode_disnaker: 'Surat Tugas', nama: '', pesawat: 'SURAT_TUGAS', revisi: 'Rev. 2026', last_updated: todayStr, file: null }); setShowFormDisnakerModal(true); }} className="bg-black text-white px-4 py-2 flex items-center gap-2 rounded text-sm font-medium hover:bg-gray-800">
+                                    <Plus size={16} /> Tambah Template Surat Tugas
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -505,7 +564,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             { id: 'inspektur', label: 'Tim RU', icon: User, count: inspectors.length },
                             { id: 'cert', label: 'Sertifikat PJK3', icon: Award, count: sertifikat_pjk3.length },
                             { id: 'regulasi', label: 'Regulasi K3', icon: BriefcaseBusiness, count: regulasi_k3.length },
-                            { id: 'form', label: 'Form Standar Disnaker', icon: ClipboardList, count: form_disnaker.length },
+                            { id: 'form', label: 'Form Standar Disnaker', icon: ClipboardList, count: formDisnakerList.length },
+                            { id: 'surat_permohonan', label: 'Surat Permohonan', icon: FileText, count: suratPermohonanList.length },
+                            { id: 'surat_tugas', label: 'Template Surat Tugas', icon: FileCheck, count: suratTugasList.length },
                         ].map(t => {
                             const Icon = t.icon;
                             const active = tab === t.id;
@@ -881,7 +942,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {form_disnaker.map((f) => (
+                                    {formDisnakerList.map((f) => (
                                         <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
                                             <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
                                             <td className="p-4 font-mono font-semibold text-orange-600">{f.kode_disnaker}</td>
@@ -907,6 +968,116 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                         <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
                                                             <Trash size={15} />
                                                         </button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {/* Surat Permohonan Tab */}
+                        {tab === 'surat_permohonan' && (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
+                                        <th className="p-4 font-semibold">Kode</th>
+                                        <th className="p-4 font-semibold">Kategori Surat</th>
+                                        <th className="p-4 font-semibold">Nama Template Document</th>
+                                        <th className="p-4 font-semibold">Tujuan Disnaker</th>
+                                        <th className="p-4 font-semibold">Revisi</th>
+                                        <th className="p-4 font-semibold">Last Updated</th>
+                                        <th className="p-4 font-semibold">File Template</th>
+                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {suratPermohonanList.map((f) => (
+                                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                            <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
+                                            <td className="p-4 font-mono font-semibold text-blue-600">{f.kode_disnaker}</td>
+                                            <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
+                                            <td className="p-4 text-xs">{f.pesawat || 'General Disnaker'}</td>
+                                            <td className="p-4 font-mono text-xs">{f.revisi}</td>
+                                            <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
+                                            <td className="p-4 font-medium">
+                                                {f.file ? (
+                                                    <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                        <Download size={14} /> <span className="text-xs">Download Template</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </td>
+                                            {canManage && (
+                                                <td className="p-4 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        {typeof f.id === 'number' && (
+                                                            <>
+                                                                <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit">
+                                                                    <Pencil size={15} />
+                                                                </button>
+                                                                <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                    <Trash size={15} />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {/* Template Surat Tugas Tab */}
+                        {tab === 'surat_tugas' && (
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
+                                        <th className="p-4 font-semibold">Kode</th>
+                                        <th className="p-4 font-semibold">Kategori Surat</th>
+                                        <th className="p-4 font-semibold">Nama Template Surat Tugas</th>
+                                        <th className="p-4 font-semibold">Format</th>
+                                        <th className="p-4 font-semibold">Revisi</th>
+                                        <th className="p-4 font-semibold">Last Updated</th>
+                                        <th className="p-4 font-semibold">File Master Template</th>
+                                        {canManage && <th className="p-4 font-semibold text-center">Aksi</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {suratTugasList.map((f) => (
+                                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                            <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
+                                            <td className="p-4 font-mono font-semibold text-emerald-600">{f.kode_disnaker}</td>
+                                            <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
+                                            <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Word (.docx)'}</td>
+                                            <td className="p-4 font-mono text-xs">{f.revisi}</td>
+                                            <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
+                                            <td className="p-4 font-medium">
+                                                {f.file ? (
+                                                    <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                        <Download size={14} /> <span className="text-xs">Download Template</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">—</span>
+                                                )}
+                                            </td>
+                                            {canManage && (
+                                                <td className="p-4 text-center">
+                                                    <div className="flex justify-center gap-2">
+                                                        {typeof f.id === 'number' && (
+                                                            <>
+                                                                <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit">
+                                                                    <Pencil size={15} />
+                                                                </button>
+                                                                <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                    <Trash size={15} />
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             )}

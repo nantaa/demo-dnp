@@ -1,0 +1,70 @@
+# Plan: Sidebar Access Restriction & Stage 4 Document Generator Feature
+
+This plan addresses two user requests:
+1. **Restricting "+ Job Baru" sidebar menu item** so it is only visible to `marketing` and `superadmin` roles.
+2. **Adding a Document Generator feature on Stage 4 (S4 - Pelaksanaan Lapangan Riksa Uji)** allowing assigned Ahli K3, Petugas, and PIC personnel to easily download official field documentation (Surat Tugas, Form Riksa Uji template, and Personnel Credentials).
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Stage 4 Document Generator Scope:**
+> 1. **Surat Tugas (.docx)**: Will download the auto-generated Word document populated with Job details, inspection date, unit count, and tagged Ahli K3 & Petugas/PIC.
+> 2. **Form Riksa Uji / LHPP Draft Template (.docx)**: Will generate a pre-filled inspection checklist tailored to the equipment type (`pesawat`) for field inspection.
+> 3. **Personnel & PJK3 Credentials**: Download links for attached SKP/Lisensi documents and PJK3 certificates.
+
+---
+
+## Proposed Changes
+
+### Navigation & Access Control
+
+#### [MODIFY] [AppLayout.jsx](file:///d:/Download%20Backup/Lovable/dnp-monitor/dnp-rework/resources/js/Layouts/AppLayout.jsx)
+- Update sidebar navigation configuration for `/jobs/create` from `roles: ['marketing', 'manager', 'superadmin']` to `roles: ['marketing', 'superadmin']`.
+- This hides "+ Job Baru" from all other roles (including `manager`, `admin`, `inspektur`, `finance`).
+
+---
+
+### Backend (Laravel Controllers & Routes)
+
+#### [MODIFY] [web.php](file:///d:/Download%20Backup/Lovable/dnp-monitor/dnp-rework/routes/web.php)
+- Add new download routes for Stage 4:
+  - `GET /jobs/{job}/download-surat-tugas` -> `JobController@downloadSuratTugas`
+  - `GET /jobs/{job}/download-form-riksauji` -> `JobController@downloadFormRiksaUji`
+
+#### [MODIFY] [JobController.php](file:///d:/Download%20Backup/Lovable/dnp-monitor/dnp-rework/app/Http/Controllers/JobController.php)
+- Add `downloadSuratTugas(Job $job)` method:
+  - Ensures `no_surat_tugas` exists (generates if not already generated).
+  - Generates or locates the latest `SuratTugas.docx` in `storage/app/public/job-documents/{job->id}/`.
+  - Returns `response()->download(...)` with clean headers for instant download on mobile or desktop.
+- Add `downloadFormRiksaUji(Job $job)` method:
+  - Uses `PhpWord\TemplateProcessor` to dynamically fill equipment form template based on `job->pesawat` and unit details.
+  - Returns downloaded `.docx` document ready for Ahli/Petugas to fill out on-site.
+
+---
+
+### Frontend Components (React Inertia)
+
+#### [MODIFY] [JobDetailSheet.jsx](file:///d:/Download%20Backup/Lovable/dnp-monitor/dnp-rework/resources/js/Components/JobDetailSheet.jsx)
+- In the Stage 4 (Pelaksanaan Lapangan) section, render a new **📄 Document Generator & Field Download Hub** component:
+  - **Download Surat Tugas**: Direct button triggering `/jobs/{job.id}/download-surat-tugas`.
+  - **Download Form Riksa Uji Template**: Direct button triggering `/jobs/{job.id}/download-form-riksauji`.
+  - Display list of tagged Ahli K3 and Petugas/PIC with links to download their registered SKP / Lisensi files directly.
+
+---
+
+## Verification Plan
+
+### Automated / Build Verification
+- Execute `npm run build` to confirm zero JSX compilation errors.
+- Test routes using Laravel Artisan route check.
+
+### Manual Verification
+1. **Sidebar Visibility Check**:
+   - Login as `manager`, `admin`, `inspektur`, `finance` -> Verify "+ Job Baru" menu item is hidden.
+   - Login as `marketing` or `superadmin` -> Verify "+ Job Baru" menu item is visible.
+2. **Stage 4 Document Generator Check**:
+   - Open any job in Stage 4 (Pelaksanaan Lapangan).
+   - Click **Download Surat Tugas** -> Verify `.docx` downloads containing correct job code, date, and assigned personnel.
+   - Click **Download Form Riksa Uji** -> Verify pre-filled inspection checklist downloads.

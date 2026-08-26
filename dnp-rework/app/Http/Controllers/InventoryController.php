@@ -72,19 +72,25 @@ class InventoryController extends Controller
         if (!$this->canManage()) abort(403);
 
         $validated = $request->validate([
-            'user_id'         => 'required|exists:users,id',
-            'skp'             => 'nullable|string|max:100',
-            'skp_expired_at'  => 'nullable|date',
-            'spesialisasi'    => 'nullable|array',
-            'domisili'        => 'nullable|string|max:100',
-            'senior_level'    => 'nullable|boolean',
-            'subrole'         => 'nullable|in:tenaga_ahli,teknisi',
-            'skp_files_input' => 'nullable|array',
+            'user_id'           => 'required|exists:users,id',
+            'skp'               => 'nullable|string|max:100',
+            'skp_expired_at'    => 'nullable|date',
+            'spesialisasi'      => 'nullable|array',
+            'domisili'          => 'nullable|string|max:100',
+            'senior_level'      => 'nullable|boolean',
+            'subrole'           => 'nullable|in:tenaga_ahli,teknisi',
+            'skp_files_input'   => 'nullable|array',
+            'skp_details_input' => 'nullable',
         ]);
 
         // Prevent duplicate profile
         if (InspectorProfile::where('user_id', $validated['user_id'])->exists()) {
             return back()->withErrors(['user_id' => 'User ini sudah memiliki profil inspektur.']);
+        }
+
+        $inputDetails = $request->input('skp_details_input', []);
+        if (is_string($inputDetails)) {
+            $inputDetails = json_decode($inputDetails, true) ?: [];
         }
 
         $skpFilesMap = [];
@@ -96,7 +102,23 @@ class InventoryController extends Controller
                 }
             }
         }
+
+        $selectedSpecs = $validated['spesialisasi'] ?? [];
+        $finalDetails = [];
+        foreach ($selectedSpecs as $s) {
+            $noSkp = $inputDetails[$s]['no_skp'] ?? $validated['skp'] ?? null;
+            $expiredAt = $inputDetails[$s]['expired_at'] ?? $validated['skp_expired_at'] ?? null;
+            $filePath = $skpFilesMap[$s] ?? null;
+
+            $finalDetails[$s] = [
+                'no_skp'     => $noSkp,
+                'expired_at' => $expiredAt,
+                'file'       => $filePath,
+            ];
+        }
+
         $validated['skp_files'] = $skpFilesMap;
+        $validated['skp_details'] = $finalDetails;
 
         InspectorProfile::create($validated);
         return back()->with('success', 'Profil inspektur berhasil ditambahkan.');
@@ -107,16 +129,23 @@ class InventoryController extends Controller
         if (!$this->canManage()) abort(403);
 
         $validated = $request->validate([
-            'skp'             => 'nullable|string|max:100',
-            'skp_expired_at'  => 'nullable|date',
-            'spesialisasi'    => 'nullable|array',
-            'domisili'        => 'nullable|string|max:100',
-            'senior_level'    => 'nullable|boolean',
-            'subrole'         => 'nullable|in:tenaga_ahli,teknisi',
-            'skp_files_input' => 'nullable|array',
+            'skp'               => 'nullable|string|max:100',
+            'skp_expired_at'    => 'nullable|date',
+            'spesialisasi'      => 'nullable|array',
+            'domisili'          => 'nullable|string|max:100',
+            'senior_level'      => 'nullable|boolean',
+            'subrole'           => 'nullable|in:tenaga_ahli,teknisi',
+            'skp_files_input'   => 'nullable|array',
+            'skp_details_input' => 'nullable',
         ]);
 
+        $inputDetails = $request->input('skp_details_input', []);
+        if (is_string($inputDetails)) {
+            $inputDetails = json_decode($inputDetails, true) ?: [];
+        }
+
         $skpFilesMap = is_array($inspectorProfile->skp_files) ? $inspectorProfile->skp_files : [];
+        $existingDetails = is_array($inspectorProfile->skp_details) ? $inspectorProfile->skp_details : [];
 
         if ($request->hasFile('skp_files_input')) {
             foreach ($request->file('skp_files_input') as $specName => $file) {
@@ -129,7 +158,23 @@ class InventoryController extends Controller
                 }
             }
         }
+
+        $selectedSpecs = $validated['spesialisasi'] ?? [];
+        $finalDetails = [];
+        foreach ($selectedSpecs as $s) {
+            $noSkp = $inputDetails[$s]['no_skp'] ?? $existingDetails[$s]['no_skp'] ?? $validated['skp'] ?? null;
+            $expiredAt = $inputDetails[$s]['expired_at'] ?? $existingDetails[$s]['expired_at'] ?? $validated['skp_expired_at'] ?? null;
+            $filePath = $skpFilesMap[$s] ?? $existingDetails[$s]['file'] ?? null;
+
+            $finalDetails[$s] = [
+                'no_skp'     => $noSkp,
+                'expired_at' => $expiredAt,
+                'file'       => $filePath,
+            ];
+        }
+
         $validated['skp_files'] = $skpFilesMap;
+        $validated['skp_details'] = $finalDetails;
 
         $inspectorProfile->update($validated);
         return back()->with('success', 'Profil inspektur berhasil diperbarui.');

@@ -86,8 +86,24 @@ function UsersIndex({ users = [], auth = {} }) {
                                         {(ROLES && ROLES[user?.role]?.label) || user?.role || 'UNK'}
                                     </span>
                                     {user?.role === 'inspektur' && (user?.inspector_profile || user?.inspectorProfile) && (
-                                        <div className="text-[10px] text-gray-500 mt-1 leading-tight">
-                                            <div>SKP: {(user.inspector_profile || user.inspectorProfile).skp || '—'}</div>
+                                        <div className="text-[10px] text-gray-500 mt-1 leading-tight space-y-0.5">
+                                            <div>
+                                                {(() => {
+                                                    const profile = user.inspector_profile || user.inspectorProfile;
+                                                    let details = {};
+                                                    try {
+                                                        details = typeof profile.skp_details === 'string' ? JSON.parse(profile.skp_details) : (profile.skp_details || {});
+                                                    } catch(e) {}
+                                                    const skpList = Object.entries(details)
+                                                        .filter(([spec, d]) => d?.no_skp)
+                                                        .map(([spec, d]) => `${spec}: ${d.no_skp}`);
+                                                    
+                                                    if (skpList.length > 0) {
+                                                        return <div className="font-mono text-[9px] text-gray-700">{skpList.join(' | ')}</div>;
+                                                    }
+                                                    return <div>SKP: {profile.skp || '—'}</div>;
+                                                })()}
+                                            </div>
                                             <div>AK3: {(() => {
                                                 try {
                                                     const profile = user.inspector_profile || user.inspectorProfile;

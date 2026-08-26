@@ -101,6 +101,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         skp: '',
         skp_expired_at: '',
         spesialisasi: [],
+        skp_details_input: {},
         skp_files_input: {},
         domisili: '',
         senior_level: false
@@ -154,13 +155,35 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     }, [alat_uji, todayStr]);
 
     const inspekturStats = useMemo(() => {
-        const expired = inspectors.filter(i => i.skp_expired_at && daysBetween(todayStr, i.skp_expired_at) < 0);
-        const expiring = inspectors.filter(i => {
-            if (!i.skp_expired_at) return false;
-            const d = daysBetween(todayStr, i.skp_expired_at);
-            return d >= 0 && d < 180;
+        let expiredList = [];
+        let expiringList = [];
+
+        inspectors.forEach(i => {
+            let skpDetails = {};
+            try {
+                skpDetails = typeof i.skp_details === 'string' ? JSON.parse(i.skp_details) : (i.skp_details || {});
+            } catch (e) {
+                skpDetails = i.skp_details || {};
+            }
+
+            let expDates = [];
+            Object.values(skpDetails).forEach(d => {
+                if (d?.expired_at) expDates.push(d.expired_at);
+            });
+            if (expDates.length === 0 && i.skp_expired_at) {
+                expDates.push(i.skp_expired_at);
+            }
+
+            if (expDates.length > 0) {
+                expDates.sort();
+                const mainExpDate = expDates[0];
+                const d = daysBetween(todayStr, mainExpDate);
+                if (d < 0) expiredList.push(i);
+                else if (d >= 0 && d < 180) expiringList.push(i);
+            }
         });
-        return { expired, expiring };
+
+        return { expired: expiredList, expiring: expiringList };
     }, [inspectors, todayStr]);
 
     // Handle Alat Submit
@@ -242,11 +265,27 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         } catch(e) {
             spec = Array.isArray(i.spesialisasi) ? i.spesialisasi : [];
         }
+        let details = {};
+        try {
+            details = typeof i.skp_details === 'string' ? JSON.parse(i.skp_details) : (i.skp_details || {});
+        } catch(e) {
+            details = i.skp_details || {};
+        }
+
+        const detailsInput = {};
+        spec.forEach(s => {
+            detailsInput[s] = {
+                no_skp: details[s]?.no_skp || i.skp || '',
+                expired_at: details[s]?.expired_at ? details[s].expired_at.substring(0, 10) : (i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '')
+            };
+        });
+
         inspectorForm.setData({
             user_id: i.user_id,
             skp: i.skp || '',
             skp_expired_at: i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '',
             spesialisasi: spec,
+            skp_details_input: detailsInput,
             skp_files_input: {},
             domisili: i.domisili || '',
             senior_level: !!i.senior_level
@@ -562,7 +601,33 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             <tr key={insp.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
                                                 <td className="p-4 font-mono font-semibold">{insp.id}</td>
                                                 <td className="p-4 font-semibold text-gray-900">{insp.user?.name || 'Unknown'}</td>
-                                                <td className="p-4 font-mono text-xs">{insp.skp || '—'}</td>
+                                                <td className="p-4 font-mono text-xs">
+                                                    {(() => {
+                                                        let skpDetails = {};
+                                                        try {
+                                                            skpDetails = typeof insp.skp_details === 'string' ? JSON.parse(insp.skp_details) : (insp.skp_details || {});
+                                                        } catch (e) {
+                                                            skpDetails = insp.skp_details || {};
+                                                        }
+                                                        const hasPerSpec = specs.some(s => skpDetails[s]?.no_skp);
+                                                        if (hasPerSpec) {
+                                                            return (
+                                                                <div className="flex flex-col gap-1">
+                                                                    {specs.map(s => {
+                                                                        const num = skpDetails[s]?.no_skp || insp.skp;
+                                                                        return num ? (
+                                                                            <div key={s} className="truncate max-w-[170px]" title={`AK3 ${s}: ${num}`}>
+                                                                                <span className="font-semibold text-gray-400 mr-1">{s}:</span>
+                                                                                <span>{num}</span>
+                                                                            </div>
+                                                                        ) : null;
+                                                                    })}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return insp.skp || '—';
+                                                    })()}
+                                                </td>
                                                 <td className="p-4">
                                                     <div className="flex gap-1.5 flex-wrap">
                                                         {specs.map(s => {
@@ -895,9 +960,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </div>
                             </div>
                             {inspectorForm.data.spesialisasi.length > 0 && (
-                                <div className="space-y-2 border-t pt-3">
-                                    <label className="block text-xs font-bold uppercase text-gray-500">Upload File SKP Per Spesialisasi</label>
-                                    <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                                <div className="space-y-3 border-t pt-3">
+                                    <label className="block text-xs font-bold uppercase text-gray-700">Detail & File SKP Per Spesialisasi</label>
+                                    <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
                                         {inspectorForm.data.spesialisasi.map(s => {
                                             let skpFiles = {};
                                             try {
@@ -906,23 +971,61 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                 skpFiles = selectedInspector?.skp_files || {};
                                             }
                                             const existingFile = skpFiles[s];
+                                            const detail = inspectorForm.data.skp_details_input?.[s] || {};
+
                                             return (
-                                                <div key={s} className="bg-gray-50 p-2 rounded border text-xs">
-                                                    <div className="font-semibold text-gray-700 flex justify-between items-center mb-1">
+                                                <div key={s} className="bg-gray-50 p-3 rounded border border-gray-200 text-xs space-y-2">
+                                                    <div className="font-bold text-gray-800 flex justify-between items-center border-b pb-1">
                                                         <span>AK3 {s}</span>
                                                         {existingFile && (
-                                                            <a href={`/storage/${existingFile}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]">
+                                                            <a href={`/storage/${existingFile}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 text-[11px] font-medium">
                                                                 <Download size={12} /> File saat ini
                                                             </a>
                                                         )}
                                                     </div>
-                                                    <input type="file" accept="*" onChange={e => {
-                                                        const file = e.target.files[0];
-                                                        inspectorForm.setData('skp_files_input', {
-                                                            ...inspectorForm.data.skp_files_input,
-                                                            [s]: file
-                                                        });
-                                                    }} className="w-full border px-2 py-1 rounded text-xs bg-white" />
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nomor SKP</label>
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Nomor SKP" 
+                                                                value={detail.no_skp || ''} 
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    inspectorForm.setData('skp_details_input', {
+                                                                        ...inspectorForm.data.skp_details_input,
+                                                                        [s]: { ...(inspectorForm.data.skp_details_input?.[s] || {}), no_skp: val }
+                                                                    });
+                                                                }} 
+                                                                className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Berlaku s/d</label>
+                                                            <input 
+                                                                type="date" 
+                                                                value={detail.expired_at || ''} 
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    inspectorForm.setData('skp_details_input', {
+                                                                        ...inspectorForm.data.skp_details_input,
+                                                                        [s]: { ...(inspectorForm.data.skp_details_input?.[s] || {}), expired_at: val }
+                                                                    });
+                                                                }} 
+                                                                className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Upload File SKP</label>
+                                                        <input type="file" accept="*" onChange={e => {
+                                                            const file = e.target.files[0];
+                                                            inspectorForm.setData('skp_files_input', {
+                                                                ...inspectorForm.data.skp_files_input,
+                                                                [s]: file
+                                                            });
+                                                        }} className="w-full border px-2 py-1 rounded text-xs bg-white" />
+                                                    </div>
                                                 </div>
                                             );
                                         })}

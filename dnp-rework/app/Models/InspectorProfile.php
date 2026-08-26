@@ -15,6 +15,8 @@ class InspectorProfile extends Model
         'skp',
         'skp_expired_at',
         'spesialisasi',
+        'skp_files',
+        'skp_details',
         'domisili',
         'senior_level',
         'subrole',  // tenaga_ahli | teknisi
@@ -24,6 +26,8 @@ class InspectorProfile extends Model
     protected $casts = [
         'skp_expired_at' => 'date',
         'spesialisasi' => 'array',
+        'skp_files' => 'array',
+        'skp_details' => 'array',
         'active' => 'boolean',
     ];
 

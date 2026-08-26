@@ -609,18 +609,19 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                         } catch (e) {
                                                             skpDetails = insp.skp_details || {};
                                                         }
-                                                        const hasPerSpec = specs.some(s => skpDetails[s]?.no_skp);
-                                                        if (hasPerSpec) {
+
+                                                        if (specs.length > 0) {
                                                             return (
                                                                 <div className="flex flex-col gap-1">
                                                                     {specs.map(s => {
                                                                         const num = skpDetails[s]?.no_skp || insp.skp;
-                                                                        return num ? (
-                                                                            <div key={s} className="truncate max-w-[170px]" title={`AK3 ${s}: ${num}`}>
-                                                                                <span className="font-semibold text-gray-400 mr-1">{s}:</span>
-                                                                                <span>{num}</span>
+                                                                        if (!num) return null;
+                                                                        return (
+                                                                            <div key={s} className="truncate max-w-[220px]" title={`AK3 ${s}: ${num}`}>
+                                                                                {specs.length > 1 && <span className="font-semibold text-gray-500 mr-1">{s}:</span>}
+                                                                                <span className="font-mono text-gray-900">{num}</span>
                                                                             </div>
-                                                                        ) : null;
+                                                                        );
                                                                     })}
                                                                 </div>
                                                             );
@@ -651,7 +652,34 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                         })}
                                                     </div>
                                                 </td>
-                                                <td className="p-4 font-mono text-xs">{insp.skp_expired_at ? formatDate(insp.skp_expired_at) : '—'}</td>
+                                                <td className="p-4 font-mono text-xs">
+                                                    {(() => {
+                                                        let skpDetails = {};
+                                                        try {
+                                                            skpDetails = typeof insp.skp_details === 'string' ? JSON.parse(insp.skp_details) : (insp.skp_details || {});
+                                                        } catch (e) {
+                                                            skpDetails = insp.skp_details || {};
+                                                        }
+                                                        const hasSpecExp = specs.some(s => skpDetails[s]?.expired_at);
+                                                        if (hasSpecExp) {
+                                                            return (
+                                                                <div className="flex flex-col gap-1">
+                                                                    {specs.map(s => {
+                                                                        const exp = skpDetails[s]?.expired_at || insp.skp_expired_at;
+                                                                        if (!exp) return null;
+                                                                        return (
+                                                                            <div key={s} className="truncate" title={`AK3 ${s}: ${formatDate(exp)}`}>
+                                                                                {specs.length > 1 && <span className="font-semibold text-gray-500 mr-1">{s}:</span>}
+                                                                                <span>{formatDate(exp)}</span>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return insp.skp_expired_at ? formatDate(insp.skp_expired_at) : '—';
+                                                    })()}
+                                                </td>
                                                 <td className="p-4">{statObj ? <StatusBadge status={statObj.status}>{statObj.label}</StatusBadge> : '—'}</td>
                                                 {canManage && (
                                                     <td className="p-4 text-center">
@@ -934,14 +962,6 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     ))}
                                 </select>
                                 {inspectorForm.errors.user_id && <div className="text-red-500 text-xs mt-1">{inspectorForm.errors.user_id}</div>}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nomor SKP</label>
-                                <input type="text" value={inspectorForm.data.skp} onChange={e => inspectorForm.setData('skp', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Berlaku s/d</label>
-                                <input type="date" value={inspectorForm.data.skp_expired_at} onChange={e => inspectorForm.setData('skp_expired_at', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Spesialisasi</label>

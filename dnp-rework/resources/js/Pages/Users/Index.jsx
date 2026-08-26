@@ -184,7 +184,7 @@ function UsersIndex({ users = [], auth = {} }) {
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-700 mb-1">Spesialisasi</label>
                                         <div className="grid grid-cols-2 gap-1.5 border p-2 rounded max-h-24 overflow-y-auto bg-white">
-                                            {['PUBT', 'Listrik', 'Kebakaran', 'PAA', 'PTP', 'Elevator & Eskalator', 'Lift'].map(s => {
+                                            {['PUBT / PV', 'Listrik & IPP', 'IPK', 'PAPA', 'PTP', 'Elevator & Eskalator', 'Umum'].map(s => {
                                                 const isChecked = data.spesialisasi.includes(s);
                                                 return (
                                                     <label key={s} className="flex items-center gap-1 text-[11px] cursor-pointer">

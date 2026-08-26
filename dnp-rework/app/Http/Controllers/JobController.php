@@ -947,9 +947,18 @@ class JobController extends Controller
             ? 'superadmin'
             : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
-        $jobs = Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])
-                   ->orderBy('created_at', 'desc')
-                   ->get();
+        $query = Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])
+                   ->orderBy('created_at', 'desc');
+
+        if ($user->role === 'marketing' && !$user->isSuperadmin()) {
+            $query->where(function($q) use ($user) {
+                $q->where(function($sub) use ($user) {
+                    $sub->where('stage', 1)->where('owner_marketing', $user->name);
+                })->orWhere('stage', '!=', 1);
+            });
+        }
+
+        $jobs = $query->get();
 
         return Inertia::render('Jobs/List', [
             'auth' => [

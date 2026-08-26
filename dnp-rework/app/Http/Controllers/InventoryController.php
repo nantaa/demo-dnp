@@ -72,19 +72,31 @@ class InventoryController extends Controller
         if (!$this->canManage()) abort(403);
 
         $validated = $request->validate([
-            'user_id'       => 'required|exists:users,id',
-            'skp'           => 'nullable|string|max:100',
-            'skp_expired_at' => 'nullable|date',
-            'spesialisasi'  => 'nullable|array',
-            'domisili'      => 'nullable|string|max:100',
-            'senior_level'  => 'nullable|boolean',
-            'subrole'       => 'nullable|in:tenaga_ahli,teknisi',
+            'user_id'         => 'required|exists:users,id',
+            'skp'             => 'nullable|string|max:100',
+            'skp_expired_at'  => 'nullable|date',
+            'spesialisasi'    => 'nullable|array',
+            'domisili'        => 'nullable|string|max:100',
+            'senior_level'    => 'nullable|boolean',
+            'subrole'         => 'nullable|in:tenaga_ahli,teknisi',
+            'skp_files_input' => 'nullable|array',
         ]);
 
         // Prevent duplicate profile
         if (InspectorProfile::where('user_id', $validated['user_id'])->exists()) {
             return back()->withErrors(['user_id' => 'User ini sudah memiliki profil inspektur.']);
         }
+
+        $skpFilesMap = [];
+        if ($request->hasFile('skp_files_input')) {
+            foreach ($request->file('skp_files_input') as $specName => $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('master-documents/skp', 'public');
+                    $skpFilesMap[$specName] = $path;
+                }
+            }
+        }
+        $validated['skp_files'] = $skpFilesMap;
 
         InspectorProfile::create($validated);
         return back()->with('success', 'Profil inspektur berhasil ditambahkan.');
@@ -95,13 +107,29 @@ class InventoryController extends Controller
         if (!$this->canManage()) abort(403);
 
         $validated = $request->validate([
-            'skp'           => 'nullable|string|max:100',
-            'skp_expired_at' => 'nullable|date',
-            'spesialisasi'  => 'nullable|array',
-            'domisili'      => 'nullable|string|max:100',
-            'senior_level'  => 'nullable|boolean',
-            'subrole'       => 'nullable|in:tenaga_ahli,teknisi',
+            'skp'             => 'nullable|string|max:100',
+            'skp_expired_at'  => 'nullable|date',
+            'spesialisasi'    => 'nullable|array',
+            'domisili'        => 'nullable|string|max:100',
+            'senior_level'    => 'nullable|boolean',
+            'subrole'         => 'nullable|in:tenaga_ahli,teknisi',
+            'skp_files_input' => 'nullable|array',
         ]);
+
+        $skpFilesMap = is_array($inspectorProfile->skp_files) ? $inspectorProfile->skp_files : [];
+
+        if ($request->hasFile('skp_files_input')) {
+            foreach ($request->file('skp_files_input') as $specName => $file) {
+                if ($file && $file->isValid()) {
+                    if (!empty($skpFilesMap[$specName])) {
+                        Storage::disk('public')->delete($skpFilesMap[$specName]);
+                    }
+                    $path = $file->store('master-documents/skp', 'public');
+                    $skpFilesMap[$specName] = $path;
+                }
+            }
+        }
+        $validated['skp_files'] = $skpFilesMap;
 
         $inspectorProfile->update($validated);
         return back()->with('success', 'Profil inspektur berhasil diperbarui.');
@@ -110,6 +138,11 @@ class InventoryController extends Controller
     public function destroyInspector(InspectorProfile $inspectorProfile)
     {
         if (!$this->canManage()) abort(403);
+        if (is_array($inspectorProfile->skp_files)) {
+            foreach ($inspectorProfile->skp_files as $path) {
+                if ($path) Storage::disk('public')->delete($path);
+            }
+        }
         $inspectorProfile->delete();
         return back()->with('success', 'Profil inspektur berhasil dihapus.');
     }

@@ -101,6 +101,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         skp: '',
         skp_expired_at: '',
         spesialisasi: [],
+        skp_files_input: {},
         domisili: '',
         senior_level: false
     });
@@ -246,6 +247,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
             skp: i.skp || '',
             skp_expired_at: i.skp_expired_at ? i.skp_expired_at.substring(0, 10) : '',
             spesialisasi: spec,
+            skp_files_input: {},
             domisili: i.domisili || '',
             senior_level: !!i.senior_level
         });
@@ -562,10 +564,26 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                 <td className="p-4 font-semibold text-gray-900">{insp.user?.name || 'Unknown'}</td>
                                                 <td className="p-4 font-mono text-xs">{insp.skp || '—'}</td>
                                                 <td className="p-4">
-                                                    <div className="flex gap-1 flex-wrap">
-                                                        {specs.map(s => (
-                                                            <span key={s} className="bg-gray-100 border border-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider">AK3 {s}</span>
-                                                        ))}
+                                                    <div className="flex gap-1.5 flex-wrap">
+                                                        {specs.map(s => {
+                                                            let skpFiles = {};
+                                                            try {
+                                                                skpFiles = typeof insp.skp_files === 'string' ? JSON.parse(insp.skp_files) : (insp.skp_files || {});
+                                                            } catch(e) {
+                                                                skpFiles = insp.skp_files || {};
+                                                            }
+                                                            const filePath = skpFiles[s];
+                                                            return (
+                                                                <span key={s} className="inline-flex items-center gap-1 bg-gray-100 border border-gray-200 text-gray-700 text-[10px] px-2 py-0.5 rounded font-bold tracking-wider">
+                                                                    <span>AK3 {s}</span>
+                                                                    {filePath && (
+                                                                        <a href={`/storage/${filePath}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 ml-0.5" title={`Download SKP ${s}`}>
+                                                                            <Download size={11} />
+                                                                        </a>
+                                                                    )}
+                                                                </span>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </td>
                                                 <td className="p-4 font-mono text-xs">{insp.skp_expired_at ? formatDate(insp.skp_expired_at) : '—'}</td>
@@ -876,6 +894,41 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     })}
                                 </div>
                             </div>
+                            {inspectorForm.data.spesialisasi.length > 0 && (
+                                <div className="space-y-2 border-t pt-3">
+                                    <label className="block text-xs font-bold uppercase text-gray-500">Upload File SKP Per Spesialisasi</label>
+                                    <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                                        {inspectorForm.data.spesialisasi.map(s => {
+                                            let skpFiles = {};
+                                            try {
+                                                skpFiles = typeof selectedInspector?.skp_files === 'string' ? JSON.parse(selectedInspector.skp_files) : (selectedInspector?.skp_files || {});
+                                            } catch(e) {
+                                                skpFiles = selectedInspector?.skp_files || {};
+                                            }
+                                            const existingFile = skpFiles[s];
+                                            return (
+                                                <div key={s} className="bg-gray-50 p-2 rounded border text-xs">
+                                                    <div className="font-semibold text-gray-700 flex justify-between items-center mb-1">
+                                                        <span>AK3 {s}</span>
+                                                        {existingFile && (
+                                                            <a href={`/storage/${existingFile}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]">
+                                                                <Download size={12} /> File saat ini
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                    <input type="file" accept="*" onChange={e => {
+                                                        const file = e.target.files[0];
+                                                        inspectorForm.setData('skp_files_input', {
+                                                            ...inspectorForm.data.skp_files_input,
+                                                            [s]: file
+                                                        });
+                                                    }} className="w-full border px-2 py-1 rounded text-xs bg-white" />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Domisili</label>

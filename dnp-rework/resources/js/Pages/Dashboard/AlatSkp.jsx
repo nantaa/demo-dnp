@@ -498,6 +498,17 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     };
 
     const deleteFormDisnaker = async (id) => {
+        if (!id) return;
+
+        // If string fallback ID (not saved in database yet), don't send invalid DELETE request
+        if (typeof id === 'string' && (id.startsWith('sp-default') || id.startsWith('st-default'))) {
+            const res = await showConfirm('Hapus Form', 'Master template ini belum tersimpan di database. Hapus dari tampilan?');
+            if (res.isConfirmed) {
+                router.reload();
+            }
+            return;
+        }
+
         const res = await showConfirm('Hapus Form', 'Hapus form disnaker ini?');
         if (res.isConfirmed) {
             router.delete(`/inventory/form-disnaker/${id}`);

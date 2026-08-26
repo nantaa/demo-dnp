@@ -93,8 +93,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/inventory/regulasi/{regulasiK3}', [InventoryController::class, 'destroyRegulasi'])->name('inventory.regulasi.destroy');
 
     Route::post('/inventory/form-disnaker', [InventoryController::class, 'storeFormDisnaker'])->name('inventory.form-disnaker.store');
-    Route::match(['put', 'post'], '/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'updateFormDisnaker'])->name('inventory.form-disnaker.update');
-    Route::delete('/inventory/form-disnaker/{formDisnaker}', [InventoryController::class, 'destroyFormDisnaker'])->name('inventory.form-disnaker.destroy');
+    Route::match(['put', 'post'], '/inventory/form-disnaker/{id}', [InventoryController::class, 'updateFormDisnaker'])->name('inventory.form-disnaker.update');
+    Route::delete('/inventory/form-disnaker/{id}', [InventoryController::class, 'destroyFormDisnaker'])->name('inventory.form-disnaker.destroy');
 });
 
 require __DIR__.'/auth.php'; // Keep Breeze Auth routes

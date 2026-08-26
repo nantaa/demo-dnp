@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function KanbanColumn({ stageNumber, title, count, isLocked, children }) {
     return (
-        <div className={`w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border-t-4 shadow-xs backdrop-blur-xs transition-all ${isLocked ? 'border-slate-300' : 'border-[#00A8E8]'}`}>
+        <div className={`w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all ${isLocked ? 'border-t-slate-400' : 'border-t-[#00A8E8]'}`}>
             <div className="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl">
                 <div className="flex items-center gap-2 min-w-0">
                     {stageNumber && (

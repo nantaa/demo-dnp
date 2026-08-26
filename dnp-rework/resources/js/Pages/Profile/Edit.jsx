@@ -4,8 +4,9 @@ import AppLayout from '@/Layouts/AppLayout';
 import { User, Lock, Save, CheckCircle2 } from 'lucide-react';
 import { ROLES } from '@/Constants';
 
-export default function ProfileEdit({ auth, status }) {
-    const { user } = auth;
+export default function ProfileEdit(props) {
+    const { auth = {}, user: propUser, status } = props || {};
+    const user = propUser || auth?.user || {};
 
     const profileForm = useForm({
         name: user.name || '',

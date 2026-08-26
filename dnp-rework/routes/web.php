@@ -51,6 +51,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/jobs/{job}/evaluations/{evaluation}', [JobController::class, 'deleteEvaluation'])->name('jobs.evaluations.delete');
     Route::post('/jobs/{job}/disnaker-followup', [JobController::class, 'saveDisnakerFollowup'])->name('jobs.disnaker-followup');
     Route::post('/jobs/{job}/unit-tracking', [JobController::class, 'saveUnitTracking'])->name('jobs.unit-tracking');
+    Route::delete('/jobs/clear-all', [JobController::class, 'clearAll'])->name('jobs.clear-all');
+    Route::delete('/jobs/{job}', [JobController::class, 'destroy'])->name('jobs.destroy');
 
     // Master data & Smart Recommendations API
     Route::get('/api/master-data', [JobController::class, 'getMasterData'])->name('api.master-data');

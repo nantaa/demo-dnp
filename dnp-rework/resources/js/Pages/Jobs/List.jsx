@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
-import { showWarning } from '@/swal';
+import { showWarning, showConfirm, showSuccess } from '@/swal';
+import { Trash2 } from 'lucide-react';
 
 export default function JobList({ jobs, auth }) {
     const { permissions } = auth;
+    const isSuperadmin = auth.user.role === 'superadmin' || permissions === 'superadmin';
     const queryParams = new URLSearchParams(window.location.search);
     const [searchTerm, setSearchTerm] = useState(queryParams.get('search') || '');
     const [selectedJob, setSelectedJob] = useState(null);
@@ -25,6 +27,41 @@ export default function JobList({ jobs, auth }) {
         j.kode.toLowerCase().includes(searchTerm.toLowerCase()) ||
         j.klien.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleClearAllJobs = async () => {
+        const res = await showConfirm(
+            'Kosongkan Database Job',
+            'Apakah Anda yakin ingin menghapus SELURUH data Job dari database? Tindakan ini tidak dapat dibatalkan!',
+            'Hapus Semua Data',
+            'Batal'
+        );
+        if (res.isConfirmed) {
+            router.delete('/jobs/clear-all', {
+                onSuccess: () => {
+                    showSuccess('Berhasil', 'Seluruh data Job berhasil dikosongkan.');
+                    setSelectedJob(null);
+                }
+            });
+        }
+    };
+
+    const handleDeleteSingleJob = async (job, e) => {
+        e.stopPropagation();
+        const res = await showConfirm(
+            'Hapus Job',
+            `Apakah Anda yakin ingin menghapus Job ${job.kode} (${job.klien})?`,
+            'Ya, Hapus',
+            'Batal'
+        );
+        if (res.isConfirmed) {
+            router.delete(`/jobs/${job.id}`, {
+                onSuccess: () => {
+                    showSuccess('Berhasil', `Job ${job.kode} berhasil dihapus.`);
+                    if (selectedJob?.id === job.id) setSelectedJob(null);
+                }
+            });
+        }
+    };
 
     const handleExportCSV = () => {
         if (filteredJobs.length === 0) return showWarning('Ekspor Gagal', 'Tidak ada data untuk diexport');
@@ -89,7 +126,7 @@ export default function JobList({ jobs, auth }) {
             {/* Header toolbar — stacks on mobile */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 sm:mb-6">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Daftar Job</h1>
-                <div className="flex gap-2 sm:gap-4">
+                <div className="flex flex-wrap gap-2 sm:gap-4 items-center">
                     <input
                         type="text"
                         placeholder="Cari Kode / Klien..."
@@ -105,6 +142,15 @@ export default function JobList({ jobs, auth }) {
                     <button onClick={handleExportCSV} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded text-sm font-medium whitespace-nowrap">
                         Export CSV
                     </button>
+                    {isSuperadmin && (
+                        <button
+                            onClick={handleClearAllJobs}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-bold flex items-center gap-1 shadow-xs whitespace-nowrap"
+                            title="Kosongkan SELURUH database Job (Superadmin Special)"
+                        >
+                            <Trash2 size={15} /> Kosongkan Database Job
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -123,6 +169,15 @@ export default function JobList({ jobs, auth }) {
                                 <div className="flex items-center gap-1.5">
                                     {getSlaBadge(job)}
                                     <span className="text-xs bg-gray-100 border px-2 py-0.5 rounded font-medium">S{stageInfo?.displayId || job.stage}</span>
+                                    {isSuperadmin && (
+                                        <button
+                                            onClick={(e) => handleDeleteSingleJob(job, e)}
+                                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                            title="Hapus Job Ini"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                             <h3 className="font-bold text-gray-900 text-sm leading-tight">{job.klien}</h3>
@@ -149,6 +204,7 @@ export default function JobList({ jobs, auth }) {
                             <th className="px-4 py-3 font-medium text-gray-600">Pesawat</th>
                             <th className="px-4 py-3 font-medium text-gray-600">Stage</th>
                             <th className="px-4 py-3 font-medium text-gray-600">Marketing</th>
+                            {isSuperadmin && <th className="px-4 py-3 font-medium text-gray-600 text-right">Aksi</th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -171,12 +227,23 @@ export default function JobList({ jobs, auth }) {
                                         <span className="ml-2">{getSlaBadge(job)}</span>
                                     </td>
                                     <td className="px-4 py-3 text-gray-600">{job.owner_marketing}</td>
+                                    {isSuperadmin && (
+                                        <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
+                                            <button
+                                                onClick={(e) => handleDeleteSingleJob(job, e)}
+                                                className="bg-red-50 hover:bg-red-100 text-red-600 p-1.5 rounded text-xs font-bold transition-colors inline-flex items-center gap-1"
+                                                title="Hapus Job Ini (Superadmin)"
+                                            >
+                                                <Trash2 size={14} /> Hapus
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })}
                         {filteredJobs.length === 0 && (
                             <tr>
-                                <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                                <td colSpan={isSuperadmin ? 6 : 5} className="px-4 py-8 text-center text-gray-500">
                                     Tidak ada data job ditemukan.
                                 </td>
                             </tr>

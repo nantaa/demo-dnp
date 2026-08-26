@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
+import { showConfirm, showSuccess } from '@/swal';
+import { Trash2, Plus } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
@@ -38,10 +40,52 @@ export default function KanbanIndex({ jobs, auth }) {
         );
     };
 
+    const handleClearAllJobs = async () => {
+        const res = await showConfirm(
+            'Kosongkan Database Job',
+            'Apakah Anda yakin ingin menghapus SELURUH data Job dari database? Tindakan ini akan menghapus semua job di Kanban board!',
+            'Hapus Semua Data',
+            'Batal'
+        );
+        if (res.isConfirmed) {
+            router.delete('/jobs/clear-all', {
+                onSuccess: () => {
+                    showSuccess('Berhasil', 'Seluruh data Job dan Kanban berhasil dikosongkan.');
+                    setSelectedJob(null);
+                }
+            });
+        }
+    };
+
     return (
         <AppLayout>
             <Head title="Kanban Board" />
             
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-bold text-gray-900">Kanban Board</h1>
+                    <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
+                        Total {jobs.length} Job
+                    </span>
+                </div>
+                <div className="flex items-center gap-2">
+                    {['marketing', 'manager', 'superadmin'].includes(auth.user.role) && (
+                        <Link href={route('jobs.create')} className="bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
+                            <Plus size={14} /> + Job Baru
+                        </Link>
+                    )}
+                    {(auth.user.role === 'superadmin' || permissions === 'superadmin') && (
+                        <button
+                            onClick={handleClearAllJobs}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs"
+                            title="Kosongkan SELURUH database Job (Superadmin Special)"
+                        >
+                            <Trash2 size={14} /> Kosongkan Database Job
+                        </button>
+                    )}
+                </div>
+            </div>
+
             <div className="flex h-full overflow-x-auto space-x-4 pb-4">
                 {STAGES.map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);

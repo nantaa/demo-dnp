@@ -1079,4 +1079,48 @@ class JobController extends Controller
 
         return back()->with('success', 'Status verifikasi berhasil disimpan.');
     }
+
+    /**
+     * Delete a single job (Superadmin only).
+     */
+    public function destroy(Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'superadmin' && !$user->isSuperadmin()) {
+            abort(403, 'Akses ditolak. Hanya Superadmin yang dapat menghapus Job.');
+        }
+
+        // Delete associated document files
+        foreach ($job->documents as $doc) {
+            if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
+                Storage::disk('public')->delete($doc->file_path);
+            }
+            $doc->delete();
+        }
+
+        $job->inspectors()->detach();
+        $job->delete();
+
+        return back()->with('success', "Job {$job->kode} berhasil dihapus.");
+    }
+
+    /**
+     * Clear ALL jobs and database records for jobs (Superadmin only).
+     */
+    public function clearAll(Request $request)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'superadmin' && !$user->isSuperadmin()) {
+            abort(403, 'Akses ditolak. Hanya Superadmin yang dapat mengosongkan seluruh database Job.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function() {
+            JobDocument::query()->delete();
+            \Illuminate\Support\Facades\DB::table('job_inspectors')->delete();
+            \Illuminate\Support\Facades\DB::table('job_alat_uji')->delete();
+            Job::query()->delete();
+        });
+
+        return back()->with('success', 'Seluruh data Job dan Kanban berhasil dikosongkan.');
+    }
 }

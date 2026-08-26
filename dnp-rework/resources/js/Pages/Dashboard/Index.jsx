@@ -242,22 +242,22 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                 </div>
                 <div className="flex items-center gap-4 self-end md:self-auto">
                     {isPersonal && (
-                        <div className="flex rounded-md border border-gray-300 shadow-sm overflow-hidden bg-white">
+                        <div className="flex rounded-lg border border-slate-200 shadow-2xs overflow-hidden bg-white p-1 gap-1">
                             <button onClick={() => setFilterMine(true)}
-                                className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-colors ${
-                                    filterMine ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-50'
+                                className={`px-4 py-1.5 text-xs font-extrabold rounded-md flex items-center gap-2 transition-all ${
+                                    filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                                 }`}>
                                 <User size={14} /> {isINS ? 'Tugas Saya' : 'Pekerjaan Saya'}
                             </button>
                             <button onClick={() => setFilterMine(false)}
-                                className={`px-4 py-2 text-xs font-semibold transition-colors ${
-                                    !filterMine ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-50'
+                                className={`px-4 py-1.5 text-xs font-extrabold rounded-md transition-all ${
+                                    !filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
                                 }`}>
                                 Semua Job
                             </button>
                         </div>
                     )}
-                    <div className="text-sm font-mono text-gray-500 bg-gray-100 px-3 py-1.5 rounded border border-gray-200">
+                    <div className="text-xs font-mono font-bold text-[#0A385C] bg-slate-100 px-3 py-2 rounded-lg border border-slate-200/80 shadow-2xs">
                         {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                 </div>
@@ -272,23 +272,23 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             {isSuper && (
                 <div className="space-y-6">
                     {/* Superadmin combines Manager & Admin statistics */}
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-5 mb-4">
-                        <div className="flex items-center gap-2 text-purple-900 font-bold text-lg mb-2">
-                            <Shield size={20} />
-                            <span>Monitoring Superadmin</span>
+                    <div className="bg-gradient-to-r from-[#063970] via-[#0A385C] to-[#004B87] border-b-4 border-b-[#00A8E8] rounded-2xl p-6 mb-6 text-white shadow-md">
+                        <div className="flex items-center gap-2 font-black text-lg mb-4 text-[#00A8E8]">
+                            <Shield size={22} />
+                            <span className="tracking-wide">Monitoring Superadmin · PT Delta Nusantara Persada</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white p-4 shadow-sm border rounded">
-                                <div className="text-xs text-gray-500 font-medium">Total Pipeline</div>
-                                <div className="text-2xl font-bold text-purple-700 mt-1">{formatRp(stats.pipeline)}</div>
+                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xs">
+                                <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider">Total Pipeline</div>
+                                <div className="text-2xl font-black text-[#00A8E8] mt-1">{formatRp(stats.pipeline)}</div>
                             </div>
-                            <div className="bg-white p-4 shadow-sm border rounded">
-                                <div className="text-xs text-gray-500 font-medium">Job Aktif (Global)</div>
-                                <div className="text-2xl font-bold text-gray-900 mt-1">{stats.active.length}</div>
+                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xs">
+                                <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider">Job Aktif (Global)</div>
+                                <div className="text-2xl font-black text-white mt-1">{stats.active.length}</div>
                             </div>
-                            <div className="bg-white p-4 shadow-sm border rounded">
-                                <div className="text-xs text-gray-500 font-medium">Laporan Selesai (Bulan Ini)</div>
-                                <div className="text-2xl font-bold text-green-600 mt-1">{stats.thisMonth.length}</div>
+                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xs">
+                                <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider">Laporan Selesai (Bulan Ini)</div>
+                                <div className="text-2xl font-black text-emerald-400 mt-1">{stats.thisMonth.length}</div>
                             </div>
                         </div>
                     </div>

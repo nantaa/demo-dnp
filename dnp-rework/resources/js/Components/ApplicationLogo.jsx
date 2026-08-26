@@ -3,8 +3,8 @@ import React from 'react';
 export default function ApplicationLogo({ className = "h-12 w-auto", showText = true, textClassName = "" }) {
     return (
         <div className="flex items-center gap-3">
-            {/* DNP Delta Icon SVG */}
             <div className="relative flex items-center justify-center shrink-0">
+                <img src="/images/logo.png" alt="DNP Logo" className={className} />
             </div>
 
             {showText && (

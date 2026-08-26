@@ -39,8 +39,8 @@ export default function Login({ status, canResetPassword }) {
                 {/* Login Card */}
                 <div className="bg-white/95 backdrop-blur-md px-8 py-8 shadow-xl rounded-2xl border border-slate-100">
                     <div className="mb-6 text-center">
-                        <h2 className="text-xl font-bold text-[#0A385C]">Portal Riksa Uji K3</h2>
-                        <p className="text-xs text-gray-500 mt-1">Masuk ke sistem monitoring PT Delta Nusantara Persada</p>
+                        <h2 className="text-xl font-bold text-[#0A385C]">MORIKU APP</h2>
+                        <p className="text-xs text-gray-500 mt-1">Monitoring Riksa Uji PT Delta Nusantara Persada</p>
                     </div>
 
                     {status && (

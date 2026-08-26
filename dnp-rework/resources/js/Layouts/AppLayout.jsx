@@ -57,26 +57,31 @@ export default function AppLayout({ header, children }) {
         <div className="min-h-screen bg-gray-50 flex flex-col text-gray-900 font-sans">
 
             {/* ── Header ─────────────────────────────────────────────────── */}
-            <header className="bg-white border-b sticky top-0 z-30">
-                <div className="px-3 sm:px-6 py-3 flex items-center justify-between">
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs relative">
+                {/* DNP Top Gradient Line Accent */}
+                <div className="h-1.5 bg-gradient-to-r from-[#063970] via-[#0A385C] to-[#00A8E8]" />
+
+                <div className="px-3 sm:px-6 py-2.5 flex items-center justify-between">
                     {/* Left: Hamburger + Logo */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         {/* Mobile hamburger */}
                         <button
-                            className="lg:hidden p-2 rounded hover:bg-gray-100 transition-colors"
+                            className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors text-[#0A385C]"
                             onClick={() => setSidebarOpen(true)}
                             aria-label="Open menu"
                         >
                             <Menu size={20} />
                         </button>
 
-                        <img src={logoImg} alt="PT Delta Nusantara Persada" className="h-9 w-auto object-contain shrink-0" />
-                        <div>
-                            <div className="hidden sm:block text-[10px] tracking-widest uppercase text-gray-500 font-bold leading-none">
-                                PT Delta Nusantara Persada
-                            </div>
-                            <div className="text-sm sm:text-base font-medium leading-tight sm:mt-1">
-                                <span className="hidden sm:inline">Riksa Uji · </span>Monitoring
+                        <div className="flex items-center gap-2.5">
+                            <img src={logoImg} alt="PT Delta Nusantara Persada" className="h-9 w-auto object-contain shrink-0" />
+                            <div>
+                                <div className="hidden sm:block text-[10px] tracking-widest uppercase text-[#0A385C] font-extrabold leading-none">
+                                    PT Delta Nusantara Persada
+                                </div>
+                                <div className="text-sm sm:text-base font-bold leading-tight text-slate-800 sm:mt-0.5">
+                                    <span className="hidden sm:inline text-[#00A8E8]">Riksa Uji · </span>Monitoring
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -84,20 +89,20 @@ export default function AppLayout({ header, children }) {
                     {/* Right: User info + Notification Bell + Profile + Logout */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         <NotificationBell />
-                        <Link href="/profile" className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-gray-50 border border-gray-200 rounded hover:bg-gray-100 transition-colors">
-                            <div className="w-6 h-6 bg-black text-white flex items-center justify-center text-[10px] font-bold rounded flex-shrink-0">
+                        <Link href="/profile" className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-[#00A8E8] rounded-full hover:bg-slate-100 transition-all shadow-2xs">
+                            <div className="w-6 h-6 bg-[#0A385C] text-[#00A8E8] flex items-center justify-center text-[10px] font-extrabold rounded-full flex-shrink-0 border border-[#00A8E8]/40">
                                 {ROLES[user.role]?.label || 'USR'}
                             </div>
                             <div className="hidden sm:block text-left">
-                                <div className="text-xs font-bold leading-none">{user.name}</div>
-                                <div className="text-[10px] text-gray-500 mt-0.5">{ROLES[user.role]?.name || user.role}</div>
+                                <div className="text-xs font-bold leading-none text-slate-800">{user.name}</div>
+                                <div className="text-[9px] font-semibold text-[#0A385C] tracking-wide uppercase mt-0.5">{ROLES[user.role]?.name || user.role}</div>
                             </div>
-                            <div className="sm:hidden text-xs font-bold">{user.name.split(' ')[0]}</div>
+                            <div className="sm:hidden text-xs font-bold text-slate-800">{user.name.split(' ')[0]}</div>
                         </Link>
-                        <Link href="/profile" title="Pengaturan Akun" className="text-gray-500 hover:text-black p-1">
+                        <Link href="/profile" title="Pengaturan Akun" className="text-slate-500 hover:text-[#0A385C] p-1 transition-colors">
                             <UserIcon size={18} />
                         </Link>
-                        <Link href={route('logout')} method="post" as="button" title="Keluar" className="text-gray-500 hover:text-red-600 p-1">
+                        <Link href={route('logout')} method="post" as="button" title="Keluar" className="text-slate-400 hover:text-red-600 p-1 transition-colors">
                             <LogOut size={18} />
                         </Link>
                     </div>

@@ -1447,30 +1447,30 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     const isFuture = job.stage < stage.id;
                     
                     let iconBg = 'bg-gray-100 border-gray-300';
-                    if (isPast) iconBg = 'bg-emerald-500 border-emerald-500 text-white';
-                    if (isCurrent) iconBg = 'bg-blue-500 border-blue-500 text-white ring-4 ring-blue-100';
+                    if (isPast) iconBg = 'bg-emerald-500 border-emerald-600 text-white shadow-2xs';
+                    if (isCurrent) iconBg = 'bg-gradient-to-tr from-[#0A385C] to-[#00A8E8] border-2 border-white text-white ring-4 ring-[#00A8E8]/30 shadow-md scale-110 font-extrabold';
 
                     const stageDocs = (job.documents || []).filter(d => d.stage === stage.id);
                     
                     return (
-                        <div key={stage.id} className={`relative ${isFuture ? 'opacity-50' : ''}`}>
+                        <div key={stage.id} className={`relative ${isFuture ? 'opacity-40' : ''}`}>
                             {/* Connector Node */}
-                            <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold ${iconBg}`}>
+                            <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-transform ${iconBg}`}>
                                 {isPast ? '✓' : (stage.displayId || stage.id)}
                             </div>
                             
-                            <div className="bg-white border rounded-lg shadow-sm p-4">
+                            <div className={`bg-white border rounded-xl shadow-xs p-4 transition-all ${isCurrent ? 'border-[#00A8E8] ring-1 ring-[#00A8E8]/40 shadow-sm' : 'border-slate-200'}`}>
                                 <div className="flex items-center justify-between mb-2">
-                                    <h4 className={`font-bold ${isCurrent ? 'text-blue-700' : 'text-gray-800'}`}>
+                                    <h4 className={`font-extrabold text-sm ${isCurrent ? 'text-[#0A385C]' : 'text-slate-800'}`}>
                                         Stage {stage.displayId || stage.id}: {stage.name}
                                     </h4>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${isCurrent ? 'bg-[#0A385C] text-[#00A8E8]' : 'bg-slate-100 text-slate-600'}`}>
                                         PIC: {stage.role.toUpperCase()}
                                     </span>
                                 </div>
                                 
                                 {isCurrent && (
-                                    <div className="mt-4 pt-4 border-t border-blue-100">
+                                    <div className="mt-4 pt-4 border-t border-[#00A8E8]/20 bg-[#F8FAFC] -mx-4 -mb-4 p-4 rounded-b-xl">
                                         {renderStageAction()}
                                     </div>
                                 )}

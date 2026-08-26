@@ -208,9 +208,19 @@ export default function Index({ defaultStartDate, defaultEndDate }) {
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {previewData.map((row, idx) => (
                                             <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
-                                                {Object.values(row).map((val, cellIdx) => (
-                                                    <td key={cellIdx} className="px-4 py-2 whitespace-nowrap text-gray-700">
-                                                        {val}
+                                                {Object.entries(row).map(([key, val], cellIdx) => (
+                                                    <td key={cellIdx} className="px-4 py-2 text-gray-700 text-xs whitespace-nowrap font-medium">
+                                                        {key === 'Yang Jalan Riksa Uji' && typeof val === 'string' && val !== '-' ? (
+                                                            <div className="flex flex-wrap gap-1 items-center max-w-xs">
+                                                                {val.split(', ').map((name, i) => (
+                                                                    <span key={i} className="inline-block bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded text-[11px] border border-blue-200">
+                                                                        {name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            val
+                                                        )}
                                                     </td>
                                                 ))}
                                             </tr>

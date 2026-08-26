@@ -43,7 +43,7 @@ class ReportController extends Controller
         $endDate   = $validated['end_date'] . ' 23:59:59';
         $filterBy  = $validated['filter_by'] ?? 'created_at';
 
-        $query = Job::with(['inspectors']);
+        $query = Job::with(['inspectors', 'reportWriter']);
 
         if ($filterBy === 'tgl_pelaksanaan') {
             $query->whereBetween('tgl_pelaksanaan', [$startDate, substr($endDate, 0, 10)]);
@@ -55,7 +55,11 @@ class ReportController extends Controller
 
         // Format data for the Excel export (excluding no_seri)
         $formattedData = $jobs->map(function ($job, $index) {
-            $inspectorsList = $job->inspectors ? $job->inspectors->pluck('name')->filter()->join(', ') : '-';
+            $names = $job->inspectors ? $job->inspectors->pluck('name')->filter()->unique()->values() : collect();
+            if ($names->isEmpty() && $job->reportWriter) {
+                $names->push($job->reportWriter->name);
+            }
+            $inspectorsList = $names->isNotEmpty() ? $names->join(', ') : '-';
             
             return [
                 'NO'                   => $index + 1,
@@ -66,7 +70,7 @@ class ReportController extends Controller
                 'Jmlh'                 => $job->units ?: 1,
                 'Lokasi Alat'          => $job->lokasi ?: '-',
                 'Tanggal Riksa Uji'    => $job->tgl_pelaksanaan ? date('d F Y', strtotime($job->tgl_pelaksanaan)) : '-',
-                'Yang Jalan Riksa Uji' => $inspectorsList ?: '-',
+                'Yang Jalan Riksa Uji' => $inspectorsList,
                 'PIC'                  => $job->pic_klien ?: '-',
                 'Surat Tugas'          => $job->no_surat_tugas ?: '-',
                 'SUKET SELESAI'        => $job->stage >= 10 ? ($job->stage_started_at ? date('d F Y', strtotime($job->stage_started_at)) : 'Selesai') : '-',

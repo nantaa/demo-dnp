@@ -69,9 +69,9 @@ export default function KanbanIndex({ jobs, auth }) {
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
-                    {['marketing', 'manager', 'superadmin'].includes(auth.user.role) && (
+                    {['marketing', 'manager'].includes(auth.user.role) && (
                         <Link href={route('jobs.create')} className="bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
-                            <Plus size={14} /> + Job Baru
+                            <Plus size={14} /> Job Baru
                         </Link>
                     )}
                     {(auth.user.role === 'superadmin' || permissions === 'superadmin') && (

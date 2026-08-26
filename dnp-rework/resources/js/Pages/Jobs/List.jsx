@@ -134,7 +134,7 @@ export default function JobList({ jobs, auth }) {
                         onChange={e => setSearchTerm(e.target.value)}
                         className="flex-1 sm:flex-none px-3 py-2 border rounded text-sm sm:w-64"
                     />
-                    {['marketing', 'manager', 'superadmin'].includes(auth.user.role) && (
+                    {['marketing', 'manager'].includes(auth.user.role) && (
                         <Link href={route('jobs.create')} className="bg-black text-white px-3 sm:px-4 py-2 rounded text-sm font-medium whitespace-nowrap">
                             + Job Baru
                         </Link>

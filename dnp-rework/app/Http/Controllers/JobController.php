@@ -122,7 +122,11 @@ class JobController extends Controller
             abort(403, 'You do not have permission to edit this job at its current stage.');
         }
 
-        $job->update($request->all());
+        $job->update($request->except(['inspector_ids']));
+
+        if ($request->has('inspector_ids')) {
+            $job->inspectors()->sync($request->input('inspector_ids', []));
+        }
 
         return back()->with('success', 'Job updated successfully.');
     }

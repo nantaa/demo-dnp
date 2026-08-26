@@ -200,45 +200,19 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
     // Filter master template items for Surat Permohonan, Surat Tugas, and Form Disnaker
     const suratPermohonanList = useMemo(() => {
-        const filtered = form_disnaker.filter(f => 
+        return form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_PERMOHONAN') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('permohonan')) ||
             (f.nama && f.nama.toLowerCase().includes('permohonan'))
         );
-        if (filtered.length > 0) return filtered;
-        return [
-            {
-                id: 'sp-default-1',
-                kode_form: 'SP-DISNAKER-01',
-                kode_disnaker: 'Surat Permohonan',
-                nama: 'Template Surat Permohonan Riksa Uji (Disnaker RI)',
-                pesawat: 'Umum',
-                revisi: 'Rev. 2026',
-                last_updated: '2026-01-01',
-                file: null
-            }
-        ];
     }, [form_disnaker]);
 
     const suratTugasList = useMemo(() => {
-        const filtered = form_disnaker.filter(f => 
+        return form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_TUGAS') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('tugas')) ||
             (f.nama && f.nama.toLowerCase().includes('tugas'))
         );
-        if (filtered.length > 0) return filtered;
-        return [
-            {
-                id: 'st-default-1',
-                kode_form: 'ST-OFFICIAL-01',
-                kode_disnaker: 'Surat Tugas',
-                nama: 'Template Official Surat Tugas Penugasan Riksa Uji (Word .docx)',
-                pesawat: 'Umum',
-                revisi: 'Rev. 2026',
-                last_updated: '2026-01-01',
-                file: null
-            }
-        ];
     }, [form_disnaker]);
 
     const formDisnakerList = useMemo(() => {
@@ -499,17 +473,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
     const deleteFormDisnaker = async (id) => {
         if (!id) return;
-
-        // If string fallback ID (not saved in database yet), don't send invalid DELETE request
-        if (typeof id === 'string' && (id.startsWith('sp-default') || id.startsWith('st-default'))) {
-            const res = await showConfirm('Hapus Form', 'Master template ini belum tersimpan di database. Hapus dari tampilan?');
-            if (res.isConfirmed) {
-                router.reload();
-            }
-            return;
-        }
-
-        const res = await showConfirm('Hapus Form', 'Hapus form disnaker ini?');
+        const res = await showConfirm('Hapus Form', 'Apakah Anda yakin ingin menghapus template / form ini?');
         if (res.isConfirmed) {
             router.delete(`/inventory/form-disnaker/${id}`);
         }
@@ -1014,37 +978,45 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {suratPermohonanList.map((f) => (
-                                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
-                                            <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
-                                            <td className="p-4 font-mono font-semibold text-blue-600">{f.kode_disnaker}</td>
-                                            <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
-                                            <td className="p-4 text-xs">{f.pesawat || 'General Disnaker'}</td>
-                                            <td className="p-4 font-mono text-xs">{f.revisi}</td>
-                                            <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
-                                            <td className="p-4 font-medium">
-                                                {f.file ? (
-                                                    <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                                                        <Download size={14} /> <span className="text-xs">Download Template</span>
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">—</span>
-                                                )}
+                                    {suratPermohonanList.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={canManage ? 8 : 7} className="p-8 text-center text-gray-500 text-sm">
+                                                Belum ada template Surat Permohonan. Klik <strong className="text-black">+ Tambah Surat Permohonan</strong> di atas untuk membuat template baru.
                                             </td>
-                                            {canManage && (
-                                                <td className="p-4 text-center">
-                                                    <div className="flex justify-center gap-2">
-                                                        <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
-                                                            <Pencil size={15} />
-                                                        </button>
-                                                        <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
-                                                            <Trash size={15} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            )}
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        suratPermohonanList.map((f) => (
+                                            <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                                <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
+                                                <td className="p-4 font-mono font-semibold text-blue-600">{f.kode_disnaker}</td>
+                                                <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
+                                                <td className="p-4 text-xs">{f.pesawat || 'General Disnaker'}</td>
+                                                <td className="p-4 font-mono text-xs">{f.revisi}</td>
+                                                <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
+                                                <td className="p-4 font-medium">
+                                                    {f.file ? (
+                                                        <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                            <Download size={14} /> <span className="text-xs">Download Template</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                                {canManage && (
+                                                    <td className="p-4 text-center">
+                                                        <div className="flex justify-center gap-2">
+                                                            <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
+                                                                <Pencil size={15} />
+                                                            </button>
+                                                            <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                <Trash size={15} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         )}
@@ -1065,37 +1037,45 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {suratTugasList.map((f) => (
-                                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
-                                            <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
-                                            <td className="p-4 font-mono font-semibold text-emerald-600">{f.kode_disnaker}</td>
-                                            <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
-                                            <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Umum'}</td>
-                                            <td className="p-4 font-mono text-xs">{f.revisi}</td>
-                                            <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
-                                            <td className="p-4 font-medium">
-                                                {f.file ? (
-                                                    <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                                                        <Download size={14} /> <span className="text-xs">Download Template</span>
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-xs text-gray-400">—</span>
-                                                )}
+                                    {suratTugasList.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={canManage ? 8 : 7} className="p-8 text-center text-gray-500 text-sm">
+                                                Belum ada template Surat Tugas. Klik <strong className="text-black">+ Tambah Template Surat Tugas</strong> di atas untuk membuat template baru.
                                             </td>
-                                            {canManage && (
-                                                <td className="p-4 text-center">
-                                                    <div className="flex justify-center gap-2">
-                                                        <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
-                                                            <Pencil size={15} />
-                                                        </button>
-                                                        <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
-                                                            <Trash size={15} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            )}
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        suratTugasList.map((f) => (
+                                            <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
+                                                <td className="p-4 font-mono font-semibold">{f.kode_form}</td>
+                                                <td className="p-4 font-mono font-semibold text-emerald-600">{f.kode_disnaker}</td>
+                                                <td className="p-4 text-gray-900 font-medium">{f.nama}</td>
+                                                <td className="p-4 text-xs font-semibold text-indigo-600">{f.pesawat || 'Umum'}</td>
+                                                <td className="p-4 font-mono text-xs">{f.revisi}</td>
+                                                <td className="p-4 font-mono text-xs">{formatDate(f.last_updated)}</td>
+                                                <td className="p-4 font-medium">
+                                                    {f.file ? (
+                                                        <a href={f.file.startsWith('templates/') ? `/${f.file}` : `/storage/${f.file}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                                            <Download size={14} /> <span className="text-xs">Download Template</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                                {canManage && (
+                                                    <td className="p-4 text-center">
+                                                        <div className="flex justify-center gap-2">
+                                                            <button onClick={() => openEditFormDisnaker(f)} className="text-gray-500 hover:text-black" title="Edit / Upload File">
+                                                                <Pencil size={15} />
+                                                            </button>
+                                                            <button onClick={() => deleteFormDisnaker(f.id)} className="text-red-500 hover:text-red-700" title="Hapus">
+                                                                <Trash size={15} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         )}

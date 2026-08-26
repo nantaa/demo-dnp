@@ -1105,7 +1105,7 @@ class JobController extends Controller
         $job->inspectors()->detach();
         $job->delete();
 
-        return back()->with('success', "Job {$job->kode} berhasil dihapus.");
+        return redirect()->back(303)->with('success', "Job {$job->kode} berhasil dihapus.");
     }
 
     /**
@@ -1125,6 +1125,6 @@ class JobController extends Controller
             Job::query()->delete();
         });
 
-        return back()->with('success', 'Seluruh data Job dan Kanban berhasil dikosongkan.');
+        return redirect()->back(303)->with('success', 'Seluruh data Job dan Kanban berhasil dikosongkan.');
     }
 }

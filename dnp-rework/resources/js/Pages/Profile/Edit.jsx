@@ -50,13 +50,13 @@ export default function ProfileEdit(props) {
                     {/* User Card Info */}
                     <div className="bg-white border rounded-xl p-5 shadow-sm space-y-4 h-fit">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-bold text-base rounded-full">
-                                {ROLES[user.role]?.label || 'USR'}
+                            <div className="w-12 h-12 bg-[#0A385C] text-[#00A8E8] flex items-center justify-center font-bold text-base rounded-full border border-[#00A8E8]/40">
+                                {ROLES[user?.role]?.label || 'USR'}
                             </div>
                             <div>
-                                <h3 className="font-bold text-base text-gray-900">{user.name}</h3>
+                                <h3 className="font-bold text-base text-gray-900">{user?.name || 'User'}</h3>
                                 <span className="inline-block text-xs bg-gray-100 border text-gray-700 font-semibold px-2 py-0.5 rounded mt-0.5">
-                                    {ROLES[user.role]?.name || user.role}
+                                    {ROLES[user?.role]?.name || user?.role || 'Pengguna'}
                                 </span>
                             </div>
                         </div>

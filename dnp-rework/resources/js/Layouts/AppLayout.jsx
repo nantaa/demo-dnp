@@ -115,13 +115,13 @@ export default function AppLayout({ header, children }) {
                         <NotificationBell />
                         <Link href="/profile" className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-[#00A8E8] rounded-full hover:bg-slate-100 transition-all shadow-2xs">
                             <div className="w-6 h-6 bg-[#0A385C] text-[#00A8E8] flex items-center justify-center text-[10px] font-extrabold rounded-full flex-shrink-0 border border-[#00A8E8]/40">
-                                {ROLES[user.role]?.label || 'USR'}
+                                {ROLES[user?.role]?.label || 'USR'}
                             </div>
                             <div className="hidden sm:block text-left">
-                                <div className="text-xs font-bold leading-none text-slate-800">{user.name}</div>
-                                <div className="text-[9px] font-semibold text-[#0A385C] tracking-wide uppercase mt-0.5">{ROLES[user.role]?.name || user.role}</div>
+                                <div className="text-xs font-bold leading-none text-slate-800">{user?.name || 'User'}</div>
+                                <div className="text-[9px] font-semibold text-[#0A385C] tracking-wide uppercase mt-0.5">{ROLES[user?.role]?.name || user?.role || 'Pengguna'}</div>
                             </div>
-                            <div className="sm:hidden text-xs font-bold text-slate-800">{user.name.split(' ')[0]}</div>
+                            <div className="sm:hidden text-xs font-bold text-slate-800">{(user?.name || 'User').split(' ')[0]}</div>
                         </Link>
                         <Link href="/profile" title="Pengaturan Akun" className="text-slate-500 hover:text-[#0A385C] p-1 transition-colors">
                             <UserIcon size={18} />

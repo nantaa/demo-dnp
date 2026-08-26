@@ -85,18 +85,20 @@ class UserController extends Controller
         if (Auth::user()->role !== 'superadmin') abort(403);
 
         $validated = $request->validate([
-            'stages' => 'array',
-            'stages.*' => 'integer|min:1|max:11',
+            'stages'   => 'nullable|array',
+            'stages.*' => 'integer|min:1|max:30',
         ]);
 
         // Wipe old permissions
         $user->stagePermissions()->delete();
 
+        $stages = $validated['stages'] ?? [];
+
         // Add new permissions
-        foreach ($validated['stages'] as $stage) {
+        foreach ($stages as $stage) {
             UserStagePermission::create([
-                'user_id' => $user->id,
-                'stage' => $stage,
+                'user_id'  => $user->id,
+                'stage'    => (int) $stage,
                 'is_owner' => 1,
                 'can_view' => 1,
             ]);

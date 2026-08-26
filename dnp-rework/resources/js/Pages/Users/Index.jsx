@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { ROLES, STAGES } from '@/Constants';
 import { Trash2, Shield, Plus, X } from 'lucide-react';
 import ErrorBoundary from '@/Components/ErrorBoundary';
-import { showConfirm } from '@/swal';
+import { showConfirm, showSuccess, showError } from '@/swal';
 
 export default function UsersIndexWrapper(props) {
     return (
@@ -107,11 +107,14 @@ function UsersIndex({ users = [], auth = {} }) {
                                         <span className="text-xs text-gray-500">Unrestricted (Semua Stage)</span>
                                     ) : (
                                         <div className="flex flex-wrap gap-1">
-                                            {(user?.stage_permissions || []).map(p => (
-                                                <span key={p.id} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-200" title={(STAGES || []).find(s => s.id == p.stage)?.name}>
-                                                    S{p.stage}
-                                                </span>
-                                            ))}
+                                            {(user?.stage_permissions || []).map(p => {
+                                                const sObj = (STAGES || []).find(s => Number(s.id) === Number(p.stage));
+                                                return (
+                                                    <span key={p.id} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-200" title={sObj?.name}>
+                                                        S{sObj?.displayId || p.stage}
+                                                    </span>
+                                                );
+                                            })}
                                             {(!user?.stage_permissions || user.stage_permissions.length === 0) && (
                                                 <span className="text-xs text-red-500">No Access</span>
                                             )}
@@ -231,15 +234,16 @@ function UsersIndex({ users = [], auth = {} }) {
 
 function PermissionModal({ user, onClose }) {
     // Initial state based on current permissions
-    const currentStageIds = (user.stage_permissions || []).map(p => p.stage);
+    const currentStageIds = (user.stage_permissions || []).map(p => Number(p.stage));
     const [selectedStages, setSelectedStages] = useState(currentStageIds);
     const [saving, setSaving] = useState(false);
 
     const toggleStage = (stageId) => {
-        if (selectedStages.includes(stageId)) {
-            setSelectedStages(selectedStages.filter(id => id !== stageId));
+        const numId = Number(stageId);
+        if (selectedStages.includes(numId)) {
+            setSelectedStages(selectedStages.filter(id => id !== numId));
         } else {
-            setSelectedStages([...selectedStages, stageId]);
+            setSelectedStages([...selectedStages, numId]);
         }
     };
 
@@ -247,7 +251,13 @@ function PermissionModal({ user, onClose }) {
         setSaving(true);
         router.post(`/users/${user.id}/permissions`, { stages: selectedStages }, {
             preserveScroll: true,
-            onSuccess: () => onClose(),
+            onSuccess: () => {
+                showSuccess('Hak Akses Stage Berhasil Disimpan!');
+                onClose();
+            },
+            onError: (errs) => {
+                showError(Object.values(errs).join(', ') || 'Gagal menyimpan permissions.');
+            },
             onFinish: () => setSaving(false)
         });
     };
@@ -270,12 +280,12 @@ function PermissionModal({ user, onClose }) {
                             <label key={stage.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0">
                                 <input 
                                     type="checkbox" 
-                                    checked={selectedStages.includes(stage.id) || selectedStages.includes(String(stage.id))}
+                                    checked={selectedStages.includes(Number(stage.id))}
                                     onChange={() => toggleStage(stage.id)}
                                     className="w-4 h-4 rounded text-black focus:ring-black"
                                 />
                                 <div className="flex-1">
-                                    <div className="font-bold text-sm">Stage {stage.id}: {stage.name}</div>
+                                    <div className="font-bold text-sm">Stage {stage.displayId || stage.id}: {stage.name}</div>
                                     <div className="text-xs text-gray-500">Default Owner: {(ROLES && ROLES[stage.role]?.name) || stage.role}</div>
                                 </div>
                             </label>

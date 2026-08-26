@@ -10,12 +10,10 @@ class InspectorRecommendationService
 {
     public function getRecommendations(Job $targetJob)
     {
-        $inspectors = User::whereIn('role', ['inspektur', 'manager'])
-            ->where('name', 'NOT LIKE', '%Diba Aini%')
-            ->orWhereHas('inspectorProfile', function($q) {
-                $q->whereHas('user', function($u) {
-                    $u->where('name', 'NOT LIKE', '%Diba Aini%');
-                });
+        $inspectors = User::where('name', 'NOT LIKE', '%Diba Aini%')
+            ->where(function($query) {
+                $query->whereIn('role', ['inspektur', 'manager'])
+                      ->orWhereHas('inspectorProfile');
             })
             ->with(['inspectorProfile'])
             ->get();
@@ -37,8 +35,12 @@ class InspectorRecommendationService
                     'spesialisasi' => [],
                     'domisili' => 'Bekasi',
                     'senior_level' => 1,
-                    'subrole' => 'inspektur',
+                    'subrole' => 'tenaga_ahli',
                 ];
+            } else {
+                if (empty($profile->subrole)) {
+                    $profile->subrole = 'tenaga_ahli';
+                }
             }
 
             // Hard Filters

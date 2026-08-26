@@ -16,6 +16,7 @@ const SubroleBadge = ({ profile }) => {
 export default function SmartRecommendation({ job, onSelectInspector, selectedInspectorIds = [] }) {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({ recommended: [], eliminated: [] });
+    const [filterRole, setFilterRole] = useState('all'); // 'all', 'tenaga_ahli', 'teknisi'
 
     useEffect(() => {
         fetch(`/api/jobs/${job.id}/recommendations`)
@@ -38,22 +39,27 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
     }, [job.id]);
 
     if (loading) {
-        return <div className="p-4 text-center text-sm text-gray-500 animate-pulse">Menganalisis Inspektur terbaik…</div>;
+        return <div className="p-4 text-center text-sm text-gray-500 animate-pulse">Menganalisis Tim RU & Inspektur…</div>;
     }
 
     // Merge recommended + eliminated into one flat list for the selector grid
-    // Eliminated inspectors are shown with neutral styling (no red badge)
     const allInspectors = [
         ...(data?.recommended || []).map(r => ({ ...r, isEliminated: false })),
         ...(data?.eliminated || []).map(e => ({ user: e.user, profile: e.profile || {}, score: null, details: {}, bonuses: [], klien_exp: 0, pesawat_exp: 0, isEliminated: true, eliminatedReason: e.reason })),
     ];
 
+    const filteredInspectors = allInspectors.filter(ins => {
+        if (filterRole === 'all') return true;
+        const sr = ins.profile?.subrole || 'tenaga_ahli';
+        return sr === filterRole;
+    });
+
     return (
         <div className="bg-[#F2EFE8] p-4 rounded-lg border border-[#E8E4DA] text-sm text-gray-800 font-sans">
             {/* Header */}
             <div className="bg-white p-4 mb-4 border border-gray-200 shadow-sm">
-                <h3 className="font-bold text-lg mb-1">Smart Recommendation — Inspector Matching Algorithm</h3>
-                <p className="text-xs text-gray-500 mb-3">Algoritma transparan 100 poin yang membantu Admin RU pilih inspektur tepat</p>
+                <h3 className="font-bold text-lg mb-1">Smart Recommendation — Tim RU & Inspector Matching</h3>
+                <p className="text-xs text-gray-500 mb-3">Pilih Ahli K3 dan/atau Petugas / PIC Lapangan untuk penugasan Riksa Uji</p>
                 <div className="text-sm">
                     <strong>Target Job: {job.kode} · {job.klien}</strong>
                     <div className="text-gray-600 mt-1">Pesawat: {job.pesawat} ({job.units} unit) · Lokasi: {job.lokasi}</div>
@@ -67,7 +73,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                         <div className="flex items-center gap-2">
                             <CheckSquare size={16} /> REKOMENDASI SISTEM — Top {Math.min(3, (data?.recommended || []).length)} Terbaik
                         </div>
-                        <div className="opacity-80">Bobot: Spesialisasi · Workload · Pengalaman · Availability · Bonus</div>
+                        <div className="opacity-80">Bobot: Spesialisasi · Workload · Pengalaman · Availability</div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -78,14 +84,14 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                 </div>
                                 <div className="flex justify-between items-start mb-3 mt-1">
                                     <div>
-                                        <div className="font-bold text-base flex items-center gap-1.5">
+                                        <div className="font-bold text-base flex items-center gap-1.5 flex-wrap">
                                             {rec.user.name}
                                             <SubroleBadge profile={rec.profile} />
                                         </div>
-                                        <div className="text-[10px] text-gray-500 mt-0.5">{(rec.profile.spesialisasi || []).join(', ')}</div>
+                                        <div className="text-[10px] text-gray-500 mt-0.5">{(rec.profile.spesialisasi || []).join(', ') || 'Umum'}</div>
                                         <div className="text-[10px] text-gray-500 flex gap-1 mt-0.5">
-                                            <span className="border px-1">Domisili {rec.profile.domisili}</span>
-                                            <span className="border px-1">Senior Lvl {rec.profile.senior_level}</span>
+                                            <span className="border px-1">Domisili {rec.profile.domisili || 'Bekasi'}</span>
+                                            <span className="border px-1">Senior Lvl {rec.profile.senior_level || 1}</span>
                                         </div>
                                     </div>
                                     <div className="text-center">
@@ -133,11 +139,37 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                 </>
             )}
 
-            {/* All Inspectors Grid (recommended + eliminated, no red badge for eliminated) */}
+            {/* All Inspectors Grid (with subrole filter tabs) */}
             <div className="border border-gray-200 bg-white p-4 mb-4">
-                <div className="font-bold text-gray-700 text-sm mb-3">Semua Inspektur ({allInspectors.length} orang)</div>
+                <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+                    <div className="font-bold text-gray-700 text-sm">Pilih Personel Tim RU ({filteredInspectors.length} orang)</div>
+                    <div className="flex gap-1 border p-0.5 rounded bg-gray-50 text-xs">
+                        <button
+                            type="button"
+                            onClick={() => setFilterRole('all')}
+                            className={`px-2.5 py-1 rounded font-medium ${filterRole === 'all' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                            Semua ({allInspectors.length})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilterRole('tenaga_ahli')}
+                            className={`px-2.5 py-1 rounded font-medium ${filterRole === 'tenaga_ahli' ? 'bg-indigo-600 text-white shadow-sm font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                            Ahli K3 ({allInspectors.filter(i => (i.profile?.subrole || 'tenaga_ahli') === 'tenaga_ahli').length})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFilterRole('teknisi')}
+                            className={`px-2.5 py-1 rounded font-medium ${filterRole === 'teknisi' ? 'bg-sky-600 text-white shadow-sm font-bold' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                            Petugas / PIC ({allInspectors.filter(i => i.profile?.subrole === 'teknisi').length})
+                        </button>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {allInspectors.map(ins => {
+                    {filteredInspectors.map(ins => {
                         const isSelected = selectedInspectorIds.includes(ins.user.id);
                         return (
                             <button key={ins.user.id}

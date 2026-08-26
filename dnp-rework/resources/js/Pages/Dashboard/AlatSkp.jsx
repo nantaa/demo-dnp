@@ -1049,11 +1049,50 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     })}
                                 </div>
                             </div>
-                            {inspectorForm.data.spesialisasi.length > 0 && (
-                                <div className="space-y-3 border-t pt-3">
-                                    <label className="block text-xs font-bold uppercase text-gray-700">
-                                        Detail & File {inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'} Per Spesialisasi
-                                    </label>
+                            {/* Section Detail & File SKP / Lisensi */}
+                            <div className="space-y-3 border-t pt-3">
+                                <label className="block text-xs font-bold uppercase text-gray-700">
+                                    Detail & File {inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}
+                                </label>
+                                {inspectorForm.data.spesialisasi.length === 0 ? (
+                                    <div className="bg-gray-50 p-3 rounded border border-gray-200 text-xs space-y-2">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">
+                                                    Nomor {inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder={`Nomor ${inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}`} 
+                                                    value={inspectorForm.data.skp || ''} 
+                                                    onChange={e => inspectorForm.setData('skp', e.target.value)} 
+                                                    className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Berlaku s/d</label>
+                                                <input 
+                                                    type="date" 
+                                                    value={inspectorForm.data.skp_expired_at || ''} 
+                                                    onChange={e => inspectorForm.setData('skp_expired_at', e.target.value)} 
+                                                    className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">
+                                                Upload File {inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}
+                                            </label>
+                                            <input type="file" accept="*" onChange={e => {
+                                                const file = e.target.files[0];
+                                                inspectorForm.setData('skp_files_input', {
+                                                    ...inspectorForm.data.skp_files_input,
+                                                    'Umum': file
+                                                });
+                                            }} className="w-full border px-2 py-1 rounded text-xs bg-white" />
+                                        </div>
+                                    </div>
+                                ) : (
                                     <div className="max-h-56 overflow-y-auto space-y-3 pr-1">
                                         {inspectorForm.data.spesialisasi.map(s => {
                                             let skpFiles = {};
@@ -1062,7 +1101,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             } catch(e) {
                                                 skpFiles = selectedInspector?.skp_files || {};
                                             }
-                                            const existingFile = skpFiles[s];
+                                            const existingFile = skpFiles[s] || skpFiles['Umum'];
                                             const detail = inspectorForm.data.skp_details_input?.[s] || {};
                                             const prefix = inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'AK3';
                                             const docName = inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP';
@@ -1083,7 +1122,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                             <input 
                                                                 type="text" 
                                                                 placeholder={`Nomor ${docName}`} 
-                                                                value={detail.no_skp || ''} 
+                                                                value={detail.no_skp || inspectorForm.data.skp || ''} 
                                                                 onChange={e => {
                                                                     const val = e.target.value;
                                                                     inspectorForm.setData('skp_details_input', {
@@ -1098,7 +1137,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                             <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Berlaku s/d</label>
                                                             <input 
                                                                 type="date" 
-                                                                value={detail.expired_at || ''} 
+                                                                value={detail.expired_at || inspectorForm.data.skp_expired_at || ''} 
                                                                 onChange={e => {
                                                                     const val = e.target.value;
                                                                     inspectorForm.setData('skp_details_input', {
@@ -1124,8 +1163,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             );
                                         })}
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Domisili</label>

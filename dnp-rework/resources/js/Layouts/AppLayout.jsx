@@ -39,6 +39,18 @@ export default function AppLayout({ header, children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
+        // Set tab icon to moriku-logo.png
+        try {
+            let link = document.querySelector("link[rel*='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'shortcut icon';
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            link.type = 'image/png';
+            link.href = '/moriku-logo.png';
+        } catch(e) {}
+
         // Intercept global inertia events
         const removeErrorListener = router.on('error', (event) => {
             const errs = event.detail.errors;

@@ -48,10 +48,10 @@ export const STAGE4_PHOTO_TYPES = [
     'Foto Kepulangan',
 ];
 
-// INS subroles (Task 8) — informational only for now
+// INS subroles (Task 8) — Ahli K3 vs Petugas / PIC
 export const INS_SUBROLES = {
-    tenaga_ahli: 'Tenaga Ahli INS',
-    teknisi: 'Teknisi INS',
+    tenaga_ahli: 'Ahli K3',
+    teknisi: 'Petugas / PIC',
 };
 
 // Stage 5 review decisions (Task 14)

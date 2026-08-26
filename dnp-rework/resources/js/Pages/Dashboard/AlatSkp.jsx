@@ -198,38 +198,49 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         return { expired: expiredList, expiring: expiringList };
     }, [inspectors, todayStr]);
 
+    // Helper to sort list by kode_form (natural alphanumeric order)
+    const sortByKode = (list) => {
+        return [...list].sort((a, b) => 
+            (a.kode_form || '').localeCompare(b.kode_form || '', undefined, { numeric: true, sensitivity: 'base' })
+        );
+    };
+
     // Filter master template items for Surat Permohonan, Surat Tugas, and Form Disnaker
     const suratPermohonanList = useMemo(() => {
-        return form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_PERMOHONAN') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('permohonan')) ||
             (f.nama && f.nama.toLowerCase().includes('permohonan'))
         );
+        return sortByKode(filtered);
     }, [form_disnaker]);
 
     const suratTugasList = useMemo(() => {
-        return form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_TUGAS') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('tugas')) ||
             (f.nama && f.nama.toLowerCase().includes('tugas'))
         );
+        return sortByKode(filtered);
     }, [form_disnaker]);
 
     const suratKuasaList = useMemo(() => {
-        return form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_KUASA') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('kuasa')) ||
             (f.nama && f.nama.toLowerCase().includes('kuasa'))
         );
+        return sortByKode(filtered);
     }, [form_disnaker]);
 
     const suratLainnyaList = useMemo(() => {
-        return form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f => 
             (f.pesawat && f.pesawat.toUpperCase() === 'LAINNYA') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('lainnya')) ||
             (f.nama && f.nama.toLowerCase().includes('lainnya')) ||
             (f.kode_form && f.kode_form.startsWith('DOC-'))
         );
+        return sortByKode(filtered);
     }, [form_disnaker]);
 
     const formDisnakerList = useMemo(() => {
@@ -237,7 +248,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         const stIds = new Set(suratTugasList.map(t => t.id));
         const skIds = new Set(suratKuasaList.map(k => k.id));
         const slIds = new Set(suratLainnyaList.map(l => l.id));
-        return form_disnaker.filter(f => !spIds.has(f.id) && !stIds.has(f.id) && !skIds.has(f.id) && !slIds.has(f.id));
+        const filtered = form_disnaker.filter(f => !spIds.has(f.id) && !stIds.has(f.id) && !skIds.has(f.id) && !slIds.has(f.id));
+        return sortByKode(filtered);
     }, [form_disnaker, suratPermohonanList, suratTugasList, suratKuasaList, suratLainnyaList]);
 
     // Handle Alat Submit

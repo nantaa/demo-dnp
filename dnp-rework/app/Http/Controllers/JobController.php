@@ -98,8 +98,7 @@ class JobController extends Controller
         }
 
         $year  = date('Y');
-        $count = Job::whereYear('created_at', $year)->count() + 1;
-        $validated['kode']  = sprintf('DNP/%s/%04d', $year, $count);
+        $validated['kode']  = $this->generateUniqueKode($year);
         $validated['stage'] = 1;
 
         $job = Job::create($validated);
@@ -989,8 +988,7 @@ class JobController extends Controller
 
             if (!$job->no_surat_tugas) {
                 $year  = date('Y');
-                $count = Job::whereYear('created_at', $year)->count() + 1;
-                $job->no_surat_tugas  = sprintf('%03d/DNP/STRU/%s', $count, $year);
+                $job->no_surat_tugas  = $this->generateUniqueNoSuratTugas($year);
                 $job->tgl_surat_tugas = now();
                 $job->save();
             }
@@ -1126,5 +1124,66 @@ class JobController extends Controller
         });
 
         return redirect()->back(303)->with('success', 'Seluruh data Job dan Kanban berhasil dikosongkan.');
+    }
+
+    /**
+     * Generate a collision-free unique Job Code (DNP/YYYY/XXXX).
+     */
+    protected function generateUniqueKode(string $year): string
+    {
+        $existingCodes = Job::where('kode', 'LIKE', "DNP/{$year}/%")->pluck('kode')->toArray();
+
+        $maxNum = 0;
+        foreach ($existingCodes as $c) {
+            $parts = explode('/', $c);
+            $num = (int) end($parts);
+            if ($num > $maxNum) {
+                $maxNum = $num;
+            }
+        }
+
+        $nextNum = $maxNum + 1;
+
+        do {
+            $kode = sprintf('DNP/%s/%04d', $year, $nextNum);
+            $exists = in_array($kode, $existingCodes) || Job::where('kode', $kode)->exists();
+            if ($exists) {
+                $nextNum++;
+            }
+        } while ($exists);
+
+        return $kode;
+    }
+
+    /**
+     * Generate a collision-free unique Surat Tugas Number (XXX/DNP/STRU/YYYY).
+     */
+    protected function generateUniqueNoSuratTugas(string $year): string
+    {
+        $existingSTs = Job::whereNotNull('no_surat_tugas')
+            ->where('no_surat_tugas', 'LIKE', "%/DNP/STRU/{$year}")
+            ->pluck('no_surat_tugas')
+            ->toArray();
+
+        $maxNum = 0;
+        foreach ($existingSTs as $st) {
+            $parts = explode('/', $st);
+            $num = (int) $parts[0];
+            if ($num > $maxNum) {
+                $maxNum = $num;
+            }
+        }
+
+        $nextNum = $maxNum + 1;
+
+        do {
+            $stNum = sprintf('%03d/DNP/STRU/%s', $nextNum, $year);
+            $exists = in_array($stNum, $existingSTs) || Job::where('no_surat_tugas', $stNum)->exists();
+            if ($exists) {
+                $nextNum++;
+            }
+        } while ($exists);
+
+        return $stNum;
     }
 }

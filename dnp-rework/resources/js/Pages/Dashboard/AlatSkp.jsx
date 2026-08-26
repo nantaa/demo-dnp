@@ -58,7 +58,7 @@ function StatusBadge({ status, children }) {
     );
 }
 
-const PESAWAT_CATEGORIES = ['PUBT', 'PV', 'Listrik', 'Kebakaran', 'PAA', 'PTP', 'Lift', 'Umum', 'BOILER'];
+const PESAWAT_CATEGORIES = ['PUBT / PV', 'Listrik & IPP', 'IPK', 'PAPA', 'PTP', 'Elevator & Eskalator', 'Lift', 'Umum', 'BOILER'];
 
 function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulasi_k3 = [], form_disnaker = [], users = [], auth = {} }) {
     const [tab, setTab] = useState('alat');
@@ -863,7 +863,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Spesialisasi</label>
                                 <div className="grid grid-cols-2 gap-2 border p-3 rounded max-h-32 overflow-y-auto">
-                                    {['PUBT', 'Listrik', 'Kebakaran', 'PAA', 'PTP', 'Elevator & Eskalator', 'Lift'].map(s => {
+                                    {['PUBT / PV', 'Listrik & IPP', 'IPK', 'PAPA', 'PTP', 'Elevator & Eskalator', 'Umum'].map(s => {
                                         const isChecked = inspectorForm.data.spesialisasi.includes(s);
                                         return (
                                             <label key={s} className="flex items-center gap-1.5 text-xs cursor-pointer">
@@ -912,9 +912,15 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kategori</label>
                                     <select value={sertifikatForm.data.kategori} onChange={e => sertifikatForm.setData('kategori', e.target.value)} className="w-full border px-3 py-2 rounded text-sm bg-white">
                                         <option value="Umum">Umum</option>
-                                        <option value="PAA">PAA</option>
-                                        <option value="Listrik">Listrik</option>
-                                        <option value="Kebakaran">Kebakaran</option>
+                                        <option value="PAPA">PAPA (Pesawat Angkat & Angkut)</option>
+                                        <option value="Listrik & IPP">Listrik & IPP (Instalasi Penyalur Petir)</option>
+                                        <option value="IPK">IPK (Instalasi Proteksi Kebakaran)</option>
+                                        <option value="PUBT / PV">PUBT / PV (Pesawat Uap & Bejana Tekan)</option>
+                                        <option value="PTP">PTP (Pesawat Tenaga & Produksi)</option>
+                                        <option value="Elevator & Eskalator">Elevator & Eskalator</option>
+                                        {sertifikatForm.data.kategori && !['Umum', 'PAPA', 'Listrik & IPP', 'IPK', 'PUBT / PV', 'PTP', 'Elevator & Eskalator'].includes(sertifikatForm.data.kategori) && (
+                                            <option value={sertifikatForm.data.kategori}>{sertifikatForm.data.kategori}</option>
+                                        )}
                                     </select>
                                 </div>
                             </div>

@@ -83,17 +83,19 @@ export default function Login({ status, canResetPassword }) {
 
                 {/* Logo + Brand above card */}
                 <div className="flex flex-col items-center mb-7">
-                    <img
-                        src="/images/logo.png"
-                        alt="PT Delta Nusantara Persada"
-                        className="h-14 w-auto object-contain mb-3 drop-shadow-lg"
-                        onError={(e) => { e.target.style.display = 'none'; }}
-                    />
+                    <div className="bg-white p-3 rounded-2xl shadow-xl border border-white/20 mb-3 inline-flex items-center justify-center">
+                        <img
+                            src="/images/logo.png"
+                            alt="PT Delta Nusantara Persada"
+                            className="h-12 w-auto object-contain"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                    </div>
                     <div className="text-center">
                         <div className="text-white font-black text-lg tracking-widest uppercase leading-none">
                             MORIKU APP
                         </div>
-                        <div className="text-[#00A8E8] text-[11px] font-semibold tracking-wider mt-1 uppercase">
+                        <div className="text-[#00A8E8] text-[11px] font-semibold tracking-wider mt-1.5 uppercase">
                             Monitoring Riksa Uji · PT Delta Nusantara Persada
                         </div>
                     </div>

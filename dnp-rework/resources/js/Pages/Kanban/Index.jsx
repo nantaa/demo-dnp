@@ -66,7 +66,8 @@ export default function KanbanIndex({ jobs, auth }) {
                     return (
                         <KanbanColumn 
                             key={stage.id} 
-                            title={`${stage.displayId || stage.id}. ${stage.name}`} 
+                            stageNumber={stage.displayId || stage.id}
+                            title={stage.name} 
                             count={columnJobs.length}
                             isLocked={isLocked}
                         >

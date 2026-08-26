@@ -272,23 +272,23 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             {isSuper && (
                 <div className="space-y-6">
                     {/* Superadmin combines Manager & Admin statistics */}
-                    <div className="bg-gradient-to-r from-[#063970] via-[#0A385C] to-[#004B87] border-b-4 border-b-[#00A8E8] rounded-2xl p-6 mb-6 text-white shadow-md">
-                        <div className="flex items-center gap-2 font-black text-lg mb-4 text-[#00A8E8]">
-                            <Shield size={22} />
-                            <span className="tracking-wide">Monitoring Superadmin · PT Delta Nusantara Persada</span>
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-xs">
+                        <div className="flex items-center gap-2 font-extrabold text-base mb-4 text-[#0A385C]">
+                            <Shield size={20} className="text-[#00A8E8]" />
+                            <span>Monitoring Superadmin · PT Delta Nusantara Persada</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xs">
-                                <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider">Total Pipeline</div>
-                                <div className="text-2xl font-black text-[#00A8E8] mt-1">{formatRp(stats.pipeline)}</div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Pipeline</div>
+                                <div className="text-2xl font-black text-[#0A385C] mt-1">{formatRp(stats.pipeline)}</div>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xs">
-                                <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider">Job Aktif (Global)</div>
-                                <div className="text-2xl font-black text-white mt-1">{stats.active.length}</div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Job Aktif (Global)</div>
+                                <div className="text-2xl font-black text-slate-900 mt-1">{stats.active.length}</div>
                             </div>
-                            <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xs">
-                                <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider">Laporan Selesai (Bulan Ini)</div>
-                                <div className="text-2xl font-black text-emerald-400 mt-1">{stats.thisMonth.length}</div>
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Laporan Selesai (Bulan Ini)</div>
+                                <div className="text-2xl font-black text-emerald-600 mt-1">{stats.thisMonth.length}</div>
                             </div>
                         </div>
                     </div>

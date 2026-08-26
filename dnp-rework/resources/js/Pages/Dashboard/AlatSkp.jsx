@@ -1479,26 +1479,35 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
             {showFormDisnakerModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">{selectedFormDisnaker ? 'Edit Form Disnaker' : 'Tambah Form Disnaker Baru'}</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">
+                            {selectedFormDisnaker
+                                ? (tab === 'surat_permohonan' ? 'Edit Template Surat Permohonan' : tab === 'surat_tugas' ? 'Edit Template Surat Tugas' : 'Edit Form Disnaker')
+                                : (tab === 'surat_permohonan' ? 'Tambah Surat Permohonan Baru' : tab === 'surat_tugas' ? 'Tambah Template Surat Tugas Baru' : 'Tambah Form Disnaker Baru')
+                            }
+                        </h2>
                         <form onSubmit={submitFormDisnaker} className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kode Form</label>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kode Document</label>
                                     <input type="text" required disabled={!!selectedFormDisnaker} value={formDisnakerForm.data.kode_form} onChange={e => formDisnakerForm.setData('kode_form', e.target.value)} className="w-full border px-3 py-2 rounded text-sm disabled:bg-gray-100" />
                                     {formDisnakerForm.errors.kode_form && <div className="text-red-500 text-xs mt-1">{formDisnakerForm.errors.kode_form}</div>}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Form No (Disnaker)</label>
-                                    <input type="text" placeholder="e.g. Form 6, Form 36" value={formDisnakerForm.data.kode_disnaker} onChange={e => formDisnakerForm.setData('kode_disnaker', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
+                                        {tab === 'surat_permohonan' || tab === 'surat_tugas' ? 'Kategori / Jenis Surat' : 'Form No (Disnaker)'}
+                                    </label>
+                                    <input type="text" placeholder={tab === 'surat_permohonan' ? 'e.g. Surat Permohonan' : tab === 'surat_tugas' ? 'e.g. Surat Tugas' : 'e.g. Form 6, Form 36'} value={formDisnakerForm.data.kode_disnaker} onChange={e => formDisnakerForm.setData('kode_disnaker', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Nama Form</label>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
+                                    {tab === 'surat_permohonan' ? 'Nama Template Surat Permohonan' : tab === 'surat_tugas' ? 'Nama Template Surat Tugas' : 'Nama Form'}
+                                </label>
                                 <input type="text" required value={formDisnakerForm.data.nama} onChange={e => formDisnakerForm.setData('nama', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Untuk Pesawat</label>
+                                    <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kategori Pesawat</label>
                                     <select 
                                         value={formDisnakerForm.data.pesawat} 
                                         onChange={e => formDisnakerForm.setData('pesawat', e.target.value)} 
@@ -1512,7 +1521,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Revisi</label>
-                                    <input type="text" placeholder="e.g. 01, 02" value={formDisnakerForm.data.revisi} onChange={e => formDisnakerForm.setData('revisi', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
+                                    <input type="text" placeholder="e.g. Rev. 2026" value={formDisnakerForm.data.revisi} onChange={e => formDisnakerForm.setData('revisi', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                                 </div>
                             </div>
                             <div>
@@ -1520,11 +1529,13 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 <input type="date" value={formDisnakerForm.data.last_updated} onChange={e => formDisnakerForm.setData('last_updated', e.target.value)} className="w-full border px-3 py-2 rounded text-sm" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Upload File Form</label>
+                                <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
+                                    {tab === 'surat_permohonan' || tab === 'surat_tugas' ? 'Upload Master Template File (.docx / .pdf)' : 'Upload File Form'}
+                                </label>
                                 <input type="file" accept="*" onChange={e => formDisnakerForm.setData('file', e.target.files[0])} className="w-full border px-3 py-2 rounded text-sm bg-white" />
                                 {selectedFormDisnaker?.file && (
                                     <div className="text-xs text-gray-500 mt-1">
-                                        File saat ini: <a href={`/storage/${selectedFormDisnaker.file}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download</a>
+                                        File saat ini: <a href={`/storage/${selectedFormDisnaker.file}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Download Template</a>
                                     </div>
                                 )}
                             </div>

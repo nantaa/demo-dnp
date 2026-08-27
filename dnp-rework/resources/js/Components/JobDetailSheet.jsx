@@ -7,7 +7,7 @@ import { Trash2 } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
-    STAGE2_VERIFY_CHECKLIST
+    STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES
 } from '@/Constants';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -759,8 +759,27 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Disnaker Tujuan *</label>
-                                <input type="text" value={data.disnaker_tujuan} onChange={e => setData('disnaker_tujuan', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" placeholder="Contoh: Disnaker Kab. Bekasi" />
+                                <select 
+                                    value={data.disnaker_tujuan} 
+                                    onChange={e => setData('disnaker_tujuan', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-blue-400"
+                                    required
+                                >
+                                    <option value="">-- Pilih Disnaker Provinsi --</option>
+                                    {data.disnaker_tujuan && 
+                                        !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) && 
+                                        !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
+                                        <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
+                                    )}
+                                    {INDONESIA_PROVINCES.map(prov => {
+                                        const val = `Disnaker Prov. ${prov}`;
+                                        return (
+                                            <option key={prov} value={val}>
+                                                {val}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
                             </div>
                         </div>
                         {/* Smart Recommendation */}

@@ -125,7 +125,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                     </div>
                                 </div>
 
-                                <button onClick={() => onSelectInspector(rec.user)}
+                                <button type="button" onClick={() => onSelectInspector(rec.user)}
                                     className={`w-full py-1.5 border text-xs font-bold flex justify-center items-center gap-1 ${
                                         selectedInspectorIds.includes(rec.user.id)
                                             ? 'bg-green-600 border-green-600 text-white hover:bg-green-700'
@@ -172,7 +172,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                     {filteredInspectors.map(ins => {
                         const isSelected = selectedInspectorIds.includes(ins.user.id);
                         return (
-                            <button key={ins.user.id}
+                            <button type="button" key={ins.user.id}
                                 onClick={() => onSelectInspector(ins.user)}
                                 className={`text-left p-2.5 border rounded-lg text-xs transition-all ${
                                     isSelected

@@ -254,6 +254,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         s10_progress_status:  job.s10_progress_status  ?? '',
         tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
     });
+    const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
     const [s14, setS14] = useState({
         s14_payment_status: job.s14_payment_status ?? 'pending',
         s14_payment_notes:  job.s14_payment_notes  ?? '',
@@ -348,6 +349,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             s10_progress_status:  job.s10_progress_status  ?? '',
             tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
         });
+        setS11({ no_resi: job.no_resi ?? '' });
         setS14({
             s14_payment_status: job.s14_payment_status ?? 'pending',
             s14_payment_notes:  job.s14_payment_notes  ?? '',
@@ -473,6 +475,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'No. Resi tersimpan.') });
     const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
 
     const handleUpdateJob = (e) => {
@@ -1115,6 +1118,23 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
                             <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
+                        {/* No. Resi — tracking number for Suket shipment */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                            <label className="block text-xs font-semibold text-blue-800">📦 No. Resi Pengiriman <span className="font-normal text-blue-600">(Opsional)</span></label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={s11.no_resi}
+                                    onChange={e => setS11({ ...s11, no_resi: e.target.value })}
+                                    placeholder="Contoh: JNE-123456789, SiCepat-987..."
+                                    className="flex-1 text-sm border border-blue-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                />
+                                <button type="button" onClick={handleSaveS11}
+                                    className="px-3 py-1.5 rounded text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap">
+                                    Simpan Resi
+                                </button>
+                            </div>
+                        </div>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
@@ -1403,8 +1423,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Pengiriman Suket ke Klien:</p>
-                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">✓ Suket telah diserahkan ke Klien</span></div>
+                    <div className="grid grid-cols-2 gap-2 bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div className="col-span-2"><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">✓ Suket telah diserahkan ke Klien</span></div>
+                        {job.no_resi && (
+                            <div className="col-span-2"><span className="text-gray-400">No. Resi:</span> <span className="font-semibold text-blue-700 font-mono">{job.no_resi}</span></div>
+                        )}
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">

@@ -777,6 +777,7 @@ class JobController extends Controller
 
         $validated = $request->validate([
             'tgl_submit_mkt' => 'required|date',
+            'no_resi'        => 'nullable|string|max:100',
         ]);
 
         $job->update($validated);

@@ -67,12 +67,19 @@ const DocChip = ({ doc, canManage, onDelete }) => (
 
 const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => {
     const getNextLabel = () => {
+        if (stage === 4) return 'Lanjut ke Stage 5 (LHPP) →';
+        if (stage === 13) return 'Lanjut ke Stage 5 (LHPP) →';
         if (stage === 11) return 'Lanjut ke Stage 11b (Pembayaran) →';
         if (stage === 14) return 'Lanjut ke Stage 12 (Closed) →';
         const currIdx = STAGES.findIndex(s => s.id === stage);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
-            const next = STAGES[currIdx + 1];
-            return `Lanjut ke Stage ${next.displayId || next.id} (${next.short}) →`;
+            let next = STAGES[currIdx + 1];
+            if (next.id === 13) {
+                next = STAGES[currIdx + 2];
+            }
+            if (next) {
+                return `Lanjut ke Stage ${next.displayId || next.id} (${next.short}) →`;
+            }
         }
         return `Lanjut ke Stage ${stage + 1} →`;
     };
@@ -85,7 +92,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
                 </div>
             )}
             <div className="flex gap-2">
-                {[2,4,5,8,9].includes(stage) && (
+                {[2,4,5,8,9,13].includes(stage) && (
                     <button type="button" onClick={onReject} disabled={processing}
                         className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                         Tolak / Kembalikan
@@ -191,11 +198,17 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
     const getNextStageId = (currentStageId) => {
+        if (currentStageId === 4) return 5;
+        if (currentStageId === 13) return 5;
         if (currentStageId === 11) return 14;
         if (currentStageId === 14) return 12;
         const currIdx = STAGES.findIndex(s => s.id === currentStageId);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
-            return STAGES[currIdx + 1].id;
+            let next = STAGES[currIdx + 1];
+            if (next.id === 13) {
+                next = STAGES[currIdx + 2];
+            }
+            return next ? next.id : currentStageId + 1;
         }
         return currentStageId + 1;
     };
@@ -901,28 +914,117 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                         </div>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        {/* Move to Stage 13 */}
+                        {/* Stage 4 Navigation Buttons */}
                         {s4UnitMismatch ? (
-                            <form onSubmit={handleRouteTo13} className="border border-red-200 rounded-lg p-3 bg-red-50">
-                                <p className="text-sm font-semibold text-red-800 mb-2">
-                                    ⚠️ Jumlah alat tidak sesuai. Lanjutkan ke Stage Perubahan Unit agar Marketing dapat merevisi PO/Invoice.
+                            <div className="border border-amber-200 rounded-lg p-3.5 bg-amber-50/80 space-y-3">
+                                <p className="text-xs font-semibold text-amber-900">
+                                    ⚠️ Jumlah alat yang diperiksa ({s4.actual_units}) tidak sesuai dengan jumlah unit awal ({job.units}).
                                 </p>
-                                <textarea rows={2} value={data.notes} onChange={e => setData('notes', e.target.value)}
-                                    className="w-full text-sm border rounded px-2 py-1.5 mb-2"
-                                    placeholder="Catatan untuk Marketing (opsional)…" />
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={handleRejectStage} disabled={processing}
-                                        className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
-                                        Tolak / Kembalikan
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            post(`/jobs/${job.id}/move`, {
+                                                data: { ...data, next_stage: 5 },
+                                                onSuccess: () => onClose()
+                                            });
+                                        }}
+                                        disabled={processing}
+                                        className="w-full px-4 py-2.5 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1"
+                                    >
+                                        🚀 Lanjut ke Stage 5 (Penyusunan LHPP) →
                                     </button>
-                                    <button type="submit" className="flex-1 py-2 rounded text-sm font-bold bg-red-600 text-white hover:bg-red-700">
-                                        Lanjut ke Perubahan Unit (MKT)
+                                    <button
+                                        type="button"
+                                        onClick={handleRouteTo13}
+                                        disabled={processing}
+                                        className="w-full px-4 py-2 rounded text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 shadow-xs flex items-center justify-center gap-1"
+                                    >
+                                        📝 Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
                                     </button>
                                 </div>
-                            </form>
+                            </div>
                         ) : (
                             <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                         )}
+                    </div>
+                )}
+
+                {/* ── STAGE 13 (Aktualisasi Unit — 4b MKT) ──────── */}
+                {s === 13 && (
+                    <div className="space-y-4">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <h4 className="text-xs font-bold text-amber-900 mb-1">
+                                📝 Stage 4b: Aktualisasi Unit (Marketing)
+                            </h4>
+                            <p className="text-xs text-amber-800">
+                                Hasil pemeriksaan lapangan: <strong>{job.actual_units ?? job.units} Unit</strong> (Unit awal: {job.units} Unit).
+                                {job.unit_count_notes && <span className="block mt-1 italic font-medium">Catatan: "{job.unit_count_notes}"</span>}
+                            </p>
+                        </div>
+
+                        <div className="bg-white border rounded-lg p-3 space-y-3">
+                            <h5 className="text-xs font-semibold text-gray-700">Penyesuaian Detail Job</h5>
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <label className="block text-gray-600 mb-1">Jumlah Unit Baru</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={editForm.data.units}
+                                        onChange={e => editForm.setData('units', e.target.value)}
+                                        className="w-full border rounded px-2 py-1.5 text-sm"
+                                    />
+                                </div>
+                                {canSeeNilai && (
+                                    <div>
+                                        <label className="block text-gray-600 mb-1">Nilai Kontrak / Invoice (Rp)</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.data.nilai}
+                                            onChange={e => editForm.setData('nilai', e.target.value)}
+                                            className="w-full border rounded px-2 py-1.5 text-sm"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleUpdateJob}
+                                disabled={editForm.processing}
+                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded"
+                            >
+                                Simpan Penyesuaian Job
+                            </button>
+                        </div>
+
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                type="button"
+                                onClick={handleRejectStage}
+                                disabled={processing}
+                                className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                            >
+                                Tolak / Kembalikan
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    post(`/jobs/${job.id}/move`, {
+                                        data: { ...data, next_stage: 5 },
+                                        onSuccess: () => onClose()
+                                    });
+                                }}
+                                disabled={processing}
+                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+                            >
+                                {processing ? '...' : '🚀 Lanjut ke Stage 5 (LHPP) →'}
+                            </button>
+                        </div>
                     </div>
                 )}
 

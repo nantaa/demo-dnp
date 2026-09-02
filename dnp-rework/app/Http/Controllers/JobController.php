@@ -196,15 +196,8 @@ class JobController extends Controller
             $validationRules['cert_ids']           = 'nullable|array';
         }
 
-        // Stage 4: unit count must match if moving to Stage 5
-        if ($currentStage == 4) {
-            $actualUnits = $job->actual_units;
-            if ($request->input('next_stage') == 5 && $actualUnits !== null && (int)$actualUnits !== (int)$job->units) {
-                return back()->withErrors([
-                    'unit_count' => 'Jumlah alat yang diperiksa (' . $actualUnits . ') tidak sesuai dengan jumlah alat di Job (' . $job->units . '). Lanjutkan ke Aktualisasi Unit (MKT).',
-                ]);
-            }
-        }
+        // Stage 4: move to Stage 5 or Stage 13 allowed
+
 
         // Stage 5 → 6: require LHPP + BAP uploaded
         if ($currentStage == 5) {

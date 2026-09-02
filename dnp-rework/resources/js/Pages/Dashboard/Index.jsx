@@ -322,7 +322,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                                             <td className="p-3 font-mono font-bold text-gray-800">{h.job.kode}</td>
                                             <td className="p-3">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-800 border">
-                                                    S{h.stage}
+                                                    S{getStageDisplayId(h.stage)}
                                                 </span>
                                             </td>
                                             <td className="p-3 text-gray-600">{h.action}</td>

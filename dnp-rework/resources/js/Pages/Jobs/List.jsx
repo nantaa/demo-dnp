@@ -67,16 +67,19 @@ export default function JobList({ jobs, auth }) {
         if (filteredJobs.length === 0) return showWarning('Ekspor Gagal', 'Tidak ada data untuk diexport');
         
         const headers = ['Kode', 'Klien', 'Pesawat', 'Unit', 'Lokasi', 'Stage', 'Marketing', 'Tgl Pelaksanaan'];
-        const rows = filteredJobs.map(job => [
-            job.kode,
-            `"${job.klien}"`,
-            `"${job.pesawat}"`,
-            job.units,
-            `"${job.lokasi}"`,
-            job.stage,
-            `"${job.owner_marketing}"`,
-            job.tgl_pelaksanaan || ''
-        ]);
+        const rows = filteredJobs.map(job => {
+            const stageInfo = STAGES.find(s => s.id === job.stage);
+            return [
+                job.kode,
+                `"${job.klien}"`,
+                `"${job.pesawat}"`,
+                job.units,
+                `"${job.lokasi}"`,
+                stageInfo?.displayId || job.stage,
+                `"${job.owner_marketing}"`,
+                job.tgl_pelaksanaan || ''
+            ];
+        });
         
         const csvContent = "data:text/csv;charset=utf-8," 
             + headers.join(",") + "\n"

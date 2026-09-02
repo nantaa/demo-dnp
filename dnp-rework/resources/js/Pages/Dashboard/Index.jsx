@@ -689,7 +689,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                                 className="text-[10px] font-bold rounded bg-blue-50 text-blue-900 p-1.5 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors flex flex-col gap-0.5 shadow-xs">
                                 <div className="truncate flex justify-between items-center">
                                     <span className="truncate font-semibold text-blue-950">{j.kode}</span>
-                                    <span className="text-[9px] bg-blue-200 text-blue-800 px-1 rounded font-mono ml-1">S{j.stage}</span>
+                                    <span className="text-[9px] bg-blue-200 text-blue-800 px-1 rounded font-mono ml-1">S{getStageDisplayId(j.stage)}</span>
                                 </div>
                                 <div className="text-[9px] font-medium text-gray-600 truncate">{j.klien}</div>
                                 {insList.length > 0 && (

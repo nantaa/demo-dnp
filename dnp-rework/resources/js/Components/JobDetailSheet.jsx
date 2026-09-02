@@ -1383,7 +1383,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             );
         }
 
-        if (s === 42) {
+        if (s === 13) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Aktualisasi Unit:</p>

@@ -15,6 +15,11 @@ export const STAGES = [
     { id: 12, name: 'Selesai / Closed', short: 'Closed', role: 'finance', sla: null },
 ];
 
+export const getStageDisplayId = (stageId) => {
+    const stage = STAGES.find(s => s.id === (typeof stageId === 'number' ? stageId : parseInt(stageId)));
+    return stage?.displayId || String(stageId || '');
+};
+
 export const ROLES = {
     marketing: { name: 'Marketing', label: 'MKT' },
     admin: { name: 'Admin Dokumen & RU', label: 'ADM' },

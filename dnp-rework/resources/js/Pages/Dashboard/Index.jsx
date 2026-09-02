@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { STAGES } from '@/Constants';
+import { STAGES, getStageDisplayId } from '@/Constants';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { showSuccess } from '@/swal';
 import { 
@@ -80,7 +80,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
     }, [jobs, filterMine, isMGR, user.name, user.id]);
 
     const stats = useMemo(() => {
-        const active = personalFiltered.filter(j => j.stage < 12);
+        const active = personalFiltered.filter(j => j.stage !== 12);
         const completed = personalFiltered.filter(j => j.stage === 12);
         const thisMonth = completed.filter(j => {
             const d = new Date(j.updated_at);
@@ -103,7 +103,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                 return { ...j, deadlineDays, elapsedDays, remainingDays };
             }).sort((a, b) => a.remainingDays - b.remainingDays) : [];
 
-        const stage4Mine = isINS ? personalFiltered.filter(j => j.stage === 4) : [];
+        const stage4Mine = isINS ? personalFiltered.filter(j => j.stage === 4 || j.stage === 13) : [];
 
         // MGR-specific
         const lhppNeedReview = jobs.filter(j => j.stage === 5 && j.peer_review_status === 'submitted');
@@ -135,10 +135,10 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
         const workloadByInspektur = isMGR || isSuper ? (inspectors || []).map(insp => {
             const activeInspJobs = jobs.filter(j =>
-                j.stage >= 4 && j.stage <= 6 &&
+                [4, 13, 5, 6].includes(j.stage) &&
                 (j.inspectors || []).some(x => x.id === insp.user_id)
             );
-            const lapanganCount = activeInspJobs.filter(j => j.stage === 4).length;
+            const lapanganCount = activeInspJobs.filter(j => j.stage === 4 || j.stage === 13).length;
             const lhppCount = activeInspJobs.filter(j => j.stage === 6).length;
             const overdueCount = activeInspJobs.filter(j => jobStatus(j) === 'overdue').length;
 
@@ -175,8 +175,8 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             { label: 'Penawaran / Stage 1', stage: 1, count: personalFiltered.filter(j => j.stage === 1).length, total: personalFiltered.filter(j => j.stage === 1).reduce((s, j) => s + Number(j.nilai || 0), 0) },
             { label: 'Verifikasi Dokumen', stage: 2, count: personalFiltered.filter(j => j.stage === 2).length, total: personalFiltered.filter(j => j.stage === 2).reduce((s, j) => s + Number(j.nilai || 0), 0) },
             { label: 'Penjadwalan', stage: 3, count: personalFiltered.filter(j => j.stage === 3).length, total: personalFiltered.filter(j => j.stage === 3).reduce((s, j) => s + Number(j.nilai || 0), 0) },
-            { label: 'Pelaksanaan + LHPP', stage: [4, 5, 6], count: personalFiltered.filter(j => [4, 5, 6].includes(j.stage)).length, total: personalFiltered.filter(j => [4, 5, 6].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) },
-            { label: 'Disnaker + Penagihan', stage: [7, 8, 9, 10, 11], count: personalFiltered.filter(j => [7, 8, 9, 10, 11].includes(j.stage)).length, total: personalFiltered.filter(j => [7, 8, 9, 10, 11].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) }
+            { label: 'Pelaksanaan + LHPP', stage: [4, 13, 5, 6], count: personalFiltered.filter(j => [4, 13, 5, 6].includes(j.stage)).length, total: personalFiltered.filter(j => [4, 13, 5, 6].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) },
+            { label: 'Disnaker + Penagihan', stage: [7, 8, 9, 10, 11, 14], count: personalFiltered.filter(j => [7, 8, 9, 10, 11, 14].includes(j.stage)).length, total: personalFiltered.filter(j => [7, 8, 9, 10, 11, 14].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) }
         ];
 
         // ADM-specific

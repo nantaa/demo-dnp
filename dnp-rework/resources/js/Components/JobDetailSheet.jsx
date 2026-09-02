@@ -1587,9 +1587,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
             <div className="relative border-l-2 border-gray-200 ml-4 pl-6 space-y-8">
                 {STAGES.map(stage => {
-                    const isPast = job.stage > stage.id;
-                    const isCurrent = job.stage === stage.id;
-                    const isFuture = job.stage < stage.id;
+                    const currentStageIdx = STAGES.findIndex(s => s.id === job.stage);
+                    const stageIdx = STAGES.findIndex(s => s.id === stage.id);
+                    const isPast = currentStageIdx > stageIdx;
+                    const isCurrent = currentStageIdx === stageIdx;
+                    const isFuture = currentStageIdx < stageIdx;
                     
                     let iconBg = 'bg-gray-100 border-gray-300';
                     if (isPast) iconBg = 'bg-emerald-500 border-emerald-600 text-white shadow-2xs';

@@ -312,7 +312,7 @@ class JobController extends Controller
                 'cert_ids'         => json_encode($validated['cert_ids'] ?? []),
             ]);
 
-            $this->generateSuratTugas($job);
+            // $this->generateSuratTugas($job); // Dinonaktifkan sementara karena generator error
         }
 
         // Stage 7 → 8: set 30-day Disnaker EWS deadline
@@ -1031,6 +1031,9 @@ class JobController extends Controller
      */
     public function generateSuratTugas(Job $job)
     {
+        // Generator Surat Tugas dinonaktifkan sementara karena template/engine error
+        return;
+
         $templatePath = resource_path('templates/SuratTugas.docx');
         if (!file_exists($templatePath)) {
             Log::error("Surat Tugas template not found at: " . $templatePath);

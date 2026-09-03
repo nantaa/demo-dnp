@@ -184,16 +184,17 @@ class JobController extends Controller
             ]);
         }
 
-        // Stage 3 → 4: scheduling validation
+        // Stage 3 → 4: scheduling validation (per-day scheduler)
         if ($currentStage == 3) {
-            $validationRules['tgl_pelaksanaan']   = 'required|date';
-            $validationRules['jam_mulai']          = 'required|string';
-            $validationRules['durasi_hari']        = 'required|integer|min:1';
-            $validationRules['disnaker_tujuan']    = 'required|string';
-            $validationRules['inspector_ids']      = 'required|array|min:1';
-            $validationRules['report_writer_id']   = 'nullable|exists:users,id';
-            $validationRules['alat_ids']           = 'nullable|array';
-            $validationRules['cert_ids']           = 'nullable|array';
+            $validationRules['schedule_days']                   = 'required|array|min:1';
+            $validationRules['schedule_days.*.date']            = 'required|date';
+            $validationRules['schedule_days.*.inspector_ids']   = 'required|array|min:1';
+            $validationRules['schedule_days.*.inspector_ids.*'] = 'exists:users,id';
+            $validationRules['jam_mulai']                       = 'required|string';
+            $validationRules['disnaker_tujuan']                 = 'required|string';
+            $validationRules['report_writer_id']                = 'nullable|exists:users,id';
+            $validationRules['alat_ids']                        = 'nullable|array';
+            $validationRules['cert_ids']                        = 'nullable|array';
         }
 
         // Stage 4: move to Stage 5 or Stage 13 allowed
@@ -273,22 +274,33 @@ class JobController extends Controller
         $validated = $request->validate($validationRules);
         $nextStage = $validated['next_stage'];
 
-        // Stage 3 specific: sync inspectors + save scheduling data
+        // Stage 3 specific: sync inspectors + save per-day schedule
         if ($currentStage == 3) {
-            $job->inspectors()->sync($validated['inspector_ids'] ?? []);
-            $tgl_pelaksanaan = Carbon::parse($validated['tgl_pelaksanaan']);
+            $scheduleDays = $validated['schedule_days'];
+
+            // Collect all unique inspector IDs across every day
+            $allInspectorIds = collect($scheduleDays)
+                ->flatMap(fn($d) => $d['inspector_ids'])
+                ->unique()
+                ->values()
+                ->toArray();
+
+            $job->inspectors()->sync($allInspectorIds);
+
+            // First day's date is the canonical start date (for H-5, summary displays)
+            $tgl_pelaksanaan = Carbon::parse($scheduleDays[0]['date']);
+
             $job->update([
+                'schedule_days'    => $scheduleDays,
                 'tgl_pelaksanaan'  => $tgl_pelaksanaan,
                 'jam_mulai'        => $validated['jam_mulai'],
-                'durasi_hari'      => $validated['durasi_hari'],
+                'durasi_hari'      => count($scheduleDays),
                 'disnaker_tujuan'  => $validated['disnaker_tujuan'],
                 'report_writer_id' => $validated['report_writer_id'] ?? null,
                 'tgl_h5'           => $tgl_pelaksanaan->copy()->subDays(5),
                 'alat_ids'         => json_encode($validated['alat_ids'] ?? []),
                 'cert_ids'         => json_encode($validated['cert_ids'] ?? []),
             ]);
-            // Disabled: Word Surat Tugas generator is not working/required
-            // $this->generateSuratTugas($job);
         }
 
         // Stage 7 → 8: set 30-day Disnaker EWS deadline

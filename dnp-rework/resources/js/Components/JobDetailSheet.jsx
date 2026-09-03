@@ -268,6 +268,27 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
     });
     const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
+    const [isMoving, setIsMoving] = useState(false);
+
+    // ── Schedule builder state (Stage 3) ─────────────────────────────────────
+    const initScheduleDays = (j) => {
+        const saved = j.schedule_days;
+        if (Array.isArray(saved) && saved.length > 0) {
+            return saved.map(d => ({
+                date: d.date || '',
+                inspector_ids: Array.isArray(d.inspector_ids) ? d.inspector_ids : [],
+            }));
+        }
+        // Backward compat: single-day from flat fields
+        if (j.tgl_pelaksanaan) {
+            return [{
+                date: j.tgl_pelaksanaan.slice(0, 10),
+                inspector_ids: j.inspectors ? j.inspectors.map(i => i.id) : [],
+            }];
+        }
+        return [{ date: '', inspector_ids: [] }];
+    };
+    const [scheduleDays, setScheduleDays] = useState(() => initScheduleDays(job));
     const [s14, setS14] = useState({
         s14_payment_status: job.s14_payment_status ?? 'pending',
         s14_payment_notes:  job.s14_payment_notes  ?? '',
@@ -367,6 +388,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             s14_payment_status: job.s14_payment_status ?? 'pending',
             s14_payment_notes:  job.s14_payment_notes  ?? '',
         });
+        setScheduleDays(initScheduleDays(job));
 
         const saved = parseJsonObject(job.s2_verify_data);
         const init = {};
@@ -432,16 +454,37 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // Stage 4: unit mismatch
     const s4UnitMismatch = s4.actual_units != null && parseInt(s4.actual_units) !== parseInt(job.units);
 
+    // ── Stage 3 schedule validity ────────────────────────────────────────────
+    const allSelectedInspectorIds = [...new Set(scheduleDays.flatMap(d => d.inspector_ids))];
+    const s3ScheduleValid =
+        scheduleDays.length > 0 &&
+        scheduleDays.every(d => d.date?.trim()) &&
+        scheduleDays.every(d => d.inspector_ids.length > 0);
+
     // ── Handlers ─────────────────────────────────────────────────────────────
     const handleMoveStage = (e) => {
         e.preventDefault();
         if (job.stage === 1 && !stage1DocOk) return showError('Upload Dokumen', 'Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
         if (job.stage === 2 && !stage2CanMove) return showError('Dokumen Belum Lengkap', 'Lengkapi dokumen atau minta persetujuan Kadiv/MGR.');
         if (job.stage === 3) {
-            if (!data.tgl_pelaksanaan) return showError('Validasi', 'Tanggal Pelaksanaan wajib diisi!');
-            if (!data.inspector_ids?.length) return showError('Validasi', 'Pilih minimal satu inspektur!');
+            if (!data.disnaker_tujuan) return showError('Validasi', 'Pilih Disnaker Tujuan!');
+            if (!s3ScheduleValid) return showError('Validasi', 'Lengkapi tanggal dan inspektur untuk setiap hari!');
+            setIsMoving(true);
+            router.post(`/jobs/${job.id}/move`, {
+                next_stage:      data.next_stage,
+                notes:           data.notes,
+                jam_mulai:       data.jam_mulai,
+                disnaker_tujuan: data.disnaker_tujuan,
+                report_writer_id: data.report_writer_id,
+                alat_ids:        data.alat_ids,
+                cert_ids:        data.cert_ids,
+                schedule_days:   scheduleDays,
+            }, {
+                onSuccess: () => { setIsMoving(false); onClose(); },
+                onError:   () => setIsMoving(false),
+            });
+            return;
         }
-        
         post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
     };
 
@@ -756,57 +799,152 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 3 ─────────────────────────────────── */}
                 {s === 3 && (
                     <div className="space-y-4">
-                        {/* Scheduling fields */}
+                        {/* Row 1: Jam Mulai + Disnaker */}
                         <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Pelaksanaan *</label>
-                                <input type="date" value={data.tgl_pelaksanaan} onChange={e => setData('tgl_pelaksanaan', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" required />
-                            </div>
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Jam Mulai *</label>
                                 <input type="time" value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Durasi (hari) *</label>
-                                <input type="number" min="1" value={data.durasi_hari} onChange={e => setData('durasi_hari', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-400" />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Disnaker Tujuan *</label>
-                                <select 
-                                    value={data.disnaker_tujuan} 
+                                <select
+                                    value={data.disnaker_tujuan}
                                     onChange={e => setData('disnaker_tujuan', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-blue-400"
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-indigo-400"
                                     required
                                 >
                                     <option value="">-- Pilih Disnaker Provinsi --</option>
-                                    {data.disnaker_tujuan && 
-                                        !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) && 
+                                    {data.disnaker_tujuan &&
+                                        !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) &&
                                         !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
                                         <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
                                     )}
                                     {INDONESIA_PROVINCES.map(prov => {
                                         const val = `Disnaker Prov. ${prov}`;
-                                        return (
-                                            <option key={prov} value={val}>
-                                                {val}
-                                            </option>
-                                        );
+                                        return <option key={prov} value={val}>{val}</option>;
                                     })}
                                 </select>
                             </div>
                         </div>
-                        {/* Smart Recommendation */}
+
+                        {/* ── Schedule Builder ── */}
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
+                            {/* Header: title + add/remove day controls */}
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-indigo-900">📅 Jadwal Pelaksanaan</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] text-indigo-700">Hari:</span>
+                                    <button type="button"
+                                        onClick={() => scheduleDays.length > 1 && setScheduleDays(prev => prev.slice(0, -1))}
+                                        disabled={scheduleDays.length <= 1}
+                                        className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100 disabled:opacity-40">−</button>
+                                    <span className="text-sm font-bold text-indigo-900 w-5 text-center">{scheduleDays.length}</span>
+                                    <button type="button"
+                                        onClick={() => setScheduleDays(prev => [...prev, { date: '', inspector_ids: [] }])}
+                                        className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100">+</button>
+                                </div>
+                            </div>
+
+                            {/* Day rows */}
+                            {scheduleDays.map((day, dayIdx) => {
+                                const allInspectors = [
+                                    ...(recommendations.recommended || []),
+                                    ...(recommendations.eliminated  || []),
+                                ];
+                                return (
+                                    <div key={dayIdx} className="bg-white border border-indigo-200 rounded-lg p-3">
+                                        {/* Day header: label + date picker + remove */}
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded shrink-0">
+                                                Hari {dayIdx + 1}
+                                            </span>
+                                            <input
+                                                type="date"
+                                                value={day.date}
+                                                onChange={e => {
+                                                    const updated = scheduleDays.map((d, i) =>
+                                                        i === dayIdx ? { ...d, date: e.target.value } : d
+                                                    );
+                                                    setScheduleDays(updated);
+                                                }}
+                                                className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-indigo-400"
+                                            />
+                                            {scheduleDays.length > 1 && (
+                                                <button type="button"
+                                                    onClick={() => setScheduleDays(prev => prev.filter((_, i) => i !== dayIdx))}
+                                                    className="text-red-400 hover:text-red-600 text-base leading-none px-1 shrink-0" title="Hapus hari ini">✕</button>
+                                            )}
+                                        </div>
+
+                                        {/* Inspector chips */}
+                                        <p className="text-[10px] text-gray-500 mb-1.5">Inspektur pada Hari {dayIdx + 1}:</p>
+                                        {allInspectors.length === 0 ? (
+                                            <p className="text-[11px] text-gray-400 italic">Memuat data inspektur...</p>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {allInspectors.map(item => {
+                                                    const uid = item.user.id;
+                                                    const isSelected = day.inspector_ids.includes(uid);
+                                                    const isOverloaded = item.statuses
+                                                        ? item.statuses.some(st => st === 'Overload')
+                                                        : false;
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            key={uid}
+                                                            onClick={() => {
+                                                                const updated = scheduleDays.map((d, i) => {
+                                                                    if (i !== dayIdx) return d;
+                                                                    const ids = d.inspector_ids.includes(uid)
+                                                                        ? d.inspector_ids.filter(id => id !== uid)
+                                                                        : [...d.inspector_ids, uid];
+                                                                    return { ...d, inspector_ids: ids };
+                                                                });
+                                                                setScheduleDays(updated);
+                                                            }}
+                                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                                                                isSelected
+                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                                                    : isOverloaded
+                                                                        ? 'bg-gray-50 text-gray-400 border-gray-200 hover:border-red-300 hover:text-red-500'
+                                                                        : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+                                                            }`}
+                                                        >
+                                                            {isSelected && <span>✓</span>}
+                                                            {item.user.name}
+                                                            {isOverloaded && !isSelected && <span className="text-red-400 text-[9px]">⚠</span>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                        {!day.date && (
+                                            <p className="text-[10px] text-red-500 mt-1">⚠ Pilih tanggal untuk hari ini</p>
+                                        )}
+                                        {day.inspector_ids.length === 0 && (
+                                            <p className="text-[10px] text-red-500 mt-0.5">⚠ Pilih minimal 1 inspektur untuk hari ini</p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Smart Recommendation — quick-fill to all days */}
                         <SmartRecommendation
                             job={job}
-                            selectedInspectorIds={data.inspector_ids}
+                            selectedInspectorIds={allSelectedInspectorIds}
                             onSelectInspector={(insUser) => {
-                                const ids = data.inspector_ids.includes(insUser.id)
-                                    ? data.inspector_ids.filter(id => id !== insUser.id)
-                                    : [...data.inspector_ids, insUser.id];
-                                setData('inspector_ids', ids);
+                                const uid = insUser.id;
+                                const isInAll = scheduleDays.every(d => d.inspector_ids.includes(uid));
+                                setScheduleDays(scheduleDays.map(d => ({
+                                    ...d,
+                                    inspector_ids: isInAll
+                                        ? d.inspector_ids.filter(id => id !== uid)
+                                        : d.inspector_ids.includes(uid)
+                                            ? d.inspector_ids
+                                            : [...d.inspector_ids, uid],
+                                })));
                             }}
                         />
 
@@ -831,7 +969,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 ))}
                             </select>
                         </div>
-                        {/* Alat & Sertifikat */}
+
+                        {/* Alat Uji */}
                         {masterData.alat_uji.length > 0 && (
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Alat Uji yang Digunakan</label>
@@ -849,9 +988,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </div>
                             </div>
                         )}
+
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!data.tgl_pelaksanaan || !data.inspector_ids?.length}
-                            disabledMsg={!data.inspector_ids?.length ? 'Pilih minimal satu inspektur' : ''} />
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
+                            disabled={!s3ScheduleValid || !data.disnaker_tujuan}
+                            disabledMsg={!data.disnaker_tujuan ? 'Pilih Disnaker Tujuan' : !s3ScheduleValid ? 'Lengkapi jadwal dan inspektur tiap hari' : ''} />
                     </div>
                 )}
 
@@ -1343,16 +1484,40 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
 
         if (s === 3) {
+            const schedDays = parseJsonArray(job.schedule_days);
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penjadwalan:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
-                        <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
-                        <div><span className="text-gray-400">Jam:</span> <span className="font-semibold text-gray-800">{job.jam_mulai || '-'}</span></div>
-                        <div><span className="text-gray-400">Durasi:</span> <span className="font-semibold text-gray-800">{job.durasi_hari ? `${job.durasi_hari} Hari` : '-'}</span></div>
-                        <div><span className="text-gray-400">Disnaker Tujuan:</span> <span className="font-semibold text-gray-800">{job.disnaker_tujuan || '-'}</span></div>
-                        <div className="col-span-2"><span className="text-gray-400">Inspektur Bertugas:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
+                        <div><span className="text-gray-400">Jam Mulai:</span> <span className="font-semibold text-gray-800">{job.jam_mulai || '-'}</span></div>
+                        <div><span className="text-gray-400">Total Hari:</span> <span className="font-semibold text-gray-800">{job.durasi_hari ? `${job.durasi_hari} Hari` : '-'}</span></div>
+                        <div className="col-span-2"><span className="text-gray-400">Disnaker Tujuan:</span> <span className="font-semibold text-gray-800">{job.disnaker_tujuan || '-'}</span></div>
                     </div>
+                    {schedDays.length > 0 ? (
+                        <div className="space-y-1.5">
+                            {schedDays.map((day, idx) => {
+                                const dayInspectors = (job.inspectors || []).filter(ins =>
+                                    (day.inspector_ids || []).map(String).includes(String(ins.id))
+                                );
+                                return (
+                                    <div key={idx} className="flex gap-2 items-start text-xs bg-white border border-gray-200 rounded px-2.5 py-1.5">
+                                        <span className="font-bold text-indigo-700 shrink-0">Hari {idx + 1} ({fmt(day.date)}):</span>
+                                        <span className="text-gray-700">
+                                            {dayInspectors.length > 0
+                                                ? dayInspectors.map(i => i.name).join(', ')
+                                                : (day.inspector_ids?.length > 0 ? `${day.inspector_ids.length} inspektur` : '-')}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        /* Backward compat: old flat format */
+                        <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1">
+                            <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
+                            <div><span className="text-gray-400">Inspektur Bertugas:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
+                        </div>
+                    )}
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
                             <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}

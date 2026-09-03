@@ -56,6 +56,7 @@ class Job extends Model
         's2_verify_data'              => 'array',
         's4_checklist'                => 'array',
         's7_bundel_checklist'         => 'array',
+        'schedule_days'               => 'array',
     ];
 
     /**

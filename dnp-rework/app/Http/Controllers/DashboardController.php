@@ -18,11 +18,7 @@ class DashboardController extends Controller
         $query = Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])->orderBy('updated_at', 'desc');
 
         if ($user->role === 'marketing' && !$user->isSuperadmin()) {
-            $query->where(function($q) use ($user) {
-                $q->where(function($sub) use ($user) {
-                    $sub->where('stage', 1)->where('owner_marketing', $user->name);
-                })->orWhere('stage', '!=', 1);
-            });
+            $query->where('owner_marketing', $user->name);
         }
 
         return [

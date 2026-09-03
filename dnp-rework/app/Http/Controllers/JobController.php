@@ -35,10 +35,10 @@ class JobController extends Controller
         }
 
         if ($user->role === 'marketing') {
+            if ($job && !empty($job->owner_marketing) && $job->owner_marketing !== $user->name) {
+                return false;
+            }
             if (in_array($stage, [1, 11, 13])) {
-                if ($job && !empty($job->owner_marketing) && $job->owner_marketing === $user->name) {
-                    return true;
-                }
                 return $user->canOwnStage($stage);
             }
             return false;
@@ -960,11 +960,7 @@ class JobController extends Controller
                    ->orderBy('created_at', 'desc');
 
         if ($user->role === 'marketing' && !$user->isSuperadmin()) {
-            $query->where(function($q) use ($user) {
-                $q->where(function($sub) use ($user) {
-                    $sub->where('stage', 1)->where('owner_marketing', $user->name);
-                })->orWhere('stage', '!=', 1);
-            });
+            $query->where('owner_marketing', $user->name);
         }
 
         $jobs = $query->get();

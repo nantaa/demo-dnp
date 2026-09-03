@@ -92,8 +92,8 @@ export default function KanbanIndex({ jobs, auth }) {
                     const columnJobs = jobs.filter(j => {
                         if (j.stage !== stage.id) return false;
                         if (permissions === 'superadmin') return true;
-                        if (auth.user.role === 'marketing' && j.owner_marketing === auth.user.name) {
-                            return true;
+                        if (auth.user.role === 'marketing') {
+                            return j.owner_marketing === auth.user.name;
                         }
                         if (auth.user.role === 'inspektur') {
                             const uId = String(auth.user.id);

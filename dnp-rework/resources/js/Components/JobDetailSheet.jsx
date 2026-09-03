@@ -92,7 +92,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
                 </div>
             )}
             <div className="flex gap-2">
-                {[2,4,5,8,9,13].includes(stage) && (
+                {[2,4,5,8,9,10,13].includes(stage) && (
                     <button type="button" onClick={onReject} disabled={processing}
                         className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                         Tolak / Kembalikan
@@ -262,6 +262,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     });
     const [s9,  setS9]  = useState({ s9_progress_status: job.s9_progress_status  ?? '' });
     const [s10, setS10] = useState({
+        invoice_no:           job.invoice_no           ?? '',
         total_invoice_amount: job.total_invoice_amount ?? '',
         tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
         s10_progress_status:  job.s10_progress_status  ?? '',
@@ -378,6 +379,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         });
         setS9({ s9_progress_status: job.s9_progress_status ?? '' });
         setS10({
+            invoice_no:           job.invoice_no           ?? '',
             total_invoice_amount: job.total_invoice_amount ?? '',
             tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
             s10_progress_status:  job.s10_progress_status  ?? '',
@@ -485,6 +487,34 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             });
             return;
         }
+        if (job.stage === 10) {
+            if (!s10.invoice_no?.trim()) return showError('Validasi', 'Nomor Invoice wajib diisi.');
+            if (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) return showError('Validasi', 'Total Invoice (Nilai Tagihan) wajib diisi dengan benar.');
+            if (!s10.tgl_invoice_issued) return showError('Validasi', 'Tanggal Invoice Diterbitkan wajib diisi.');
+            
+            const hasInvoiceDoc = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'].includes(d.type));
+            if (!hasInvoiceDoc) return showError('Dokumen Belum Lengkap', 'Dokumen "Invoice (PDF)" wajib diunggah sebelum melanjutkan.');
+
+            setIsMoving(true);
+            router.post(`/jobs/${job.id}/stage10-data`, s10, {
+                onSuccess: () => {
+                    router.post(`/jobs/${job.id}/move`, { notes: data.notes }, {
+                        onSuccess: () => { setIsMoving(false); onClose(); },
+                        onError: (errs) => {
+                            setIsMoving(false);
+                            const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
+                            showError('Gagal Pindah Stage', msg);
+                        },
+                    });
+                },
+                onError: (errs) => {
+                    setIsMoving(false);
+                    const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan data penagihan.';
+                    showError('Gagal Simpan', msg);
+                },
+            });
+            return;
+        }
         post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
     };
 
@@ -499,6 +529,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (job.stage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
         else if (job.stage === 5) targetStage = 4;
         else if (job.stage === 8) targetStage = 6;
+        else if (job.stage === 10) targetStage = 9;
         else if (job.stage === 14) targetStage = 11;
         const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
@@ -1365,45 +1396,61 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 )}
 
                 {/* ── STAGE 10 (Penagihan — Finance) ──────────── */}
-                {s === 10 && (
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Total Invoice (Rp)</label>
-                                <input type="number" value={s10.total_invoice_amount}
-                                    onChange={e => setS10({ ...s10, total_invoice_amount: e.target.value })}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                {s === 10 && (() => {
+                    const hasInvoiceDoc10 = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'].includes(d.type));
+                    const s10CanMove = s10.invoice_no?.trim() && s10.total_invoice_amount && parseFloat(s10.total_invoice_amount) > 0 && s10.tgl_invoice_issued && hasInvoiceDoc10;
+                    const s10DisabledMsg = !s10.invoice_no?.trim() ? 'Isi Nomor Invoice terlebih dahulu' :
+                        (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) ? 'Isi Total Invoice (Nilai Tagihan) dengan benar' :
+                        !s10.tgl_invoice_issued ? 'Isi Tanggal Invoice Diterbitkan terlebih dahulu' :
+                        !hasInvoiceDoc10 ? 'Upload Dokumen "Invoice (PDF)" terlebih dahulu' : '';
+
+                    return (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nomor Invoice</label>
+                                    <input type="text" value={s10.invoice_no}
+                                        placeholder="Contoh: INV/2026/001"
+                                        onChange={e => setS10({ ...s10, invoice_no: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Total Invoice (Rp)</label>
+                                    <input type="number" value={s10.total_invoice_amount}
+                                        onChange={e => setS10({ ...s10, total_invoice_amount: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan</label>
+                                    <input type="date" value={s10.tgl_invoice_issued}
+                                        onChange={e => setS10({ ...s10, tgl_invoice_issued: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Submit ke MKT</label>
+                                    <input type="date" value={s10.tgl_submit_mkt}
+                                        onChange={e => setS10({ ...s10, tgl_submit_mkt: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
+                                    <select value={s10.s10_progress_status} onChange={e => setS10({ ...s10, s10_progress_status: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                                        <option value="">-- Pilih Status --</option>
+                                        {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan</label>
-                                <input type="date" value={s10.tgl_invoice_issued}
-                                    onChange={e => setS10({ ...s10, tgl_invoice_issued: e.target.value })}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
-                                <select value={s10.s10_progress_status} onChange={e => setS10({ ...s10, s10_progress_status: e.target.value })}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
-                                    <option value="">-- Pilih Status --</option>
-                                    {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                                </select>
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Submit ke MKT</label>
-                                <input type="date" value={s10.tgl_submit_mkt}
-                                    onChange={e => setS10({ ...s10, tgl_submit_mkt: e.target.value })}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
-                            </div>
+                            <button type="button" onClick={handleSaveS10}
+                                className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                                Simpan Data Penagihan
+                            </button>
+                            {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                            <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                            <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} disabled={!s10CanMove} disabledMsg={s10DisabledMsg} />
                         </div>
-                        <button type="button" onClick={handleSaveS10}
-                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                            Simpan Data Penagihan
-                        </button>
-                        {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
-                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
-                    </div>
-                )}
+                    );
+                })()}
 
                 {/* ── STAGE 11 (Pengiriman SUKET — MKT) ──────── */}
                 {s === 11 && (

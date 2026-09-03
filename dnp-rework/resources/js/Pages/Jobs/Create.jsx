@@ -2,13 +2,14 @@ import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import IndonesiaLocationSelect from '@/Components/IndonesiaLocationSelect';
+import { PESAWAT_TYPES } from '@/Constants';
 
 export default function JobCreate({ auth }) {
     const isMkt = auth?.user?.role === 'marketing';
 
     const { data, setData, post, processing, errors } = useForm({
         klien: '',
-        pesawat: 'Boiler',
+        pesawat: [],
         lokasi: '',
         // Auto-fill from logged-in user name for marketing; editable for others
         owner_marketing: isMkt ? (auth.user.name || '') : '',
@@ -19,6 +20,22 @@ export default function JobCreate({ auth }) {
         no_po: '',
         tgl_po: '',
     });
+
+    const handleCheckboxChange = (type) => {
+        if (data.pesawat.includes(type)) {
+            setData('pesawat', data.pesawat.filter(item => item !== type));
+        } else {
+            setData('pesawat', [...data.pesawat, type]);
+        }
+    };
+
+    const handleSelectAll = () => {
+        if (data.pesawat.length === PESAWAT_TYPES.length) {
+            setData('pesawat', []);
+        } else {
+            setData('pesawat', [...PESAWAT_TYPES]);
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -51,23 +68,43 @@ export default function JobCreate({ auth }) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Alat yang di RiksaUji</label>
-                            <select
-                                value={data.pesawat}
-                                onChange={e => setData('pesawat', e.target.value)}
-                                className="w-full px-3 py-2 border rounded"
-                                required
-                            >
-                                <option value="">-- Pilih Jenis Alat --</option>
-                                <option value="Proteksi Kebakaran (Form 65 K)">Proteksi Kebakaran (Form 65 K)</option>
-                                <option value="Lift / Dumbwaiter (Form 36/38/39)">Lift / Dumbwaiter (Form 36/38/39)</option>
-                                <option value="Eskalator / Travelator (Form 52)">Eskalator / Travelator (Form 52)</option>
-                                <option value="PAPA (Crane/Forklift/dll) (Form A 52)">PAPA (Crane/Forklift/dll) (Form A 52)</option>
-                                <option value="Instalasi Listrik & PP (Form 55 L)">Instalasi Listrik &amp; PP (Form 55 L)</option>
-                                <option value="Pesawat Uap (Boiler) (Form 6)">Pesawat Uap (Boiler) (Form 6)</option>
-                                <option value="Bejana Tekan (Form 45 A.1)">Bejana Tekan (Form 45 A.1)</option>
-                                <option value="PTP (Compressor/Genset) (Form 54 A)">PTP (Compressor/Genset) (Form 54 A)</option>
-                            </select>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-sm font-bold text-gray-700">
+                                    Jenis Alat yang di RiksaUji <span className="text-red-500">*</span>
+                                    {data.pesawat.length > 0 && (
+                                        <span className="ml-2 text-xs font-normal text-blue-600">({data.pesawat.length} dipilih)</span>
+                                    )}
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleSelectAll}
+                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                                >
+                                    {data.pesawat.length === PESAWAT_TYPES.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border rounded-lg bg-gray-50 max-h-60 overflow-y-auto">
+                                {PESAWAT_TYPES.map((type) => {
+                                    const isChecked = data.pesawat.includes(type);
+                                    return (
+                                        <label
+                                            key={type}
+                                            className={`flex items-start space-x-2.5 p-2 rounded-md border text-sm cursor-pointer transition-colors ${
+                                                isChecked ? 'bg-blue-50 border-blue-300 text-blue-900 font-medium' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={() => handleCheckboxChange(type)}
+                                                className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <span className="leading-tight">{type}</span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
                             {errors.pesawat && <div className="text-red-500 text-xs mt-1">{errors.pesawat}</div>}
                         </div>
 

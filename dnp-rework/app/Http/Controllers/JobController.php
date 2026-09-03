@@ -80,9 +80,15 @@ class JobController extends Controller
             abort(403, 'Unauthorized to create jobs. Stage 1 is owned by Marketing.');
         }
 
+        if ($request->has('pesawat') && is_array($request->pesawat)) {
+            $request->merge([
+                'pesawat' => implode(', ', array_filter($request->pesawat))
+            ]);
+        }
+
         $validated = $request->validate([
             'klien'           => 'required|string|max:255',
-            'pesawat'         => 'required|string|max:100',
+            'pesawat'         => 'required|string|max:255',
             'lokasi'          => 'required|string',
             'owner_marketing' => 'required|string',
             'pic_klien'       => 'nullable|string',

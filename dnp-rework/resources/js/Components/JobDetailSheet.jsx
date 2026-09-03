@@ -490,15 +490,22 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (job.stage === 10) {
             if (!s10.invoice_no?.trim()) return showError('Validasi', 'Nomor Invoice wajib diisi.');
             if (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) return showError('Validasi', 'Total Invoice (Nilai Tagihan) wajib diisi dengan benar.');
-            if (!s10.tgl_invoice_issued) return showError('Validasi', 'Tanggal Invoice Diterbitkan wajib diisi.');
+            const invDate = s10.tgl_invoice_issued || s10.invoice_date;
+            if (!invDate) return showError('Validasi', 'Tanggal Invoice Diterbitkan wajib diisi.');
             
-            const hasInvoiceDoc = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'].includes(d.type));
-            if (!hasInvoiceDoc) return showError('Dokumen Belum Lengkap', 'Dokumen "Invoice (PDF)" wajib diunggah sebelum melanjutkan.');
+            const hasInvoiceDoc = (job.documents || []).some(d => 
+                ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi', 'Bukti Transfer'].includes(d.type) ||
+                d.stage === 10
+            );
+            if (!hasInvoiceDoc) return showError('Dokumen Belum Lengkap', 'Dokumen "Invoice (PDF)" atau dokumen penagihan wajib diunggah sebelum melanjutkan.');
 
             setIsMoving(true);
             router.post(`/jobs/${job.id}/stage10-data`, s10, {
                 onSuccess: () => {
-                    router.post(`/jobs/${job.id}/move`, { notes: data.notes }, {
+                    router.post(`/jobs/${job.id}/move`, {
+                        next_stage: data.next_stage || 11,
+                        notes: data.notes,
+                    }, {
                         onSuccess: () => { setIsMoving(false); onClose(); },
                         onError: (errs) => {
                             setIsMoving(false);

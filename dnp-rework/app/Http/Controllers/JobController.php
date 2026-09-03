@@ -264,13 +264,17 @@ class JobController extends Controller
                     'total_invoice_amount' => 'Jumlah Tagihan (Nilai Invoice) wajib diisi dengan benar.',
                 ]);
             }
-            if (empty($job->tgl_invoice_issued)) {
+            $invDate = $job->tgl_invoice_issued ?? $job->invoice_date;
+            if (empty($invDate)) {
                 return back()->withErrors([
                     'tgl_invoice_issued' => 'Tanggal Invoice Diterbitkan wajib diisi.',
                 ]);
             }
             $hasInvoiceDoc = $job->documents()
-                ->whereIn('type', ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'])
+                ->where(function ($q) {
+                    $q->whereIn('type', ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi', 'Bukti Transfer'])
+                      ->orWhere('stage', 10);
+                })
                 ->exists();
             if (!$hasInvoiceDoc) {
                 return back()->withErrors([
@@ -804,12 +808,16 @@ class JobController extends Controller
             'tgl_submit_mkt'       => 'nullable|date',
         ]);
 
-        // Auto-calculate payment due date
+        // Auto-calculate payment due date and sync date fields
         $invDate = $validated['invoice_date'] ?? $validated['tgl_invoice_issued'] ?? null;
-        if (!empty($invDate) && !empty($validated['top_days'])) {
-            $validated['payment_due_date'] = Carbon::parse($invDate)
-                ->addDays((int) $validated['top_days'])
-                ->toDateString();
+        if (!empty($invDate)) {
+            $validated['tgl_invoice_issued'] = $invDate;
+            $validated['invoice_date'] = $invDate;
+            if (!empty($validated['top_days'])) {
+                $validated['payment_due_date'] = Carbon::parse($invDate)
+                    ->addDays((int) $validated['top_days'])
+                    ->toDateString();
+            }
         }
 
         $job->update($validated);

@@ -320,17 +320,10 @@ class JobController extends Controller
             'notes'             => $validated['notes'] ?? null,
         ]);
 
-        // Send notifications to next stage owners & assigned inspectors
-        $nextOwners = NotificationService::getStageOwnerUserIds($nextStage);
-        if ($nextStage === 4 || $nextStage === 6) {
-            $inspectorUserIds = $job->inspectors()->pluck('users.id')->toArray();
-            $nextOwners = array_unique(array_merge($nextOwners, $inspectorUserIds));
-            if ($job->report_writer_id) {
-                $nextOwners[] = $job->report_writer_id;
-            }
-        }
+        // Send notifications to all related users (next stage owners, marketing owner, inspectors, report writer, managers, superadmins)
+        $recipients = NotificationService::getRelatedUserIds($job, $nextStage);
         NotificationService::send(
-            $nextOwners,
+            $recipients,
             'stage_moved',
             "Job {$job->kode} masuk ke Stage {$nextStage}",
             "{$job->klien} — {$job->pesawat} telah dilanjutkan ke Stage {$nextStage} oleh " . Auth::user()->name,
@@ -357,6 +350,14 @@ class JobController extends Controller
         ]);
 
         $prevStage = max(1, $currentStage - 1);
+        if ($currentStage === 13 || $currentStage === 5) {
+            $prevStage = 4;
+        } elseif ($currentStage === 8) {
+            $prevStage = 6;
+        } elseif ($currentStage === 14) {
+            $prevStage = 11;
+        }
+
         if (!empty($validated['target_stage'])) {
             $prevStage = max(1, (int)$validated['target_stage']);
         }
@@ -374,10 +375,10 @@ class JobController extends Controller
             'notes'                => $validated['notes'],
         ]);
 
-        // Send notification to previous stage owner(s)
-        $prevOwners = NotificationService::getStageOwnerUserIds($prevStage);
+        // Send notification to all related users
+        $recipients = NotificationService::getRelatedUserIds($job, $prevStage);
         NotificationService::send(
-            $prevOwners,
+            $recipients,
             'rejected',
             "⚠️ Job {$job->kode} dikembalikan ke Stage {$prevStage}",
             "Catatan penolakan: {$validated['notes']} (oleh " . Auth::user()->name . ")",
@@ -476,6 +477,15 @@ class JobController extends Controller
             'action_by_user_id'   => Auth::id(),
             'notes'               => $validated['notes'],
         ]);
+
+        $recipients = NotificationService::getRelatedUserIds($job, 1);
+        NotificationService::send(
+            $recipients,
+            'returned_stage1',
+            "⚠️ Job {$job->kode} dikembalikan ke Stage 1",
+            "Dikembalikan dari Stage {$fromStage} (jumlah alat tidak sesuai). Catatan: {$validated['notes']} (oleh " . Auth::user()->name . ")",
+            $job->id
+        );
 
         return back()->with('success', 'Job dikembalikan ke Stage 1. Marketing dapat merevisi detail job.');
     }
@@ -729,6 +739,16 @@ class JobController extends Controller
                 'action'            => 'Auto-advanced ke Stage 10: Semua ' . $totalExpected . ' unit Suket berstatus Issued.',
                 'action_by_user_id' => Auth::id(),
             ]);
+
+            $recipients = NotificationService::getRelatedUserIds($job, 10);
+            NotificationService::send(
+                $recipients,
+                'stage_moved',
+                "Job {$job->kode} otomatis maju ke Stage 10 (Penagihan)",
+                "Semua unit Suket ({$totalExpected} unit) telah Issued. Job otomatis masuk ke Stage 10.",
+                $job->id
+            );
+
             return back()->with('success', 'Data Suket disimpan. Semua unit issued — job otomatis maju ke Stage 10 (Penagihan).');
         }
 

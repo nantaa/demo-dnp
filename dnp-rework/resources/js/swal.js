@@ -64,3 +64,24 @@ export const handleInertiaError = (errors) => {
         }
     }
 };
+
+export const showToast = (title, text = '', icon = 'info') => {
+    return MySwal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: icon,
+        title: title,
+        text: text,
+        showConfirmButton: false,
+        timer: 6000,
+        timerProgressBar: true,
+        customClass: {
+            popup: 'colored-toast shadow-lg rounded-xl border border-slate-200 text-xs text-slate-800 bg-white dark:bg-slate-800 dark:text-slate-100',
+        },
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
+};
+

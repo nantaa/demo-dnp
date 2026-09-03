@@ -495,7 +495,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const handleRejectStage = async () => {
         if (!data.notes?.trim()) return showError('Validasi', 'Isi catatan penolakan terlebih dahulu!');
-        const targetStage = job.stage === 8 ? 6 : Math.max(1, job.stage - 1);
+        let targetStage = Math.max(1, job.stage - 1);
+        if (job.stage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
+        else if (job.stage === 5) targetStage = 4;
+        else if (job.stage === 8) targetStage = 6;
+        else if (job.stage === 14) targetStage = 11;
         const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
         post(`/jobs/${job.id}/reject`, {

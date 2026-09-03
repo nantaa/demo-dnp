@@ -58,4 +58,41 @@ class NotificationService
     {
         return User::where('role', 'finance')->pluck('id')->toArray();
     }
+
+    /**
+     * Get all user IDs related to a job (Target Stage owners, marketing owner, assigned inspectors, report writer, managers, superadmins).
+     */
+    public static function getRelatedUserIds(Job $job, ?int $targetStage = null): array
+    {
+        $userIds = [];
+
+        // Target stage owners
+        if ($targetStage !== null) {
+            $userIds = array_merge($userIds, self::getStageOwnerUserIds($targetStage));
+        }
+
+        // Marketing owner
+        if (!empty($job->owner_marketing)) {
+            $mktId = User::where('name', $job->owner_marketing)->value('id');
+            if ($mktId) {
+                $userIds[] = $mktId;
+            }
+        }
+
+        // Assigned inspectors
+        $inspectorIds = $job->inspectors()->pluck('users.id')->toArray();
+        $userIds = array_merge($userIds, $inspectorIds);
+
+        // Report writer
+        if ($job->report_writer_id) {
+            $userIds[] = $job->report_writer_id;
+        }
+
+        // Managers & Superadmins
+        $managers = User::whereIn('role', ['manager', 'superadmin'])->pluck('id')->toArray();
+        $userIds = array_merge($userIds, $managers);
+
+        return array_values(array_unique(array_filter($userIds)));
+    }
 }
+

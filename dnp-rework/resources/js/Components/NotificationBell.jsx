@@ -1,27 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCheck, Clock, ExternalLink, X } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { showToast } from '@/swal';
 
 export default function NotificationBell({ onSelectJob }) {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const prevNotifIdsRef = useRef(null);
 
     const fetchNotifications = () => {
         fetch('/api/notifications')
             .then(res => res.json())
             .then(data => {
-                setNotifications(data.notifications || []);
-                setUnreadCount(data.unread_count || 0);
+                const fetchedNotifs = data.notifications || [];
+                const newUnreadCount = data.unread_count || 0;
+
+                // Show corner toast alert for new unread notifications
+                if (prevNotifIdsRef.current !== null) {
+                    const newNotifs = fetchedNotifs.filter(
+                        n => !n.is_read && !prevNotifIdsRef.current.has(n.id)
+                    );
+                    newNotifs.forEach(notif => {
+                        let iconType = 'info';
+                        if (notif.type === 'rejected' || notif.type === 'returned_stage1') {
+                            iconType = 'warning';
+                        } else if (notif.type === 'approved' || notif.type === 'completed') {
+                            iconType = 'success';
+                        }
+                        showToast(notif.title, notif.body, iconType);
+                    });
+                }
+
+                // Store current notification IDs to detect newly arrived notifications
+                prevNotifIdsRef.current = new Set(fetchedNotifs.map(n => n.id));
+
+                setNotifications(fetchedNotifs);
+                setUnreadCount(newUnreadCount);
             })
             .catch(console.error);
     };
 
     useEffect(() => {
         fetchNotifications();
-        // Poll every 15 seconds for live update fallback
-        const interval = setInterval(fetchNotifications, 15000);
+        // Poll every 8 seconds for fast real-time corner alerts
+        const interval = setInterval(fetchNotifications, 8000);
         return () => clearInterval(interval);
     }, []);
 

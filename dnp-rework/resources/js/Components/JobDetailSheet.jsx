@@ -993,6 +993,29 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                         )}
 
+                        {/* Download Surat Tugas */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm mb-2">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                    📄
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-blue-950">Surat Tugas Riksa Uji</p>
+                                    <p className="text-[11px] text-blue-700 font-medium">
+                                        {job.no_surat_tugas ? `No: ${job.no_surat_tugas}` : 'Auto-generated otomatis dari Sistem'}
+                                    </p>
+                                </div>
+                            </div>
+                            <a
+                                href={`/jobs/${job.id}/download-surat-tugas`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition flex items-center gap-1 cursor-pointer"
+                            >
+                                📥 Download Surat Tugas (.docx)
+                            </a>
+                        </div>
+
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
                             disabled={!s3ScheduleValid || !data.disnaker_tujuan}
@@ -1003,6 +1026,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 4 ─────────────────────────────────── */}
                 {s === 4 && (
                     <div className="space-y-4">
+                        {/* Download Surat Tugas */}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                    📄
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-blue-950">Surat Tugas Riksa Uji</p>
+                                    <p className="text-[11px] text-blue-700 font-medium">
+                                        {job.no_surat_tugas ? `No: ${job.no_surat_tugas}` : 'Siap Di-download & Auto-generate'}
+                                    </p>
+                                </div>
+                            </div>
+                            <a
+                                href={`/jobs/${job.id}/download-surat-tugas`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition flex items-center gap-1 cursor-pointer"
+                            >
+                                📥 Download Surat Tugas (.docx)
+                            </a>
+                        </div>
                         {/* Unit Count */}
                         <div className="bg-gray-50 border rounded-lg p-3">
                             <p className="text-xs font-semibold text-gray-700 mb-2">Jumlah Alat yang Benar-benar Diperiksa</p>

@@ -301,6 +301,8 @@ class JobController extends Controller
                 'alat_ids'         => json_encode($validated['alat_ids'] ?? []),
                 'cert_ids'         => json_encode($validated['cert_ids'] ?? []),
             ]);
+
+            $this->generateSuratTugas($job);
         }
 
         // Stage 7 → 8: set 30-day Disnaker EWS deadline
@@ -995,9 +997,24 @@ class JobController extends Controller
     }
 
     /**
+     * Download or generate Surat Tugas document.
+     */
+    public function downloadSuratTugas(Job $job)
+    {
+        $this->generateSuratTugas($job);
+
+        $doc = $job->documents()->where('type', 'Surat Tugas')->latest()->first();
+        if ($doc && \Illuminate\Support\Facades\Storage::disk('public')->exists($doc->path)) {
+            return response()->download(\Illuminate\Support\Facades\Storage::disk('public')->path($doc->path), $doc->name);
+        }
+
+        return back()->with('error', 'Dokumen Surat Tugas belum dapat diproses.');
+    }
+
+    /**
      * Generate Surat Tugas from template and save it as a JobDocument.
      */
-    private function generateSuratTugas(Job $job)
+    public function generateSuratTugas(Job $job)
     {
         $templatePath = resource_path('templates/SuratTugas.docx');
         if (!file_exists($templatePath)) {
@@ -1010,15 +1027,20 @@ class JobController extends Controller
 
             if (!$job->no_surat_tugas) {
                 $year  = date('Y');
-                $job->no_surat_tugas  = $this->generateUniqueNoSuratTugas($year);
+                $padId = str_pad(substr((string)$job->id, 0, 8), 6, '0', STR_PAD_LEFT);
+                $job->no_surat_tugas  = "ST/DNP/{$padId}/{$year}";
                 $job->tgl_surat_tugas = now();
                 $job->save();
             }
 
+            $tglPelaksanaan = $job->tgl_pelaksanaan ? Carbon::parse($job->tgl_pelaksanaan)->translatedFormat('d F Y') : Carbon::now()->translatedFormat('d F Y');
+            $jamMulai = $job->jam_mulai ? substr($job->jam_mulai, 0, 5) : '08:00';
+            $picInfo = ($job->pic_klien ?? '-') . ($job->pic_klien_phone ? (' / ' . $job->pic_klien_phone) : '');
+
             $templateProcessor->setValue('no_surat',   $job->no_surat_tugas);
-            $templateProcessor->setValue('perusahaan', $job->klien);
+            $templateProcessor->setValue('perusahaan', $job->klien ?? '-');
             $templateProcessor->setValue('no_po',      $job->no_po ?? '-');
-            $templateProcessor->setValue('marketing',  $job->owner_marketing);
+            $templateProcessor->setValue('marketing',  $job->owner_marketing ?? '-');
             $templateProcessor->setValue('tgl_surat',  Carbon::parse($job->tgl_surat_tugas)->translatedFormat('d F Y'));
 
             $inspectors = $job->inspectors()->with('inspectorProfile')->get();
@@ -1040,17 +1062,17 @@ class JobController extends Controller
                     $rowNum = $index + 1;
                     $templateProcessor->setValue("no#{$rowNum}",        $rowNum . '.');
                     $templateProcessor->setValue("nama_alat#{$rowNum}", $unit->unit_label);
-                    $templateProcessor->setValue("lokasi#{$rowNum}",    $job->lokasi);
-                    $templateProcessor->setValue("tanggal#{$rowNum}",   Carbon::parse($job->tgl_pelaksanaan)->translatedFormat('d F Y') . ' ' . substr($job->jam_mulai, 0, 5));
-                    $templateProcessor->setValue("pic#{$rowNum}",       $job->pic_klien . ' / ' . $job->pic_klien_phone);
+                    $templateProcessor->setValue("lokasi#{$rowNum}",    $job->lokasi ?? '-');
+                    $templateProcessor->setValue("tanggal#{$rowNum}",   $tglPelaksanaan . ' ' . $jamMulai);
+                    $templateProcessor->setValue("pic#{$rowNum}",       $picInfo);
                 }
             } else {
                 $templateProcessor->cloneRow('no', 1);
                 $templateProcessor->setValue("no#1",        "1.");
-                $templateProcessor->setValue("nama_alat#1", $job->pesawat . " ({$job->units} Unit)");
-                $templateProcessor->setValue("lokasi#1",    $job->lokasi);
-                $templateProcessor->setValue("tanggal#1",   Carbon::parse($job->tgl_pelaksanaan)->translatedFormat('d F Y') . ' ' . substr($job->jam_mulai, 0, 5));
-                $templateProcessor->setValue("pic#1",       $job->pic_klien . ' / ' . $job->pic_klien_phone);
+                $templateProcessor->setValue("nama_alat#1", ($job->pesawat ?? 'Peralatan') . " ({$job->units} Unit)");
+                $templateProcessor->setValue("lokasi#1",    $job->lokasi ?? '-');
+                $templateProcessor->setValue("tanggal#1",   $tglPelaksanaan . ' ' . $jamMulai);
+                $templateProcessor->setValue("pic#1",       $picInfo);
             }
 
             $outputDir = storage_path("app/public/job-documents/{$job->id}");
@@ -1068,7 +1090,7 @@ class JobController extends Controller
                 'type'                => 'Surat Tugas',
                 'name'                => $filename,
                 'path'                => "job-documents/{$job->id}/{$filename}",
-                'uploaded_by_user_id' => Auth::id(),
+                'uploaded_by_user_id' => Auth::id() ?? $job->user_id,
             ]);
 
             Log::info("Generated Surat Tugas for Job ID {$job->id}");

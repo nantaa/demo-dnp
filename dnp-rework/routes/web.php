@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/jobs/{job}/evaluations/{evaluation}', [JobController::class, 'deleteEvaluation'])->name('jobs.evaluations.delete');
     Route::post('/jobs/{job}/disnaker-followup', [JobController::class, 'saveDisnakerFollowup'])->name('jobs.disnaker-followup');
     Route::post('/jobs/{job}/unit-tracking', [JobController::class, 'saveUnitTracking'])->name('jobs.unit-tracking');
+    Route::get('/jobs/{job}/download-surat-tugas', [JobController::class, 'downloadSuratTugas'])->name('jobs.download-surat-tugas');
     Route::delete('/jobs/clear-all', [JobController::class, 'clearAll'])->name('jobs.clear-all');
     Route::delete('/jobs/{job}', [JobController::class, 'destroy'])->name('jobs.destroy');
 

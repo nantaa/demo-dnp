@@ -27,12 +27,12 @@ export default function JobCreate({ auth }) {
 
     return (
         <AppLayout>
-            <Head title="Buat Job Baru (PO/SPK)" />
+            <Head title="Buat Job Baru (PO / SPK / PROPOSAL)" />
 
             <div className="max-w-2xl mx-auto sm:mt-8">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-900">Buat Job Baru</h1>
-                    <p className="text-gray-500 text-sm mt-1">Stage 1: Pendaftaran PO/SPK Baru oleh Marketing.</p>
+                    <p className="text-gray-500 text-sm mt-1">Stage 1: Pendaftaran PO / SPK / Proposal Baru oleh Marketing.</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -100,19 +100,19 @@ export default function JobCreate({ auth }) {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">No PO / SPK *</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">No PO / SPK / Proposal *</label>
                                 <input
                                     type="text"
                                     value={data.no_po}
                                     onChange={e => setData('no_po', e.target.value)}
                                     className="w-full px-3 py-2 border rounded placeholder-gray-400"
-                                    placeholder="PO/CLIENT/2026/0123"
+                                    placeholder="PO/SPK/PROPOSAL/2026/0123"
                                     required
                                 />
                                 {errors.no_po && <div className="text-red-500 text-xs mt-1">{errors.no_po}</div>}
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Tanggal PO</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Tanggal PO / SPK / Proposal</label>
                                 <input
                                     type="date"
                                     value={data.tgl_po}

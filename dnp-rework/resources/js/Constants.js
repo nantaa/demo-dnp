@@ -1,5 +1,5 @@
 export const STAGES = [
-    { id: 1, name: 'PO / SPK', short: 'PO', role: 'marketing', sla: null },
+    { id: 1, name: 'PO / SPK / Proposal', short: 'PO', role: 'marketing', sla: null },
     { id: 2, name: 'Verifikasi Dokumen', short: 'Verifikasi', role: 'admin', sla: 1 },
     { id: 3, name: 'Penjadwalan & Surat Tugas', short: 'Jadwal', role: 'admin', sla: 1 },
     { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi', role: 'inspektur', sla: null },
@@ -84,7 +84,7 @@ export const PROGRESS_STATUSES = [
 
 // Stage 2 verification checklist (Task 6)
 export const STAGE2_VERIFY_CHECKLIST = [
-    { no: '01', type: 'PO/SPK', label: 'PO / SPK dari Klien', badge: 'WAJIB', hasNa: false, hint: null },
+    { no: '01', type: 'PO/SPK', label: 'PO / SPK / Proposal dari Klien', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '02', type: 'Surat Permohonan', label: 'Surat Permohonan Riksa Uji (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '03', type: 'Surat Kuasa', label: 'Surat Kuasa dari Pemilik (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '04', type: 'Pernyataan Keabsahan', label: 'Surat Pernyataan Keabsahan Data', badge: 'OPSIONAL', hasNa: true, hint: null },

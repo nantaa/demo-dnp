@@ -59,7 +59,7 @@ const DocChip = ({ doc, canManage, onDelete }) => (
             📎 {doc.name}
         </a>
         {canManage && (
-            <button onClick={() => onDelete(doc.id)}
+            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
                 className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
         )}
     </div>
@@ -611,7 +611,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const deleteDoc = async (docId) => {
         const res = await showConfirm('Hapus Dokumen', 'Hapus dokumen ini?');
         if (!res.isConfirmed) return;
-        router.delete(`/jobs/${job.id}/documents/${docId}`);
+        router.delete(`/jobs/${job.id}/documents/${docId}`, { preserveScroll: true });
     };
 
     // Get docs for a stage+type

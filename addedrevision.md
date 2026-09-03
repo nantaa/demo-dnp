@@ -11,3 +11,5 @@ STAGE4 [NEW] Foto Alat dikurangi/tidak usah
 STAGE10 [new] input tanggal bukan upload bukti 
 STAGE11 [new] opsional upload
 STAGE11 [NEW] upload only 3 document PROPOSAL, SUKET, KWITANSI
+[PENDING] Ubah label "Jumlah Unit" menjadi "Jumlah" di form Buat Job Baru & Edit Job
+[PENDING] Tambah field "Satuan" setelah "Jumlah" dengan pilihan (Unit / Lot / Lusin / dll)

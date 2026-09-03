@@ -29,7 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // API/Actions
     Route::get('/jobs/create', [JobController::class, 'create'])->name('jobs.create');
     Route::post('/jobs', [JobController::class, 'store'])->name('jobs.store');
-    Route::put('/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
+    Route::match(['put', 'post'], '/jobs/{job}', [JobController::class, 'update'])->name('jobs.update');
     Route::post('/jobs/{job}/move', [JobController::class, 'updateStage'])->name('jobs.move');
     Route::post('/jobs/{job}/reject', [JobController::class, 'rejectStage'])->name('jobs.reject');
     Route::post('/jobs/{job}/ask-approval', [JobController::class, 'askApproval'])->name('jobs.ask-approval');

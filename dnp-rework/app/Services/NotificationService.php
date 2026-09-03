@@ -60,18 +60,19 @@ class NotificationService
     }
 
     /**
-     * Get all user IDs related to a job (Target Stage owners, marketing owner, assigned inspectors, report writer, managers, superadmins).
+     * Get all user IDs related to a job (Target Stage owners, marketing owner, assigned inspectors, report writer).
+     * Excludes current actor to prevent redundant self-notifications.
      */
     public static function getRelatedUserIds(Job $job, ?int $targetStage = null): array
     {
         $userIds = [];
 
-        // Target stage owners
+        // 1. Target stage owners (who need to act on the next stage)
         if ($targetStage !== null) {
             $userIds = array_merge($userIds, self::getStageOwnerUserIds($targetStage));
         }
 
-        // Marketing owner
+        // 2. Marketing owner of this specific job
         if (!empty($job->owner_marketing)) {
             $mktId = User::where('name', $job->owner_marketing)->value('id');
             if ($mktId) {
@@ -79,18 +80,20 @@ class NotificationService
             }
         }
 
-        // Assigned inspectors
+        // 3. Assigned inspectors of this specific job
         $inspectorIds = $job->inspectors()->pluck('users.id')->toArray();
         $userIds = array_merge($userIds, $inspectorIds);
 
-        // Report writer
+        // 4. Report writer of this specific job
         if ($job->report_writer_id) {
             $userIds[] = $job->report_writer_id;
         }
 
-        // Managers & Superadmins
-        $managers = User::whereIn('role', ['manager', 'superadmin'])->pluck('id')->toArray();
-        $userIds = array_merge($userIds, $managers);
+        // 5. Exclude current acting user (so they don't get notified for their own action)
+        $actorId = \Illuminate\Support\Facades\Auth::id();
+        if ($actorId) {
+            $userIds = array_filter($userIds, fn($id) => (int)$id !== (int)$actorId);
+        }
 
         return array_values(array_unique(array_filter($userIds)));
     }

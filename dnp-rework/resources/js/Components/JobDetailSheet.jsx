@@ -540,7 +540,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
-        editForm.put(`/jobs/${job.id}`, { onSuccess: () => setIsEditing(false) });
+        router.post(`/jobs/${job.id}`, {
+            _method: 'PUT',
+            ...editForm.data
+        }, {
+            onSuccess: () => {
+                setIsEditing(false);
+                showSuccess('Berhasil', 'Informasi Job berhasil diperbarui.');
+            }
+        });
     };
 
     // Generic document upload (for most stages)
@@ -728,7 +736,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                                         {/* FILE */}
                                         <div className="px-2 py-3 flex flex-col items-center gap-1">
-                                            {item.isManual ? (
+                                            {item.noVerify ? (
+                                                <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px] flex items-center gap-1 cursor-not-allowed" title="Dokumen bersifat privat & tidak perlu dibaca Admin">
+                                                    🔒 Privat / Unreadable
+                                                </span>
+                                            ) : item.isManual ? (
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
                                             ) : hasFile ? (
                                                 docs.map(d => (
@@ -744,7 +756,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                     <span>✕</span> KOSONG
                                                 </button>
                                             )}
-                                            {hasFile && canManageStageDocs(2) && (
+                                            {hasFile && !item.noVerify && canManageStageDocs(2) && (
                                                 <button type="button" onClick={() => triggerUpload(2, item.type)}
                                                     className="text-[10px] text-blue-500 hover:underline">+ ganti</button>
                                             )}
@@ -752,18 +764,6 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                                         {/* STATUS VERIFIKASI */}
                                         <div className="px-2 py-3 flex items-center justify-center gap-1">
-                                            <button type="button" onClick={() => setStatus('ok')}
-                                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
-                                                    status === 'ok'
-                                                        ? 'bg-green-500 text-white border-green-500'
-                                                        : 'border-green-400 text-green-600 hover:bg-green-50'
-                                                }`}>✓ OK</button>
-                                            <button type="button" onClick={() => setStatus('tidak')}
-                                                className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
-                                                    status === 'tidak'
-                                                        ? 'bg-red-500 text-white border-red-500'
-                                                        : 'border-red-400 text-red-600 hover:bg-red-50'
-                                                }`}>✕ Tidak</button>
                                             {item.hasNa && (
                                                 <button type="button" onClick={() => setStatus('na')}
                                                     className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
@@ -993,7 +993,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                         )}
 
-                        {/* Download Surat Tugas */}
+                        {/* Download Surat Tugas (DISABLED - STILL ERROR)
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm mb-2">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
@@ -1015,6 +1015,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 📥 Download Surat Tugas (.docx)
                             </a>
                         </div>
+                        */}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
@@ -1026,7 +1027,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 4 ─────────────────────────────────── */}
                 {s === 4 && (
                     <div className="space-y-4">
-                        {/* Download Surat Tugas */}
+                        {/* Download Surat Tugas (DISABLED - STILL ERROR)
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
@@ -1048,6 +1049,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 📥 Download Surat Tugas (.docx)
                             </a>
                         </div>
+                        */}
                         {/* Unit Count */}
                         <div className="bg-gray-50 border rounded-lg p-3">
                             <p className="text-xs font-semibold text-gray-700 mb-2">Jumlah Alat yang Benar-benar Diperiksa</p>

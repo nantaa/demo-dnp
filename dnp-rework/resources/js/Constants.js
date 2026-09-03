@@ -84,7 +84,7 @@ export const PROGRESS_STATUSES = [
 
 // Stage 2 verification checklist (Task 6)
 export const STAGE2_VERIFY_CHECKLIST = [
-    { no: '01', type: 'PO/SPK', label: 'PO / SPK / Proposal dari Klien', badge: 'WAJIB', hasNa: false, hint: null },
+    { no: '01', type: 'PO/SPK', label: 'PO / SPK / Proposal dari Klien', badge: 'PRIVAT', hasNa: false, noVerify: true, hint: 'Dokumen PO/SPK bersifat privat & tidak perlu diverifikasi Admin' },
     { no: '02', type: 'Surat Permohonan', label: 'Surat Permohonan Riksa Uji (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '03', type: 'Surat Kuasa', label: 'Surat Kuasa dari Pemilik (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '04', type: 'Pernyataan Keabsahan', label: 'Surat Pernyataan Keabsahan Data', badge: 'OPSIONAL', hasNa: true, hint: null },
@@ -118,7 +118,7 @@ export const DOC_TYPES_BY_STAGE = {
 export const STAGE1_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'];
 
 // Stage 2 mandatory docs (can be bypassed by Kadiv approval — Task 6)
-export const STAGE2_REQUIRED_DOCS = ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa'];
+export const STAGE2_REQUIRED_DOCS = ['Surat Permohonan', 'Surat Kuasa'];
 
 // Stage 4 lapangan checklist items (saved as s4_checklist JSON on dnp_jobs)
 // Each item key matches the id; stored as { [id]: { status: 'checked'|'unchecked', catatan: string } }

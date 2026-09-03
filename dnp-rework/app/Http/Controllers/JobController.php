@@ -123,17 +123,21 @@ class JobController extends Controller
      */
     public function update(Request $request, Job $job)
     {
-        if (!$this->canActOnStage($job->stage, $job)) {
-            abort(403, 'You do not have permission to edit this job at its current stage.');
+        $user = Auth::user();
+        $isOwnerMkt = ($user->role === 'marketing' && $job->owner_marketing === $user->name);
+        $isAdminOrMgr = in_array($user->role, ['superadmin', 'admin', 'manager']);
+
+        if (!$isAdminOrMgr && !$isOwnerMkt && !$this->canActOnStage($job->stage, $job)) {
+            abort(403, 'Anda tidak memiliki izin untuk mengubah informasi job ini.');
         }
 
-        $job->update($request->except(['inspector_ids']));
+        $job->update($request->except(['inspector_ids', '_method']));
 
         if ($request->has('inspector_ids')) {
             $job->inspectors()->sync($request->input('inspector_ids', []));
         }
 
-        return back()->with('success', 'Job updated successfully.');
+        return back()->with('success', 'Informasi Job berhasil diperbarui.');
     }
 
     /**
@@ -1007,6 +1011,10 @@ class JobController extends Controller
      */
     public function downloadSuratTugas(Job $job)
     {
+        // Generator Surat Tugas dinonaktifkan sementara karena masih error template
+        return back()->with('error', 'Fitur generator Surat Tugas sedang dinonaktifkan sementara.');
+
+        /*
         $this->generateSuratTugas($job);
 
         $doc = $job->documents()->where('type', 'Surat Tugas')->latest()->first();
@@ -1015,6 +1023,7 @@ class JobController extends Controller
         }
 
         return back()->with('error', 'Dokumen Surat Tugas belum dapat diproses.');
+        */
     }
 
     /**

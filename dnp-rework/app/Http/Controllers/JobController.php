@@ -52,6 +52,19 @@ class JobController extends Controller
             return false;
         }
 
+        // Finance role can act on finance stages by default
+        if ($user->role === 'finance') {
+            if (in_array($stage, [10, 12, 14])) {
+                return true;
+            }
+            return $user->canOwnStage($stage);
+        }
+
+        // Admin role can act on any stage by default
+        if ($user->role === 'admin') {
+            return true;
+        }
+
         return $user->canOwnStage($stage);
     }
 
@@ -256,7 +269,9 @@ class JobController extends Controller
                     'tgl_invoice_issued' => 'Tanggal Invoice Diterbitkan wajib diisi.',
                 ]);
             }
-            $hasInvoiceDoc = $job->documents()->where('stage', 10)->where('type', 'Invoice (PDF)')->exists();
+            $hasInvoiceDoc = $job->documents()
+                ->whereIn('type', ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'])
+                ->exists();
             if (!$hasInvoiceDoc) {
                 return back()->withErrors([
                     'documents' => 'Dokumen "Invoice (PDF)" wajib diunggah sebelum melanjutkan ke Stage 11.',
@@ -774,8 +789,8 @@ class JobController extends Controller
     public function saveStage10Data(Request $request, Job $job)
     {
         $user = Auth::user();
-        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
-            abort(403, 'Only Finance can update Stage 10 data.');
+        if ($user->role !== 'finance' && $user->role !== 'admin' && !$user->isSuperadmin() && !$this->canActOnStage(10, $job)) {
+            abort(403, 'Hanya Finance atau Admin yang dapat mengubah data Stage 10.');
         }
 
         $validated = $request->validate([

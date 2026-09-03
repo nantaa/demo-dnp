@@ -1701,11 +1701,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
 
         if (s === 9) {
+            const s9StatusObj = PROGRESS_STATUSES.find(p => p.value === job.s9_progress_status);
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Informasi Suket:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
-                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{job.s9_progress_status || '-'}</span></div>
+                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{s9StatusObj ? s9StatusObj.label : (job.s9_progress_status || '-')}</span></div>
                         <div><span className="text-gray-400">No Suket:</span> <span className="font-semibold text-gray-800">{job.s9_no_suket || '-'}</span></div>
                         <div><span className="text-gray-400">Masa Berlaku:</span> <span className="font-semibold text-gray-800">{fmt(job.s9_suket_berlaku_sampai) || '-'}</span></div>
                     </div>
@@ -1834,7 +1835,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 
                                 {isCurrent && (
                                     <div className="mt-4 pt-4 border-t border-[#00A8E8]/20 bg-[#F8FAFC] -mx-4 -mb-4 p-4 rounded-b-xl">
-                                        {renderStageAction()}
+                                        {canManage ? (
+                                            renderStageAction()
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {renderCompletedStageSummary(stage.id)}
+                                                {stageDocs.length > 0 && (
+                                                    <div className="mt-3 space-y-1">
+                                                        <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

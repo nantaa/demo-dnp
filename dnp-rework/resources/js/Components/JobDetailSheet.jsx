@@ -726,7 +726,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="border border-gray-200 rounded-lg overflow-hidden text-xs">
                             {/* Table Header */}
                             <div className="grid bg-gray-100 border-b border-gray-200 font-bold text-gray-600 uppercase tracking-wide"
-                                style={{ gridTemplateColumns: '2.5rem 1fr 7rem 8.5rem' }}>
+                                style={{ gridTemplateColumns: '2.5rem 1fr 7rem 10.5rem' }}>
                                 <div className="px-2 py-2 text-center">NO</div>
                                 <div className="px-3 py-2">DOKUMEN</div>
                                 <div className="px-2 py-2 text-center">FILE</div>
@@ -747,7 +747,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 return (
                                     <div key={item.type}
                                         className="grid border-b border-gray-100 hover:bg-gray-50 transition-colors items-start"
-                                        style={{ gridTemplateColumns: '2.5rem 1fr 7rem 8.5rem' }}>
+                                        style={{ gridTemplateColumns: '2.5rem 1fr 7rem 10.5rem' }}>
 
                                         {/* NO */}
                                         <div className="px-2 py-3 text-center font-bold text-gray-400">{item.no}</div>
@@ -801,14 +801,38 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         </div>
 
                                         {/* STATUS VERIFIKASI */}
-                                        <div className="px-2 py-3 flex items-center justify-center gap-1">
-                                            {item.hasNa && (
-                                                <button type="button" onClick={() => setStatus('na')}
-                                                    className={`px-2 py-1 rounded border text-[10px] font-bold transition-colors ${
-                                                        status === 'na'
-                                                            ? 'bg-gray-500 text-white border-gray-500'
-                                                            : 'border-gray-400 text-gray-500 hover:bg-gray-50'
-                                                    }`}>N/A</button>
+                                        <div className="px-2 py-3 flex items-center justify-center gap-1 flex-wrap">
+                                            {item.noVerify ? (
+                                                <span className="text-[10px] text-gray-400 italic">-</span>
+                                            ) : (
+                                                <>
+                                                    <button type="button" onClick={() => setStatus(status === 'ok' ? '' : 'ok')}
+                                                        className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
+                                                            status === 'ok'
+                                                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
+                                                                : 'border-gray-300 text-gray-600 bg-white hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700'
+                                                        }`} title="Mark OK / Verified">
+                                                        ✓ OK
+                                                    </button>
+                                                    <button type="button" onClick={() => setStatus(status === 'tidak' ? '' : 'tidak')}
+                                                        className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
+                                                            status === 'tidak'
+                                                                ? 'bg-red-600 text-white border-red-600 shadow-xs scale-105'
+                                                                : 'border-gray-300 text-gray-600 bg-white hover:bg-red-50 hover:border-red-400 hover:text-red-700'
+                                                        }`} title="Mark TIDAK / Rejected">
+                                                        ✕ TIDAK
+                                                    </button>
+                                                    {item.hasNa && (
+                                                        <button type="button" onClick={() => setStatus(status === 'na' ? '' : 'na')}
+                                                            className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
+                                                                status === 'na'
+                                                                    ? 'bg-gray-600 text-white border-gray-600 shadow-xs scale-105'
+                                                                    : 'border-gray-300 text-gray-500 bg-white hover:bg-gray-100 hover:border-gray-400'
+                                                            }`} title="Not Applicable">
+                                                            N/A
+                                                        </button>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>

@@ -18,9 +18,9 @@ use Carbon\Carbon;
 class JobController extends Controller
 {
     // Stages exclusively owned by MKT (MGR cannot intercept)
-    private const MKT_STAGES = [1, 11];
+    private const MKT_STAGES = [1, 13, 11, 14];
     // Stages exclusively owned by FIN (MGR cannot intercept)
-    private const FIN_STAGES = [10, 12];
+    private const FIN_STAGES = [10, 15, 12];
 
     /**
      * Check if the current user can act on a stage.
@@ -38,15 +38,15 @@ class JobController extends Controller
             if ($job && !empty($job->owner_marketing) && $job->owner_marketing !== $user->name) {
                 return false;
             }
-            if (in_array($stage, [1, 11, 13])) {
+            if (in_array($stage, self::MKT_STAGES)) {
                 return $user->canOwnStage($stage);
             }
             return false;
         }
 
-        // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 5)
+        // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 17)
         if ($user->role === 'inspektur') {
-            if ($job && ($stage === 4 || $stage === 5)) {
+            if ($job && in_array($stage, [4, 17])) {
                 return $job->inspectors()->where('users.id', $user->id)->exists();
             }
             return false;
@@ -54,13 +54,13 @@ class JobController extends Controller
 
         // Finance role can act on finance stages by default
         if ($user->role === 'finance') {
-            if (in_array($stage, [10, 12, 14])) {
+            if (in_array($stage, self::FIN_STAGES)) {
                 return true;
             }
             return $user->canOwnStage($stage);
         }
 
-        // Admin role can act on any stage by default
+        // Admin role can act on admin stages (2, 3, 16, 5, 7, 8, 9) or by permission
         if ($user->role === 'admin') {
             return true;
         }

@@ -68,15 +68,16 @@ const DocChip = ({ doc, canManage, onDelete }) => (
 const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => {
     const getNextLabel = () => {
         if (stage === 4) return 'Lanjut ke Stage 5 (LHPP) →';
-        if (stage === 13) return 'Lanjut ke Stage 5 (LHPP) →';
-        if (stage === 11) return 'Lanjut ke Stage 11b (Pembayaran) →';
-        if (stage === 14) return 'Lanjut ke Stage 12 (Closed) →';
+        if (stage === 13) return 'Jadwalkan Ulang (Stage 4c) →';
+        if (stage === 16) return 'Lanjut ke Riksa Uji Ulang (Stage 4d) →';
+        if (stage === 17) return 'Lanjut ke Penyusunan LHPP (Stage 5) →';
+        if (stage === 10) return 'Lanjut ke Penagihan Pembayaran (Stage 11) →';
+        if (stage === 11) return 'Serahkan ke Verifikasi Pembayaran (Stage 11c) →';
+        if (stage === 15) return 'Verifikasi Lunas & Buka Kirim SUKET (Stage 11b) →';
+        if (stage === 14) return 'Selesaikan Job (Stage 12 Closed) →';
         const currIdx = STAGES.findIndex(s => s.id === stage);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
-            let next = STAGES[currIdx + 1];
-            if (next.id === 13) {
-                next = STAGES[currIdx + 2];
-            }
+            const next = STAGES[currIdx + 1];
             if (next) {
                 return `Lanjut ke Stage ${next.displayId || next.id} (${next.short}) →`;
             }
@@ -92,7 +93,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
                 </div>
             )}
             <div className="flex gap-2">
-                {[2,4,5,8,9,10,13].includes(stage) && (
+                {[2, 4, 13, 16, 17, 5, 6, 7, 8, 9, 10, 11, 15, 14].includes(stage) && (
                     <button type="button" onClick={onReject} disabled={processing}
                         className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                         Tolak / Kembalikan
@@ -198,18 +199,22 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function JobDetailSheet({ job, onClose, auth, canManage: propCanManage }) {
     const getNextStageId = (currentStageId) => {
+        if (currentStageId === 1) return 2;
+        if (currentStageId === 2) return 3;
+        if (currentStageId === 3) return 4;
         if (currentStageId === 4) return 5;
-        if (currentStageId === 13) return 5;
-        if (currentStageId === 11) return 14;
-        if (currentStageId === 14) return 12;
-        const currIdx = STAGES.findIndex(s => s.id === currentStageId);
-        if (currIdx !== -1 && currIdx < STAGES.length - 1) {
-            let next = STAGES[currIdx + 1];
-            if (next.id === 13) {
-                next = STAGES[currIdx + 2];
-            }
-            return next ? next.id : currentStageId + 1;
-        }
+        if (currentStageId === 13) return 16; // 4b Aktualisasi Unit -> 4c Penjadwalan Ulang
+        if (currentStageId === 16) return 17; // 4c Penjadwalan Ulang -> 4d Riksa Uji Ulang
+        if (currentStageId === 17) return 5;  // 4d RU Ulang -> 5 Penyusunan LHPP
+        if (currentStageId === 5) return 6;
+        if (currentStageId === 6) return 7;
+        if (currentStageId === 7) return 8;
+        if (currentStageId === 8) return 9;
+        if (currentStageId === 9) return 10;
+        if (currentStageId === 10) return 11; // 10 Pembuatan Invoice -> 11 Penagihan Pembayaran
+        if (currentStageId === 11) return 15; // 11 Penagihan Pembayaran -> 11c Verifikasi Pembayaran
+        if (currentStageId === 15) return 14; // 11c Verifikasi Pembayaran -> 11b Kirim SUKET ke Klien
+        if (currentStageId === 14) return 12; // 11b Kirim SUKET -> 12 Selesai
         return currentStageId + 1;
     };
 
@@ -267,6 +272,43 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
         s10_progress_status:  job.s10_progress_status  ?? '',
         tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+    });
+    const [s4c, setS4c] = useState({
+        reschedule_reason: job.reschedule_reason ?? '',
+        tgl_reschedule:    job.tgl_reschedule    ?? '',
+        reschedule_notes:  job.reschedule_notes  ?? '',
+    });
+    const [s4d, setS4d] = useState({
+        ru_ulang_status: job.ru_ulang_status ?? 'lolos',
+        ru_ulang_notes:  job.ru_ulang_notes  ?? '',
+    });
+    const [s5Dates, setS5Dates] = useState({
+        tgl_teknis_diserahkan: job.tgl_teknis_diserahkan ?? '',
+        tgl_laporan_mulai:    job.tgl_laporan_mulai    ?? '',
+        tgl_laporan_selesai:  job.tgl_laporan_selesai  ?? '',
+    });
+    const [s9Suket, setS9Suket] = useState({
+        tgl_input_suket:   job.tgl_input_suket   ?? '',
+        tgl_suket_selesai: job.tgl_suket_selesai ?? '',
+    });
+    const [s11Collection, setS11Collection] = useState({
+        metode_penagihan: job.metode_penagihan ?? 'Email & WhatsApp',
+        status_penagihan: job.status_penagihan ?? 'Dalam Follow-up',
+        tgl_penagihan:    job.tgl_penagihan    ?? new Date().toISOString().slice(0, 10),
+        catatan_penagihan: job.catatan_penagihan ?? '',
+    });
+    const [s11c, setS11c] = useState({
+        verification_status: job.payment_verification_status ?? (job.paid ? 'Lunas' : 'Partial / Pending'),
+        bank_ref:            job.bank_ref            ?? '',
+        amount_received:     job.amount_received     ?? (job.nilai || 0),
+        verification_notes:  job.payment_verification_notes ?? '',
+    });
+    const [s11bDelivery, setS11bDelivery] = useState({
+        no_resi:            job.no_resi            ?? '',
+        tgl_kirim_suket:    job.tgl_kirim_suket    ?? '',
+        ekspedisi:          job.ekspedisi          ?? 'Kurir Internal',
+        batch_no:           job.batch_no           ?? 'Batch 1',
+        tanda_terima_klien: job.tanda_terima_klien ?? '',
     });
     const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
     const [isMoving, setIsMoving] = useState(false);
@@ -420,7 +462,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (permissions === 'superadmin') return true;
         if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
         if (isInspector) {
-            return [4, 6].includes(job.stage) && isAssignedInspector;
+            return [4, 17].includes(job.stage) && isAssignedInspector;
         }
         const p = permissions[job.stage];
         return p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1');
@@ -436,8 +478,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const canManageStageDocs = (sid) => {
         if (['superadmin','manager'].includes(user?.role)) return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sid)) return true;
-        if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return isAssignedInspector;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13,14].includes(sid)) return true;
+        if (user?.role === 'finance' && [10,15,12].includes(sid)) return true;
+        if (isInspector && [4,17].includes(sid) && sid === job.stage) return isAssignedInspector;
         if (isInspector) return false;
         const p = permissions?.[sid];
         return p && p.is_owner;
@@ -533,11 +576,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const handleRejectStage = async () => {
         if (!data.notes?.trim()) return showError('Validasi', 'Isi catatan penolakan terlebih dahulu!');
         let targetStage = Math.max(1, job.stage - 1);
-        if (job.stage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
+        if (job.stage === 13) targetStage = 4;       // 4b -> 4
+        else if (job.stage === 16) targetStage = 13; // 4c -> 4b
+        else if (job.stage === 17) targetStage = 16; // 4d -> 4c
         else if (job.stage === 5) targetStage = 4;
-        else if (job.stage === 8) targetStage = 6;
+        else if (job.stage === 6) targetStage = 5;
+        else if (job.stage === 7) targetStage = 6;
+        else if (job.stage === 8) targetStage = 7;
+        else if (job.stage === 9) targetStage = 8;
         else if (job.stage === 10) targetStage = 9;
-        else if (job.stage === 14) targetStage = 11;
+        else if (job.stage === 11) targetStage = 10;
+        else if (job.stage === 15) targetStage = 11; // 11c -> 11 (Loopback penagihan ulang)
+        else if (job.stage === 14) targetStage = 15; // 11b -> 11c
         const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
         post(`/jobs/${job.id}/reject`, {
@@ -564,17 +614,39 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
     };
 
-    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS5  = () => {
+    const handleSaveS4   = () => router.post(`/jobs/${job.id}/stage4-data`, s4, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS4c  = () => router.post(`/jobs/${job.id}/stage4c-data`, s4c, { onSuccess: () => showSuccess('Berhasil', 'Data Reschedule tersimpan.') });
+    const handleSaveS4d  = () => router.post(`/jobs/${job.id}/stage4d-data`, s4d, { onSuccess: () => showSuccess('Berhasil', 'Data RU Ulang tersimpan.') });
+    const handleSaveS5Dates = () => router.post(`/jobs/${job.id}/stage5-dates`, s5Dates, { onSuccess: () => showSuccess('Berhasil', 'Tracking Tanggal LHPP tersimpan.') });
+    const handleSaveS9Suket = () => router.post(`/jobs/${job.id}/stage9-suket`, s9Suket, { onSuccess: () => showSuccess('Berhasil', 'Tracking Durasi SUKET tersimpan.') });
+    const handleSaveS5   = () => {
         if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
         router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.') });
     };
-    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'No. Resi tersimpan.') });
-    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
+    const handleSaveS7   = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS8   = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS9   = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS10  = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS11  = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'No. Resi tersimpan.') });
+    const handleSaveS11c = (targetStatus) => {
+        const finalStatus = targetStatus || s11c.verification_status;
+        if (finalStatus === 'Partial / Pending' && !s11c.verification_notes?.trim()) {
+            return showError('Catatan Diperlukan', 'Harap isi alasan / catatan jika status Partial / Pending untuk tindak lanjut Marketing.');
+        }
+        router.post(`/jobs/${job.id}/payment-verification`, {
+            status: finalStatus,
+            bank_ref: s11c.bank_ref,
+            amount_received: s11c.amount_received,
+            notes: s11c.verification_notes,
+            verifier: auth?.user?.name || 'Finance Admin',
+        }, {
+            onSuccess: () => {
+                showSuccess('Verifikasi Berhasil', `Status verifikasi pembayaran: ${finalStatus}`);
+                onClose();
+            }
+        });
+    };
+    const handleSaveS14  = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -1255,14 +1327,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
 
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex gap-2 mt-4 flex-wrap">
                             <button
                                 type="button"
                                 onClick={handleRejectStage}
                                 disabled={processing}
                                 className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
                             >
-                                Tolak / Kembalikan
+                                Tolak / Kembali ke Stage 4
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    post(`/jobs/${job.id}/move`, {
+                                        data: { ...data, next_stage: 16 },
+                                        onSuccess: () => onClose()
+                                    });
+                                }}
+                                disabled={processing}
+                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm"
+                            >
+                                {processing ? '...' : '📅 Jadwalkan Ulang (Stage 4c) →'}
                             </button>
                             <button
                                 type="button"
@@ -1274,17 +1360,246 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     });
                                 }}
                                 disabled={processing}
-                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+                                className="px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
                             >
-                                {processing ? '...' : '🚀 Lanjut ke Stage 5 (LHPP) →'}
+                                {processing ? '...' : '🚀 Bypass ke Stage 5 (LHPP) →'}
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* ── STAGE 5 (Penyusunan LHPP — INS) ────────── */}
+                {/* ── STAGE 16 (Penjadwalan Ulang — 4c ADM) ──────── */}
+                {s === 16 && (
+                    <div className="space-y-4">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <h4 className="text-xs font-bold text-amber-900 mb-1">
+                                📅 Stage 4c: Penjadwalan Ulang / Reschedule (Admin)
+                            </h4>
+                            <p className="text-xs text-amber-800">
+                                Terdapat unit yang tertunda/rusak saat Riksa Uji. Tentukan tanggal inspeksi ulang dan tim ahli untuk Riksa Uji Ulang (Stage 4d).
+                            </p>
+                        </div>
+
+                        <div className="bg-white border rounded-lg p-3 space-y-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Alasan Penjadwalan Ulang *</label>
+                                <select
+                                    value={s4c.reschedule_reason}
+                                    onChange={e => setS4c({ ...s4c, reschedule_reason: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
+                                >
+                                    <option value="">-- Pilih Alasan Reschedule --</option>
+                                    <option value="Unit belum siap / rusak di lokasi">Unit belum siap / rusak di lokasi</option>
+                                    <option value="Permintaan Klien (operasional pabrik berjalan)">Permintaan Klien (operasional pabrik berjalan)</option>
+                                    <option value="Cuaca ekstrim / kendala teknis lapangan">Cuaca ekstrim / kendala teknis lapangan</option>
+                                    <option value="Penambahan unit baru hasil aktualisasi">Penambahan unit baru hasil aktualisasi</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">Tanggal Jadwal Baru RU Ulang *</label>
+                                    <input
+                                        type="date"
+                                        value={s4c.tgl_reschedule}
+                                        onChange={e => setS4c({ ...s4c, tgl_reschedule: e.target.value })}
+                                        className="w-full border rounded px-2 py-1.5 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">Catatan Tambahan</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Catatan inspektur / perlengkapan..."
+                                        value={s4c.reschedule_notes}
+                                        onChange={e => setS4c({ ...s4c, reschedule_notes: e.target.value })}
+                                        className="w-full border rounded px-2 py-1.5 text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {(DOC_TYPES_BY_STAGE[16] || []).map(t => (
+                            <UploadSlot key={t} type={t} stageId={16} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
+                        ))}
+
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                type="button"
+                                onClick={handleRejectStage}
+                                disabled={processing}
+                                className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                            >
+                                Kembalikan ke 4b (Aktualisasi)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (!s4c.reschedule_reason?.trim()) return showError('Validasi', 'Pilih alasan penjadwalan ulang terlebih dahulu!');
+                                    if (!s4c.tgl_reschedule) return showError('Validasi', 'Tentukan tanggal jadwal baru!');
+                                    post(`/jobs/${job.id}/move`, {
+                                        data: { ...data, ...s4c, next_stage: 17 },
+                                        onSuccess: () => onClose()
+                                    });
+                                }}
+                                disabled={processing}
+                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm"
+                            >
+                                {processing ? '...' : '🔍 Lanjut ke Riksa Uji Ulang (Stage 4d) →'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STAGE 17 (Riksa Uji Ulang — 4d INS) ──────── */}
+                {s === 17 && (
+                    <div className="space-y-4">
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                            <h4 className="text-xs font-bold text-indigo-900 mb-1">
+                                🔍 Stage 4d: Riksa Uji Ulang (Tim Ahli / Inspektur)
+                            </h4>
+                            <p className="text-xs text-indigo-800">
+                                Pelaksanaan inspeksi ulang untuk unit yang sebelumnya tertunda/dijadwalkan ulang. Unggah BAP dan Foto RU Ulang.
+                            </p>
+                        </div>
+
+                        <div className="bg-white border rounded-lg p-3 space-y-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Hasil Riksa Uji Ulang *</label>
+                                <div className="flex gap-4 text-xs font-semibold">
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="ru_ulang_status"
+                                            value="lolos"
+                                            checked={s4d.ru_ulang_status === 'lolos'}
+                                            onChange={() => setS4d({ ...s4d, ru_ulang_status: 'lolos' })}
+                                        />
+                                        <span className="text-emerald-700">✅ Lolos Riksa Uji Ulang (Lanjut ke Stage 5 LHPP)</span>
+                                    </label>
+                                    <label className="flex items-center gap-1.5 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="ru_ulang_status"
+                                            value="gagal"
+                                            checked={s4d.ru_ulang_status === 'gagal'}
+                                            onChange={() => setS4d({ ...s4d, ru_ulang_status: 'gagal' })}
+                                        />
+                                        <span className="text-red-700">❌ Gagal / Perlu Reschedule Lanjutan</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Catatan Teknis RU Ulang</label>
+                                <textarea
+                                    rows={2}
+                                    value={s4d.ru_ulang_notes}
+                                    onChange={e => setS4d({ ...s4d, ru_ulang_notes: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
+                                    placeholder="Kondisi pengujian unit ulang, temuan teknis..."
+                                />
+                            </div>
+                        </div>
+
+                        {(DOC_TYPES_BY_STAGE[17] || []).map(t => (
+                            <UploadSlot key={t} type={t} stageId={17} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={false} />
+                        ))}
+
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                type="button"
+                                onClick={handleRejectStage}
+                                disabled={processing}
+                                className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                            >
+                                Kembalikan ke 4c
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    const next = s4d.ru_ulang_status === 'lolos' ? 5 : 16;
+                                    post(`/jobs/${job.id}/move`, {
+                                        data: { ...data, ...s4d, next_stage: next },
+                                        onSuccess: () => onClose()
+                                    });
+                                }}
+                                disabled={processing}
+                                className={`flex-1 px-4 py-2 rounded text-sm font-bold text-white shadow-sm ${s4d.ru_ulang_status === 'lolos' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+                            >
+                                {processing ? '...' : (s4d.ru_ulang_status === 'lolos' ? '🚀 Lolos RU — Lanjut ke Stage 5 (LHPP) →' : '🔁 Gagal RU — Kembali ke Penjadwalan Ulang (Stage 4c) →')}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── STAGE 5 (Penyusunan LHPP — ADM) ────────── */}
                 {s === 5 && (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                        {/* 3-Date Milestone Tracking per v5-2-2 & Rev6 */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-bold text-blue-900">
+                                    📊 Milestone Tracking Penyusunan LHPP (Per-Unit)
+                                </h4>
+                                <span className="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded font-black">
+                                    Delta v5-2-2
+                                </span>
+                            </div>
+                            <p className="text-xs text-blue-800">
+                                Catat 3 tanggal penting untuk tracking due date dan perhitungan otomatis lead time sub-fase laporan.
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                                <div>
+                                    <label className="block text-gray-700 font-bold mb-1">1. Data Teknis Diserahkan</label>
+                                    <input
+                                        type="date"
+                                        value={s5Dates.tgl_teknis_diserahkan}
+                                        onChange={e => setS5Dates({ ...s5Dates, tgl_teknis_diserahkan: e.target.value })}
+                                        className="w-full border border-blue-300 rounded px-2 py-1.5 bg-white text-xs"
+                                    />
+                                    <span className="text-[10px] text-gray-500">Diterima dari inspektur</span>
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-bold mb-1">2. Pengerjaan Laporan Mulai</label>
+                                    <input
+                                        type="date"
+                                        value={s5Dates.tgl_laporan_mulai}
+                                        onChange={e => setS5Dates({ ...s5Dates, tgl_laporan_mulai: e.target.value })}
+                                        className="w-full border border-blue-300 rounded px-2 py-1.5 bg-white text-xs"
+                                    />
+                                    <span className="text-[10px] text-gray-500">Admin mulai susun LHPP</span>
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-bold mb-1">3. Laporan Selesai</label>
+                                    <input
+                                        type="date"
+                                        value={s5Dates.tgl_laporan_selesai}
+                                        onChange={e => setS5Dates({ ...s5Dates, tgl_laporan_selesai: e.target.value })}
+                                        className="w-full border border-blue-300 rounded px-2 py-1.5 bg-white text-xs"
+                                    />
+                                    <span className="text-[10px] text-gray-500">Siap review Stage 6</span>
+                                </div>
+                            </div>
+
+                            {/* Lead Time calculation badges */}
+                            {s5Dates.tgl_teknis_diserahkan && s5Dates.tgl_laporan_selesai && (
+                                <div className="flex items-center gap-2 pt-2 border-t border-blue-200">
+                                    <span className="text-[11px] font-extrabold text-blue-900">⏱ Lead Time LHPP:</span>
+                                    <span className="text-[11px] font-bold bg-white text-blue-800 border border-blue-300 px-2 py-0.5 rounded shadow-2xs">
+                                        Total Durasi: {Math.max(0, Math.round((new Date(s5Dates.tgl_laporan_selesai) - new Date(s5Dates.tgl_teknis_diserahkan)) / 86400000))} Hari
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
                         <p className="text-xs text-gray-500">Unggah dokumen LHPP dan BAP untuk penyusunan laporan teknis.</p>
                         {(DOC_TYPES_BY_STAGE[5] || []).map(t => <UploadSlot key={t} type={t} stageId={5} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
@@ -1398,9 +1713,52 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* ── STAGE 9 (Pengurusan Suket — Admin) ──────── */}
+                {/* ── STAGE 9 (Pengurusan SUKET — Admin) ─────────────────────────── */}
                 {s === 9 && (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-bold text-emerald-900">
+                                    ⏱ Tracking Durasi Pengurusan SUKET Disnaker
+                                </h4>
+                                <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-black">
+                                    Delta v5-2-2
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <label className="block text-gray-700 font-bold mb-1">Tanggal Input SUKET *</label>
+                                    <input
+                                        type="date"
+                                        value={s9Suket.tgl_input_suket}
+                                        onChange={e => setS9Suket({ ...s9Suket, tgl_input_suket: e.target.value })}
+                                        className="w-full border border-emerald-300 rounded px-2 py-1.5 bg-white text-xs"
+                                    />
+                                    <span className="text-[10px] text-gray-500">Titik awal pencatatan waktu</span>
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-bold mb-1">Tanggal SUKET Terbit / Selesai</label>
+                                    <input
+                                        type="date"
+                                        value={s9Suket.tgl_suket_selesai}
+                                        onChange={e => setS9Suket({ ...s9Suket, tgl_suket_selesai: e.target.value })}
+                                        className="w-full border border-emerald-300 rounded px-2 py-1.5 bg-white text-xs"
+                                    />
+                                    <span className="text-[10px] text-gray-500">SUKET fisik diterima</span>
+                                </div>
+                            </div>
+                            {s9Suket.tgl_input_suket && (
+                                <div className="pt-2 border-t border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2">
+                                    <span>Durasi Pengurusan:</span>
+                                    <span className="bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs">
+                                        {s9Suket.tgl_suket_selesai 
+                                            ? `${Math.max(0, Math.round((new Date(s9Suket.tgl_suket_selesai) - new Date(s9Suket.tgl_input_suket)) / 86400000))} Hari Kalender (Selesai)` 
+                                            : `${Math.max(0, Math.round((new Date() - new Date(s9Suket.tgl_input_suket)) / 86400000))} Hari Berjalan`}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
                             <select value={s9.s9_progress_status} onChange={e => setS9({ s9_progress_status: e.target.value })}
@@ -1420,15 +1778,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200">Tolak</button>
                             <button type="submit" disabled={processing}
                                 className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 10 →'}
+                                {processing ? '...' : 'Lanjut ke Pembuatan Invoice (Stage 10) →'}
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* ── STAGE 10 (Penagihan — Finance) ──────────── */}
+                {/* ── STAGE 10 (Pembuatan Invoice — Finance) ──── */}
                 {s === 10 && (() => {
-                    const hasInvoiceDoc10 = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'].includes(d.type));
+                    const hasInvoiceDoc10 = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Kwitansi Tagihan'].includes(d.type));
                     const s10CanMove = s10.invoice_no?.trim() && s10.total_invoice_amount && parseFloat(s10.total_invoice_amount) > 0 && s10.tgl_invoice_issued && hasInvoiceDoc10;
                     const s10DisabledMsg = !s10.invoice_no?.trim() ? 'Isi Nomor Invoice terlebih dahulu' :
                         (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) ? 'Isi Total Invoice (Nilai Tagihan) dengan benar' :
@@ -1483,88 +1841,326 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     );
                 })()}
 
-                {/* ── STAGE 11 (Pengiriman SUKET — MKT) ──────── */}
+                {/* ── STAGE 11 (Penagihan Pembayaran — MKT) ──── */}
                 {s === 11 && (
-                    <div className="space-y-3">
-                        <p className="text-xs text-gray-500">Upload dokumen (Opsional), kemudian tandai selesai.</p>
+                    <div className="space-y-4">
+                        {job.payment_retry_count > 0 && (
+                            <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-xs text-red-900 font-medium animate-pulse">
+                                ⚠️ <strong>Hasil Verifikasi Finance: Pembayaran Belum Lunas / Pending!</strong><br />
+                                Job dikembalikan dari Stage 11c untuk follow-up penagihan ulang oleh Marketing (Penagihan Ulang ke-{job.payment_retry_count}).
+                                {job.payment_verification_notes && (
+                                    <span className="block mt-1 bg-white p-2 rounded border border-red-200 font-semibold text-red-800">
+                                        Catatan Finance: "{job.payment_verification_notes}"
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-bold text-blue-900">
+                                    💼 Penagihan & Follow-up Pembayaran (Marketing)
+                                </h4>
+                                <span className="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded font-black">
+                                    Delta v5-2-2
+                                </span>
+                            </div>
+                            <p className="text-xs text-blue-800">
+                                Lakukan penagihan kepada PIC Klien ({job.pic_klien || job.klien}) untuk pelunasan invoice senilai <strong>{fmtCurrency(job.nilai)}</strong>. Unggah bukti tagihan dan bukti transfer jika ada.
+                            </p>
+                        </div>
+
+                        <div className="bg-white border rounded-lg p-3 space-y-3 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">Metode Follow-up Penagihan</label>
+                                    <input
+                                        type="text"
+                                        value={s11Collection.metode_penagihan}
+                                        onChange={e => setS11Collection({ ...s11Collection, metode_penagihan: e.target.value })}
+                                        placeholder="Email / Telepon / WhatsApp / Visit..."
+                                        className="w-full border rounded px-2 py-1.5"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">Tanggal Terakhir Ditagih</label>
+                                    <input
+                                        type="date"
+                                        value={s11Collection.tgl_penagihan}
+                                        onChange={e => setS11Collection({ ...s11Collection, tgl_penagihan: e.target.value })}
+                                        className="w-full border rounded px-2 py-1.5"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-1">Catatan Penagihan / Konfirmasi Klien</label>
+                                <textarea
+                                    rows={2}
+                                    value={s11Collection.catatan_penagihan}
+                                    onChange={e => setS11Collection({ ...s11Collection, catatan_penagihan: e.target.value })}
+                                    className="w-full border rounded px-2.5 py-1.5"
+                                    placeholder="Contoh: Klien mengonfirmasi transfer hari ini via Mandiri..."
+                                />
+                            </div>
+                        </div>
+
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
                             <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
-                        {/* No. Resi — tracking number for Suket shipment */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                            <label className="block text-xs font-semibold text-blue-800">📦 No. Resi Pengiriman <span className="font-normal text-blue-600">(Opsional)</span></label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={s11.no_resi}
-                                    onChange={e => setS11({ ...s11, no_resi: e.target.value })}
-                                    placeholder="Contoh: JNE-123456789, SiCepat-987..."
-                                    className="flex-1 text-sm border border-blue-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                                <button type="button" onClick={handleSaveS11}
-                                    className="px-3 py-1.5 rounded text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap">
-                                    Simpan Resi
-                                </button>
-                            </div>
-                        </div>
+
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                type="button"
+                                onClick={handleRejectStage}
+                                disabled={processing}
+                                className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                            >
+                                Kembalikan ke Invoice (Stage 10)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    post(`/jobs/${job.id}/move`, {
+                                        data: { ...data, ...s11Collection, next_stage: 15 },
+                                        onSuccess: () => onClose()
+                                    });
+                                }}
+                                disabled={processing}
+                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm"
+                            >
+                                {processing ? '...' : '💳 Serahkan ke Verifikasi Pembayaran (Stage 11c) →'}
+                            </button>
+                        </div>
                     </div>
                 )}
 
-                {/* ── STAGE 14 (Pembayaran / Pelunasan — 11b FIN) ── */}
-                {s === 14 && (
+                {/* ── STAGE 15 (Verifikasi Pembayaran — 11c FIN) ─ */}
+                {s === 15 && (
                     <div className="space-y-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <h4 className="text-xs font-bold text-blue-900 mb-1">
-                                💳 Verifikasi Pembayaran / Pelunasan (Finance)
-                            </h4>
-                            <p className="text-xs text-blue-700">
-                                Verifikasi status pelunasan pembayaran dari klien sebelum proyek ditutup (Closed).
+                        <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-black text-purple-900 uppercase tracking-wide flex items-center gap-1.5">
+                                    <span>🔐 Stage 11c: Verifikasi Pembayaran (Finance)</span>
+                                </h4>
+                                <span className="bg-purple-200 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                    HARD GATE v5-2-2
+                                </span>
+                            </div>
+                            <p className="text-xs text-purple-800">
+                                Finance memvalidasi mutasi bank dan kepastian dana masuk sebelum SUKET dapat dirilis ke klien. Jika belum lunas, kembalikan ke Stage 11.
                             </p>
                         </div>
-                        
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">Status Pembayaran 11b *</label>
-                            <select
-                                value={s14.s14_payment_status || 'pending'}
-                                onChange={e => setS14({ ...s14, s14_payment_status: e.target.value })}
-                                className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 font-medium"
-                            >
-                                <option value="pending">⏳ Pending (Belum Lunas)</option>
-                                <option value="partial">🌗 Partial (Dibayar Sebagian)</option>
-                                <option value="paid">✅ Paid (Lunas Sempurna)</option>
-                            </select>
+
+                        {/* Rekonsiliasi Tagihan vs Penerimaan */}
+                        <div className="bg-white border rounded-lg p-3 space-y-3 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span className="text-gray-500 font-semibold block mb-1">Nilai Kontrak / Invoice</span>
+                                    <span className="text-sm font-bold text-gray-900">{fmtCurrency(job.nilai)}</span>
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">Dana Masuk Rekening (Rp) *</label>
+                                    <input
+                                        type="number"
+                                        value={s11c.amount_received}
+                                        onChange={e => setS11c({ ...s11c, amount_received: e.target.value })}
+                                        className="w-full border rounded px-2 py-1.5 text-sm font-bold text-emerald-700"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">No. Referensi / Mutasi Bank *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Contoh: BCA-TRF-98234710..."
+                                        value={s11c.bank_ref}
+                                        onChange={e => setS11c({ ...s11c, bank_ref: e.target.value })}
+                                        className="w-full border rounded px-2 py-1.5"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-1">Keputusan Status Pembayaran *</label>
+                                    <select
+                                        value={s11c.verification_status}
+                                        onChange={e => setS11c({ ...s11c, verification_status: e.target.value })}
+                                        className="w-full border rounded px-2 py-1.5 font-bold"
+                                    >
+                                        <option value="Lunas">✅ Lunas (Dana Diterima Penuh)</option>
+                                        <option value="Partial / Pending">⏳ Partial / Pending (Belum Lunas)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-700 font-semibold mb-1">
+                                    Catatan Verifikasi Keuangan {s11c.verification_status === 'Partial / Pending' && <span className="text-red-500">* (Wajib diisi jika Partial/Pending)</span>}
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={s11c.verification_notes}
+                                    onChange={e => setS11c({ ...s11c, verification_notes: e.target.value })}
+                                    className="w-full border rounded px-2.5 py-1.5"
+                                    placeholder={s11c.verification_status === 'Partial / Pending' ? 'Sebutkan kekurangan transfer atau alasan penolakan...' : 'Keterangan mutasi / rekening koran...'}
+                                />
+                            </div>
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">Catatan Pembayaran / Transfer</label>
-                            <textarea
-                                rows={2}
-                                value={s14.s14_payment_notes || ''}
-                                onChange={e => setS14({ ...s14, s14_payment_notes: e.target.value })}
-                                className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
-                                placeholder="Contoh: Transfer via BCA tgl 20 Aug, lunas 100%..."
-                            />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleSaveS14}
-                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm"
-                        >
-                            💾 Simpan Status Pembayaran 11b
-                        </button>
-
-                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran (Opsional)</p>
-                        {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
-                            <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
+                        {(DOC_TYPES_BY_STAGE[15] || []).map(t => (
+                            <UploadSlot key={t} type={t} stageId={15} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
 
-                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                        {/* Decision Buttons */}
+                        <div className="flex gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => handleSaveS11c('Partial / Pending')}
+                                disabled={processing}
+                                className="px-4 py-2 rounded text-sm font-bold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 flex items-center gap-1"
+                            >
+                                ↩️ Partial/Pending (Loop ke Stage 11)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSaveS11c('Lunas')}
+                                disabled={processing}
+                                className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm flex items-center justify-center gap-1"
+                            >
+                                ✅ Verifikasi Lunas & Buka Kirim SUKET (Stage 11b) →
+                            </button>
+                        </div>
                     </div>
                 )}
+
+                {/* ── STAGE 14 (Pengiriman SUKET ke Klien — 11b MKT) ── */}
+                {s === 14 && (() => {
+                    const isPaymentVerified = job.payment_verification_status === 'Lunas' || job.paid === true;
+                    return (
+                        <div className="space-y-4">
+                            {!isPaymentVerified ? (
+                                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-xs text-red-900">
+                                    <div className="font-extrabold text-sm mb-1 flex items-center gap-1.5">
+                                        🔒 Pengiriman SUKET Terkunci!
+                                    </div>
+                                    <p>
+                                        Berdasarkan aturan gerbang keputusan <strong>Status Lunas? (Delta v5-2-2)</strong>, SUKET tidak dapat diserahkan/dikirim kepada klien sebelum Finance menyatakan pembayaran <strong>Lunas</strong> di Stage 11c.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={handleRejectStage}
+                                        className="mt-3 px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700"
+                                    >
+                                        Kembalikan ke Verifikasi Keuangan (Stage 11c)
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                                        <h4 className="text-xs font-bold text-emerald-900 mb-1">
+                                            📦 Stage 11b: Pengiriman SUKET ke Klien (Marketing)
+                                        </h4>
+                                        <p className="text-xs text-emerald-800">
+                                            Pembayaran terverifikasi LUNAS. Kirimkan SUKET fisik/digital ke klien secara bertahap atau sekaligus.
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-white border rounded-lg p-3 space-y-3 text-xs">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-1">No. Resi / Tracking Ekspedisi</label>
+                                                <input
+                                                    type="text"
+                                                    value={s11bDelivery.no_resi}
+                                                    onChange={e => setS11bDelivery({ ...s11bDelivery, no_resi: e.target.value })}
+                                                    placeholder="Contoh: JNE-9827361928"
+                                                    className="w-full border rounded px-2 py-1.5"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-1">Nama Ekspedisi / Kurir</label>
+                                                <input
+                                                    type="text"
+                                                    value={s11bDelivery.ekspedisi}
+                                                    onChange={e => setS11bDelivery({ ...s11bDelivery, ekspedisi: e.target.value })}
+                                                    placeholder="Kurir Internal / JNE / SiCepat..."
+                                                    className="w-full border rounded px-2 py-1.5"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-1">Tanggal Pengiriman</label>
+                                                <input
+                                                    type="date"
+                                                    value={s11bDelivery.tgl_kirim_suket}
+                                                    onChange={e => setS11bDelivery({ ...s11bDelivery, tgl_kirim_suket: e.target.value })}
+                                                    className="w-full border rounded px-2 py-1.5"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-gray-700 font-semibold mb-1">Pengiriman Batch ke-</label>
+                                                <input
+                                                    type="text"
+                                                    value={s11bDelivery.batch_no}
+                                                    onChange={e => setS11bDelivery({ ...s11bDelivery, batch_no: e.target.value })}
+                                                    placeholder="Batch 1 (Semua Unit) / Batch 1 (20 Unit)..."
+                                                    className="w-full border rounded px-2 py-1.5"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-gray-700 font-semibold mb-1">Penerima di Klien / Tanda Terima</label>
+                                            <input
+                                                type="text"
+                                                value={s11bDelivery.tanda_terima_klien}
+                                                onChange={e => setS11bDelivery({ ...s11bDelivery, tanda_terima_klien: e.target.value })}
+                                                placeholder="Nama PIC Penerima & Tanda Tangan Tanda Terima..."
+                                                className="w-full border rounded px-2 py-1.5"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
+                                        <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
+                                    ))}
+
+                                    <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+
+                                    <div className="flex gap-2 mt-4">
+                                        <button
+                                            type="button"
+                                            onClick={handleRejectStage}
+                                            disabled={processing}
+                                            className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                                        >
+                                            Kembalikan ke Stage 11c
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                post(`/jobs/${job.id}/move`, {
+                                                    data: { ...data, ...s11bDelivery, next_stage: 12 },
+                                                    onSuccess: () => onClose()
+                                                });
+                                            }}
+                                            disabled={processing}
+                                            className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+                                        >
+                                            {processing ? '...' : '🎉 Selesaikan & Tutup Job (Stage 12 Closed) →'}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* ── STAGE 12 (Selesai / Closed) ────────── */}
                 {s === 12 && (
@@ -1680,9 +2276,42 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (s === 13) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Detail Aktualisasi Unit:</p>
+                    <p className="font-bold text-gray-700">Detail Aktualisasi Unit (Stage 4b):</p>
                     <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div><span className="text-gray-400">Status Update Unit:</span> <span className="font-semibold text-gray-800">Selesai diperbarui</span></div>
+                        <div><span className="text-gray-400">Unit Aktual:</span> <span className="font-semibold text-gray-800">{job.actual_units ?? job.units} Unit (Awal: {job.units} Unit)</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 16) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Detail Penjadwalan Ulang (Stage 4c):</p>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Alasan Reschedule:</span> <span className="font-semibold text-gray-800">{job.reschedule_reason || '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl Jadwal Baru:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_reschedule) || '-'}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 17) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Hasil Riksa Uji Ulang (Stage 4d):</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div><span className="text-gray-400">Status RU Ulang:</span> <span className="font-semibold text-emerald-700">{job.ru_ulang_status === 'lolos' ? '✅ Lolos RU Ulang' : (job.ru_ulang_status || 'Selesai RU Ulang')}</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -1697,8 +2326,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penyusunan LHPP:</p>
-                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div><span className="text-gray-400">Status LHPP & BAP:</span> <span className="font-semibold text-emerald-700">✓ Dokumen Selesai Diunggah & Disusun</span></div>
+                    <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">Data Teknis Diserahkan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_teknis_diserahkan) || '-'}</span></div>
+                        <div><span className="text-gray-400">Pengerjaan Laporan Mulai:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_laporan_mulai) || '-'}</span></div>
+                        <div><span className="text-gray-400">Laporan Selesai:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_laporan_selesai) || '-'}</span></div>
+                        <div><span className="text-gray-400">Status Dokumen:</span> <span className="font-semibold text-emerald-700">✓ Selesai Disusun</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -1780,11 +2412,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
         if (s === 9) {
             const s9StatusObj = PROGRESS_STATUSES.find(p => p.value === job.s9_progress_status);
+            const duration = (job.tgl_input_suket && job.tgl_suket_selesai)
+                ? `${Math.max(0, Math.round((new Date(job.tgl_suket_selesai) - new Date(job.tgl_input_suket)) / 86400000))} Hari`
+                : null;
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Informasi Suket:</p>
+                    <p className="font-bold text-gray-700">Informasi Suket Disnaker (Stage 9):</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
                         <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{s9StatusObj ? s9StatusObj.label : (job.s9_progress_status || '-')}</span></div>
+                        <div><span className="text-gray-400">Durasi Pengurusan:</span> <span className="font-semibold text-emerald-700">{duration || '-'}</span></div>
                         <div><span className="text-gray-400">No Suket:</span> <span className="font-semibold text-gray-800">{job.s9_no_suket || '-'}</span></div>
                         <div><span className="text-gray-400">Masa Berlaku:</span> <span className="font-semibold text-gray-800">{fmt(job.s9_suket_berlaku_sampai) || '-'}</span></div>
                     </div>
@@ -1800,11 +2436,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (s === 10) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Detail Penagihan / Invoice:</p>
+                    <p className="font-bold text-gray-700">Detail Pembuatan Invoice (Stage 10):</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
                         <div><span className="text-gray-400">Total Invoice:</span> <span className="font-semibold text-gray-800">{job.total_invoice_amount ? `Rp ${Number(job.total_invoice_amount).toLocaleString('id-ID')}` : '-'}</span></div>
                         <div><span className="text-gray-400">Tgl Invoice Diterbitkan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_invoice_issued) || '-'}</span></div>
-                        <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{job.s10_progress_status || '-'}</span></div>
+                        <div><span className="text-gray-400">Nomor Invoice:</span> <span className="font-semibold text-gray-800">{job.invoice_no || '-'}</span></div>
                         <div><span className="text-gray-400">Tgl Submit MKT:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_submit_mkt) || '-'}</span></div>
                     </div>
                     {stageNotes && (
@@ -1819,12 +2455,47 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (s === 11) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Pengiriman Suket ke Klien:</p>
+                    <p className="font-bold text-gray-700">Penagihan Pembayaran (Stage 11 - Marketing):</p>
                     <div className="grid grid-cols-2 gap-2 bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div className="col-span-2"><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">✓ Suket telah diserahkan ke Klien</span></div>
-                        {job.no_resi && (
-                            <div className="col-span-2"><span className="text-gray-400">No. Resi:</span> <span className="font-semibold text-blue-700 font-mono">{job.no_resi}</span></div>
-                        )}
+                        <div><span className="text-gray-400">Metode Penagihan:</span> <span className="font-semibold text-gray-800">{job.metode_penagihan || 'Email / WA'}</span></div>
+                        <div><span className="text-gray-400">Tanggal Ditagih:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_penagihan) || '-'}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Penagihan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 15) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Verifikasi Pembayaran (Stage 11c - Finance):</p>
+                    <div className="grid grid-cols-2 gap-2 bg-purple-50/70 p-2.5 rounded border border-purple-200 text-gray-600">
+                        <div><span className="text-gray-400">Status Verifikasi:</span> <span className="font-bold text-emerald-700">{job.payment_verification_status || (job.paid ? 'Lunas' : 'Partial / Pending')}</span></div>
+                        <div><span className="text-gray-400">Mutasi / Ref Bank:</span> <span className="font-semibold text-gray-800">{job.bank_ref || '-'}</span></div>
+                        <div><span className="text-gray-400">Dana Masuk:</span> <span className="font-semibold text-gray-800">{fmtCurrency(job.amount_received || job.nilai)}</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Keuangan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 14) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Pengiriman SUKET ke Klien (Stage 11b - Marketing):</p>
+                    <div className="grid grid-cols-2 gap-2 bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div><span className="text-gray-400">No. Resi / Kurir:</span> <span className="font-semibold text-blue-700 font-mono">{job.no_resi || job.ekspedisi || '-'}</span></div>
+                        <div><span className="text-gray-400">Tanggal Kirim:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_kirim_suket) || '-'}</span></div>
+                        <div><span className="text-gray-400">Pengiriman Batch:</span> <span className="font-semibold text-gray-800">{job.batch_no || 'Batch 1'}</span></div>
+                        <div><span className="text-gray-400">Tanda Terima:</span> <span className="font-semibold text-emerald-700">{job.tanda_terima_klien || 'Diterima Klien'}</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -1835,22 +2506,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             );
         }
 
-        if (s === 14 || s === 12) {
-            const statusLabel = job.s14_payment_status === 'paid' ? '✅ Paid (Lunas Sempurna)' : job.s14_payment_status === 'partial' ? '🌗 Partial (Dibayar Sebagian)' : '⏳ Pending';
+        if (s === 12) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Status Pelunasan Pembayaran:</p>
-                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1">
-                        <div><span className="text-gray-400">Status Pembayaran 11b:</span> <span className="font-bold text-gray-800">{statusLabel}</span></div>
-                        {job.s14_payment_notes && (
-                            <div><span className="text-gray-400">Catatan Pembayaran:</span> <span className="font-medium text-gray-800">{job.s14_payment_notes}</span></div>
-                        )}
+                    <p className="font-bold text-emerald-700">Pekerjaan Selesai (Closed):</p>
+                    <div className="bg-emerald-50/70 p-2.5 rounded border border-emerald-200 text-emerald-900">
+                        <span>✓ Seluruh tahapan RU, LHPP, Disnaker, Pelunasan Keuangan, dan Pengiriman SUKET telah selesai sempurna.</span>
                     </div>
-                    {stageNotes && !job.s14_payment_notes && (
-                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
-                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
-                        </div>
-                    )}
                 </div>
             );
         }

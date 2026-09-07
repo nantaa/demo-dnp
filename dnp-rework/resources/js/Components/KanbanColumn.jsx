@@ -1,13 +1,19 @@
 import React from 'react';
 
-export default function KanbanColumn({ stageNumber, title, count, isLocked, children }) {
+export default function KanbanColumn({ stageNumber, title, count, isLocked, id, children }) {
+    const isDelta = ['4b', '4c', '4d', '11c', '11b'].includes(String(stageNumber).toLowerCase());
     return (
-        <div className={`w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all ${isLocked ? 'border-t-slate-400' : 'border-t-[#00A8E8]'}`}>
+        <div id={id || `col-stage-${stageNumber}`} className={`w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all ${isDelta ? 'border-t-amber-500' : (isLocked ? 'border-t-slate-400' : 'border-t-[#00A8E8]')}`}>
             <div className="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl">
                 <div className="flex items-center gap-2 min-w-0">
                     {stageNumber && (
-                        <span className="shrink-0 bg-[#0A385C] text-white text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs">
+                        <span className={`shrink-0 text-white text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs ${isDelta ? 'bg-amber-600' : 'bg-[#0A385C]'}`}>
                             {stageNumber}
+                        </span>
+                    )}
+                    {isDelta && (
+                        <span className="shrink-0 bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.5 rounded border border-amber-300 shadow-2xs">
+                            DELTA
                         </span>
                     )}
                     {isLocked && (
@@ -21,7 +27,7 @@ export default function KanbanColumn({ stageNumber, title, count, isLocked, chil
                 </div>
                 <span className={`shrink-0 ml-2 px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${
                     count > 0 
-                        ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs' 
+                        ? (isDelta ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-2xs' : 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs') 
                         : 'bg-slate-100 text-slate-400 border-slate-200'
                 }`}>
                     {count}

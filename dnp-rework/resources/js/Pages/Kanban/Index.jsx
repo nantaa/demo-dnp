@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
     const [selectedJob, setSelectedJob] = useState(null);
+    const [selectedPhase, setSelectedPhase] = useState('all');
+    const boardRef = useRef(null);
 
     // Live background polling sync to keep Kanban updated across all active users
     useEffect(() => {
@@ -57,15 +59,44 @@ export default function KanbanIndex({ jobs, auth }) {
         }
     };
 
+    const handleScroll = (direction) => {
+        if (boardRef.current) {
+            boardRef.current.scrollBy({ left: direction * 500, behavior: 'smooth' });
+        }
+    };
+
+    const scrollToStage = (stageDisplayId) => {
+        const el = document.getElementById(`col-stage-${stageDisplayId}`);
+        if (el && boardRef.current) {
+            const boardRect = boardRef.current.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            const leftOffset = elRect.left - boardRect.left + boardRef.current.scrollLeft - 16;
+            boardRef.current.scrollTo({ left: Math.max(0, leftOffset), behavior: 'smooth' });
+        }
+    };
+
+    const isDeltaStage = (displayId) => ['4b', '4c', '4d', '11c', '11b'].includes(String(displayId).toLowerCase());
+
+    const filteredStages = STAGES.filter(stage => {
+        if (selectedPhase === 'all') return true;
+        if (selectedPhase === 'ru') return [1, 2, 3, 4, 13, 16, 17].includes(stage.id);
+        if (selectedPhase === 'teknis') return [5, 6, 7, 8, 9].includes(stage.id);
+        if (selectedPhase === 'finance') return [10, 11, 15, 14, 12].includes(stage.id);
+        return true;
+    });
+
     return (
         <AppLayout>
             <Head title="Kanban Board" />
             
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                     <h1 className="text-xl font-bold text-gray-900">Kanban Board</h1>
                     <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
                         Total {jobs.length} Job
+                    </span>
+                    <span className="text-xs bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
+                        <Sparkles size={12} className="text-amber-600" /> Delta v5-2-2 (17 Stages)
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -86,8 +117,95 @@ export default function KanbanIndex({ jobs, auth }) {
                 </div>
             </div>
 
-            <div className="flex h-full overflow-x-auto space-x-4 pb-4">
-                {STAGES.map((stage) => {
+            {/* Quick Navigation & Phase Filter Bar */}
+            <div className="bg-white rounded-xl border border-slate-200 p-2.5 mb-3 shadow-xs flex flex-col gap-2">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 flex items-center gap-1">
+                            <Layers size={13} className="text-[#00A8E8]" /> Filter Fase:
+                        </span>
+                        <button
+                            onClick={() => setSelectedPhase('all')}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${selectedPhase === 'all' ? 'bg-[#0A385C] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            Semua Stage (17)
+                        </button>
+                        <button
+                            onClick={() => setSelectedPhase('ru')}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${selectedPhase === 'ru' ? 'bg-[#0A385C] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            Fase 1: RU Lapangan (1 - 4d)
+                        </button>
+                        <button
+                            onClick={() => setSelectedPhase('teknis')}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${selectedPhase === 'teknis' ? 'bg-[#0A385C] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            Fase 2: Laporan & Dinas (5 - 9)
+                        </button>
+                        <button
+                            onClick={() => setSelectedPhase('finance')}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${selectedPhase === 'finance' ? 'bg-[#0A385C] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            Fase 3: Invoice & SUKET (10 - 12)
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handleScroll(-1)}
+                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1 text-xs font-semibold px-2"
+                                title="Scroll Kiri"
+                            >
+                                <ChevronLeft size={16} /> Geser Kiri
+                            </button>
+                            <button
+                                onClick={() => handleScroll(1)}
+                                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1 text-xs font-semibold px-2"
+                                title="Scroll Kanan"
+                            >
+                                Geser Kanan <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Stage Quick Jump Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto py-1 custom-scrollbar">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase shrink-0 mr-1">Lompat ke:</span>
+                    {STAGES.map(stage => {
+                        const count = jobs.filter(j => j.stage === stage.id).length;
+                        const isDelta = isDeltaStage(stage.displayId || stage.id);
+                        return (
+                            <button
+                                key={stage.id}
+                                onClick={() => scrollToStage(stage.displayId || stage.id)}
+                                className={`shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold border transition-all ${
+                                    isDelta 
+                                        ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 ring-1 ring-amber-400/50' 
+                                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                }`}
+                                title={`Lompat ke Stage ${stage.displayId || stage.id}: ${stage.name}`}
+                            >
+                                <span className={`px-1.5 py-0.2 rounded text-[10px] text-white font-black ${isDelta ? 'bg-amber-600' : 'bg-[#0A385C]'}`}>
+                                    {stage.displayId || stage.id}
+                                </span>
+                                <span className="truncate max-w-[90px]">{stage.short}</span>
+                                {count > 0 ? (
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${isDelta ? 'bg-amber-200 text-amber-900' : 'bg-blue-100 text-blue-800'}`}>
+                                        {count}
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] text-slate-400">0</span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div ref={boardRef} className="flex h-full overflow-x-auto space-x-4 pb-4">
+                {filteredStages.map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);
                     const columnJobs = jobs.filter(j => {
                         if (j.stage !== stage.id) return false;
@@ -110,6 +228,7 @@ export default function KanbanIndex({ jobs, auth }) {
                     return (
                         <KanbanColumn 
                             key={stage.id} 
+                            id={`col-stage-${stage.displayId || stage.id}`}
                             stageNumber={stage.displayId || stage.id}
                             title={stage.name} 
                             count={columnJobs.length}

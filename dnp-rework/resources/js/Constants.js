@@ -1,18 +1,21 @@
 export const STAGES = [
-    { id: 1, name: 'PO / SPK / Proposal', short: 'PO', role: 'marketing', sla: null },
-    { id: 2, name: 'Verifikasi Dokumen', short: 'Verifikasi', role: 'admin', sla: 1 },
-    { id: 3, name: 'Penjadwalan & Surat Tugas', short: 'Jadwal', role: 'admin', sla: 1 },
-    { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi', role: 'inspektur', sla: null },
+    { id: 1, name: 'PO / SPK / Proposal', short: 'PO', role: 'marketing', sla: null, displayId: '1' },
+    { id: 2, name: 'Verifikasi Dokumen', short: 'Verifikasi', role: 'admin', sla: 1, displayId: '2' },
+    { id: 3, name: 'Penjadwalan & Surat Tugas', short: 'Jadwal', role: 'admin', sla: 1, displayId: '3' },
+    { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi', role: 'inspektur', sla: null, displayId: '4' },
     { id: 13, name: 'Aktualisasi Unit', short: 'Aktualisasi', role: 'marketing', sla: 1, displayId: '4b' },
-    { id: 5, name: 'Penyusunan LHPP', short: 'LHPP', role: 'inspektur', sla: 3 },
-    { id: 6, name: 'Review Laporan Teknis', short: 'Rev. Laporan', role: 'manager', sla: 1 },
-    { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'manager', sla: 1 },
-    { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30 },
-    { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
-    { id: 10, name: 'Penagihan', short: 'Tagihan', role: 'finance', sla: 1 },
-    { id: 11, name: 'Pengiriman SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null },
-    { id: 14, name: 'Pembayaran / Pelunasan', short: 'Pembayaran', role: 'finance', sla: 1, displayId: '11b' },
-    { id: 12, name: 'Selesai / Closed', short: 'Closed', role: 'finance', sla: null },
+    { id: 16, name: 'Penjadwalan Ulang', short: 'Reschedule', role: 'admin', sla: 1, displayId: '4c' },
+    { id: 17, name: 'Riksa Uji Ulang', short: 'RU Ulang', role: 'inspektur', sla: null, displayId: '4d' },
+    { id: 5, name: 'Penyusunan LHPP', short: 'LHPP', role: 'admin', sla: 3, displayId: '5' },
+    { id: 6, name: 'Review Laporan Teknis', short: 'Rev. Laporan', role: 'manager', sla: 1, displayId: '6' },
+    { id: 7, name: 'Verifikasi ke Dinas', short: 'Verif Dinas', role: 'admin', sla: 1, displayId: '7' },
+    { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30, displayId: '8' },
+    { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1, displayId: '9' },
+    { id: 10, name: 'Pembuatan Invoice', short: 'Invoice', role: 'finance', sla: 1, displayId: '10' },
+    { id: 11, name: 'Penagihan Pembayaran', short: 'Penagihan', role: 'marketing', sla: null, displayId: '11' },
+    { id: 15, name: 'Verifikasi Pembayaran', short: 'Verif Bayar', role: 'finance', sla: 1, displayId: '11c' },
+    { id: 14, name: 'Pengiriman SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null, displayId: '11b' },
+    { id: 12, name: 'Selesai / Closed', short: 'Closed', role: 'finance', sla: null, displayId: '12' },
 ];
 
 export const getStageDisplayId = (stageId) => {
@@ -30,9 +33,13 @@ export const ROLES = {
 };
 
 // Marketing-only stages (locked for MGR intercept)
-export const MKT_STAGES = [1, 11, 13];
+export const MKT_STAGES = [1, 13, 11, 14];
 // Finance-only stages (locked for MGR intercept)
-export const FIN_STAGES = [10, 14, 12];
+export const FIN_STAGES = [10, 15, 12];
+// Admin stages
+export const ADM_STAGES = [2, 3, 16, 5, 7, 8, 9];
+// Inspector stages
+export const INS_STAGES = [4, 17];
 
 // Jenis alat yang di RiksaUji (Task 3)
 export const PESAWAT_TYPES = [
@@ -102,16 +109,19 @@ export const DOC_TYPES_BY_STAGE = {
     2: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
     3: ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
     4: ['Foto Nameplate', 'Foto Kondisi Fisik', 'BAP', 'Foto Hasil Pengukuran', 'Foto Alat Pengaman', 'Foto APD & Tim di Lokasi', 'Foto Dokumentasi Lapangan', 'Data Pengukuran'],
+    13: ['Berita Acara Mismatch Unit', 'Form Aktualisasi Unit'], // Stage 4b: Aktualisasi Unit (Marketing)
+    16: ['Surat Permohonan Reschedule', 'Jadwal Baru Disnaker'], // Stage 4c: Penjadwalan Ulang (Admin)
+    17: ['BAP RU Ulang', 'Foto Dokumentasi RU Ulang', 'Hasil Pengujian RU Ulang'], // Stage 4d: Riksa Uji Ulang (Inspektur)
     5: ['LHPP', 'BAP', 'Laporan Teknis Tambahan'],         // Stage 5 = Penyusunan LHPP (Admin)
     6: ['LHPP Draft', 'BAP', 'Catatan Review MGR'],         // Stage 6 = Review Laporan Teknis (Manager)
     7: ['Bukti Penyerahan ke Disnaker'],
     8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],
     9: ['Suket (Asli) dari Disnaker'],
-    10: ['Invoice (PDF)', 'Kwitansi', 'Bukti Transfer'],
-    11: ['Tanda Terima Suket'],
-    12: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas'],
-    13: [],
-    14: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
+    10: ['Invoice (PDF)', 'Kwitansi Tagihan'],              // Stage 10 = Pembuatan Invoice (Finance)
+    11: ['Bukti Tagihan Terkirim', 'Bukti Transfer Klien', 'Korespondensi Penagihan'], // Stage 11 = Penagihan Pembayaran (Marketing)
+    15: ['Bukti Rekening Koran / Mutasi Bank', 'Voucher Penerimaan Kas/Bank'], // Stage 11c = Verifikasi Pembayaran (Finance)
+    14: ['Tanda Terima SUKET Klien', 'Surat Jalan / Resi Pengiriman'], // Stage 11b = Kirim SUKET ke Klien (Marketing)
+    12: ['BAP Final', 'Dokumen Penutupan Proyek'],         // Stage 12 = Closed (Finance)
 };
 
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)

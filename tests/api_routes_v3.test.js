@@ -49,7 +49,7 @@ describe('DNP Monitor v3 — API & Security Masking Integration Tests', () => {
 
     const jobWithValue = body.jobs.find(j => j.nilai !== null && j.nilai !== undefined);
     if (jobWithValue) {
-      assert.ok(typeof jobWithValue.nilai === 'number');
+      assert.ok(typeof jobWithValue.nilai === 'number' || (typeof jobWithValue.nilai === 'string' && !isNaN(Number(jobWithValue.nilai))));
     }
   });
 

@@ -167,7 +167,7 @@ class JobController extends Controller
         }
 
         $validationRules = [
-            'next_stage'    => 'required|integer|min:1|max:14',
+            'next_stage'    => 'required|integer|min:1|max:16',
             'notes'         => 'nullable|string',
             'inspector_ids' => 'nullable|array',
             'inspector_ids.*' => 'exists:users,id',
@@ -775,7 +775,7 @@ class JobController extends Controller
         );
 
         // Auto-advance to Stage 10 if every contracted unit is now `issued`
-        $totalExpected = (int) $job->units;
+        $totalExpected = (int) ($job->unit_count ?? 1);
         $issuedCount   = $job->unitsTracking()->where('status', 'issued')->count();
         $totalTracked  = $job->unitsTracking()->count();
 
@@ -1126,7 +1126,7 @@ class JobController extends Controller
             } else {
                 $templateProcessor->cloneRow('no', 1);
                 $templateProcessor->setValue("no#1",        "1.");
-                $templateProcessor->setValue("nama_alat#1", ($job->pesawat ?? 'Peralatan') . " ({$job->units} Unit)");
+                $templateProcessor->setValue("nama_alat#1", ($job->pesawat ?? 'Peralatan') . " ({$job->unit_count} Unit)");
                 $templateProcessor->setValue("lokasi#1",    $job->lokasi ?? '-');
                 $templateProcessor->setValue("tanggal#1",   $tglPelaksanaan . ' ' . $jamMulai);
                 $templateProcessor->setValue("pic#1",       $picInfo);

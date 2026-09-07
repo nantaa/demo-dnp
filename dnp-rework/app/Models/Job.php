@@ -101,7 +101,20 @@ class Job extends Model
     protected function closedUnitCount(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->units->where('unit_status', 'Closed')->count()
+            get: function () {
+                $units = $this->relationLoaded('units') ? $this->getRelation('units') : $this->units()->get();
+                return $units->where('unit_status', 'Closed')->count();
+            }
+        );
+    }
+
+    /**
+     * Total unit count (numeric) safely retrieved without collision with units relationship.
+     */
+    protected function unitCount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->total_unit_count ?? $this->getRawOriginal('units') ?? 1
         );
     }
 

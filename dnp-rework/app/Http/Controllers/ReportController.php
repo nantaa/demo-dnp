@@ -67,7 +67,7 @@ class ReportController extends Controller
                 'Marketing'            => $job->owner_marketing ?: '-',
                 'Client'               => $job->klien ?: '-',
                 'Jenis Alat'           => $job->pesawat ?: '-',
-                'Jmlh'                 => $job->units ?: 1,
+                'Jmlh'                 => $job->unit_count ?: 1,
                 'Lokasi Alat'          => $job->lokasi ?: '-',
                 'Tanggal Riksa Uji'    => $job->tgl_pelaksanaan ? date('d F Y', strtotime($job->tgl_pelaksanaan)) : '-',
                 'Yang Jalan Riksa Uji' => $inspectorsList,

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Job extends Model
 {
@@ -57,7 +58,56 @@ class Job extends Model
         's4_checklist'                => 'array',
         's7_bundel_checklist'         => 'array',
         'schedule_days'               => 'array',
+        'reschedule_reason_log'       => 'array',
+        'dp_paid'                     => 'boolean',
+        'dp_amount'                   => 'decimal:2',
+        'total_unit_count'            => 'integer',
+        'payment_retry_count'         => 'integer',
     ];
+
+    // -------------------------------------------------------------------------
+    // v3 Computed Accessors (never stored — rollup from units)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Computed job_status: Open / Partial / Closed based on unit rollup.
+     * - Open    = no units, or all units are InProgress/ReworkLoop
+     * - Partial = some units Closed, some still InProgress/ReworkLoop
+     * - Closed  = all units are Closed
+     */
+    protected function jobStatus(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $units = $this->units;
+                if ($units->isEmpty()) {
+                    return 'Open';
+                }
+                $closedCount = $units->where('unit_status', 'Closed')->count();
+                if ($closedCount === 0) {
+                    return 'Open';
+                }
+                if ($closedCount === $units->count()) {
+                    return 'Closed';
+                }
+                return 'Partial';
+            }
+        );
+    }
+
+    /**
+     * Count of units with status = Closed (for display: "95/100 Units Closed").
+     */
+    protected function closedUnitCount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->units->where('unit_status', 'Closed')->count()
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
 
     /**
      * The user designated to prepare the report/document (Assigned in Stage 3)
@@ -113,5 +163,49 @@ class Job extends Model
     public function disnakerFollowups(): HasMany
     {
         return $this->hasMany(DisnakerFollowup::class);
+    }
+
+    // -------------------------------------------------------------------------
+    // v3 Relationships
+    // -------------------------------------------------------------------------
+
+    /**
+     * Units (Alat) — the core v3 entity; each has its own stage and RU result.
+     */
+    public function units(): HasMany
+    {
+        return $this->hasMany(Unit::class, 'job_id');
+    }
+
+    /**
+     * Inspection events (Sesi Riksa Uji) — each produces one BAP.
+     */
+    public function inspectionEvents(): HasMany
+    {
+        return $this->hasMany(InspectionEvent::class, 'job_id');
+    }
+
+    /**
+     * Batches — groups of Approved-LHPP units submitted together to Disnaker.
+     */
+    public function batches(): HasMany
+    {
+        return $this->hasMany(Batch::class, 'job_id');
+    }
+
+    /**
+     * Payment verifications (Stage 11c) — Finance confirms payment before SUKET sent.
+     */
+    public function paymentVerifications(): HasMany
+    {
+        return $this->hasMany(PaymentVerification::class, 'job_id');
+    }
+
+    /**
+     * Latest payment verification record.
+     */
+    public function latestPaymentVerification()
+    {
+        return $this->hasOne(PaymentVerification::class, 'job_id')->latestOfMany();
     }
 }

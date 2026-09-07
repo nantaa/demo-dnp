@@ -1,0 +1,63 @@
+[     503ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[    2137ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=42ac15a1:20356
+[  166319ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/notifications:0
+[  166321ms] [ERROR] SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ :0
+[  174320ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/notifications:0
+[  174321ms] [ERROR] SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ :0
+[  176415ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176416ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[  176416ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176416ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[  176417ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176417ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[  176640ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  182308ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/notifications:0
+[  182309ms] [ERROR] SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ :0
+[  176415ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176416ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[  176416ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176416ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[  176417ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176417ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[  186356ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  186356ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[  186357ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  186357ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[  186359ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  186359ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[  186442ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  190325ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/notifications:0
+[  190325ms] [ERROR] SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ :0
+[  176415ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176416ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[  176416ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176416ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[  176417ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  176417ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[  186356ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  186356ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[  186357ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  186357ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[  186359ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  186359ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[  196355ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  196355ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[  196356ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx?t=1788764844949' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  196356ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx?t=1788764844949:0
+[  196359ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[  196359ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[  196451ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  198321ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/notifications:0
+[  198322ms] [ERROR] SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON @ :0
+[  204121ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:559
+[  206476ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  206740ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/api/notifications:0
+[  206740ms] [ERROR] TypeError: Failed to fetch
+    at fetchNotifications (http://localhost:5173/dnp-rework/resources/js/Components/NotificationBell.jsx:30:5) @ :0
+[  208658ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/kanban:0
+[  208658ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  208663ms] HttpNetworkError: Network error (http://localhost:5173/kanban)
+    at xhr.onerror (http://localhost:5173/node_modules/.vite/deps/@inertiajs_react.js?v=42ac15a1:8034:35)
+[  209842ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  211022ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  212108ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=42ac15a1:20356

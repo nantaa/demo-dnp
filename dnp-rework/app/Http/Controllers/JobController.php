@@ -100,16 +100,18 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'klien'           => 'required|string|max:255',
-            'pesawat'         => 'required|string|max:255',
-            'lokasi'          => 'required|string',
-            'owner_marketing' => 'required|string',
-            'pic_klien'       => 'nullable|string',
-            'pic_klien_phone' => 'nullable|string',
-            'units'           => 'integer|min:1',
-            'nilai'           => 'numeric|min:0',
-            'no_po'           => 'required|string|max:255',
-            'tgl_po'          => 'nullable|date',
+            'klien'              => 'required|string|max:255',
+            'pesawat'            => 'required|string|max:255',
+            'lokasi'             => 'required|string',
+            'owner_marketing'    => 'required|string',
+            'pic_klien'          => 'nullable|string',
+            'pic_klien_phone'    => 'nullable|string',
+            'units'              => 'integer|min:1',
+            'nilai'              => 'numeric|min:0',
+            'no_po'              => 'required|string|max:255',
+            'tgl_po'             => 'nullable|date',
+            'termin_pembayaran'  => 'required|in:DP,FULL',
+            'total_unit_count'   => 'nullable|integer|min:1',
         ]);
 
         if (Auth::user()->role === 'marketing') {
@@ -218,6 +220,12 @@ class JobController extends Controller
             $validationRules['report_writer_id']                = 'nullable|exists:users,id';
             $validationRules['alat_ids']                        = 'nullable|array';
             $validationRules['cert_ids']                        = 'nullable|array';
+
+            // v3 DP Payment hard gate: DP termin requires dp_paid before Surat Tugas
+            $dpGate = \App\Services\WorkflowService::canIssueSuratTugas($job);
+            if (!$dpGate['allowed']) {
+                return back()->withErrors([$dpGate['field'] => $dpGate['message']]);
+            }
         }
 
         // Stage 4: move to Stage 5 or Stage 13 allowed
@@ -297,6 +305,14 @@ class JobController extends Controller
                 return back()->withErrors([
                     'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum menutup (Close) pekerjaan ini.',
                 ]);
+            }
+        }
+
+        // Stage 15 (11b: SUKET Delivery) → 12: require payment verified by Finance
+        if ($currentStage == 15) {
+            $suketGate = \App\Services\WorkflowService::canDeliverSuket($job);
+            if (!$suketGate['allowed']) {
+                return back()->withErrors([$suketGate['field'] => $suketGate['message']]);
             }
         }
 
@@ -1270,5 +1286,127 @@ class JobController extends Controller
         } while ($exists);
 
         return $stNum;
+    }
+    /**
+     * Reschedule a job: update tgl_pelaksanaan and append to reschedule_reason_log.
+     * Hard gate: only Admin (or Manager/Superadmin) can reschedule.
+     */
+    public function reschedule(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if (!in_array($user->role, ['admin', 'manager', 'superadmin'])) {
+            abort(403, 'Only Admin can reschedule a job.');
+        }
+
+        $validated = $request->validate([
+            'reason'              => 'required|string|min:5|max:2000',
+            'new_tgl_pelaksanaan' => 'required|date',
+        ]);
+
+        // Append to the reschedule log (not overwrite)
+        $log = $job->reschedule_reason_log ?? [];
+        $log[] = [
+            'reason'       => $validated['reason'],
+            'old_date'     => $job->tgl_pelaksanaan?->toDateString(),
+            'new_date'     => $validated['new_tgl_pelaksanaan'],
+            'rescheduled_by' => $user->name,
+            'rescheduled_at' => now()->toIso8601String(),
+        ];
+
+        $job->update([
+            'tgl_pelaksanaan'     => $validated['new_tgl_pelaksanaan'],
+            'reschedule_reason_log' => $log,
+        ]);
+
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => 'Reschedule: ' . $validated['reason'],
+            'action_by_user_id' => Auth::id(),
+        ]);
+
+        $recipients = \App\Services\NotificationService::getRelatedUserIds($job, $job->stage);
+        \App\Services\NotificationService::send(
+            $recipients,
+            'reschedule',
+            "📅 Job {$job->kode} dijadwalkan ulang",
+            "Tanggal pelaksanaan diubah ke {$validated['new_tgl_pelaksanaan']}. Alasan: {$validated['reason']}",
+            $job->id
+        );
+
+        return back()->with('success', 'Jadwal berhasil diperbarui.');
+    }
+
+    /**
+     * Finance submits payment verification (Stage 11c).
+     * If status = Partial/Pending → loop Job back to Stage 11 and increment retry_count.
+     * If status = Verified       → unlock Stage 11b (SUKET delivery).
+     */
+    public function savePaymentVerification(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+            abort(403, 'Only Finance can submit payment verification.');
+        }
+
+        $validated = $request->validate([
+            'status'    => 'required|in:Pending,Verified,Partial',
+            'notes'     => 'nullable|string|max:2000',
+            'bukti_url' => 'nullable|string|max:2000',
+        ]);
+
+        // Create or update the latest PaymentVerification record
+        $verification = $job->paymentVerifications()->create([
+            'verified_by' => $user->id,
+            'verified_at' => now(),
+            'status'      => $validated['status'],
+            'notes'       => $validated['notes'] ?? null,
+            'bukti_url'   => $validated['bukti_url'] ?? null,
+        ]);
+
+        if (in_array($validated['status'], ['Partial', 'Pending'])) {
+            // Loop back to Stage 11 (Penagihan) — increment retry_count on job
+            $job->increment('payment_retry_count');
+            $job->update([
+                'stage'           => 11,
+                'stage_started_at' => now(),
+            ]);
+
+            $job->historyLogs()->create([
+                'stage'             => 11,
+                'action'            => 'Verifikasi Pembayaran: ' . strtoupper($validated['status']) . ' — Job dikembalikan ke Stage 11 untuk penagihan ulang',
+                'action_by_user_id' => Auth::id(),
+                'notes'             => $validated['notes'] ?? null,
+            ]);
+
+            $recipients = \App\Services\NotificationService::getRelatedUserIds($job, 11);
+            \App\Services\NotificationService::send(
+                $recipients,
+                'payment_partial',
+                "⚠️ Job {$job->kode} kembali ke Stage 11 (Pembayaran Belum Lunas)",
+                "Finance: pembayaran {$validated['status']}. Silakan lakukan penagihan ulang. Catatan: " . ($validated['notes'] ?? '-'),
+                $job->id
+            );
+
+            return back()->with('info', 'Status Partial/Pending dicatat. Job dikembalikan ke Stage 11 untuk penagihan ulang.');
+        }
+
+        // Verified → stay at current stage (11c), unlock 11b
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => 'Verifikasi Pembayaran: VERIFIED — SUKET dapat dikirim ke klien (Stage 11b)',
+            'action_by_user_id' => Auth::id(),
+            'notes'             => $validated['notes'] ?? null,
+        ]);
+
+        $recipients = \App\Services\NotificationService::getRelatedUserIds($job, $job->stage);
+        \App\Services\NotificationService::send(
+            $recipients,
+            'payment_verified',
+            "✅ Job {$job->kode} — Pembayaran Terverifikasi",
+            "Finance telah memverifikasi pembayaran. SUKET dapat dikirimkan ke klien.",
+            $job->id
+        );
+
+        return back()->with('success', 'Pembayaran terverifikasi. SUKET dapat dikirim ke klien.');
     }
 }

@@ -1,0 +1,322 @@
+[      73ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[     245ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=42ac15a1:20356
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   10804ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   20708ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   30687ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40602ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40603ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   40605ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40605ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   40607ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40608ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40693ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40602ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40603ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   40605ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40605ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   40607ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40608ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   50588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50590ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   50699ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40602ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40603ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   40605ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40605ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   40607ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40608ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   50588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50590ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   60591ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   60592ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60592ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   60594ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60594ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   60691ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40602ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40603ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   40605ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40605ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   40607ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40608ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   50588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50590ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   60591ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   60592ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60592ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   60594ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60594ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   70618ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70618ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   70625ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70626ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   70628ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70628ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   70733ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40602ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40603ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   40605ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40605ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   40607ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40608ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   50588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50590ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   60591ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   60592ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60592ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   60594ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60594ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   70618ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70618ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   70625ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70626ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   70628ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70628ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   80588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   80588ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   80588ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   80588ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   80589ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   80589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   80692ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   10683ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10683ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   10688ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10689ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   10691ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   10691ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20606ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20606ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   20609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   20611ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   20611ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   30599ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30599ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   30602ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   30602ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   40602ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40603ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   40605ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40605ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   40607ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   40608ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   50588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50590ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   50590ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   50591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   60591ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60591ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   60592ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60592ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   60594ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   60594ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   70618ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70618ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   70625ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70626ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   70628ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   70628ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   80588ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   80588ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   80588ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   80588ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   80589ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   80589ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   90604ms] [ERROR] Access to script at 'http://localhost:5173/@vite/client' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   90604ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@vite/client:0
+[   90607ms] [ERROR] Access to script at 'http://localhost:5173/src/main.jsx' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   90607ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/src/main.jsx:0
+[   90609ms] [ERROR] Access to script at 'http://localhost:5173/@react-refresh' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ about:srcdoc:0
+[   90609ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:5173/@react-refresh:0
+[   90716ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   94480ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:559
+[   94896ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[   95549ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=42ac15a1:20356
+[  105915ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  115919ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  125917ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  135915ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  145918ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  155918ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  165909ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  175920ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  185915ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  195910ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  205908ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  215918ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  225914ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  235918ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  245906ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  255913ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/kanban:0
+[  257307ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/dnp-rework/resources/js/Pages/Pelaporan/Index.jsx:0
+[  257308ms] [ERROR] [hmr] Failed to reload /src/App.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
+[  263400ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:559
+[  265764ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  266001ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/api/notifications:0
+[  266001ms] [ERROR] TypeError: Failed to fetch
+    at fetchNotifications (http://localhost:5173/dnp-rework/resources/js/Components/NotificationBell.jsx:30:5) @ :0
+[  266280ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/kanban:0
+[  266282ms] HttpNetworkError: Network error (http://localhost:5173/kanban)
+    at xhr.onerror (http://localhost:5173/node_modules/.vite/deps/@inertiajs_react.js?v=42ac15a1:8034:35)
+[  268258ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  271637ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  274248ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/api/notifications:0
+[  274248ms] [ERROR] TypeError: Failed to fetch
+    at fetchNotifications (http://localhost:5173/dnp-rework/resources/js/Components/NotificationBell.jsx:30:5) @ :0
+[  274527ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  277910ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  278159ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/kanban:0
+[  278160ms] HttpNetworkError: Network error (http://localhost:5173/kanban)
+    at xhr.onerror (http://localhost:5173/node_modules/.vite/deps/@inertiajs_react.js?v=42ac15a1:8034:35)
+[  279841ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  282362ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=c441a73f:20356

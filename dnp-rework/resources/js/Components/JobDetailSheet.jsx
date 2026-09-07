@@ -279,8 +279,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         reschedule_notes:  job.reschedule_notes  ?? '',
     });
     const [s4d, setS4d] = useState({
-        ru_ulang_status: job.ru_ulang_status ?? 'lolos',
-        ru_ulang_notes:  job.ru_ulang_notes  ?? '',
+        actual_units:     job.actual_units ?? job.units ?? 1,
+        unit_count_notes: job.unit_count_notes ?? '',
+        ru_ulang_status:  job.ru_ulang_status ?? 'lolos',
+        ru_ulang_notes:   job.ru_ulang_notes  ?? '',
     });
     const [s5Dates, setS5Dates] = useState({
         tgl_teknis_diserahkan: job.tgl_teknis_diserahkan ?? '',
@@ -313,7 +315,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
     const [isMoving, setIsMoving] = useState(false);
 
-    // ── Schedule builder state (Stage 3) ─────────────────────────────────────
+    // ── Schedule builder state (Stage 3 & Stage 4c Reschedule) ────────────────
     const initScheduleDays = (j) => {
         const saved = j.schedule_days;
         if (Array.isArray(saved) && saved.length > 0) {
@@ -353,11 +355,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/s2-verify`, { s2_verify_data: updated }, { preserveScroll: true });
     };
 
-    // Master data & recommendations (Stage 3)
+    // Master data & recommendations (Stage 3 & Stage 4c Reschedule)
     const [masterData,       setMasterData]       = useState({ alat_uji: [], sertifikat_pjk3: [] });
     const [recommendations,  setRecommendations]  = useState({ recommended: [], eliminated: [] });
     useEffect(() => {
-        if (job.stage === 3) {
+        if (job.stage === 3 || job.stage === 16) {
             fetch('/api/master-data')
                 .then(r => {
                     if (!r.ok) throw new Error('Master data request failed');
@@ -427,6 +429,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             s10_progress_status:  job.s10_progress_status  ?? '',
             tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
         });
+        setS4c({
+            reschedule_reason: job.reschedule_reason ?? '',
+            tgl_reschedule:    job.tgl_reschedule    ?? '',
+            reschedule_notes:  job.reschedule_notes  ?? '',
+        });
+        setS4d({
+            actual_units:     job.actual_units     ?? job.units ?? 1,
+            unit_count_notes: job.unit_count_notes ?? '',
+            ru_ulang_status:  job.ru_ulang_status  ?? 'lolos',
+            ru_ulang_notes:   job.ru_ulang_notes   ?? '',
+        });
         setS11({ no_resi: job.no_resi ?? '' });
         setS14({
             s14_payment_status: job.s14_payment_status ?? 'pending',
@@ -458,14 +471,20 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const canManage = (() => {
         if (propCanManage !== undefined) return propCanManage;
-        if (!permissions) return false;
-        if (permissions === 'superadmin') return true;
+        if (!user) return false;
+        if (user.role === 'superadmin') return true;
+        if (user.role === 'marketing' && [1, 13, 11, 14].includes(job.stage)) return true;
+        if (user.role === 'admin' && [2, 3, 16, 5, 7, 8, 9].includes(job.stage)) return true;
+        if (user.role === 'finance' && [10, 15, 12].includes(job.stage)) return true;
         if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
         if (isInspector) {
-            return [4, 17].includes(job.stage) && isAssignedInspector;
+            return [4, 17].includes(job.stage) && (isAssignedInspector || !job.inspectors || job.inspectors.length === 0);
         }
-        const p = permissions[job.stage];
-        return p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1');
+        if (permissions && typeof permissions === 'object') {
+            const p = permissions[job.stage];
+            if (p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1')) return true;
+        }
+        return false;
     })();
 
     const canViewStageDocs = (sid) => {
@@ -496,8 +515,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const stage2Bypass = job.peer_review_status === 'approved';
     const stage2CanMove = stage2DocOk || stage2Bypass;
 
-    // Stage 4: unit mismatch
+    // Stage 4 & 4d: unit mismatch
     const s4UnitMismatch = s4.actual_units != null && parseInt(s4.actual_units) !== parseInt(job.units);
+    const s4dUnitMismatch = s4d.actual_units != null && parseInt(s4d.actual_units) !== parseInt(job.units);
 
     // ── Stage 3 schedule validity ────────────────────────────────────────────
     const allSelectedInspectorIds = [...new Set(scheduleDays.flatMap(d => d.inspector_ids))];
@@ -1376,17 +1396,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 📅 Stage 4c: Penjadwalan Ulang / Reschedule (Admin)
                             </h4>
                             <p className="text-xs text-amber-800">
-                                Terdapat unit yang tertunda/rusak saat Riksa Uji. Tentukan tanggal inspeksi ulang dan tim ahli untuk Riksa Uji Ulang (Stage 4d).
+                                Terdapat unit yang tertunda/rusak saat Riksa Uji. Tentukan tanggal inspeksi ulang, tim ahli, dan alat uji untuk Riksa Uji Ulang (Stage 4d).
                             </p>
                         </div>
 
+                        {/* Informasi Reschedule */}
                         <div className="bg-white border rounded-lg p-3 space-y-3">
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Alasan Penjadwalan Ulang *</label>
                                 <select
                                     value={s4c.reschedule_reason}
                                     onChange={e => setS4c({ ...s4c, reschedule_reason: e.target.value })}
-                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
+                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-amber-400"
                                 >
                                     <option value="">-- Pilih Alasan Reschedule --</option>
                                     <option value="Unit belum siap / rusak di lokasi">Unit belum siap / rusak di lokasi</option>
@@ -1403,7 +1424,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     <input
                                         type="date"
                                         value={s4c.tgl_reschedule}
-                                        onChange={e => setS4c({ ...s4c, tgl_reschedule: e.target.value })}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            setS4c({ ...s4c, tgl_reschedule: val });
+                                            if (scheduleDays.length > 0 && !scheduleDays[0].date) {
+                                                setScheduleDays(scheduleDays.map((d, i) => i === 0 ? { ...d, date: val } : d));
+                                            }
+                                        }}
                                         className="w-full border rounded px-2 py-1.5 text-sm"
                                     />
                                 </div>
@@ -1418,6 +1445,188 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Schedule Builder (Same as Stage 3) */}
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Jam Mulai RU Ulang *</label>
+                                    <input type="time" value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-400" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Disnaker Tujuan *</label>
+                                    <select
+                                        value={data.disnaker_tujuan}
+                                        onChange={e => setData('disnaker_tujuan', e.target.value)}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-indigo-400"
+                                        required
+                                    >
+                                        <option value="">-- Pilih Disnaker Provinsi --</option>
+                                        {data.disnaker_tujuan &&
+                                            !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) &&
+                                            !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
+                                            <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
+                                        )}
+                                        {INDONESIA_PROVINCES.map(prov => {
+                                            const val = `Disnaker Prov. ${prov}`;
+                                            return <option key={prov} value={val}>{val}</option>;
+                                        })}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Jadwal Pelaksanaan Multi-Day */}
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-indigo-900">📅 Jadwal Pelaksanaan RU Ulang</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] text-indigo-700">Hari:</span>
+                                        <button type="button"
+                                            onClick={() => scheduleDays.length > 1 && setScheduleDays(prev => prev.slice(0, -1))}
+                                            disabled={scheduleDays.length <= 1}
+                                            className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100 disabled:opacity-40">−</button>
+                                        <span className="text-sm font-bold text-indigo-900 w-5 text-center">{scheduleDays.length}</span>
+                                        <button type="button"
+                                            onClick={() => setScheduleDays(prev => [...prev, { date: '', inspector_ids: [] }])}
+                                            className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100">+</button>
+                                    </div>
+                                </div>
+
+                                {scheduleDays.map((day, dayIdx) => {
+                                    const allInspectors = [
+                                        ...(recommendations.recommended || []),
+                                        ...(recommendations.eliminated  || []),
+                                    ];
+                                    return (
+                                        <div key={dayIdx} className="bg-white border border-indigo-200 rounded-lg p-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded shrink-0">
+                                                    Hari {dayIdx + 1}
+                                                </span>
+                                                <input
+                                                    type="date"
+                                                    value={day.date}
+                                                    onChange={e => {
+                                                        const updated = scheduleDays.map((d, i) =>
+                                                            i === dayIdx ? { ...d, date: e.target.value } : d
+                                                        );
+                                                        setScheduleDays(updated);
+                                                    }}
+                                                    className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-indigo-400"
+                                                />
+                                                {scheduleDays.length > 1 && (
+                                                    <button type="button"
+                                                        onClick={() => setScheduleDays(prev => prev.filter((_, i) => i !== dayIdx))}
+                                                        className="text-red-400 hover:text-red-600 text-base leading-none px-1 shrink-0" title="Hapus hari ini">✕</button>
+                                                )}
+                                            </div>
+
+                                            <p className="text-[10px] text-gray-500 mb-1.5">Inspektur pada Hari {dayIdx + 1}:</p>
+                                            {allInspectors.length === 0 ? (
+                                                <p className="text-[11px] text-gray-400 italic">Memuat data inspektur...</p>
+                                            ) : (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {allInspectors.map(item => {
+                                                        const uid = item.user.id;
+                                                        const isSelected = day.inspector_ids.includes(uid);
+                                                        const isOverloaded = item.statuses
+                                                            ? item.statuses.some(st => st === 'Overload')
+                                                            : false;
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={uid}
+                                                                onClick={() => {
+                                                                    const updated = scheduleDays.map((d, i) => {
+                                                                        if (i !== dayIdx) return d;
+                                                                        const ids = d.inspector_ids.includes(uid)
+                                                                            ? d.inspector_ids.filter(id => id !== uid)
+                                                                            : [...d.inspector_ids, uid];
+                                                                        return { ...d, inspector_ids: ids };
+                                                                    });
+                                                                    setScheduleDays(updated);
+                                                                }}
+                                                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
+                                                                    isSelected
+                                                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                                                        : isOverloaded
+                                                                            ? 'bg-gray-50 text-gray-400 border-gray-200 hover:border-red-300 hover:text-red-500'
+                                                                            : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+                                                                }`}
+                                                            >
+                                                                {isSelected && <span>✓</span>}
+                                                                {item.user.name}
+                                                                {isOverloaded && !isSelected && <span className="text-red-400 text-[9px]">⚠</span>}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Smart Recommendation */}
+                            <SmartRecommendation
+                                job={job}
+                                selectedInspectorIds={allSelectedInspectorIds}
+                                onSelectInspector={(insUser) => {
+                                    const uid = insUser.id;
+                                    const isInAll = scheduleDays.every(d => d.inspector_ids.includes(uid));
+                                    setScheduleDays(scheduleDays.map(d => ({
+                                        ...d,
+                                        inspector_ids: isInAll
+                                            ? d.inspector_ids.filter(id => id !== uid)
+                                            : d.inspector_ids.includes(uid)
+                                                ? d.inspector_ids
+                                                : [...d.inspector_ids, uid],
+                                    })));
+                                }}
+                            />
+
+                            {/* Penanggung Jawab Laporan */}
+                            <div className="bg-white border rounded-lg p-3">
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                    📝 Penanggung Jawab Laporan / Penyusun LHPP
+                                </label>
+                                <select
+                                    value={data.report_writer_id || ''}
+                                    onChange={e => setData('report_writer_id', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400"
+                                >
+                                    <option value="">-- Pilih Penanggung Jawab Laporan (Opsional) --</option>
+                                    {[
+                                        ...(recommendations.recommended || []),
+                                        ...(recommendations.eliminated || [])
+                                    ].map(item => (
+                                        <option key={item.user.id} value={item.user.id}>
+                                            {item.user.name} ({item.user.role})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Alat Uji */}
+                            {masterData.alat_uji.length > 0 && (
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Alat Uji yang Digunakan</label>
+                                    <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto border rounded p-2 bg-white">
+                                        {masterData.alat_uji.map(a => (
+                                            <label key={a.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                                <input type="checkbox" checked={data.alat_ids.includes(a.id)}
+                                                    onChange={() => {
+                                                        const ids = data.alat_ids.includes(a.id) ? data.alat_ids.filter(x => x !== a.id) : [...data.alat_ids, a.id];
+                                                        setData('alat_ids', ids);
+                                                    }} className="rounded" />
+                                                {a.nama}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {(DOC_TYPES_BY_STAGE[16] || []).map(t => (
@@ -1440,9 +1649,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 onClick={(e) => {
                                     e.preventDefault();
                                     if (!s4c.reschedule_reason?.trim()) return showError('Validasi', 'Pilih alasan penjadwalan ulang terlebih dahulu!');
-                                    if (!s4c.tgl_reschedule) return showError('Validasi', 'Tentukan tanggal jadwal baru!');
+                                    if (!s4c.tgl_reschedule) return showError('Validasi', 'Tentukan tanggal jadwal baru RU Ulang!');
                                     post(`/jobs/${job.id}/move`, {
-                                        data: { ...data, ...s4c, next_stage: 17 },
+                                        data: {
+                                            ...data,
+                                            ...s4c,
+                                            schedule_days: scheduleDays,
+                                            next_stage: 17
+                                        },
                                         onSuccess: () => onClose()
                                     });
                                 }}
@@ -1479,7 +1693,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             checked={s4d.ru_ulang_status === 'lolos'}
                                             onChange={() => setS4d({ ...s4d, ru_ulang_status: 'lolos' })}
                                         />
-                                        <span className="text-emerald-700">✅ Lolos Riksa Uji Ulang (Lanjut ke Stage 5 LHPP)</span>
+                                        <span className="text-emerald-700">✅ Lolos Riksa Uji Ulang</span>
                                     </label>
                                     <label className="flex items-center gap-1.5 cursor-pointer">
                                         <input
@@ -1494,13 +1708,55 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </div>
                             </div>
 
+                            {/* Jumlah Alat yang Benar-benar Diperiksa */}
+                            <div className="pt-2 border-t border-gray-100">
+                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                    Jumlah Alat yang Benar-benar Diperiksa
+                                </label>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={job.units}
+                                        value={s4d.actual_units}
+                                        onChange={e => setS4d({ ...s4d, actual_units: e.target.value })}
+                                        className="w-24 border border-gray-300 rounded px-3 py-1.5 text-sm font-semibold text-gray-800 text-center focus:ring-1 focus:ring-indigo-400"
+                                    />
+                                    <span className="text-xs text-gray-600 font-medium">
+                                        dari {job.units} unit dalam Job
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveS4d}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 transition"
+                                >
+                                    Simpan Data Lapangan
+                                </button>
+
+                                {s4dUnitMismatch && (
+                                    <div className="mt-2.5 p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 space-y-1.5">
+                                        <p className="font-semibold">
+                                            ⚠️ Jumlah alat yang diperiksa ({s4d.actual_units}) belum sesuai dengan jumlah total unit ({job.units}).
+                                        </p>
+                                        <input
+                                            type="text"
+                                            placeholder="Catatan selisih / kendala sisa unit..."
+                                            value={s4d.unit_count_notes}
+                                            onChange={e => setS4d({ ...s4d, unit_count_notes: e.target.value })}
+                                            className="w-full border border-amber-300 rounded px-2 py-1 text-xs bg-white focus:ring-1 focus:ring-amber-400"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Catatan Teknis RU Ulang</label>
                                 <textarea
                                     rows={2}
                                     value={s4d.ru_ulang_notes}
                                     onChange={e => setS4d({ ...s4d, ru_ulang_notes: e.target.value })}
-                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
+                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-indigo-400"
                                     placeholder="Kondisi pengujian unit ulang, temuan teknis..."
                                 />
                             </div>
@@ -1512,30 +1768,101 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
 
-                        <div className="flex gap-2 mt-4">
-                            <button
-                                type="button"
-                                onClick={handleRejectStage}
-                                disabled={processing}
-                                className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
-                            >
-                                Kembalikan ke 4c
-                            </button>
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    const next = s4d.ru_ulang_status === 'lolos' ? 5 : 16;
-                                    post(`/jobs/${job.id}/move`, {
-                                        data: { ...data, ...s4d, next_stage: next },
-                                        onSuccess: () => onClose()
-                                    });
-                                }}
-                                disabled={processing}
-                                className={`flex-1 px-4 py-2 rounded text-sm font-bold text-white shadow-sm ${s4d.ru_ulang_status === 'lolos' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'}`}
-                            >
-                                {processing ? '...' : (s4d.ru_ulang_status === 'lolos' ? '🚀 Lolos RU — Lanjut ke Stage 5 (LHPP) →' : '🔁 Gagal RU — Kembali ke Penjadwalan Ulang (Stage 4c) →')}
-                            </button>
+                        <div className="space-y-2 mt-4">
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleRejectStage}
+                                    disabled={processing}
+                                    className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                                >
+                                    Kembalikan ke 4c
+                                </button>
+                                {s4d.ru_ulang_status === 'gagal' ? (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            post(`/jobs/${job.id}/move`, {
+                                                data: { ...data, ...s4d, next_stage: 16 },
+                                                onSuccess: () => onClose()
+                                            });
+                                        }}
+                                        disabled={processing}
+                                        className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm"
+                                    >
+                                        {processing ? '...' : '🔁 Gagal RU — Kembali ke Penjadwalan Ulang (Stage 4c) →'}
+                                    </button>
+                                ) : !s4dUnitMismatch ? (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            post(`/jobs/${job.id}/move`, {
+                                                data: { ...data, ...s4d, next_stage: 5 },
+                                                onSuccess: () => onClose()
+                                            });
+                                        }}
+                                        disabled={processing}
+                                        className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+                                    >
+                                        {processing ? '...' : '🚀 Lolos Penuh — Lanjut ke Stage 5 (LHPP) →'}
+                                    </button>
+                                ) : null}
+                            </div>
+
+                            {/* Rekonsiliasi Loop when Lolos but Unit Mismatch */}
+                            {s4d.ru_ulang_status === 'lolos' && s4dUnitMismatch && (
+                                <div className="border border-amber-300 rounded-lg p-3 bg-amber-50/90 space-y-2.5">
+                                    <p className="text-xs font-semibold text-amber-900">
+                                        ⚠️ Jumlah unit yang diperiksa ({s4d.actual_units}) tidak sesuai dengan unit dalam Job ({job.units}). Pilih alur rekonsiliasi:
+                                    </p>
+                                    <div className="flex flex-col gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                post(`/jobs/${job.id}/move`, {
+                                                    data: { ...data, ...s4d, next_stage: 13 },
+                                                    onSuccess: () => onClose()
+                                                });
+                                            }}
+                                            disabled={processing}
+                                            className="w-full px-3 py-2 rounded text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-xs"
+                                        >
+                                            📝 Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                post(`/jobs/${job.id}/move`, {
+                                                    data: { ...data, ...s4d, next_stage: 16 },
+                                                    onSuccess: () => onClose()
+                                                });
+                                            }}
+                                            disabled={processing}
+                                            className="w-full px-3 py-2 rounded text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs"
+                                        >
+                                            📅 Jadwalkan Sisa Unit di Stage 4c (Reschedule ADM) →
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                post(`/jobs/${job.id}/move`, {
+                                                    data: { ...data, ...s4d, next_stage: 5 },
+                                                    onSuccess: () => onClose()
+                                                });
+                                            }}
+                                            disabled={processing}
+                                            className="w-full px-3 py-2 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs"
+                                        >
+                                            🚀 Sepakat Selesai & Lanjut ke Stage 5 (LHPP) →
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

@@ -26,6 +26,11 @@ export default defineConfig({
       '/jobs': {
         target: 'http://localhost:3001',
         changeOrigin: true,
+        bypass: (req) => {
+          if (!req.headers['x-inertia'] && req.method === 'GET') {
+            return '/index.html';
+          }
+        },
       },
       '/notifications': {
         target: 'http://localhost:3001',

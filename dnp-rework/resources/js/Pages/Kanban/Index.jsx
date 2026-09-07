@@ -27,7 +27,12 @@ export default function KanbanIndex({ jobs, auth }) {
     }, []);
 
     const canManageStage = (stageId) => {
-        if (permissions === 'superadmin') return true;
+        if (permissions === 'superadmin' || auth.user.role === 'superadmin') return true;
+        if (auth.user.role === 'marketing' && [1, 13, 11, 14].includes(stageId)) return true;
+        if (auth.user.role === 'admin' && [2, 3, 16, 5, 7, 8, 9].includes(stageId)) return true;
+        if (auth.user.role === 'inspektur' && [4, 17].includes(stageId)) return true;
+        if (auth.user.role === 'manager' && [6, 2, 3, 5, 7, 8, 9].includes(stageId)) return true;
+        if (auth.user.role === 'finance' && [10, 15, 12].includes(stageId)) return true;
         const perm = permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };

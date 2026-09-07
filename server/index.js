@@ -28,6 +28,19 @@ app.use('/api/jobs', jobsRouter);
 app.use('/jobs', jobsRouter);
 app.use('/api/app', appRouter);
 
+// Master data endpoint
+app.get('/api/master-data', (req, res) => {
+  try {
+    const row = db.prepare("SELECT value FROM app_state WHERE key = 'master:data'").get();
+    if (row) {
+      return res.json(JSON.parse(row.value));
+    }
+    res.json({ alat_uji: [], sertifikat_pjk3: [], regulasi: [], form_disnaker: [] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // Notification endpoints
 app.get('/api/notifications', (req, res) => {
   res.json({ ok: true, notifications: [] });

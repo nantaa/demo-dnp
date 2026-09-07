@@ -92,6 +92,177 @@ router.get('/create', (req, res) => {
   res.json(payload);
 });
 
+// GET /api/jobs/:id/recommendations — smart inspector recommendations (TDD v3)
+router.get('/:id/recommendations', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    const targetJob = row ? JSON.parse(row.data) : { id: req.params.id, pesawat: '', klien: '', lokasi: '' };
+
+    // Load inspectors from app_state or users
+    let inspectors = [];
+    const inspRow = db.prepare("SELECT value FROM app_state WHERE key = 'app:inspectors'").get();
+    if (inspRow) {
+      inspectors = JSON.parse(inspRow.value);
+    } else {
+      const usersRow = db.prepare("SELECT value FROM app_state WHERE key = 'app:users'").get();
+      if (usersRow) {
+        inspectors = JSON.parse(usersRow.value).filter(u => u.role === 'inspektur' || u.role === 'manager');
+      }
+    }
+
+    if (!inspectors || inspectors.length === 0) {
+      inspectors = [
+        { id: 1, name: 'Pranan Jaya, S.T.', role: 'inspektur', inspector_profile: { active: true, skp_expired_at: '2027-12-31', spesialisasi: ['Instalasi Listrik & PP', 'PTP (Compressor/Genset)', 'Proteksi Kebakaran'], domisili: 'Bekasi', senior_level: 3, subrole: 'ahli_k3' } },
+        { id: 2, name: 'Adi Octa Pratama, S.T.', role: 'inspektur', inspector_profile: { active: true, skp_expired_at: '2027-08-15', spesialisasi: ['PAPA (Crane/Forklift/dll)', 'Lift / Dumbwaiter', 'Instalasi Listrik & PP'], domisili: 'Jakarta', senior_level: 2, subrole: 'tenaga_ahli' } },
+        { id: 3, name: 'Tedy Kurniawan, S.T.', role: 'inspektur', inspector_profile: { active: true, skp_expired_at: '2028-05-20', spesialisasi: ['Pesawat Uap (Boiler)', 'Bejana Tekan', 'PTP (Compressor/Genset)'], domisili: 'Karawang', senior_level: 2, subrole: 'ahli_k3' } },
+        { id: 4, name: 'Rangga Prawira, S.T.', role: 'inspektur', inspector_profile: { active: true, skp_expired_at: '2027-10-10', spesialisasi: ['Proteksi Kebakaran', 'Instalasi Listrik & PP'], domisili: 'Tangerang', senior_level: 1, subrole: 'tenaga_ahli' } },
+        { id: 5, name: 'Bambang Supriyanto', role: 'inspektur', inspector_profile: { active: false, skp_expired_at: '2024-01-01', spesialisasi: ['PAPA (Crane/Forklift/dll)'], domisili: 'Jakarta', senior_level: 1, subrole: 'tenaga_ahli' } },
+      ];
+    }
+
+    // Active jobs count per inspector
+    const allRows = db.prepare('SELECT data FROM jobs').all();
+    const allJobs = allRows.map(r => JSON.parse(r.data));
+    const activeStages = [3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+    const activeCounts = {};
+    const clientHistoryCounts = {};
+    for (const j of allJobs) {
+      if (j.id === targetJob.id) continue;
+      const assignedIds = new Set();
+      if (Array.isArray(j.inspectors)) {
+        j.inspectors.forEach(ins => assignedIds.add(String(ins.id || ins.user_id || ins.user?.id)));
+      }
+      if (Array.isArray(j.schedule_days)) {
+        j.schedule_days.forEach(d => {
+          if (Array.isArray(d.inspector_ids)) {
+            d.inspector_ids.forEach(id => assignedIds.add(String(id)));
+          }
+        });
+      }
+      assignedIds.forEach(uid => {
+        if (activeStages.includes(Number(j.stage))) {
+          activeCounts[uid] = (activeCounts[uid] || 0) + 1;
+        }
+        if (j.stage === 12 && j.klien && j.klien === targetJob.klien) {
+          clientHistoryCounts[uid] = (clientHistoryCounts[uid] || 0) + 1;
+        }
+      });
+    }
+
+    const recommended = [];
+    const eliminated = [];
+    const targetPesawat = (targetJob.pesawat || '').toLowerCase();
+    const targetLokasi = (targetJob.lokasi || '').toLowerCase();
+
+    for (const rawUser of inspectors) {
+      const user = rawUser.user || rawUser;
+      const profile = rawUser.inspector_profile || rawUser.inspectorProfile || user.inspector_profile || user.inspectorProfile || {
+        active: true,
+        skp_expired_at: '2027-12-31',
+        spesialisasi: [],
+        domisili: 'Jakarta',
+        senior_level: 1,
+        subrole: 'tenaga_ahli'
+      };
+
+      const uid = String(user.id);
+      const isDiba = (user.name || '').includes('Diba Aini');
+      if (isDiba) continue;
+
+      // ── Hard Filters ───────────────────────────────────────
+      if (profile.active === false || user.is_active === false) {
+        eliminated.push({ user, profile, reason: 'Status Inactive' });
+        continue;
+      }
+      if (profile.skp_expired_at) {
+        const expDate = new Date(profile.skp_expired_at);
+        if (!isNaN(expDate.getTime()) && expDate < new Date()) {
+          eliminated.push({ user, profile, reason: 'SKP Expired' });
+          continue;
+        }
+      }
+
+      // ── Scoring ───────────────────────────────────────────
+      let score = 50;
+      const statuses = [];
+      const reasons = [];
+
+      // Specialization match (+40)
+      const specs = Array.isArray(profile.spesialisasi)
+        ? profile.spesialisasi
+        : (typeof profile.spesialisasi === 'string' ? JSON.parse(profile.spesialisasi || '[]') : []);
+      
+      let hasSpecMatch = false;
+      for (const sp of specs) {
+        const sLower = String(sp).toLowerCase();
+        if (targetPesawat && (targetPesawat.includes(sLower) || sLower.includes(targetPesawat.slice(0, 5)))) {
+          hasSpecMatch = true;
+          break;
+        }
+      }
+      if (hasSpecMatch || specs.length === 0) {
+        score += 40;
+        reasons.push('Spesialisasi Cocok');
+      }
+
+      // Domicile / location proximity (+20)
+      const dom = (profile.domisili || '').toLowerCase();
+      if (dom && targetLokasi && (targetLokasi.includes(dom) || dom.includes(targetLokasi))) {
+        score += 20;
+        reasons.push(`Domisili Dekat (${profile.domisili})`);
+      }
+
+      // Client experience (+10)
+      const prevJobs = clientHistoryCounts[uid] || 0;
+      if (prevJobs > 0) {
+        score += Math.min(20, prevJobs * 10);
+        reasons.push(`Pernah Riksa Klien Ini (${prevJobs}x)`);
+      }
+
+      // Active workload count
+      const activeCount = activeCounts[uid] || 0;
+      if (activeCount >= 4) {
+        score -= 20;
+        statuses.push('Overload');
+        reasons.push(`Beban Kerja Tinggi (${activeCount} Job Aktif)`);
+      }
+
+      score += (profile.senior_level || 1) * 2;
+
+      recommended.push({
+        user,
+        profile,
+        score,
+        active_jobs: activeCount,
+        statuses,
+        reasons,
+        bonuses: reasons,
+        klien_exp: prevJobs,
+        pesawat_exp: hasSpecMatch ? 1 : 0,
+        details: {
+          'Spesialisasi': hasSpecMatch ? '40/40' : '0/40',
+          'Domisili': dom && targetLokasi && targetLokasi.includes(dom) ? '20/20' : '10/20',
+          'Pengalaman': prevJobs > 0 ? `${Math.min(20, prevJobs * 10)}/20` : '5/20',
+          'Beban Kerja': activeCount >= 4 ? '0/20' : '20/20',
+        }
+      });
+    }
+
+    recommended.sort((a, b) => b.score - a.score);
+
+    res.json({
+      job_id: targetJob.id,
+      pesawat: targetJob.pesawat,
+      klien: targetJob.klien,
+      recommended,
+      eliminated,
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // GET /api/jobs/:id — single job
 router.get('/:id', (req, res) => {
   try {
@@ -215,22 +386,35 @@ router.post('/:id/move', (req, res) => {
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
-    const { next_stage, notes, actor } = req.body;
+    const body = req.body || {};
+    const nested = body.data || {};
     const oldStage = job.stage;
-    job.stage = Number(next_stage);
-    job.stage_started_at = now();
-    if (!job.history) job.history = [];
-    job.history.push({
-      stage: job.stage,
+
+    // Merge attributes
+    const merged = { ...job, ...nested, ...body };
+    const next_stage = body.next_stage !== undefined ? body.next_stage : nested.next_stage;
+    if (next_stage !== undefined) {
+      merged.stage = Number(next_stage);
+      merged.stage_started_at = now();
+    }
+
+    if (!merged.history) merged.history = [];
+    merged.history.push({
+      stage: merged.stage,
       ts: now(),
-      by: actor || req.headers['x-user-name'] || 'User',
-      action: `Pindah dari Stage ${oldStage} ke Stage ${job.stage}. ${notes || ''}`.trim()
+      by: body.actor || req.headers['x-user-name'] || 'User',
+      action: `Pindah dari Stage ${oldStage} ke Stage ${merged.stage}. ${body.notes || nested.notes || ''}`.trim()
     });
+
     const ts = now();
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
-      JSON.stringify(job), ts, req.params.id
+      JSON.stringify(merged), ts, req.params.id
     );
-    res.json({ ok: true, job });
+
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, job: merged });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
@@ -247,6 +431,9 @@ router.post('/:id/s2-verify', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -309,6 +496,9 @@ router.post('/:id/payment-verification', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -326,6 +516,9 @@ router.post('/:id/stage4-data', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -346,6 +539,9 @@ router.post('/:id/stage4c-data', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -367,6 +563,9 @@ router.post('/:id/stage4d-data', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -384,6 +583,9 @@ router.post('/:id/stage5-dates', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -401,6 +603,9 @@ router.post('/:id/stage9-suket', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -420,6 +625,9 @@ router.post('/:id/stage5-review', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -437,6 +645,9 @@ router.post('/:id', (req, res) => {
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(updated), ts, req.params.id
     );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true, job: updated });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -448,6 +659,9 @@ router.delete('/:id', (req, res) => {
   try {
     const info = db.prepare('DELETE FROM jobs WHERE id = ?').run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ ok: false, error: 'Not found' });
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });

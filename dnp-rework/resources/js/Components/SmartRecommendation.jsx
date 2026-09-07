@@ -104,7 +104,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                 </div>
 
                                 <div className="space-y-1.5 text-[10px] mb-4">
-                                    {Object.entries(rec.details).map(([key, val]) => (
+                                    {rec.details && Object.entries(rec.details).map(([key, val]) => (
                                         <div key={key} className="flex justify-between items-center">
                                             <div className="text-gray-600 w-24">{key}</div>
                                             <div className="flex-1 mx-2 h-1.5 bg-gray-100 rounded overflow-hidden">
@@ -117,10 +117,10 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                 </div>
 
                                 <div className="bg-green-50 p-2 text-[10px] rounded mb-3">
-                                    <div className="text-gray-600">Klien: {rec.klien_exp}x · Pesawat: {rec.pesawat_exp}x</div>
+                                    <div className="text-gray-600">Klien: {rec.klien_exp || 0}x · Pesawat: {rec.pesawat_exp || 0}x</div>
                                     <div className="flex flex-wrap gap-1 mt-1">
-                                        {rec.bonuses.map((b, i) => (
-                                            <span key={i} className={`px-1 py-0.5 rounded text-[9px] font-bold ${b.startsWith('-') ? 'bg-red-100 text-red-700' : 'bg-green-200 text-green-800'}`}>{b}</span>
+                                        {(rec.bonuses || rec.reasons || []).map((b, i) => (
+                                            <span key={i} className={`px-1 py-0.5 rounded text-[9px] font-bold ${b.startsWith('-') || b.includes('Tinggi') ? 'bg-red-100 text-red-700' : 'bg-green-200 text-green-800'}`}>{b}</span>
                                         ))}
                                     </div>
                                 </div>

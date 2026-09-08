@@ -1,17 +1,18 @@
-# Old React/Express Prototype (Hidden)
-/src/
-/server/
-/public/
-/node_modules/
-/package.json
-/package-lock.json
-/vite.config.js
-/eslint.config.js
-/index.html
-/dnp_monitor.html
-*.db
-/sample/
+# Dependencies
+node_modules/
 
-# Standard Ignores
+# Environment & System
 .env
 .DS_Store
+
+# AI & Automation Temp Directories
+.claude/
+.playwright/
+.playwright-mcp/
+playwright-report/
+playwright-video/
+
+# SQLite Journaling
+*.db-journal
+*.db-shm
+*.db-wal

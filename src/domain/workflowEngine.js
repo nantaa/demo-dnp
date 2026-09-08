@@ -16,6 +16,17 @@ export function validateStage1(job) {
     };
   }
 
+  if (job.termin_pembayaran === 'DP') {
+    const hasDpAmount = job.dp_amount != null && job.dp_amount !== '' && Number(job.dp_amount) > 0;
+    const hasDpPercentage = job.dp_percentage != null && job.dp_percentage !== '' && Number(job.dp_percentage) > 0;
+    if (!hasDpAmount && !hasDpPercentage) {
+      return {
+        valid: false,
+        error: 'Nominal atau persentase DP wajib diisi jika memilih skema termin DP.',
+      };
+    }
+  }
+
   if (Array.isArray(job.units)) {
     for (const unit of job.units) {
       const isElectricOrFire = ['Listrik', 'Kebakaran'].includes(unit.kategori);
@@ -393,4 +404,209 @@ export function calculateJobRollupStatus(units = [], isPaymentVerified = false) 
 }
 
 export const computeAggregateJobStatus = calculateJobRollupStatus;
+
+export const STAGE2_REQUIRED_DOCUMENTS = [
+  'PO / SPK / Proposal dari Klien',
+  'Surat Permohonan Riksa Uji (bermeterai)',
+  'Surat Kuasa dari Pemilik (bermeterai)',
+  'Surat Pernyataan Keabsahan Data',
+  'Form Checklist Disnaker (diisi klien)',
+  'Drawing / Gambar Teknis (as-built)',
+  'Manual Book / Spesifikasi Teknis',
+  'Pengesahan Gambar dari Kemnaker',
+  'Copy Suket Lama (jika perpanjangan)',
+  'Verifikasi Drawing SESUAI dengan Nameplate (cek visual foto)'
+];
+
+/**
+ * Checks authorization and justification for Stage 2 bypass.
+ * Only Kadiv / Manager Teknis / Superadmin can authorize bypass.
+ */
+export function canBypassStage2(user, justification = '') {
+  const authorizedRoles = ['manager', 'kadiv', 'superadmin'];
+  const userRole = (user && user.role) ? user.role.toLowerCase() : '';
+
+  if (!authorizedRoles.includes(userRole)) {
+    return {
+      allowed: false,
+      reason: 'Hanya Kepala Divisi, Manager Teknis, atau Superadmin yang berwenang memberikan persetujuan bypass dokumen.'
+    };
+  }
+
+  if (!justification || justification.trim() === '') {
+    return {
+      allowed: false,
+      reason: 'Alasan / justifikasi bypass dokumen wajib diisi.'
+    };
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Checks if a job has outstanding document debt (documents bypassed in Stage 2 not yet uploaded).
+ */
+export function hasDocumentDebt(job) {
+  if (job.peer_review_status !== 'approved' && !job.bypass_justification) {
+    return { hasDebt: false, missingDocs: [] };
+  }
+
+  const uploadedTypes = (job.documents || []).map(d => d.type);
+  const missingDocs = STAGE2_REQUIRED_DOCUMENTS.filter(docType => !uploadedTypes.includes(docType));
+
+  return {
+    hasDebt: missingDocs.length > 0,
+    missingDocs
+  };
+}
+
+/**
+ * Evaluates Stage 4 outcome into THREE distinct paths:
+ * 1. Happy Path: Inspected == Total units and all units Sesuai -> Stage 5 (LHPP)
+ * 2. Logistics Mismatch: Inspected < Total due to logistics/unavailability -> Stage 4b (Aktualisasi Unit MKT)
+ * 3. Technical Finding: Defective units found (Temuan / Rusak) -> Stage 6 (Review Laporan / Tidak Laik)
+ */
+export function evaluateStage4Branch(job) {
+  const total = job.total_units || job.units || 1;
+  const inspected = job.inspected_count != null ? job.inspected_count : total;
+  const results = job.unit_results || [];
+
+  const hasTechnicalFinding = results.some(u => u.status === 'Temuan' || u.status === 'Rusak' || u.status === 'Tidak Laik');
+
+  if (hasTechnicalFinding) {
+    return {
+      path: 'technical_finding',
+      nextStage: 6, // Stage 6 (Review Laporan)
+      reason: 'Terdapat temuan teknis / unit tidak laik. Diarahkan ke Stage 6 untuk review laporan teknis.'
+    };
+  }
+
+  const hasCountMismatch = inspected < total || job.mismatch_reason_type === 'logistics';
+  if (hasCountMismatch) {
+    return {
+      path: 'logistics_mismatch',
+      nextStage: 13, // Stage 4b (Aktualisasi Unit)
+      reason: 'Jumlah unit teruji belum lengkap karena kendala logistik/lapangan. Diarahkan ke Stage 4b.'
+    };
+  }
+
+  return {
+    path: 'happy',
+    nextStage: 5, // Stage 5 (Penyusunan LHPP)
+    reason: 'Semua unit telah teruji dan memenuhi syarat teknis (Sesuai).'
+  };
+}
+
+/**
+ * Loop counter check for Stage 4c/4d reschedule loop (max = 3).
+ */
+export function checkRescheduleLimit(job, max = 3) {
+  const count = job.reschedule_count || 0;
+  return {
+    count,
+    max,
+    exceeded: count >= max,
+    message: count >= max ? `Batas reschedule (${max}x) telah tercapai. Keputusan Kadiv diperlukan (Job Split atau Close as Failed).` : 'On Track'
+  };
+}
+
+/**
+ * Loop counter check for Stage 6 -> 5 revision loop (max = 2).
+ */
+export function checkRevisionLimit(job, max = 2) {
+  const count = job.revision_count || 0;
+  return {
+    count,
+    max,
+    exceeded: count >= max,
+    message: count >= max ? `Batas revisi teknis (${max}x) telah tercapai. Persetujuan Kadiv diperlukan.` : 'On Track'
+  };
+}
+
+/**
+ * Loop counter check for Stage 11c -> 11 payment retry (max = 5).
+ */
+export function checkPaymentRetryLimit(job, max = 5) {
+  const count = job.payment_retry_count || 0;
+  return {
+    count,
+    max,
+    exceeded: count >= max,
+    message: count >= max ? `Batas penagihan ulang (${max}x) telah tercapai. Eskalasi otomatis ke Kadiv & Manager.` : 'On Track'
+  };
+}
+
+/**
+ * Validates Stage 11b SUKET delivery triple hard-gate:
+ * 1. Stage 11c payment verification status = Verified (Lunas)
+ * 2. Bank statement attachment mandatory (bank_statement_attached === true)
+ * 3. Zero document debt (all bypassed docs resolved)
+ */
+export function canDeliverSuket(job) {
+  const pv = job.payment_verification || {};
+  const isVerified = (pv.status === 'Verified' || pv.status === 'Lunas');
+
+  if (!isVerified) {
+    return {
+      allowed: false,
+      reason: 'SUKET ditahan: Pembayaran belum diverifikasi Lunas oleh Finance di Stage 11c.'
+    };
+  }
+
+  const hasBankStatement = pv.bank_statement_attached === true || Boolean(pv.bukti_url);
+  if (!hasBankStatement) {
+    return {
+      allowed: false,
+      reason: 'SUKET ditahan: Lampiran Mutasi Rekening / Bank Statement wajib ada pada verifikasi pembayaran.'
+    };
+  }
+
+  const debt = hasDocumentDebt(job);
+  if (debt.hasDebt) {
+    return {
+      allowed: false,
+      reason: `SUKET ditahan: Terdapat hutang dokumen (${debt.missingDocs.length} berkas yang di-bypass di Stage 2 belum diunggah).`,
+      missingDocs: debt.missingDocs
+    };
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Splits a job into a passing parent job and a failing child job.
+ * Preserves audit link via parent_job_id and shares PO number.
+ */
+export function splitJob(parentJob, childUnitIds = []) {
+  const units = parentJob.unit_items || [];
+  const parentUnits = units.filter(u => !childUnitIds.includes(u.id));
+  const childUnits = units.filter(u => childUnitIds.includes(u.id));
+
+  const updatedParent = {
+    ...parentJob,
+    units: parentUnits.length,
+    unit_items: parentUnits,
+    has_split: true,
+    split_at: new Date().toISOString()
+  };
+
+  const childJob = {
+    ...parentJob,
+    id: `job-split-${parentJob.id}-${Date.now()}`,
+    kode: `${parentJob.kode || 'DNP'}-SPLIT`,
+    parent_job_id: parentJob.id,
+    no_po: parentJob.no_po,
+    units: childUnits.length,
+    unit_items: childUnits,
+    stage: 16, // Stage 4c (Penjadwalan Ulang)
+    reschedule_count: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  return {
+    parentJob: updatedParent,
+    childJob
+  };
+}
 

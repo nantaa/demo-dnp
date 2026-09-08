@@ -17,6 +17,10 @@ export default function JobCreate({ auth }) {
         pic_klien_phone: '',
         units: 1,
         nilai: 0,
+        termin_pembayaran: 'FULL',
+        dp_percentage: 30,
+        dp_amount: 0,
+        no_seri: '',
         no_po: '',
         tgl_po: '',
     });
@@ -133,6 +137,89 @@ export default function JobCreate({ auth }) {
                                 />
                                 {errors.nilai && <div className="text-red-500 text-xs mt-1">{errors.nilai}</div>}
                             </div>
+                        </div>
+
+                        {/* Termin Pembayaran & DP */}
+                        <div className="p-3 bg-gray-50 border rounded-lg space-y-3">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Skema Termin Pembayaran *</label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                                        <input
+                                            type="radio"
+                                            name="termin_pembayaran"
+                                            value="FULL"
+                                            checked={data.termin_pembayaran === 'FULL'}
+                                            onChange={() => setData('termin_pembayaran', 'FULL')}
+                                        />
+                                        <span>Pelunasan Belakang (FULL)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700">
+                                        <input
+                                            type="radio"
+                                            name="termin_pembayaran"
+                                            value="DP"
+                                            checked={data.termin_pembayaran === 'DP'}
+                                            onChange={() => setData('termin_pembayaran', 'DP')}
+                                        />
+                                        <span>Uang Muka (DP)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {data.termin_pembayaran === 'DP' && (
+                                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-200">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Persentase DP (%) *</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="100"
+                                            value={data.dp_percentage}
+                                            onChange={e => {
+                                                const pct = parseFloat(e.target.value) || 0;
+                                                const amt = (pct / 100) * (parseFloat(data.nilai) || 0);
+                                                setData({ ...data, dp_percentage: pct, dp_amount: amt });
+                                            }}
+                                            className="w-full px-3 py-2 border rounded text-sm bg-white"
+                                            placeholder="30"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Nominal DP (Rp) *</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={data.dp_amount}
+                                            onChange={e => setData('dp_amount', e.target.value)}
+                                            className="w-full px-3 py-2 border rounded text-sm bg-white"
+                                            placeholder="15000000"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Nomor Seri Alat (Wajib untuk Listrik & Kebakaran) */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">
+                                Nomor Seri Alat
+                                {data.pesawat.some(p => p.includes('Listrik') || p.includes('Kebakaran')) ? (
+                                    <span className="text-red-500 text-xs ml-1 font-semibold">* Wajib untuk Listrik / Kebakaran</span>
+                                ) : (
+                                    <span className="text-gray-400 text-xs ml-1 font-normal">(Opsional)</span>
+                                )}
+                            </label>
+                            <input
+                                type="text"
+                                value={data.no_seri}
+                                onChange={e => setData('no_seri', e.target.value)}
+                                className="w-full px-3 py-2 border rounded placeholder-gray-400"
+                                placeholder="Contoh: SN-EL-2026-0912"
+                                required={data.pesawat.some(p => p.includes('Listrik') || p.includes('Kebakaran'))}
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

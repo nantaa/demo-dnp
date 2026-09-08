@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import IndonesiaLocationSelect from './IndonesiaLocationSelect';
-import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
+import { showError, showSuccess, showConfirm, showWarning, MySwal } from '@/swal';
 import { Trash2 } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
@@ -628,6 +628,99 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/approve`, {}, { onSuccess: () => onClose() });
     };
 
+    const handleBypassStage2WithJustification = async () => {
+        const { value: text, isConfirmed } = await MySwal.fire({
+            title: 'Bypass Dokumen Teknis (Kadiv/MGR)',
+            text: 'Masukkan alasan / justifikasi tertulis mengapa dokumen dapat di-bypass. Catatan ini akan dicatat dalam audit trail dan tercatat sebagai hutang dokumen.',
+            input: 'textarea',
+            inputPlaceholder: 'Tuliskan justifikasi bypass dokumen di sini...',
+            inputValidator: (val) => {
+                if (!val || !val.trim()) {
+                    return 'Alasan / justifikasi bypass wajib diisi!';
+                }
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Setujui Bypass',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#10b981',
+        });
+        if (!isConfirmed || !text) return;
+        router.post(`/api/jobs/${job.id}/bypass-stage2`, {
+            justification: text.trim(),
+            approver: user?.name || 'Manager'
+        }, {
+            onSuccess: () => {
+                showSuccess('Bypass Disetujui', 'Bypass dokumen berhasil disetujui & dicatat.');
+                onClose();
+            }
+        });
+    };
+
+    const handleJobSplit = async () => {
+        const maxSplit = Math.max(1, (job.units || 1) - 1);
+        const { value: numUnits, isConfirmed } = await MySwal.fire({
+            title: 'Pecah Pekerjaan (Job Split)',
+            text: `Masukkan jumlah unit yang gagal/tertunda untuk dipindahkan ke Job baru (maksimal ${maxSplit} unit):`,
+            input: 'number',
+            inputAttributes: {
+                min: 1,
+                max: maxSplit,
+                step: 1
+            },
+            inputValue: 1,
+            inputValidator: (val) => {
+                const n = parseInt(val);
+                if (isNaN(n) || n < 1 || n >= job.units) {
+                    return `Jumlah unit split harus antara 1 dan ${maxSplit}!`;
+                }
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Pecah Job Sekarang',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#3b82f6',
+        });
+        if (!isConfirmed || !numUnits) return;
+        const splitCount = parseInt(numUnits);
+        const childUnitIds = Array.from({ length: splitCount }, (_, i) => `unit-split-${i + 1}`);
+        router.post(`/api/jobs/${job.id}/split`, {
+            child_unit_ids: childUnitIds,
+            decision_maker: user?.name || 'Manager'
+        }, {
+            onSuccess: () => {
+                showSuccess('Job Split Berhasil', 'Job berhasil dipecah. Unit passing melanjutkan ke Stage 5.');
+                onClose();
+            }
+        });
+    };
+
+    const handleReopenJob = async () => {
+        const { value: text, isConfirmed } = await MySwal.fire({
+            title: 'Buka Kembali Job (Reopen)',
+            text: 'Masukkan alasan pembukaan kembali pekerjaan yang sudah selesai (Closed). Tindakan ini akan dicatat ke audit log.',
+            input: 'textarea',
+            inputPlaceholder: 'Tuliskan alasan pembukaan kembali di sini...',
+            inputValidator: (val) => {
+                if (!val || !val.trim()) {
+                    return 'Alasan pembukaan kembali wajib diisi!';
+                }
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Buka Kembali Job',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#f59e0b',
+        });
+        if (!isConfirmed || !text) return;
+        router.post(`/api/jobs/${job.id}/reopen`, {
+            reason: text.trim(),
+            reopened_by: user?.name || 'Authorized User'
+        }, {
+            onSuccess: () => {
+                showSuccess('Job Dibuka Kembali', 'Job berhasil dibuka kembali ke Stage 5.');
+                onClose();
+            }
+        });
+    };
+
     const handleReturnToStage1 = (e) => {
         e.preventDefault();
         if (!returnNotes.trim()) return showError('Validasi', 'Isi alasan pengembalian!');
@@ -940,7 +1033,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="px-3 py-2 rounded text-sm bg-red-600 text-white font-semibold hover:bg-red-700">
                                 Kembalikan ke Marketing
                             </button>
-                            {!stage2DocOk && !stage2Bypass && job.peer_review_status !== 'requested' && !isMGR && (
+                            {!stage2DocOk && !stage2Bypass && (isMGR || auth?.user?.role === 'superadmin') && (
+                                <button type="button" onClick={handleBypassStage2WithJustification}
+                                    className="px-3 py-2 rounded text-sm bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-xs flex items-center gap-1">
+                                    🔓 Bypass Dokumen (Kadiv/MGR)
+                                </button>
+                            )}
+                            {!stage2DocOk && !stage2Bypass && job.peer_review_status !== 'requested' && !isMGR && auth?.user?.role !== 'superadmin' && (
                                 <button type="button" onClick={handleAskApproval}
                                     className="px-3 py-2 rounded text-sm bg-orange-500 text-white font-semibold hover:bg-orange-600">
                                     Minta Persetujuan MGR
@@ -955,36 +1054,50 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 )}
 
                 {/* ── STAGE 3 ─────────────────────────────────── */}
-                {s === 3 && (
-                    <div className="space-y-4">
-                        {/* Row 1: Jam Mulai + Disnaker */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Jam Mulai *</label>
-                                <input type="time" value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-400" />
+                {s === 3 && (() => {
+                    const isDpUnpaid = job.termin_pembayaran === 'DP' && !job.dp_paid && !job.paid;
+                    const dpAmt = job.dp_amount || (job.nilai * (job.dp_percentage || 30) / 100);
+                    return (
+                        <div className="space-y-4">
+                            {isDpUnpaid && (
+                                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-xs text-red-900 font-semibold space-y-1">
+                                    <div className="flex items-center gap-1.5 font-bold">
+                                        <span>🔒 Surat Tugas Diblokir (DP Hard-Gate)</span>
+                                    </div>
+                                    <p>
+                                        Skema pembayaran job ini adalah <strong>Uang Muka (DP)</strong> senilai <strong>{fmtCurrency(dpAmt)}</strong>. Penerbitan Surat Tugas diblokir sampai Finance mengonfirmasi penerimaan DP.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Row 1: Jam Mulai + Disnaker */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Jam Mulai *</label>
+                                    <input type="time" value={data.jam_mulai} onChange={e => setData('jam_mulai', e.target.value)}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-400" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Disnaker Tujuan *</label>
+                                    <select
+                                        value={data.disnaker_tujuan}
+                                        onChange={e => setData('disnaker_tujuan', e.target.value)}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-indigo-400"
+                                        required
+                                    >
+                                        <option value="">-- Pilih Disnaker Provinsi --</option>
+                                        {data.disnaker_tujuan &&
+                                            !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) &&
+                                            !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
+                                            <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
+                                        )}
+                                        {INDONESIA_PROVINCES.map(prov => {
+                                            const val = `Disnaker Prov. ${prov}`;
+                                            return <option key={prov} value={val}>{val}</option>;
+                                        })}
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Disnaker Tujuan *</label>
-                                <select
-                                    value={data.disnaker_tujuan}
-                                    onChange={e => setData('disnaker_tujuan', e.target.value)}
-                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-indigo-400"
-                                    required
-                                >
-                                    <option value="">-- Pilih Disnaker Provinsi --</option>
-                                    {data.disnaker_tujuan &&
-                                        !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) &&
-                                        !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
-                                        <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
-                                    )}
-                                    {INDONESIA_PROVINCES.map(prov => {
-                                        const val = `Disnaker Prov. ${prov}`;
-                                        return <option key={prov} value={val}>{val}</option>;
-                                    })}
-                                </select>
-                            </div>
-                        </div>
 
                         {/* ── Schedule Builder ── */}
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
@@ -1173,37 +1286,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
-                            disabled={!s3ScheduleValid || !data.disnaker_tujuan}
-                            disabledMsg={!data.disnaker_tujuan ? 'Pilih Disnaker Tujuan' : !s3ScheduleValid ? 'Lengkapi jadwal dan inspektur tiap hari' : ''} />
+                            disabled={!s3ScheduleValid || !data.disnaker_tujuan || isDpUnpaid}
+                            disabledMsg={isDpUnpaid ? 'Surat Tugas diblokir sampai DP terverifikasi' : !data.disnaker_tujuan ? 'Pilih Disnaker Tujuan' : !s3ScheduleValid ? 'Lengkapi jadwal dan inspektur tiap hari' : ''} />
                     </div>
-                )}
+                );})()}
 
                 {/* ── STAGE 4 ─────────────────────────────────── */}
                 {s === 4 && (
                     <div className="space-y-4">
-                        {/* Download Surat Tugas (DISABLED - STILL ERROR)
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                                    📄
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-blue-950">Surat Tugas Riksa Uji</p>
-                                    <p className="text-[11px] text-blue-700 font-medium">
-                                        {job.no_surat_tugas ? `No: ${job.no_surat_tugas}` : 'Siap Di-download & Auto-generate'}
-                                    </p>
-                                </div>
-                            </div>
-                            <a
-                                href={`/jobs/${job.id}/download-surat-tugas`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition flex items-center gap-1 cursor-pointer"
-                            >
-                                📥 Download Surat Tugas (.docx)
-                            </a>
-                        </div>
-                        */}
                         {/* Unit Count */}
                         <div className="bg-gray-50 border rounded-lg p-3">
                             <p className="text-xs font-semibold text-gray-700 mb-2">Jumlah Alat yang Benar-benar Diperiksa</p>
@@ -1260,40 +1350,51 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                         </div>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        {/* Stage 4 Navigation Buttons */}
-                        {s4UnitMismatch ? (
-                            <div className="border border-amber-200 rounded-lg p-3.5 bg-amber-50/80 space-y-3">
-                                <p className="text-xs font-semibold text-amber-900">
-                                    ⚠️ Jumlah alat yang diperiksa ({s4.actual_units}) tidak sesuai dengan jumlah unit awal ({job.units}).
-                                </p>
-                                <div className="flex flex-col gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            post(`/jobs/${job.id}/move`, {
-                                                data: { ...data, next_stage: 5 },
-                                                onSuccess: () => onClose()
-                                            });
-                                        }}
-                                        disabled={processing}
-                                        className="w-full px-4 py-2.5 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1"
-                                    >
-                                        🚀 Lanjut ke Stage 5 (Penyusunan LHPP) →
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleRouteTo13}
-                                        disabled={processing}
-                                        className="w-full px-4 py-2 rounded text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 shadow-xs flex items-center justify-center gap-1"
-                                    >
-                                        📝 Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
-                                    </button>
-                                </div>
+                        
+                        {/* Stage 4 Three-Path Navigation per v2.0 Specification */}
+                        <div className="border border-gray-200 rounded-lg p-3.5 bg-gray-50 space-y-2.5">
+                            <p className="text-xs font-bold text-gray-800">
+                                🚦 Pilih Hasil & Jalur Lanjutan RU Lapangan (Three-Path Routing):
+                            </p>
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        post(`/jobs/${job.id}/move`, {
+                                            data: { ...data, next_stage: 5 },
+                                            onSuccess: () => onClose()
+                                        });
+                                    }}
+                                    disabled={processing}
+                                    className="w-full px-4 py-2.5 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1.5"
+                                >
+                                    ✅ Path A: Lolos Penuh (Semua Unit Sesuai) → Lanjut ke Stage 5 (LHPP)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleRouteTo13}
+                                    disabled={processing}
+                                    className="w-full px-4 py-2 rounded text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-xs flex items-center justify-center gap-1.5"
+                                >
+                                    📦 Path B: Unit Belum Siap / Mismatch Logistik → Stage 4b (Aktualisasi MKT)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        post(`/jobs/${job.id}/move`, {
+                                            data: { ...data, next_stage: 6, s5_review_decision: 'tidak_laik' },
+                                            onSuccess: () => onClose()
+                                        });
+                                    }}
+                                    disabled={processing}
+                                    className="w-full px-4 py-2 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-xs flex items-center justify-center gap-1.5"
+                                >
+                                    🔧 Path C: Unit Rusak / Temuan Teknis → Stage 6 (Review Laporan / Tidak Laik)
+                                </button>
                             </div>
-                        ) : (
-                            <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
-                        )}
+                        </div>
                     </div>
                 )}
 
@@ -1391,14 +1492,47 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 16 (Penjadwalan Ulang — 4c ADM) ──────── */}
                 {s === 16 && (
                     <div className="space-y-4">
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <h4 className="text-xs font-bold text-amber-900 mb-1">
-                                📅 Stage 4c: Penjadwalan Ulang / Reschedule (Admin)
-                            </h4>
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-bold text-amber-900 mb-1">
+                                    📅 Stage 4c: Penjadwalan Ulang / Reschedule (Admin)
+                                </h4>
+                                <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-black">
+                                    Reschedule Loop: {job.reschedule_count || 0} / 3
+                                </span>
+                            </div>
                             <p className="text-xs text-amber-800">
                                 Terdapat unit yang tertunda/rusak saat Riksa Uji. Tentukan tanggal inspeksi ulang, tim ahli, dan alat uji untuk Riksa Uji Ulang (Stage 4d).
                             </p>
                         </div>
+
+                        {/* Exceeded Max Reschedule Alert & Job Split Option */}
+                        {(job.reschedule_count || 0) >= 3 && (
+                            <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3.5 space-y-2">
+                                <div className="text-xs font-bold text-red-900 flex items-center gap-1.5">
+                                    <span>⚠️ Batas Reschedule Tercapai ({job.reschedule_count || 3}/3)</span>
+                                </div>
+                                <p className="text-xs text-red-800">
+                                    Berdasarkan SOP v2.0, Kadiv / Manager Teknis wajib memutuskan tindak lanjut unit yang tertunda:
+                                </p>
+                                <div className="flex gap-2 pt-1 flex-wrap">
+                                    <button
+                                        type="button"
+                                        onClick={handleJobSplit}
+                                        className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-xs"
+                                    >
+                                        ✂️ Opsi A: Pecah Job (Job Split)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.post(`/jobs/${job.id}/move`, { data: { ...data, next_stage: 12, notes: 'Ditutup sebagai Gagal Uji (Closed as Failed)' } })}
+                                        className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded shadow-xs"
+                                    >
+                                        ❌ Opsi B: Tutup Job Gagal
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Informasi Reschedule */}
                         <div className="bg-white border rounded-lg p-3 space-y-3">
@@ -1937,7 +2071,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 6 (Review Laporan Teknis — MGR) ───── */}
                 {s === 6 && (
                     <div className="space-y-3">
-                        <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
+                        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded p-2.5">
+                            <p className="text-xs text-blue-900 font-medium">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
+                            <span className="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded font-black shrink-0">
+                                Revisi: {job.revision_count || 0} / 2
+                            </span>
+                        </div>
+
                         {job.s5_review_decision && (
                             <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
                                 Keputusan sebelumnya: <strong>{STAGE5_DECISIONS.find(d => d.value === job.s5_review_decision)?.label}</strong>
@@ -1947,30 +2087,68 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Keputusan Review *</label>
                             <select value={s5.s5_review_decision} onChange={e => setS5({ ...s5, s5_review_decision: e.target.value })}
-                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                                className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 font-semibold">
                                 <option value="">-- Pilih Keputusan --</option>
-                                {STAGE5_DECISIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                                <option value="approved">✅ Setuju - Laik (Lanjut ke Stage 7 Dinas)</option>
+                                <option value="revision">📝 Tolak / Revisi Teknis (Kembalikan ke Stage 5)</option>
+                                <option value="tidak_laik">❌ Tidak Laik (Perbaikan Klien & Retest Stage 4c)</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Catatan MGR</label>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Catatan MGR / Revisi Teknis</label>
                             <textarea rows={3} value={s5.s5_review_notes} onChange={e => setS5({ ...s5, s5_review_notes: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
-                                placeholder="Catatan kondisi, syarat, atau alasan penolakan…" />
+                                placeholder="Catatan kondisi, syarat, temuan kerusakan, atau instruksi revisi…" />
                         </div>
                         <button type="button" onClick={handleSaveS5}
                             className="w-full py-2 rounded text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
                             Simpan Keputusan Review
                         </button>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <div className="flex gap-2">
-                            <button type="button" onClick={handleRejectStage}
-                                className="px-4 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
-                                Tolak / Kembalikan
+                        
+                        {/* 3-Path Action Buttons for Stage 6 */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (!s5.s5_review_notes?.trim()) return showError('Catatan Diperlukan', 'Isi catatan revisi teknis terlebih dahulu.');
+                                    router.post(`/api/jobs/${job.id}/stage5-review`, {
+                                        s5_review_decision: 'revision',
+                                        s5_review_notes: s5.s5_review_notes
+                                    }, {
+                                        onSuccess: () => {
+                                            showSuccess('Revisi Dikembalikan', 'Laporan dikembalikan ke Stage 5 untuk revisi.');
+                                            onClose();
+                                        }
+                                    });
+                                }}
+                                className="px-3 py-2 rounded text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100"
+                            >
+                                📝 Kembalikan ke Stage 5 (Revisi)
                             </button>
-                            <button type="submit" disabled={processing || !s5.s5_review_decision || s5.s5_review_decision === 'rejected'}
-                                className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : 'Lanjut ke Stage 7 Penyerahan →'}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    router.post(`/api/jobs/${job.id}/stage5-review`, {
+                                        s5_review_decision: 'tidak_laik',
+                                        s5_review_notes: s5.s5_review_notes || 'Unit Tidak Laik - dialihkan untuk perbaikan dan RU Ulang'
+                                    }, {
+                                        onSuccess: () => {
+                                            showSuccess('Unit Tidak Laik', 'Job dialihkan ke Stage 4c untuk penjadwalan retest.');
+                                            onClose();
+                                        }
+                                    });
+                                }}
+                                className="px-3 py-2 rounded text-xs font-bold bg-red-50 text-red-900 border border-red-300 hover:bg-red-100"
+                            >
+                                ❌ Tidak Laik → Retest (Stage 4c)
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={processing || !s5.s5_review_decision || s5.s5_review_decision !== 'approved'}
+                                className="flex-1 py-2 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 shadow-xs"
+                            >
+                                {processing ? '...' : '✅ Approve Laik → Lanjut ke Stage 7 →'}
                             </button>
                         </div>
                     </div>
@@ -2272,14 +2450,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <h4 className="text-xs font-black text-purple-900 uppercase tracking-wide flex items-center gap-1.5">
                                     <span>🔐 Stage 11c: Verifikasi Pembayaran (Finance)</span>
                                 </h4>
-                                <span className="bg-purple-200 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                    HARD GATE v5-2-2
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="bg-purple-200 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                        Retry: {job.payment_retry_count || 0} / 5
+                                    </span>
+                                    <span className="bg-purple-200 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                        HARD GATE v2.0
+                                    </span>
+                                </div>
                             </div>
                             <p className="text-xs text-purple-800">
                                 Finance memvalidasi mutasi bank dan kepastian dana masuk sebelum SUKET dapat dirilis ke klien. Jika belum lunas, kembalikan ke Stage 11.
                             </p>
                         </div>
+
+                        {(job.payment_retry_count || 0) >= 5 && (
+                            <div className="bg-red-50 border-2 border-red-400 rounded-lg p-3 text-xs text-red-900">
+                                <p className="font-extrabold text-sm mb-1">🚨 Eskalasi Pembayaran Macet (Maksimal 5x Terlampaui)!</p>
+                                <p>
+                                    Penagihan telah gagal / partial sebanyak 5 kali. Sistem telah mengeskalasi kasus ini ke Kepala Divisi dan Manager untuk pembekuan job / tindakan penanganan khusus.
+                                </p>
+                            </div>
+                        )}
 
                         {/* Rekonsiliasi Tagihan vs Penerimaan */}
                         <div className="bg-white border rounded-lg p-3 space-y-3 text-xs">
@@ -2366,20 +2558,50 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 14 (Pengiriman SUKET ke Klien — 11b MKT) ── */}
                 {s === 14 && (() => {
                     const isPaymentVerified = job.payment_verification_status === 'Lunas' || job.paid === true;
+                    const hasBankStatement = job.bank_statement_attached === true || (job.documents || []).some(d => d.stage === 15 || d.type?.toLowerCase().includes('mutasi') || d.type?.toLowerCase().includes('bank') || d.type?.toLowerCase().includes('rekening') || d.type === 'Bukti Bayar / Mutasi Rekening');
+                    const hasDocumentDebt = job.document_debt && job.document_debt.length > 0;
+                    const canDeliver = isPaymentVerified && hasBankStatement && !hasDocumentDebt;
+
                     return (
                         <div className="space-y-4">
-                            {!isPaymentVerified ? (
-                                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-xs text-red-900">
-                                    <div className="font-extrabold text-sm mb-1 flex items-center gap-1.5">
-                                        🔒 Pengiriman SUKET Terkunci!
+                            {!canDeliver ? (
+                                <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-xs text-red-900 space-y-3">
+                                    <div className="font-extrabold text-sm flex items-center gap-1.5 text-red-950">
+                                        🔒 Pengiriman SUKET Terkunci (Triple Hard-Gate v2.0)!
                                     </div>
                                     <p>
-                                        Berdasarkan aturan gerbang keputusan <strong>Status Lunas? (Delta v5-2-2)</strong>, SUKET tidak dapat diserahkan/dikirim kepada klien sebelum Finance menyatakan pembayaran <strong>Lunas</strong> di Stage 11c.
+                                        Berdasarkan SOP resmi dan spesifikasi v2.0, SUKET tidak dapat diserahkan/dikirim kepada klien sebelum 3 syarat gerbang berikut terpenuhi:
                                     </p>
+                                    <div className="space-y-2 bg-white/80 p-3 rounded-lg border border-red-200">
+                                        <div className="flex items-center gap-2">
+                                            <span className={isPaymentVerified ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
+                                                {isPaymentVerified ? "✓" : "✕"}
+                                            </span>
+                                            <span className={isPaymentVerified ? "text-gray-700 font-medium" : "text-red-800 font-bold"}>
+                                                1. Pembayaran Diverifikasi Lunas di Stage 11c ({isPaymentVerified ? "Terverifikasi" : "Belum Lunas"})
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={hasBankStatement ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
+                                                {hasBankStatement ? "✓" : "✕"}
+                                            </span>
+                                            <span className={hasBankStatement ? "text-gray-700 font-medium" : "text-red-800 font-bold"}>
+                                                2. Lampiran Bukti Mutasi Bank / Rekening Koran ({hasBankStatement ? "Terlampir" : "Belum Ada"})
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={!hasDocumentDebt ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
+                                                {!hasDocumentDebt ? "✓" : "✕"}
+                                            </span>
+                                            <span className={!hasDocumentDebt ? "text-gray-700 font-medium" : "text-red-800 font-bold"}>
+                                                3. Bebas Hutang Dokumen Stage 2 ({!hasDocumentDebt ? "Lengkap" : `Ada ${job.document_debt.length} Dokumen Tertunda: ${job.document_debt.join(', ')}`})
+                                            </span>
+                                        </div>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={handleRejectStage}
-                                        className="mt-3 px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700"
+                                        className="px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700"
                                     >
                                         Kembalikan ke Verifikasi Keuangan (Stage 11c)
                                     </button>
@@ -2391,7 +2613,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             📦 Stage 11b: Pengiriman SUKET ke Klien (Marketing)
                                         </h4>
                                         <p className="text-xs text-emerald-800">
-                                            Pembayaran terverifikasi LUNAS. Kirimkan SUKET fisik/digital ke klien secara bertahap atau sekaligus.
+                                            Pembayaran terverifikasi LUNAS, rekening koran terlampir, dan seluruh dokumen lengkap. Kirimkan SUKET fisik/digital ke klien secara bertahap atau sekaligus.
                                         </p>
                                     </div>
 
@@ -2499,6 +2721,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai.
                             </p>
                         </div>
+
+                        {/* Reopen Button for Superadmin / Manager / Kadiv */}
+                        {['superadmin', 'manager', 'kadiv'].includes(user?.role?.toLowerCase()) && (
+                            <div className="pt-2">
+                                <button
+                                    type="button"
+                                    onClick={handleReopenJob}
+                                    className="w-full px-4 py-2.5 rounded text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                                >
+                                    🔓 Buka Kembali Job (Reopen) ke Stage 5
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </form>
@@ -3189,6 +3424,30 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                 {/* Content Area — Scrollable body */}
                 <div className="p-4 sm:p-6 overflow-y-auto bg-white flex-1">
+                    {/* Document Debt Warning Banner */}
+                    {job.document_debt && job.document_debt.length > 0 && (
+                        <div className="mb-4 bg-amber-50 border-2 border-amber-300 rounded-lg p-3 text-xs text-amber-900 shadow-xs">
+                            <div className="font-extrabold flex items-center gap-1.5 text-sm text-amber-950 mb-1">
+                                ⚠️ Hutang Dokumen (Document Debt) Aktif!
+                            </div>
+                            <p className="mb-1">
+                                Pekerjaan ini memiliki dokumen yang di-bypass di Stage 2 dan <strong>wajib dilengkapi sebelum SUKET dapat dikirim ke klien (Stage 11b)</strong>:
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {job.document_debt.map((docName, idx) => (
+                                    <span key={idx} className="bg-amber-200/80 border border-amber-400 text-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">
+                                        📄 {docName}
+                                    </span>
+                                ))}
+                            </div>
+                            {job.stage2_bypass_justification && (
+                                <p className="mt-2 text-[11px] text-amber-800 italic">
+                                    Alasan Bypass: "{job.stage2_bypass_justification}" (oleh {job.stage2_bypass_approved_by || 'Manager'})
+                                </p>
+                            )}
+                        </div>
+                    )}
+
                     {activeTab === 'timeline' && renderTimeline()}
                     {activeTab === 'docs'     && renderDocuments()}
                     {activeTab === 'history'  && renderHistory()}

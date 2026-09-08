@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import db from '../db.js';
 import { buildDemoJobs } from '../seed.js';
-import { maskSensitiveData } from '../../src/domain/workflowEngine.js';
+import {
+  maskSensitiveData,
+  STAGE2_REQUIRED_DOCUMENTS,
+  canBypassStage2,
+  hasDocumentDebt,
+  splitJob
+} from '../../src/domain/workflowEngine.js';
 
 const router = Router();
 const now = () => new Date().toISOString();
@@ -612,15 +618,152 @@ router.post('/:id/stage9-suket', (req, res) => {
   }
 });
 
+// POST /api/jobs/:id/bypass-stage2 — approve Stage 2 bypass with justification & document debt logging
+router.post('/:id/bypass-stage2', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const job = JSON.parse(row.data);
+    const { justification } = req.body;
+    const actorRole = req.headers['x-user-role'] || 'manager';
+    const actorName = req.headers['x-user-name'] || 'Kadiv Teknis';
+
+    const check = canBypassStage2({ role: actorRole, name: actorName }, justification);
+    if (!check.allowed) {
+      return res.status(403).json({ ok: false, error: check.reason });
+    }
+
+    const uploadedTypes = (job.documents || []).map(d => d.type);
+    const missingDocs = STAGE2_REQUIRED_DOCUMENTS.filter(docType => !uploadedTypes.includes(docType));
+
+    job.peer_review_status = 'approved';
+    job.bypass_justification = justification;
+    job.bypassed_by = actorName;
+    job.bypassed_at = now();
+    job.document_debt = missingDocs;
+    job.document_debt_flag = missingDocs.length > 0;
+
+    job.history = job.history || [];
+    job.history.push({
+      stage: 2,
+      ts: now(),
+      by: actorName,
+      action: `Approval Bypass Dokumen Stage 2 disetujui. Justifikasi: "${justification}". Hutang dokumen: ${missingDocs.length} berkas.`
+    });
+
+    const ts = now();
+    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+      JSON.stringify(job), ts, req.params.id
+    );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, job });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/jobs/:id/split — split failing units into child job
+router.post('/:id/split', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const job = JSON.parse(row.data);
+    const { child_unit_ids = [] } = req.body;
+
+    const { parentJob, childJob } = splitJob(job, child_unit_ids);
+    const ts = now();
+
+    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+      JSON.stringify(parentJob), ts, req.params.id
+    );
+
+    db.prepare(
+      'INSERT INTO jobs (id, data, created_at, updated_at) VALUES (?, ?, ?, ?)'
+    ).run(childJob.id, JSON.stringify(childJob), ts, ts);
+
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, parentJob, childJob });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/jobs/:id/reopen — reopen closed Stage 12 job
+router.post('/:id/reopen', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const job = JSON.parse(row.data);
+    const { reason, target_stage = 5 } = req.body;
+    const actorRole = (req.headers['x-user-role'] || 'manager').toLowerCase();
+    const actorName = req.headers['x-user-name'] || 'Kadiv Teknis';
+
+    const authorized = ['manager', 'kadiv', 'superadmin'];
+    if (!authorized.includes(actorRole)) {
+      return res.status(403).json({ ok: false, error: 'Hanya Kadiv, Manager Teknis, atau Superadmin yang dapat membuka kembali Job yang sudah selesai.' });
+    }
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ ok: false, error: 'Alasan pembukaan kembali (Reopen Reason) wajib diisi.' });
+    }
+
+    job.reopen_logs = job.reopen_logs || [];
+    job.reopen_logs.push({
+      reopened_by: actorName,
+      role: actorRole,
+      timestamp: now(),
+      reason: reason.trim(),
+      previous_stage: job.stage,
+      target_stage: Number(target_stage)
+    });
+
+    job.stage = Number(target_stage);
+    job.stage_started_at = now();
+    job.history = job.history || [];
+    job.history.push({
+      stage: job.stage,
+      ts: now(),
+      by: actorName,
+      action: `Job dibuka kembali (Reopen) ke Stage ${job.stage}. Alasan: "${reason.trim()}"`
+    });
+
+    const ts = now();
+    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+      JSON.stringify(job), ts, req.params.id
+    );
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, job });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // POST /api/jobs/:id/stage5-review — save stage 5 review decision
 router.post('/:id/stage5-review', (req, res) => {
   try {
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
-    job.peer_review_status = req.body.peer_review_status || req.body.decision;
-    job.laik_status = req.body.laik_status || job.laik_status;
+    const { decision, laik_status, notes } = req.body;
+    job.peer_review_status = req.body.peer_review_status || decision;
+    job.laik_status = laik_status || job.laik_status;
     job.stage5_data = { ...(job.stage5_data || {}), ...req.body };
+
+    if (decision === 'Revisi' || decision === 'Reject-Revisi') {
+      job.revision_count = (job.revision_count || 0) + 1;
+      job.stage = 5;
+    } else if (decision === 'Tidak Laik' || laik_status === 'Tidak Laik') {
+      job.stage = 16; // Stage 4c for retest after client repair
+    } else if (decision === 'Approve' || decision === 'Approved' || laik_status === 'Laik') {
+      job.stage = 7; // Stage 7 Dinas / Batch
+    }
+
     const ts = now();
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(job), ts, req.params.id

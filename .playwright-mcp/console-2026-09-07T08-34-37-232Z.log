@@ -1,9 +1,0 @@
-[     291ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
-[     863ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=c441a73f:20356
-[  293275ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/jobs/create:0
-[  427981ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx?t=1788770504850:0
-[  427985ms] [ERROR] [hmr] Failed to reload /dnp-rework/resources/js/Components/JobDetailSheet.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
-[  447412ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx?t=1788770524438:0
-[  447413ms] [ERROR] [hmr] Failed to reload /dnp-rework/resources/js/Components/JobDetailSheet.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
-[  572779ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx?t=1788770649843:0
-[  572780ms] [ERROR] [hmr] Failed to reload /dnp-rework/resources/js/Components/JobDetailSheet.jsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175

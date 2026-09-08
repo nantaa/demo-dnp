@@ -23,6 +23,7 @@ describe('DNP Monitor v3 — TDD Workflow Engine', () => {
         pesawat: 'Genset',
         kategori: 'Umum',
         termin_pembayaran: 'DP',
+        dp_amount: 5000000,
       };
       assert.equal(validateStage1(validJob).valid, true);
 

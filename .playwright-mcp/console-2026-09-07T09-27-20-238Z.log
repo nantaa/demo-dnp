@@ -1,0 +1,28 @@
+[     833ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[    1236ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=ac07ce4e:20356
+[  507117ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/jobs/demo-5/recommendations:0
+[  507121ms] [ERROR] Failed to fetch recommendations Error: API returned error status
+    at http://localhost:5173/dnp-rework/resources/js/Components/SmartRecommendation.jsx:39:26 @ http://localhost:5173/dnp-rework/resources/js/Components/SmartRecommendation.jsx:48
+[  507136ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/master-data:0
+[  507136ms] [ERROR] Error: Master data request failed
+    at http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx:503:26 @ :0
+[  507137ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/jobs/demo-5/recommendations:0
+[  507137ms] [ERROR] Error: Recommendations request failed
+    at http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx:511:26 @ :0
+[  507138ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/master-data:0
+[  507138ms] [ERROR] Error: Master data request failed
+    at http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx:503:26 @ :0
+[  507139ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/jobs/demo-5/recommendations:0
+[  507139ms] [ERROR] Failed to fetch recommendations Error: API returned error status
+    at http://localhost:5173/dnp-rework/resources/js/Components/SmartRecommendation.jsx:39:26 @ http://localhost:5173/dnp-rework/resources/js/Components/SmartRecommendation.jsx:48
+[  507139ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/api/jobs/demo-5/recommendations:0
+[  507140ms] [ERROR] Error: Recommendations request failed
+    at http://localhost:5173/dnp-rework/resources/js/Components/JobDetailSheet.jsx:511:26 @ :0
+[  873537ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:559
+[  876205ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/api/notifications:0
+[  876206ms] [ERROR] TypeError: Failed to fetch
+    at fetchNotifications (http://localhost:5173/dnp-rework/resources/js/Components/NotificationBell.jsx:30:5) @ :0
+[  876220ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  879594ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  883373ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  888137ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=fcb681d1:20356

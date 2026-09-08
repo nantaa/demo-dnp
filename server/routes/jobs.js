@@ -6,7 +6,14 @@ import {
   STAGE2_REQUIRED_DOCUMENTS,
   canBypassStage2,
   hasDocumentDebt,
-  splitJob
+  splitJob,
+  executeAtomicJobSplit,
+  computeFamilyStatus,
+  computeJobUnitRollups,
+  validateInspectionBatch,
+  recordInspectionResultCorrection,
+  validateMergeBackEligibility,
+  allocatePaymentToFamilyJob
 } from '../../src/domain/workflowEngine.js';
 
 const router = Router();
@@ -664,29 +671,222 @@ router.post('/:id/bypass-stage2', (req, res) => {
   }
 });
 
-// POST /api/jobs/:id/split — split failing units into child job
-router.post('/:id/split', (req, res) => {
+// POST /api/jobs/:id/splits or /api/jobs/:id/split — atomic job split
+const handleJobSplitRoute = (req, res) => {
   try {
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
-    const { child_unit_ids = [] } = req.body;
 
-    const { parentJob, childJob } = splitJob(job, child_unit_ids);
+    const {
+      selectedUnitIds,
+      child_unit_ids,
+      splitReason,
+      clientRequestedPartialProcessing,
+      commercialAllocationMode,
+      childJobStage = 16,
+      rescheduleReason,
+      approvedByUserId,
+      approvalReason,
+      version
+    } = req.body;
+
+    const unitIds = selectedUnitIds || child_unit_ids || [];
+
+    const splitResult = executeAtomicJobSplit(job, {
+      selectedUnitIds: unitIds,
+      splitReason: splitReason || 'UNIT_UNAVAILABLE',
+      clientRequestedPartialProcessing: Boolean(clientRequestedPartialProcessing),
+      commercialAllocationMode: commercialAllocationMode || 'PRO_RATA',
+      childJobStage: Number(childJobStage) || 16,
+      rescheduleReason: rescheduleReason || '',
+      approvedByUserId: approvedByUserId || req.headers['x-user-name'] || 'Manager',
+      approvalReason: approvalReason || '',
+      version
+    });
+
+    if (!splitResult.ok) {
+      return res.status(400).json({ ok: false, code: splitResult.code, error: splitResult.message });
+    }
+
+    const { parentJob, childJob } = splitResult;
     const ts = now();
 
-    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
-      JSON.stringify(parentJob), ts, req.params.id
-    );
+    const splitTx = db.transaction(() => {
+      db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+        JSON.stringify(parentJob), ts, req.params.id
+      );
+      db.prepare(
+        'INSERT INTO jobs (id, data, created_at, updated_at) VALUES (?, ?, ?, ?)'
+      ).run(childJob.id, JSON.stringify(childJob), ts, ts);
+    });
 
-    db.prepare(
-      'INSERT INTO jobs (id, data, created_at, updated_at) VALUES (?, ?, ?, ?)'
-    ).run(childJob.id, JSON.stringify(childJob), ts, ts);
+    splitTx();
 
     if (req.headers['x-inertia']) {
       return res.redirect(303, '/kanban');
     }
     res.json({ ok: true, parentJob, childJob });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+};
+
+router.post('/:id/split', handleJobSplitRoute);
+router.post('/:id/splits', handleJobSplitRoute);
+
+// GET /api/jobs/:id/family — fetch complete PO job family tree and status rollup
+router.get('/:id/family', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const targetJob = JSON.parse(row.data);
+    const rootId = targetJob.root_job_id || targetJob.id;
+
+    const allRows = db.prepare('SELECT data FROM jobs').all();
+    const familyJobs = allRows
+      .map(r => JSON.parse(r.data))
+      .filter(j => (j.root_job_id === rootId) || (j.id === rootId) || (j.parent_job_id === rootId));
+
+    const rootJob = familyJobs.find(j => j.id === rootId) || targetJob;
+    const descendantJobs = familyJobs.filter(j => j.id !== rootId);
+    const familyStatus = computeFamilyStatus(rootJob, descendantJobs);
+
+    // Cumulative stats
+    let totalOriginalUnits = rootJob.original_po_unit_count || rootJob.units || 0;
+    let totalCertifiedUnits = 0;
+    let totalActiveUnits = 0;
+
+    familyJobs.forEach(j => {
+      const rollups = computeJobUnitRollups(j.unit_items || []);
+      if (j.stage === 12 || j.status === 'CLOSED') {
+        totalCertifiedUnits += (j.units || 0);
+      } else {
+        totalActiveUnits += (j.units || 0);
+      }
+    });
+
+    res.json({
+      ok: true,
+      rootJob,
+      familyJobs,
+      familyStatus,
+      totalOriginalUnits,
+      totalCertifiedUnits,
+      totalActiveUnits
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/jobs/:id/merge-back — controlled merge back of child job into parent
+router.post('/:id/merge-back', (req, res) => {
+  try {
+    const childRow = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!childRow) return res.status(404).json({ ok: false, error: 'Child job not found' });
+    const childJob = JSON.parse(childRow.data);
+
+    if (!childJob.parent_job_id) {
+      return res.status(400).json({ ok: false, error: 'Hanya Child Job yang dapat di-merge kembali ke induk.' });
+    }
+
+    const check = validateMergeBackEligibility(childJob);
+    if (!check.allowed) {
+      return res.status(400).json({ ok: false, error: check.reason });
+    }
+
+    const parentRow = db.prepare('SELECT data FROM jobs WHERE id = ?').get(childJob.parent_job_id);
+    if (!parentRow) return res.status(404).json({ ok: false, error: 'Parent job not found' });
+    const parentJob = JSON.parse(parentRow.data);
+
+    const ts = now();
+    const mergedUnits = [...(parentJob.unit_items || []), ...(childJob.unit_items || [])].map(u => ({
+      ...u,
+      current_job_id: parentJob.id
+    }));
+
+    parentJob.unit_items = mergedUnits;
+    parentJob.units = mergedUnits.length;
+    parentJob.updated_at = ts;
+
+    childJob.status = 'CANCELLED';
+    childJob.cancellation_reason = 'Merged back to parent job';
+    childJob.unit_items = [];
+    childJob.units = 0;
+    childJob.updated_at = ts;
+
+    const mergeTx = db.transaction(() => {
+      db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+        JSON.stringify(parentJob), ts, parentJob.id
+      );
+      db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+        JSON.stringify(childJob), ts, childJob.id
+      );
+    });
+
+    mergeTx();
+
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, parentJob, childJob });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// POST /api/jobs/:id/inspection-batches — record field inspection batch with unit-level validation
+router.post('/:id/inspection-batches', (req, res) => {
+  try {
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const job = JSON.parse(row.data);
+
+    const expectedUnits = job.unit_items || Array.from({ length: job.units || 1 }, (_, i) => ({ id: `U-${i + 1}`, unit_code: `UNIT-${i + 1}` }));
+    const batchCheck = validateInspectionBatch(expectedUnits, req.body);
+    if (!batchCheck.valid) {
+      return res.status(400).json({ ok: false, error: batchCheck.reason });
+    }
+
+    job.inspection_batches = job.inspection_batches || [];
+    const newBatch = {
+      id: `batch-${Date.now()}`,
+      batch_number: (job.inspection_batches.length || 0) + 1,
+      inspection_date: req.body.inspection_date || now(),
+      inspector_ids: req.body.inspector_ids || [],
+      units: req.body.units || [],
+      submitted_by: req.headers['x-user-name'] || 'Inspector',
+      submitted_at: now()
+    };
+    job.inspection_batches.push(newBatch);
+
+    // Update unit status in job.unit_items
+    if (job.unit_items && Array.isArray(job.unit_items)) {
+      job.unit_items = job.unit_items.map(u => {
+        const matching = (req.body.units || []).find(bu => (bu.job_unit_id || bu.id) === u.id);
+        if (matching) {
+          return {
+            ...u,
+            inspection_status: matching.outcome,
+            laik_status: matching.outcome === 'LAIK' ? 'LAIK' : (matching.outcome === 'TEMUAN' ? 'TIDAK_LAIK' : 'PENDING'),
+            non_inspection_reason: matching.non_inspection_reason || null,
+            non_inspection_note: matching.note || null
+          };
+        }
+        return u;
+      });
+    }
+
+    const ts = now();
+    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+      JSON.stringify(job), ts, req.params.id
+    );
+
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, job, batch: newBatch });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }

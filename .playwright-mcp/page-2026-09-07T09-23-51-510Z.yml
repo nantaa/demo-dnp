@@ -1,0 +1,144 @@
+- generic [ref=f3e3]:
+  - banner [ref=f3e4]:
+    - generic [ref=f3e6]:
+      - generic [ref=f3e8]:
+        - img "PT Delta Nusantara Persada" [ref=f3e9]
+        - generic [ref=f3e10]:
+          - generic [ref=f3e11]: PT Delta Nusantara Persada
+          - generic [ref=f3e12]: Riksa Uji · Monitoring
+      - generic [ref=f3e13]:
+        - button "Notifikasi" [ref=f3e15] [cursor=pointer]
+        - link "MKT Terzha R. Perdanawan Marketing" [ref=f3e19] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=f3e20]: MKT
+          - generic [ref=f3e21]:
+            - generic [ref=f3e22]: Terzha R. Perdanawan
+            - generic [ref=f3e23]: Marketing
+        - link "Pengaturan Akun" [ref=f3e24] [cursor=pointer]:
+          - /url: /profile
+        - button "Keluar" [ref=f3e28] [cursor=pointer]
+  - generic [ref=f3e32]:
+    - navigation [ref=f3e33]:
+      - generic [ref=f3e34]:
+        - generic [ref=f3e35]: Menu Utama
+        - generic [ref=f3e36]:
+          - link "Dashboard" [ref=f3e37] [cursor=pointer]:
+            - /url: /
+          - link "Kanban" [ref=f3e43] [cursor=pointer]:
+            - /url: /kanban
+          - link "Daftar Job" [ref=f3e46] [cursor=pointer]:
+            - /url: /jobs
+          - link "Job Baru" [ref=f3e48] [cursor=pointer]:
+            - /url: /jobs/create
+          - link "Reminder Suket" [ref=f3e50] [cursor=pointer]:
+            - /url: /reminder-suket
+    - main [ref=f3e54]:
+      - generic [ref=f3e55]:
+        - generic [ref=f3e56]:
+          - heading "Buat Job Baru" [level=1] [ref=f3e57]
+          - paragraph [ref=f3e58]: "Stage 1: Pendaftaran PO / SPK / Proposal Baru oleh Marketing."
+        - generic [ref=f3e60]:
+          - generic [ref=f3e61]:
+            - generic [ref=f3e62]: Nama Klien / Perusahaan
+            - textbox [ref=f3e63]
+          - generic [ref=f3e64]:
+            - generic [ref=f3e65]:
+              - generic [ref=f3e66]: Jenis Alat yang di RiksaUji *
+              - button "Pilih Semua" [ref=f3e67] [cursor=pointer]
+            - generic [ref=f3e68]:
+              - generic [ref=f3e69] [cursor=pointer]:
+                - checkbox "Proteksi Kebakaran (Form 65 K)" [ref=f3e70]
+                - generic [ref=f3e71]: Proteksi Kebakaran (Form 65 K)
+              - generic [ref=f3e72] [cursor=pointer]:
+                - checkbox "Lift / Dumbwaiter (Form 36/38/39)" [ref=f3e73]
+                - generic [ref=f3e74]: Lift / Dumbwaiter (Form 36/38/39)
+              - generic [ref=f3e75] [cursor=pointer]:
+                - checkbox "Eskalator / Travelator (Form 52)" [ref=f3e76]
+                - generic [ref=f3e77]: Eskalator / Travelator (Form 52)
+              - generic [ref=f3e78] [cursor=pointer]:
+                - checkbox "PAPA (Crane/Forklift/dll) (Form A 52)" [ref=f3e79]
+                - generic [ref=f3e80]: PAPA (Crane/Forklift/dll) (Form A 52)
+              - generic [ref=f3e81] [cursor=pointer]:
+                - checkbox "Instalasi Listrik & PP (Form 55 L)" [ref=f3e82]
+                - generic [ref=f3e83]: Instalasi Listrik & PP (Form 55 L)
+              - generic [ref=f3e84] [cursor=pointer]:
+                - checkbox "Pesawat Uap (Boiler) (Form 6)" [ref=f3e85]
+                - generic [ref=f3e86]: Pesawat Uap (Boiler) (Form 6)
+              - generic [ref=f3e87] [cursor=pointer]:
+                - checkbox "Bejana Tekan (Form 45 A.1)" [ref=f3e88]
+                - generic [ref=f3e89]: Bejana Tekan (Form 45 A.1)
+              - generic [ref=f3e90] [cursor=pointer]:
+                - checkbox "PTP (Compressor/Genset) (Form 54 A)" [ref=f3e91]
+                - generic [ref=f3e92]: PTP (Compressor/Genset) (Form 54 A)
+          - generic [ref=f3e93]:
+            - generic [ref=f3e94]:
+              - generic [ref=f3e95]: Jumlah Unit
+              - spinbutton [ref=f3e96]: "1"
+            - generic [ref=f3e97]:
+              - generic [ref=f3e98]: Nilai Kontrak (Rp) (belum termasuk PPN)
+              - spinbutton [ref=f3e99]: "0"
+          - generic [ref=f3e100]:
+            - generic [ref=f3e101]:
+              - generic [ref=f3e102]: No PO / SPK / Proposal *
+              - textbox "PO/SPK/PROPOSAL/2026/0123" [ref=f3e103]
+            - generic [ref=f3e104]:
+              - generic [ref=f3e105]: Tanggal PO / SPK / Proposal
+              - textbox [ref=f3e106]
+          - generic [ref=f3e108]:
+            - generic [ref=f3e109]:
+              - generic [ref=f3e110]: Provinsi *
+              - combobox [ref=f3e111]:
+                - option "-- Pilih Provinsi --" [selected]
+                - option "Aceh"
+                - option "Sumatera Utara"
+                - option "Sumatera Barat"
+                - option "Riau"
+                - option "Jambi"
+                - option "Sumatera Selatan"
+                - option "Bengkulu"
+                - option "Lampung"
+                - option "Kepulauan Bangka Belitung"
+                - option "Kepulauan Riau"
+                - option "DKI Jakarta"
+                - option "Jawa Barat"
+                - option "Jawa Tengah"
+                - option "DI Yogyakarta"
+                - option "Jawa Timur"
+                - option "Banten"
+                - option "Bali"
+                - option "Nusa Tenggara Barat"
+                - option "Nusa Tenggara Timur"
+                - option "Kalimantan Barat"
+                - option "Kalimantan Tengah"
+                - option "Kalimantan Selatan"
+                - option "Kalimantan Timur"
+                - option "Kalimantan Utara"
+                - option "Sulawesi Utara"
+                - option "Sulawesi Tengah"
+                - option "Sulawesi Selatan"
+                - option "Sulawesi Tenggara"
+                - option "Gorontalo"
+                - option "Sulawesi Barat"
+                - option "Maluku"
+                - option "Maluku Utara"
+                - option "Papua Barat"
+                - option "Papua"
+                - option "Papua Selatan"
+                - option "Papua Tengah"
+                - option "Papua Pegunungan"
+                - option "Papua Barat Daya"
+            - generic [ref=f3e112]:
+              - generic [ref=f3e113]: Kota / Kabupaten *
+              - combobox [disabled] [ref=f3e114]:
+                - option "-- Pilih Provinsi Terlebih Dahulu --" [selected]
+          - generic [ref=f3e115]:
+            - generic [ref=f3e116]:
+              - generic [ref=f3e117]: PIC Klien
+              - textbox [ref=f3e118]
+            - generic [ref=f3e119]:
+              - generic [ref=f3e120]: No HP PIC Klien
+              - textbox [ref=f3e121]
+          - generic [ref=f3e122]:
+            - generic [ref=f3e123]: Marketing In-Charge(dari akun Anda)
+            - textbox "Nama Marketing" [ref=f3e124]: Terzha R. Perdanawan
+          - button "Buat Job Baru" [ref=f3e126] [cursor=pointer]

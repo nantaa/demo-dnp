@@ -1,0 +1,867 @@
+- generic [ref=f4e7]:
+  - banner [ref=f4e8]:
+    - generic [ref=f4e10]:
+      - generic [ref=f4e12]:
+        - img "PT Delta Nusantara Persada" [ref=f4e13]
+        - generic [ref=f4e14]:
+          - generic [ref=f4e15]: PT Delta Nusantara Persada
+          - generic [ref=f4e16]: Riksa Uji · Monitoring
+      - generic [ref=f4e17]:
+        - button "Notifikasi" [ref=f4e19] [cursor=pointer]
+        - link "SUP Super Administrator Super Administrator" [ref=f4e23] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=f4e24]: SUP
+          - generic [ref=f4e25]:
+            - generic [ref=f4e26]: Super Administrator
+            - generic [ref=f4e27]: Super Administrator
+        - link "Pengaturan Akun" [ref=f4e28] [cursor=pointer]:
+          - /url: /profile
+        - button "Keluar" [ref=f4e32] [cursor=pointer]
+  - generic [ref=f4e36]:
+    - navigation [ref=f4e37]:
+      - generic [ref=f4e38]:
+        - generic [ref=f4e39]: Menu Utama
+        - generic [ref=f4e40]:
+          - link "Dashboard" [ref=f4e41] [cursor=pointer]:
+            - /url: /
+          - link "Kanban" [ref=f4e47] [cursor=pointer]:
+            - /url: /kanban
+          - link "Daftar Job" [ref=f4e50] [cursor=pointer]:
+            - /url: /jobs
+          - link "Job Baru" [ref=f4e52] [cursor=pointer]:
+            - /url: /jobs/create
+          - link "Pelaporan" [ref=f4e54] [cursor=pointer]:
+            - /url: /pelaporan
+          - link "Users" [ref=f4e58] [cursor=pointer]:
+            - /url: /users
+          - link "Reminder Suket" [ref=f4e62] [cursor=pointer]:
+            - /url: /reminder-suket
+          - link "Alat & SKP" [ref=f4e66] [cursor=pointer]:
+            - /url: /inventory
+    - main [ref=f4e77]:
+      - generic [ref=f4e78]:
+        - generic [ref=f4e79]:
+          - heading "Kanban Board" [level=1] [ref=f4e80]
+          - generic [ref=f4e81]: Total 35 Job
+          - generic [ref=f4e82]: Delta v5-2-2 (17 Stages)
+        - button "Kosongkan Database Job" [ref=f4e86] [cursor=pointer]
+      - generic [ref=f4e90]:
+        - generic [ref=f4e91]:
+          - generic [ref=f4e92]:
+            - generic [ref=f4e93]: "Filter Fase:"
+            - button "Semua Stage (17)" [ref=f4e98] [cursor=pointer]
+            - 'button "Fase 1: RU Lapangan (1 - 4d)" [ref=f4e99] [cursor=pointer]'
+            - 'button "Fase 2: Laporan & Dinas (5 - 9)" [ref=f4e100] [cursor=pointer]'
+            - 'button "Fase 3: Invoice & SUKET (10 - 12)" [ref=f4e101] [cursor=pointer]'
+          - generic [ref=f4e103]:
+            - button "Geser Kiri" [ref=f4e104] [cursor=pointer]
+            - button "Geser Kanan" [ref=f4e107] [cursor=pointer]
+        - generic [ref=f4e110]:
+          - generic [ref=f4e111]: "Lompat ke:"
+          - button "1 PO 9" [ref=f4e112] [cursor=pointer]:
+            - generic [ref=f4e113]: "1"
+            - generic [ref=f4e114]: PO
+            - generic [ref=f4e115]: "9"
+          - button "2 Verifikasi 2" [ref=f4e116] [cursor=pointer]:
+            - generic [ref=f4e117]: "2"
+            - generic [ref=f4e118]: Verifikasi
+            - generic [ref=f4e119]: "2"
+          - button "3 Jadwal 1" [ref=f4e120] [cursor=pointer]:
+            - generic [ref=f4e121]: "3"
+            - generic [ref=f4e122]: Jadwal
+            - generic [ref=f4e123]: "1"
+          - button "4 Inspeksi 3" [ref=f4e124] [cursor=pointer]:
+            - generic [ref=f4e125]: "4"
+            - generic [ref=f4e126]: Inspeksi
+            - generic [ref=f4e127]: "3"
+          - button "4b Aktualisasi 2" [ref=f4e128] [cursor=pointer]:
+            - generic [ref=f4e129]: 4b
+            - generic [ref=f4e130]: Aktualisasi
+            - generic [ref=f4e131]: "2"
+          - button "4c Reschedule 1" [ref=f4e132] [cursor=pointer]:
+            - generic [ref=f4e133]: 4c
+            - generic [ref=f4e134]: Reschedule
+            - generic [ref=f4e135]: "1"
+          - button "4d RU Ulang 1" [ref=f4e136] [cursor=pointer]:
+            - generic [ref=f4e137]: 4d
+            - generic [ref=f4e138]: RU Ulang
+            - generic [ref=f4e139]: "1"
+          - button "5 LHPP 1" [ref=f4e140] [cursor=pointer]:
+            - generic [ref=f4e141]: "5"
+            - generic [ref=f4e142]: LHPP
+            - generic [ref=f4e143]: "1"
+          - button "6 Rev. Laporan 1" [ref=f4e144] [cursor=pointer]:
+            - generic [ref=f4e145]: "6"
+            - generic [ref=f4e146]: Rev. Laporan
+            - generic [ref=f4e147]: "1"
+          - button "7 Verif Dinas 1" [ref=f4e148] [cursor=pointer]:
+            - generic [ref=f4e149]: "7"
+            - generic [ref=f4e150]: Verif Dinas
+            - generic [ref=f4e151]: "1"
+          - button "8 Disnaker 1" [ref=f4e152] [cursor=pointer]:
+            - generic [ref=f4e153]: "8"
+            - generic [ref=f4e154]: Disnaker
+            - generic [ref=f4e155]: "1"
+          - button "9 Suket 2" [ref=f4e156] [cursor=pointer]:
+            - generic [ref=f4e157]: "9"
+            - generic [ref=f4e158]: Suket
+            - generic [ref=f4e159]: "2"
+          - button "10 Invoice 1" [ref=f4e160] [cursor=pointer]:
+            - generic [ref=f4e161]: "10"
+            - generic [ref=f4e162]: Invoice
+            - generic [ref=f4e163]: "1"
+          - button "11 Penagihan 1" [ref=f4e164] [cursor=pointer]:
+            - generic [ref=f4e165]: "11"
+            - generic [ref=f4e166]: Penagihan
+            - generic [ref=f4e167]: "1"
+          - button "11c Verif Bayar 1" [ref=f4e168] [cursor=pointer]:
+            - generic [ref=f4e169]: 11c
+            - generic [ref=f4e170]: Verif Bayar
+            - generic [ref=f4e171]: "1"
+          - button "11b Kirim SUKET 1" [ref=f4e172] [cursor=pointer]:
+            - generic [ref=f4e173]: 11b
+            - generic [ref=f4e174]: Kirim SUKET
+            - generic [ref=f4e175]: "1"
+          - button "12 Closed 6" [ref=f4e176] [cursor=pointer]:
+            - generic [ref=f4e177]: "12"
+            - generic [ref=f4e178]: Closed
+            - generic [ref=f4e179]: "6"
+      - generic [ref=f4e180]:
+        - generic [ref=f4e181]:
+          - generic [ref=f4e182]:
+            - generic [ref=f4e183]:
+              - generic [ref=f4e184]: "1"
+              - heading "PO / SPK / Proposal" [level=2] [ref=f4e185]
+            - generic [ref=f4e186]: "9"
+          - generic [ref=f4e187]:
+            - generic [ref=f4e188] [cursor=pointer]:
+              - generic [ref=f4e190]:
+                - generic [ref=f4e191]: DNP/2026/TEST-1788770854970
+                - generic [ref=f4e192]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e193]
+              - paragraph [ref=f4e194]: Genset •
+              - generic [ref=f4e196]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e197] [cursor=pointer]:
+              - generic [ref=f4e199]:
+                - generic [ref=f4e200]: DNP/2026/TEST-1788769644706
+                - generic [ref=f4e201]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e202]
+              - paragraph [ref=f4e203]: Genset •
+              - generic [ref=f4e205]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e206] [cursor=pointer]:
+              - generic [ref=f4e208]:
+                - generic [ref=f4e209]: DNP/2026/TEST-1788769629411
+                - generic [ref=f4e210]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e211]
+              - paragraph [ref=f4e212]: Genset •
+              - generic [ref=f4e214]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e215] [cursor=pointer]:
+              - generic [ref=f4e217]:
+                - generic [ref=f4e218]: DNP/2026/TEST-1788769610615
+                - generic [ref=f4e219]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e220]
+              - paragraph [ref=f4e221]: Genset •
+              - generic [ref=f4e223]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e224] [cursor=pointer]:
+              - generic [ref=f4e226]:
+                - generic [ref=f4e227]: DNP/2026/TEST-1788767196512
+                - generic [ref=f4e228]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e229]
+              - paragraph [ref=f4e230]: Genset •
+              - generic [ref=f4e232]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e233] [cursor=pointer]:
+              - generic [ref=f4e235]:
+                - generic [ref=f4e236]: DNP/2026/TEST-1788767006458
+                - generic [ref=f4e237]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e238]
+              - paragraph [ref=f4e239]: Genset •
+              - generic [ref=f4e241]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e242] [cursor=pointer]:
+              - generic [ref=f4e244]:
+                - generic [ref=f4e245]: DNP/2026/TEST-1788766988149
+                - generic [ref=f4e246]: 2 Unit
+              - heading "PT Integration Client" [level=3] [ref=f4e247]
+              - paragraph [ref=f4e248]: Genset •
+              - generic [ref=f4e250]:
+                - text: "MKT:"
+                - strong
+            - generic [ref=f4e251] [cursor=pointer]:
+              - generic [ref=f4e253]:
+                - generic [ref=f4e254]: DNP/2026/0015
+                - generic [ref=f4e255]: 6 Unit
+              - heading "PT Chandra Asri Petrochemical" [level=3] [ref=f4e256]
+              - paragraph [ref=f4e257]: Bejana Tekan (Form 45 A.1) • Cilegon, Banten
+              - generic [ref=f4e259]:
+                - text: "MKT:"
+                - strong [ref=f4e260]: Andini Sari
+            - generic [ref=f4e261] [cursor=pointer]:
+              - generic [ref=f4e263]:
+                - generic [ref=f4e264]: DNP/2026/0016
+                - generic [ref=f4e265]: 2 Unit
+              - heading "PT ALCOS GRAHA JAYA1" [level=3] [ref=f4e266]
+              - paragraph [ref=f4e267]: PAPA (Crane/Forklift/dll) (Form A 52) • Kota Administrasi Jakarta Timur, DKI Jakarta
+              - generic [ref=f4e269]:
+                - text: "MKT:"
+                - strong [ref=f4e270]: Atikah Purnama
+        - generic [ref=f4e271]:
+          - generic [ref=f4e272]:
+            - generic [ref=f4e273]:
+              - generic [ref=f4e274]: "2"
+              - heading "Verifikasi Dokumen" [level=2] [ref=f4e275]
+            - generic [ref=f4e276]: "2"
+          - generic [ref=f4e277]:
+            - generic [ref=f4e278] [cursor=pointer]:
+              - generic [ref=f4e280]: DNP/2026/0017
+              - heading "PT. Microsoft Operations Indonesia" [level=3] [ref=f4e282]
+              - paragraph [ref=f4e283]: Instalasi Listrik & PP (Form 55 L) • Kota Administrasi Jakarta Selatan, DKI Jakarta
+              - generic [ref=f4e284]:
+                - generic [ref=f4e285]:
+                  - text: "MKT:"
+                  - strong [ref=f4e286]: Intang
+                - generic "4 hari terpakai dari SLA 1 hari" [ref=f4e287]: OVERDUE 4/1d
+            - generic [ref=f4e288] [cursor=pointer]:
+              - generic [ref=f4e290]:
+                - generic [ref=f4e291]: DNP/2026/0003
+                - generic [ref=f4e292]: 8 Unit
+              - heading "PT Toyota Motor Manufacturing Indonesia" [level=3] [ref=f4e293]
+              - paragraph [ref=f4e294]: PAPA (Crane/Forklift/dll) (Form A 52) • Karawang
+              - generic [ref=f4e295]:
+                - generic [ref=f4e296]:
+                  - text: "MKT:"
+                  - strong [ref=f4e297]: Terzha R. Perdanawan
+                - generic "4 hari terpakai dari SLA 1 hari" [ref=f4e298]: OVERDUE 4/1d
+        - generic [ref=f4e299]:
+          - generic [ref=f4e300]:
+            - generic [ref=f4e301]:
+              - generic [ref=f4e302]: "3"
+              - heading "Penjadwalan & Surat Tugas" [level=2] [ref=f4e303]
+            - generic [ref=f4e304]: "1"
+          - generic [ref=f4e306] [cursor=pointer]:
+            - generic [ref=f4e308]:
+              - generic [ref=f4e309]: DNP/2026/0005
+              - generic [ref=f4e310]: 6 Unit
+            - heading "Apartemen The Pakubuwono" [level=3] [ref=f4e311]
+            - paragraph [ref=f4e312]: Lift / Dumbwaiter (Form 36/38/39) • Jakarta Selatan
+            - generic [ref=f4e313]:
+              - generic [ref=f4e314]:
+                - text: "MKT:"
+                - strong [ref=f4e315]: Andini Sari
+              - generic "8 hari terpakai dari SLA 1 hari" [ref=f4e316]: OVERDUE 8/1d
+        - generic [ref=f4e317]:
+          - generic [ref=f4e318]:
+            - generic [ref=f4e319]:
+              - generic [ref=f4e320]: "4"
+              - heading "Pelaksanaan RU" [level=2] [ref=f4e321]
+            - generic [ref=f4e322]: "3"
+          - generic [ref=f4e323]:
+            - generic [ref=f4e324] [cursor=pointer]:
+              - generic [ref=f4e326]: DNP/2026/0014
+              - heading "test" [level=3] [ref=f4e328]
+              - paragraph [ref=f4e329]: Instalasi Listrik & PP (Form 55 L) • Kota Bogor, Jawa Barat
+              - generic [ref=f4e330]:
+                - generic [ref=f4e331]: TIM RIKSA UJI
+                - generic [ref=f4e332]: PRANAN JAYA BARUS
+                - generic [ref=f4e333]: ADI OCTA PRADANA
+              - generic [ref=f4e334]:
+                - generic [ref=f4e335]:
+                  - text: "MKT:"
+                  - strong [ref=f4e336]: Atikah Purnama
+                - generic [ref=f4e337]: H -2
+            - generic [ref=f4e338] [cursor=pointer]:
+              - generic [ref=f4e340]:
+                - generic [ref=f4e341]: DNP/2026/0006
+                - generic [ref=f4e342]: 3 Unit
+              - heading "PT Astra Daihatsu Motor" [level=3] [ref=f4e343]
+              - paragraph [ref=f4e344]: Instalasi Listrik & PP (Form 55 L) • Sunter, Jakarta Utara
+              - generic [ref=f4e345]:
+                - generic [ref=f4e346]:
+                  - text: "MKT:"
+                  - strong [ref=f4e347]: Terzha R. Perdanawan
+                - generic [ref=f4e348]: HARI H
+            - generic [ref=f4e349] [cursor=pointer]:
+              - generic [ref=f4e351]: DNP/2026/0012
+              - heading "UPI" [level=3] [ref=f4e353]
+              - paragraph [ref=f4e354]: Proteksi Kebakaran (Form 65 K) • Kabupaten Aceh Barat, Aceh
+              - generic [ref=f4e355]:
+                - generic [ref=f4e356]: TIM RIKSA UJI
+                - generic [ref=f4e357]: ADI OCTA PRADANA
+                - generic [ref=f4e358]: Terzha R. Perdanawan
+              - generic [ref=f4e359]:
+                - generic [ref=f4e360]:
+                  - text: "MKT:"
+                  - strong [ref=f4e361]: MKT
+                - generic [ref=f4e362]: H -123
+        - generic [ref=f4e363]:
+          - generic [ref=f4e364]:
+            - generic [ref=f4e365]:
+              - generic [ref=f4e366]: 4b
+              - generic [ref=f4e367]: DELTA
+              - heading "Aktualisasi Unit" [level=2] [ref=f4e368]
+            - generic [ref=f4e369]: "2"
+          - generic [ref=f4e370]:
+            - generic [ref=f4e371] [cursor=pointer]:
+              - generic [ref=f4e373]: DNP/2026/0013
+              - heading "TEST" [level=3] [ref=f4e375]
+              - paragraph [ref=f4e376]: Instalasi Listrik & PP (Form 55 L) • Kota Bekasi, Jawa Barat
+              - generic [ref=f4e377]:
+                - generic [ref=f4e378]: TIM RIKSA UJI
+                - generic [ref=f4e379]: DENI STEVANUS AVIANTO
+                - generic [ref=f4e380]: PRANAN JAYA BARUS
+              - generic [ref=f4e381]:
+                - generic [ref=f4e382]:
+                  - text: "MKT:"
+                  - strong [ref=f4e383]: Atikah
+                - generic "6 hari terpakai dari SLA 1 hari" [ref=f4e384]: OVERDUE 6/1d
+            - generic [ref=f4e385] [cursor=pointer]:
+              - generic [ref=f4e387]:
+                - generic [ref=f4e388]: DNP/2026/0007
+                - generic [ref=f4e389]: 5 Unit
+              - heading "PT Indofood CBP Sukses Makmur" [level=3] [ref=f4e390]
+              - paragraph [ref=f4e391]: PTP (Compressor/Genset) (Form 54 A) • Cibitung, Bekasi
+              - generic [ref=f4e392]:
+                - generic [ref=f4e393]:
+                  - text: "MKT:"
+                  - strong [ref=f4e394]: Andini Sari
+                - generic "5 hari terpakai dari SLA 1 hari" [ref=f4e395]: OVERDUE 5/1d
+        - generic [ref=f4e396]:
+          - generic [ref=f4e397]:
+            - generic [ref=f4e398]:
+              - generic [ref=f4e399]: 4c
+              - generic [ref=f4e400]: DELTA
+              - heading "Penjadwalan Ulang" [level=2] [ref=f4e401]
+            - generic [ref=f4e402]: "1"
+          - generic [ref=f4e404] [cursor=pointer]:
+            - generic [ref=f4e406]:
+              - generic [ref=f4e407]: DNP/2026/0016
+              - generic [ref=f4e408]: 4 Unit
+            - heading "PT Toyota Astra Motor (TAM Karawang)" [level=3] [ref=f4e409]
+            - paragraph [ref=f4e410]: PAPA (Crane/Forklift/dll) (Form A 52) • KIIC Karawang Barat
+            - generic [ref=f4e411]:
+              - generic [ref=f4e412]:
+                - text: "MKT:"
+                - strong [ref=f4e413]: Terzha R. Perdanawan
+              - generic "3 hari terpakai dari SLA 1 hari" [ref=f4e414]: OVERDUE 3/1d
+        - generic [ref=f4e415]:
+          - generic [ref=f4e416]:
+            - generic [ref=f4e417]:
+              - generic [ref=f4e418]: 4d
+              - generic [ref=f4e419]: DELTA
+              - heading "Riksa Uji Ulang" [level=2] [ref=f4e420]
+            - generic [ref=f4e421]: "1"
+          - generic [ref=f4e423] [cursor=pointer]:
+            - generic [ref=f4e425]:
+              - generic [ref=f4e426]: DNP/2026/0017
+              - generic [ref=f4e427]: 2 Unit
+            - heading "PT Mayora Indah Divisi Biskuit" [level=3] [ref=f4e428]
+            - paragraph [ref=f4e429]: Pesawat Uap (Boiler) (Form 6) • Balaraja, Tangerang
+            - generic [ref=f4e431]:
+              - text: "MKT:"
+              - strong [ref=f4e432]: Andini Sari
+        - generic [ref=f4e433]:
+          - generic [ref=f4e434]:
+            - generic [ref=f4e435]:
+              - generic [ref=f4e436]: "5"
+              - heading "Penyusunan LHPP" [level=2] [ref=f4e437]
+            - generic [ref=f4e438]: "1"
+          - generic [ref=f4e440] [cursor=pointer]:
+            - generic [ref=f4e442]:
+              - generic [ref=f4e443]: DNP/2026/0001
+              - generic [ref=f4e444]: 4 Unit
+            - heading "PT Equinix Indonesia (JKT05 Cikarang)" [level=3] [ref=f4e445]
+            - paragraph [ref=f4e446]: Proteksi Kebakaran (Form 65 K) • Cikarang, Bekasi
+            - generic [ref=f4e447]:
+              - generic [ref=f4e448]:
+                - text: "MKT:"
+                - strong [ref=f4e449]: Terzha R. Perdanawan
+              - generic "3 hari terpakai dari SLA 3 hari" [ref=f4e450]: WARNING 3/3d
+        - generic [ref=f4e451]:
+          - generic [ref=f4e452]:
+            - generic [ref=f4e453]:
+              - generic [ref=f4e454]: "6"
+              - heading "Review Laporan Teknis" [level=2] [ref=f4e455]
+            - generic [ref=f4e456]: "1"
+          - generic [ref=f4e458] [cursor=pointer]:
+            - generic [ref=f4e460]:
+              - generic [ref=f4e461]: DNP/2026/0008
+              - generic [ref=f4e462]: 4 Unit
+            - heading "PT Unilever Indonesia Tbk" [level=3] [ref=f4e463]
+            - paragraph [ref=f4e464]: Eskalator / Travelator (Form 52) • BSD City, Tangerang
+            - generic [ref=f4e465]:
+              - generic [ref=f4e466]:
+                - text: "MKT:"
+                - strong [ref=f4e467]: Terzha R. Perdanawan
+              - generic "3 hari terpakai dari SLA 4 hari" [ref=f4e468]: WARNING 3/4d
+        - generic [ref=f4e469]:
+          - generic [ref=f4e470]:
+            - generic [ref=f4e471]:
+              - generic [ref=f4e472]: "7"
+              - heading "Verifikasi ke Dinas" [level=2] [ref=f4e473]
+            - generic [ref=f4e474]: "1"
+          - generic [ref=f4e476] [cursor=pointer]:
+            - generic [ref=f4e478]:
+              - generic [ref=f4e479]: DNP/2026/0009
+              - generic [ref=f4e480]: 3 Unit
+            - heading "PT Kalbe Farma Tbk" [level=3] [ref=f4e481]
+            - paragraph [ref=f4e482]: Bejana Tekan (Form 45 A.1) • Cikarang Barat
+            - generic [ref=f4e483]:
+              - generic [ref=f4e484]:
+                - text: "MKT:"
+                - strong [ref=f4e485]: Andini Sari
+              - generic "4 hari terpakai dari SLA 1 hari" [ref=f4e486]: OVERDUE 4/1d
+        - generic [ref=f4e487]:
+          - generic [ref=f4e488]:
+            - generic [ref=f4e489]:
+              - generic [ref=f4e490]: "8"
+              - heading "Proses Disnaker" [level=2] [ref=f4e491]
+            - generic [ref=f4e492]: "1"
+          - generic [ref=f4e494] [cursor=pointer]:
+            - generic [ref=f4e496]:
+              - generic [ref=f4e497]: DNP/2026/0002
+              - generic [ref=f4e498]: 4 Unit
+            - heading "Hotel Indonesia Kempinski" [level=3] [ref=f4e499]
+            - paragraph [ref=f4e500]: Bejana Tekan (Form 45 A.1) • Thamrin, Jakarta Pusat
+            - generic [ref=f4e501]:
+              - generic [ref=f4e502]:
+                - text: "MKT:"
+                - strong [ref=f4e503]: Andini Sari
+              - generic "26 hari terpakai dari SLA 30 hari" [ref=f4e504]: ON TRACK 26/30d
+        - generic [ref=f4e505]:
+          - generic [ref=f4e506]:
+            - generic [ref=f4e507]:
+              - generic [ref=f4e508]: "9"
+              - heading "Pengurusan Suket" [level=2] [ref=f4e509]
+            - generic [ref=f4e510]: "2"
+          - generic [ref=f4e511]:
+            - generic [ref=f4e512] [cursor=pointer]:
+              - generic [ref=f4e514]: DNP/2026/0015
+              - heading "ok" [level=3] [ref=f4e516]
+              - paragraph [ref=f4e517]: Instalasi Listrik & PP (Form 55 L) • Kota Bekasi, Jawa Barat
+              - generic [ref=f4e518]:
+                - generic [ref=f4e519]: TIM RIKSA UJI
+                - generic [ref=f4e520]: PRANAN JAYA BARUS
+                - generic [ref=f4e521]: ADI OCTA PRADANA
+              - generic [ref=f4e522]:
+                - generic [ref=f4e523]:
+                  - text: "MKT:"
+                  - strong [ref=f4e524]: atikah
+                - generic [ref=f4e525]: DELAYED
+            - generic [ref=f4e526] [cursor=pointer]:
+              - generic [ref=f4e528]:
+                - generic [ref=f4e529]: DNP/2026/0010
+                - generic [ref=f4e530]: 2 Unit
+              - heading "PT Mayora Indah Tbk" [level=3] [ref=f4e531]
+              - paragraph [ref=f4e532]: Pesawat Uap (Boiler) (Form 6) • Balaraja, Tangerang
+              - generic [ref=f4e533]:
+                - generic [ref=f4e534]:
+                  - text: "MKT:"
+                  - strong [ref=f4e535]: Terzha R. Perdanawan
+                - generic "6 hari terpakai dari SLA 1 hari" [ref=f4e536]: OVERDUE 6/1d
+        - generic [ref=f4e537]:
+          - generic [ref=f4e538]:
+            - generic [ref=f4e539]:
+              - generic [ref=f4e540]: "10"
+              - heading "Pembuatan Invoice" [level=2] [ref=f4e541]
+            - generic [ref=f4e542]: "1"
+          - generic [ref=f4e544] [cursor=pointer]:
+            - generic [ref=f4e546]:
+              - generic [ref=f4e547]: DNP/2026/0011
+              - generic [ref=f4e548]: 6 Unit
+            - heading "PT Santos Jaya Abadi (Kapal Api)" [level=3] [ref=f4e549]
+            - paragraph [ref=f4e550]: PAPA (Crane/Forklift/dll) (Form A 52) • Karawang International City
+            - generic [ref=f4e551]:
+              - generic [ref=f4e552]:
+                - text: "MKT:"
+                - strong [ref=f4e553]: Andini Sari
+              - generic "3 hari terpakai dari SLA 1 hari" [ref=f4e554]: OVERDUE 3/1d
+        - generic [ref=f4e555]:
+          - generic [ref=f4e556]:
+            - generic [ref=f4e557]:
+              - generic [ref=f4e558]: "11"
+              - heading "Penagihan Pembayaran" [level=2] [ref=f4e559]
+            - generic [ref=f4e560]: "1"
+          - generic [ref=f4e562] [cursor=pointer]:
+            - generic [ref=f4e564]:
+              - generic [ref=f4e565]: DNP/2026/0012
+              - generic [ref=f4e566]: 5 Unit
+            - heading "PT Nestle Indonesia" [level=3] [ref=f4e567]
+            - paragraph [ref=f4e568]: Proteksi Kebakaran (Form 65 K) • Karawang
+            - generic [ref=f4e570]:
+              - text: "MKT:"
+              - strong [ref=f4e571]: Terzha R. Perdanawan
+        - generic [ref=f4e572]:
+          - generic [ref=f4e573]:
+            - generic [ref=f4e574]:
+              - generic [ref=f4e575]: 11c
+              - generic [ref=f4e576]: DELTA
+              - heading "Verifikasi Pembayaran" [level=2] [ref=f4e577]
+            - generic [ref=f4e578]: "1"
+          - generic [ref=f4e580] [cursor=pointer]:
+            - generic [ref=f4e582]:
+              - generic [ref=f4e583]: DNP/2026/0004
+              - generic [ref=f4e584]: 2 Unit
+            - heading "PT Pupuk Kujang" [level=3] [ref=f4e585]
+            - paragraph [ref=f4e586]: Pesawat Uap (Boiler) (Form 6) • Cikampek
+            - generic [ref=f4e587]:
+              - generic [ref=f4e588]:
+                - text: "MKT:"
+                - strong [ref=f4e589]: Terzha R. Perdanawan
+              - generic "3 hari terpakai dari SLA 1 hari" [ref=f4e590]: OVERDUE 3/1d
+        - generic [ref=f4e591]:
+          - generic [ref=f4e592]:
+            - generic [ref=f4e593]:
+              - generic [ref=f4e594]: 11b
+              - generic [ref=f4e595]: DELTA
+              - heading "Pengiriman SUKET ke Klien" [level=2] [ref=f4e596]
+            - generic [ref=f4e597]: "1"
+          - generic [ref=f4e599] [cursor=pointer]:
+            - generic [ref=f4e601]:
+              - generic [ref=f4e602]: DNP/2026/0013
+              - generic [ref=f4e603]: 4 Unit
+            - heading "PT Gudang Garam Tbk" [level=3] [ref=f4e604]
+            - paragraph [ref=f4e605]: Lift / Dumbwaiter (Form 36/38/39) • Kediri / Jakarta
+            - generic [ref=f4e607]:
+              - text: "MKT:"
+              - strong [ref=f4e608]: Andini Sari
+        - generic [ref=f4e609]:
+          - generic [ref=f4e610]:
+            - generic [ref=f4e611]:
+              - generic [ref=f4e612]: "12"
+              - heading "Selesai / Closed" [level=2] [ref=f4e613]
+            - generic [ref=f4e614]: "6"
+          - generic [ref=f4e615]:
+            - generic [ref=f4e616] [cursor=pointer]:
+              - generic [ref=f4e618]:
+                - generic [ref=f4e619]: DNP/2026/0018
+                - generic [ref=f4e620]: 2 Unit
+              - heading "PT MICROSOFT OPERATION INDONESIA" [level=3] [ref=f4e621]
+              - paragraph [ref=f4e622]: Bejana Tekan (Form 45 A.1) • Kota Administrasi Jakarta Selatan, DKI Jakarta
+              - generic [ref=f4e623]:
+                - generic [ref=f4e624]: TIM RIKSA UJI
+                - generic [ref=f4e625]: MUHAMMAD DYLAN KUSNANDAR
+                - generic [ref=f4e626]: DENI STEVANUS AVIANTO
+              - generic [ref=f4e628]:
+                - text: "MKT:"
+                - strong [ref=f4e629]: Intang
+            - generic [ref=f4e630] [cursor=pointer]:
+              - generic [ref=f4e632]: DNP/2026/0011
+              - heading "test hapus job" [level=3] [ref=f4e634]
+              - paragraph [ref=f4e635]: Proteksi Kebakaran (Form 65 K) • Kabupaten Bone Bolango, Gorontalo
+              - generic [ref=f4e636]:
+                - generic [ref=f4e637]: TIM RIKSA UJI
+                - generic [ref=f4e638]: REZA JAYA
+                - generic [ref=f4e639]: ADI OCTA PRADANA
+              - generic [ref=f4e641]:
+                - text: "MKT:"
+                - strong [ref=f4e642]: Bayu Prasetio
+            - generic [ref=f4e643] [cursor=pointer]:
+              - generic [ref=f4e645]:
+                - generic [ref=f4e646]: DNP/2026/0010
+                - generic [ref=f4e647]: 2 Unit
+              - heading "PT. ALCOS GRAHA JAYA" [level=3] [ref=f4e648]
+              - paragraph [ref=f4e649]: PAPA (Crane/Forklift/dll) (Form A 52) • Kota Bekasi, Jawa Barat
+              - generic [ref=f4e650]:
+                - generic [ref=f4e651]: TIM RIKSA UJI
+                - generic [ref=f4e652]: DENI STEVANUS AVIANTO
+              - generic [ref=f4e654]:
+                - text: "MKT:"
+                - strong [ref=f4e655]: Atikah Purnama
+            - generic [ref=f4e656] [cursor=pointer]:
+              - generic [ref=f4e658]:
+                - generic [ref=f4e659]: DNP/2026/0007
+                - generic [ref=f4e660]: 10 Unit
+              - heading "ABC2" [level=3] [ref=f4e661]
+              - paragraph [ref=f4e662]: Instalasi Listrik & PP (Form 55 L) • Bekasi
+              - generic [ref=f4e663]:
+                - generic [ref=f4e664]: TIM RIKSA UJI
+                - generic [ref=f4e665]: ADI OCTA PRADANA
+              - generic [ref=f4e667]:
+                - text: "MKT:"
+                - strong [ref=f4e668]: Atikah
+            - generic [ref=f4e669] [cursor=pointer]:
+              - generic [ref=f4e671]:
+                - generic [ref=f4e672]: DNP/2026/0004
+                - generic [ref=f4e673]: 12 Unit
+              - heading "CV" [level=3] [ref=f4e674]
+              - paragraph [ref=f4e675]: Instalasi Listrik • Bekasi
+              - generic [ref=f4e676]:
+                - generic [ref=f4e677]: TIM RIKSA UJI
+                - generic [ref=f4e678]: ADI OCTA PRADANA
+              - generic [ref=f4e680]:
+                - text: "MKT:"
+                - strong [ref=f4e681]: Atikah Purnama
+            - generic [ref=f4e682] [cursor=pointer]:
+              - generic [ref=f4e684]:
+                - generic [ref=f4e685]: DNP/2026/0014
+                - generic [ref=f4e686]: 2 Unit
+              - heading "PT Danone Indonesia" [level=3] [ref=f4e687]
+              - paragraph [ref=f4e688]: Instalasi Listrik & PP (Form 55 L) • Sentul, Bogor
+              - generic [ref=f4e690]:
+                - text: "MKT:"
+                - strong [ref=f4e691]: Terzha R. Perdanawan
+      - generic [ref=f4e693]:
+        - generic [ref=f4e694]:
+          - generic [ref=f4e695]:
+            - heading "PT Toyota Astra Motor (TAM Karawang)" [level=2] [ref=f4e696]
+            - generic [ref=f4e697]:
+              - generic [ref=f4e698]: DNP/2026/0016
+              - generic [ref=f4e699]: Stage 16
+          - generic [ref=f4e700]:
+            - button "Hapus Job" [ref=f4e701] [cursor=pointer]
+            - button [ref=f4e705] [cursor=pointer]
+        - generic [ref=f4e708]:
+          - button "Status" [ref=f4e709] [cursor=pointer]
+          - button "Dokumen" [ref=f4e710] [cursor=pointer]
+          - button "Riwayat" [ref=f4e711] [cursor=pointer]
+          - button "Info & Edit" [ref=f4e712] [cursor=pointer]
+        - generic [ref=f4e714]:
+          - 'heading "Status Pekerjaan: Stage 4c (Penjadwalan Ulang)" [level=3] [ref=f4e715]'
+          - generic [ref=f4e716]: "⏱ 3 hari di stage ini (SLA: 1 hari) — OVERDUE"
+          - generic [ref=f4e717]:
+            - generic [ref=f4e718]:
+              - generic [ref=f4e719]: ✓
+              - generic [ref=f4e720]:
+                - generic [ref=f4e721]:
+                  - 'heading "Stage 1: PO / SPK / Proposal" [level=4] [ref=f4e722]'
+                  - generic [ref=f4e723]: "PIC: MARKETING"
+                - generic [ref=f4e724]:
+                  - paragraph [ref=f4e725]: "Ringkasan Order Masuk:"
+                  - generic [ref=f4e726]:
+                    - generic [ref=f4e727]: "Klien: PT Toyota Astra Motor (TAM Karawang)"
+                    - generic [ref=f4e728]: "Pesawat / Alat: PAPA (Crane/Forklift/dll) (Form A 52)"
+                    - generic [ref=f4e729]: "Lokasi: KIIC Karawang Barat"
+                    - generic [ref=f4e730]:
+                      - text: "Jumlah Unit:"
+                      - generic [ref=f4e731]: 4 Unit
+                    - generic [ref=f4e732]: "Nilai Kontrak: Rp 38.000.000"
+            - generic [ref=f4e733]:
+              - generic [ref=f4e734]: ✓
+              - generic [ref=f4e735]:
+                - generic [ref=f4e736]:
+                  - 'heading "Stage 2: Verifikasi Dokumen" [level=4] [ref=f4e737]'
+                  - generic [ref=f4e738]: "PIC: ADMIN"
+                - generic [ref=f4e739]:
+                  - paragraph [ref=f4e740]: "Hasil Verifikasi Dokumen (Stage 2):"
+                  - generic [ref=f4e741]:
+                    - generic [ref=f4e742]:
+                      - generic [ref=f4e743]:
+                        - generic [ref=f4e744]: "01"
+                        - generic [ref=f4e745]: PO / SPK / Proposal dari Klien
+                      - generic [ref=f4e746]:
+                        - generic [ref=f4e747]: Kosong
+                        - generic [ref=f4e748]: Belum Set
+                    - generic [ref=f4e749]:
+                      - generic [ref=f4e750]:
+                        - generic [ref=f4e751]: "02"
+                        - generic [ref=f4e752]: Surat Permohonan Riksa Uji (bermaterai)
+                      - generic [ref=f4e753]:
+                        - generic [ref=f4e754]: Kosong
+                        - generic [ref=f4e755]: Belum Set
+                    - generic [ref=f4e756]:
+                      - generic [ref=f4e757]:
+                        - generic [ref=f4e758]: "03"
+                        - generic [ref=f4e759]: Surat Kuasa dari Pemilik (bermaterai)
+                      - generic [ref=f4e760]:
+                        - generic [ref=f4e761]: Kosong
+                        - generic [ref=f4e762]: Belum Set
+                    - generic [ref=f4e763]:
+                      - generic [ref=f4e764]:
+                        - generic [ref=f4e765]: "04"
+                        - generic [ref=f4e766]: Surat Pernyataan Keabsahan Data
+                      - generic [ref=f4e767]:
+                        - generic [ref=f4e768]: Kosong
+                        - generic [ref=f4e769]: Belum Set
+                    - generic [ref=f4e770]:
+                      - generic [ref=f4e771]:
+                        - generic [ref=f4e772]: "05"
+                        - generic [ref=f4e773]: Form Checklist Disnaker (diisi klien)
+                      - generic [ref=f4e774]:
+                        - generic [ref=f4e775]: Kosong
+                        - generic [ref=f4e776]: Belum Set
+                    - generic [ref=f4e777]:
+                      - generic [ref=f4e778]:
+                        - generic [ref=f4e779]: "06"
+                        - generic [ref=f4e780]: Drawing / Gambar Teknis (as-built)
+                      - generic [ref=f4e781]:
+                        - generic [ref=f4e782]: Kosong
+                        - generic [ref=f4e783]: Belum Set
+                    - generic [ref=f4e784]:
+                      - generic [ref=f4e785]:
+                        - generic [ref=f4e786]: "07"
+                        - generic [ref=f4e787]: Manual Book / Spesifikasi Teknis
+                      - generic [ref=f4e788]:
+                        - generic [ref=f4e789]: Kosong
+                        - generic [ref=f4e790]: Belum Set
+                    - generic [ref=f4e791]:
+                      - generic [ref=f4e792]:
+                        - generic [ref=f4e793]: "08"
+                        - generic [ref=f4e794]: Pengesahan Gambar dari Kemnaker
+                      - generic [ref=f4e795]:
+                        - generic [ref=f4e796]: Kosong
+                        - generic [ref=f4e797]: Belum Set
+                    - generic [ref=f4e798]:
+                      - generic [ref=f4e799]:
+                        - generic [ref=f4e800]: "09"
+                        - generic [ref=f4e801]: Copy Suket Lama (perpanjangan)
+                      - generic [ref=f4e802]:
+                        - generic [ref=f4e803]: Kosong
+                        - generic [ref=f4e804]: Belum Set
+                    - generic [ref=f4e805]:
+                      - generic [ref=f4e806]:
+                        - generic [ref=f4e807]: "10"
+                        - generic [ref=f4e808]: "Verifikasi: Drawing SESUAI dengan Nameplate (cek visual foto)"
+                      - generic [ref=f4e809]:
+                        - generic [ref=f4e810]: Manual
+                        - generic [ref=f4e811]: Belum Set
+            - generic [ref=f4e812]:
+              - generic [ref=f4e813]: ✓
+              - generic [ref=f4e814]:
+                - generic [ref=f4e815]:
+                  - 'heading "Stage 3: Penjadwalan & Surat Tugas" [level=4] [ref=f4e816]'
+                  - generic [ref=f4e817]: "PIC: ADMIN"
+                - generic [ref=f4e818]:
+                  - paragraph [ref=f4e819]: "Detail Penjadwalan:"
+                  - generic [ref=f4e820]:
+                    - generic [ref=f4e821]: "Jam Mulai: -"
+                    - generic [ref=f4e822]: "Total Hari: -"
+                    - generic [ref=f4e823]: "Disnaker Tujuan: -"
+                  - generic [ref=f4e824]:
+                    - generic [ref=f4e825]: "Tgl Pelaksanaan: —"
+                    - generic [ref=f4e826]: "Inspektur Bertugas: -"
+            - generic [ref=f4e827]:
+              - generic [ref=f4e828]: ✓
+              - generic [ref=f4e829]:
+                - generic [ref=f4e830]:
+                  - 'heading "Stage 4: Pelaksanaan RU" [level=4] [ref=f4e831]'
+                  - generic [ref=f4e832]: "PIC: INSPEKTUR"
+                - generic [ref=f4e833]:
+                  - paragraph [ref=f4e834]: "Detail Pelaksanaan RU:"
+                  - generic [ref=f4e835]:
+                    - generic [ref=f4e836]: "Tgl Pelaksanaan: —"
+                    - generic [ref=f4e837]: "Tim Inspektur: -"
+                    - generic [ref=f4e838]: "Report Writer: -"
+                    - generic [ref=f4e839]: "Checklist Lapangan: -"
+            - generic [ref=f4e840]:
+              - generic [ref=f4e841]: ✓
+              - generic [ref=f4e842]:
+                - generic [ref=f4e843]:
+                  - 'heading "Stage 4b: Aktualisasi Unit" [level=4] [ref=f4e844]'
+                  - generic [ref=f4e845]: "PIC: MARKETING"
+                - generic [ref=f4e846]:
+                  - paragraph [ref=f4e847]: "Detail Aktualisasi Unit (Stage 4b):"
+                  - generic [ref=f4e849]:
+                    - text: "Unit Aktual:"
+                    - generic [ref=f4e850]: "4 Unit (Awal: 4 Unit)"
+            - generic [ref=f4e851]:
+              - generic [ref=f4e852]: 4c
+              - generic [ref=f4e853]:
+                - generic [ref=f4e854]:
+                  - 'heading "Stage 4c: Penjadwalan Ulang" [level=4] [ref=f4e855]'
+                  - generic [ref=f4e856]: "PIC: ADMIN"
+                - generic [ref=f4e859]:
+                  - generic [ref=f4e860]:
+                    - 'heading "📅 Stage 4c: Penjadwalan Ulang / Reschedule (Admin)" [level=4] [ref=f4e861]'
+                    - paragraph [ref=f4e862]: Terdapat unit yang tertunda/rusak saat Riksa Uji. Tentukan tanggal inspeksi ulang dan tim ahli untuk Riksa Uji Ulang (Stage 4d).
+                  - generic [ref=f4e863]:
+                    - generic [ref=f4e864]:
+                      - generic [ref=f4e865]: Alasan Penjadwalan Ulang *
+                      - combobox [ref=f4e866]:
+                        - option "-- Pilih Alasan Reschedule --"
+                        - option "Unit belum siap / rusak di lokasi" [selected]
+                        - option "Permintaan Klien (operasional pabrik berjalan)"
+                        - option "Cuaca ekstrim / kendala teknis lapangan"
+                        - option "Penambahan unit baru hasil aktualisasi"
+                        - option "Lainnya"
+                    - generic [ref=f4e867]:
+                      - generic [ref=f4e868]:
+                        - generic [ref=f4e869]: Tanggal Jadwal Baru RU Ulang *
+                        - textbox [ref=f4e870]: 2026-09-10
+                      - generic [ref=f4e871]:
+                        - generic [ref=f4e872]: Catatan Tambahan
+                        - textbox "Catatan inspektur / perlengkapan..." [ref=f4e873]: 1 unit overhead crane sedang dalam penggantian wire rope oleh vendor
+                  - generic [ref=f4e874]:
+                    - generic [ref=f4e875]:
+                      - generic [ref=f4e876]:
+                        - generic [ref=f4e877]: Surat Permohonan Reschedule
+                        - generic [ref=f4e878]: OPSIONAL
+                      - button "+ Upload" [ref=f4e879] [cursor=pointer]
+                    - paragraph [ref=f4e884]: Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload
+                  - generic [ref=f4e885]:
+                    - generic [ref=f4e886]:
+                      - generic [ref=f4e887]:
+                        - generic [ref=f4e888]: Jadwal Baru Disnaker
+                        - generic [ref=f4e889]: OPSIONAL
+                      - button "+ Upload" [ref=f4e890] [cursor=pointer]
+                    - paragraph [ref=f4e895]: Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload
+                  - generic [ref=f4e896]:
+                    - generic [ref=f4e897]: Catatan / Keterangan
+                    - textbox "Tulis catatan atau keterangan..." [ref=f4e898]
+                  - generic [ref=f4e899]:
+                    - button "Kembalikan ke 4b (Aktualisasi)" [ref=f4e900] [cursor=pointer]
+                    - button "🔍 Lanjut ke Riksa Uji Ulang (Stage 4d) →" [ref=f4e901] [cursor=pointer]
+            - generic [ref=f4e902]:
+              - generic [ref=f4e903]: 4d
+              - generic [ref=f4e905]:
+                - 'heading "Stage 4d: Riksa Uji Ulang" [level=4] [ref=f4e906]'
+                - generic [ref=f4e907]: "PIC: INSPEKTUR"
+            - generic [ref=f4e908]:
+              - generic [ref=f4e909]: "5"
+              - generic [ref=f4e911]:
+                - 'heading "Stage 5: Penyusunan LHPP" [level=4] [ref=f4e912]'
+                - generic [ref=f4e913]: "PIC: ADMIN"
+            - generic [ref=f4e914]:
+              - generic [ref=f4e915]: "6"
+              - generic [ref=f4e917]:
+                - 'heading "Stage 6: Review Laporan Teknis" [level=4] [ref=f4e918]'
+                - generic [ref=f4e919]: "PIC: MANAGER"
+            - generic [ref=f4e920]:
+              - generic [ref=f4e921]: "7"
+              - generic [ref=f4e923]:
+                - 'heading "Stage 7: Verifikasi ke Dinas" [level=4] [ref=f4e924]'
+                - generic [ref=f4e925]: "PIC: ADMIN"
+            - generic [ref=f4e926]:
+              - generic [ref=f4e927]: "8"
+              - generic [ref=f4e929]:
+                - 'heading "Stage 8: Proses Disnaker" [level=4] [ref=f4e930]'
+                - generic [ref=f4e931]: "PIC: ADMIN"
+            - generic [ref=f4e932]:
+              - generic [ref=f4e933]: "9"
+              - generic [ref=f4e935]:
+                - 'heading "Stage 9: Pengurusan Suket" [level=4] [ref=f4e936]'
+                - generic [ref=f4e937]: "PIC: ADMIN"
+            - generic [ref=f4e938]:
+              - generic [ref=f4e939]: "10"
+              - generic [ref=f4e941]:
+                - 'heading "Stage 10: Pembuatan Invoice" [level=4] [ref=f4e942]'
+                - generic [ref=f4e943]: "PIC: FINANCE"
+            - generic [ref=f4e944]:
+              - generic [ref=f4e945]: "11"
+              - generic [ref=f4e947]:
+                - 'heading "Stage 11: Penagihan Pembayaran" [level=4] [ref=f4e948]'
+                - generic [ref=f4e949]: "PIC: MARKETING"
+            - generic [ref=f4e950]:
+              - generic [ref=f4e951]: 11c
+              - generic [ref=f4e953]:
+                - 'heading "Stage 11c: Verifikasi Pembayaran" [level=4] [ref=f4e954]'
+                - generic [ref=f4e955]: "PIC: FINANCE"
+            - generic [ref=f4e956]:
+              - generic [ref=f4e957]: 11b
+              - generic [ref=f4e959]:
+                - 'heading "Stage 11b: Pengiriman SUKET ke Klien" [level=4] [ref=f4e960]'
+                - generic [ref=f4e961]: "PIC: MARKETING"
+            - generic [ref=f4e962]:
+              - generic [ref=f4e963]: "12"
+              - generic [ref=f4e965]:
+                - 'heading "Stage 12: Selesai / Closed" [level=4] [ref=f4e966]'
+                - generic [ref=f4e967]: "PIC: FINANCE"

@@ -1,0 +1,12 @@
+[     704ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[    1132ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-7WU2OR35.js?v=fcb681d1:20356
+[  189212ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:559
+[  191582ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  194942ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/:0
+[  195213ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/kanban:0
+[  195234ms] HttpNetworkError: Network error (http://localhost:5173/kanban)
+    at xhr.onerror (http://localhost:5173/node_modules/.vite/deps/@inertiajs_react.js?v=a410a0da:8034:35)
+[  195269ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5173/api/notifications:0
+[  195269ms] [ERROR] TypeError: Failed to fetch
+    at fetchNotifications (http://localhost:5173/dnp-rework/resources/js/Components/NotificationBell.jsx:30:5) @ :0
+[  196951ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63

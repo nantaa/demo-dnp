@@ -574,39 +574,237 @@ export function canDeliverSuket(job) {
 }
 
 /**
- * Splits a job into a passing parent job and a failing child job.
- * Preserves audit link via parent_job_id and shares PO number.
+ * Computes rollups of unit statuses for a job.
  */
-export function splitJob(parentJob, childUnitIds = []) {
-  const units = parentJob.unit_items || [];
-  const parentUnits = units.filter(u => !childUnitIds.includes(u.id));
-  const childUnits = units.filter(u => childUnitIds.includes(u.id));
+export function computeJobUnitRollups(units = []) {
+  const current = units.length;
+  let laik = 0;
+  let tidakLaik = 0;
+  let pending = 0;
+  let unavailable = 0;
+  let cancelled = 0;
 
+  for (const u of units) {
+    if (u.final_disposition === 'CANCELLED' || u.inspection_status === 'CANCELLED') {
+      cancelled++;
+    } else if (u.laik_status === 'LAIK' || u.inspection_status === 'LAIK') {
+      laik++;
+    } else if (u.laik_status === 'TIDAK_LAIK' || u.inspection_status === 'TIDAK_LAIK' || u.inspection_status === 'TEMUAN') {
+      tidakLaik++;
+    } else if (u.non_inspection_reason === 'CLIENT_UNIT_UNAVAILABLE' || u.inspection_status === 'NOT_INSPECTED') {
+      unavailable++;
+      pending++;
+    } else {
+      pending++;
+    }
+  }
+
+  return { current, laik, tidakLaik, pending, unavailable, cancelled };
+}
+
+/**
+ * Computes PO-level Job Family Status (ACTIVE, PARTIALLY_CLOSED, FULLY_CLOSED, EXCEPTION_REVIEW).
+ */
+export function computeFamilyStatus(rootJob, descendantJobs = []) {
+  const allJobs = [rootJob, ...descendantJobs].filter(Boolean);
+  if (allJobs.length === 0) return 'ACTIVE';
+
+  const isTerminal = (j) => j.stage === 12 || j.status === 'CLOSED' || j.status === 'CLOSED_FAILED' || j.status === 'CANCELLED';
+  const hasException = allJobs.some(j => j.status === 'ON_HOLD' || j.status === 'EXCEPTION_REVIEW' || (j.reschedule_count || 0) >= 3 || (j.payment_retry_count || 0) >= 5);
+
+  if (hasException) {
+    return 'EXCEPTION_REVIEW';
+  }
+
+  const allTerminal = allJobs.every(isTerminal);
+  if (allTerminal) {
+    return 'FULLY_CLOSED';
+  }
+
+  const someTerminal = allJobs.some(isTerminal);
+  if (someTerminal) {
+    return 'PARTIALLY_CLOSED';
+  }
+
+  return 'ACTIVE';
+}
+
+/**
+ * Validates whether an inspection batch covers 100% of expected units with valid outcomes and reasons.
+ */
+export function validateInspectionBatch(expectedUnits = [], batchData = {}) {
+  const submittedUnits = batchData.units || [];
+  const expectedIds = new Set(expectedUnits.map(u => u.id || u.job_unit_id));
+
+  for (const eId of expectedIds) {
+    const sub = submittedUnits.find(u => (u.job_unit_id || u.id) === eId);
+    if (!sub) {
+      return { valid: false, reason: `Unit ${eId} belum memiliki hasil inspeksi.` };
+    }
+    if (!['LAIK', 'TEMUAN', 'NOT_INSPECTED'].includes(sub.outcome)) {
+      return { valid: false, reason: `Hasil inspeksi untuk unit ${eId} tidak valid (${sub.outcome}).` };
+    }
+    if (sub.outcome === 'NOT_INSPECTED' && !sub.non_inspection_reason) {
+      return { valid: false, reason: `Unit ${eId} (NOT_INSPECTED) wajib memiliki alasan tidak diperiksa.` };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Creates an append-only inspection result correction with supersedes_result_id link.
+ */
+export function recordInspectionResultCorrection(previousResult, correctionData = {}) {
+  return {
+    id: `res-corr-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    batch_id: previousResult.batch_id,
+    job_unit_id: previousResult.job_unit_id,
+    outcome: correctionData.outcome || previousResult.outcome,
+    reason: correctionData.correction_reason || correctionData.reason || null,
+    finding_description: correctionData.finding_description !== undefined ? correctionData.finding_description : previousResult.finding_description,
+    supersedes_result_id: previousResult.id,
+    recorded_by: correctionData.corrected_by_user_id || correctionData.recorded_by || 'Inspector',
+    recorded_at: new Date().toISOString()
+  };
+}
+
+/**
+ * Executes atomic job split with preconditions, version validation, and single unit ownership.
+ */
+export function executeAtomicJobSplit(sourceJob, splitRequest = {}) {
+  const {
+    selectedUnitIds = [],
+    splitReason = 'UNIT_UNAVAILABLE',
+    commercialAllocationMode = 'PRO_RATA',
+    childJobStage = 16, // S4c
+    rescheduleReason = '',
+    approvedByUserId = null,
+    approvalReason = '',
+    version = null
+  } = splitRequest;
+
+  // Optimistic concurrency / version check
+  if (version != null && sourceJob.row_version != null && Number(version) !== Number(sourceJob.row_version)) {
+    return {
+      ok: false,
+      code: 'STALE_VERSION',
+      message: 'Job telah dimodifikasi oleh pengguna lain. Silakan muat ulang sebelum memecah job.'
+    };
+  }
+
+  if (!selectedUnitIds || selectedUnitIds.length === 0) {
+    return { ok: false, code: 'EMPTY_SELECTION', message: 'Pilih minimal satu unit untuk dipindahkan ke job anak.' };
+  }
+
+  const allUnits = sourceJob.unit_items || [];
+  if (selectedUnitIds.length >= allUnits.length && allUnits.length > 0) {
+    return { ok: false, code: 'ALL_UNITS_SELECTED', message: 'Tidak dapat memindahkan seluruh unit. Gunakan transfer / cancel.' };
+  }
+
+  const parentUnits = allUnits.filter(u => !selectedUnitIds.includes(u.id));
+  const childUnits = allUnits.filter(u => selectedUnitIds.includes(u.id));
+
+  const rootId = sourceJob.root_job_id || sourceJob.id;
+  const childId = `job-split-${sourceJob.id}-${Date.now()}`;
+  const splitSequence = (sourceJob.split_sequence || 0) + 1;
+
+  // Updated parent job
   const updatedParent = {
-    ...parentJob,
+    ...sourceJob,
+    job_type: 'PARENT',
+    root_job_id: rootId,
     units: parentUnits.length,
-    unit_items: parentUnits,
+    unit_items: parentUnits.map(u => ({ ...u, current_job_id: sourceJob.id })),
+    stage: sourceJob.stage === 13 ? 5 : sourceJob.stage, // Auto advances to S5 LHPP if split at S4b
+    split_sequence: splitSequence,
     has_split: true,
-    split_at: new Date().toISOString()
+    row_version: (sourceJob.row_version || 1) + 1,
+    split_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
+  // Newly created child job
   const childJob = {
-    ...parentJob,
-    id: `job-split-${parentJob.id}-${Date.now()}`,
-    kode: `${parentJob.kode || 'DNP'}-SPLIT`,
-    parent_job_id: parentJob.id,
-    no_po: parentJob.no_po,
+    ...sourceJob,
+    id: childId,
+    kode: `${sourceJob.kode || 'DNP'}-C${String(splitSequence).padStart(2, '0')}`,
+    job_type: 'CHILD',
+    parent_job_id: sourceJob.id,
+    root_job_id: rootId,
+    no_po: sourceJob.no_po || sourceJob.po_number,
+    po_number: sourceJob.no_po || sourceJob.po_number,
+    original_po_unit_count: sourceJob.original_po_unit_count || sourceJob.units,
     units: childUnits.length,
-    unit_items: childUnits,
-    stage: 16, // Stage 4c (Penjadwalan Ulang)
+    unit_items: childUnits.map(u => ({ ...u, current_job_id: childId })),
+    stage: childJobStage,
+    split_reason: splitReason,
+    split_at: new Date().toISOString(),
+    split_approved_by_user_id: approvedByUserId,
+    split_approval_reason: approvalReason,
+    reschedule_reason: rescheduleReason,
     reschedule_count: 0,
+    commercial_allocation_mode: commercialAllocationMode,
+    row_version: 1,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
 
   return {
+    ok: true,
     parentJob: updatedParent,
-    childJob
+    childJob,
+    transferredUnitIds: selectedUnitIds
   };
 }
+
+/**
+ * Validates whether a child job is eligible to be merged back into its parent.
+ */
+export function validateMergeBackEligibility(childJob) {
+  if (childJob.has_issued_suket || childJob.stage === 9 || childJob.stage === 14) {
+    return { allowed: false, reason: 'Child job tidak dapat di-merge: SUKET telah diterbitkan/diproses.' };
+  }
+  if (childJob.has_finalized_lhpp || childJob.stage === 5 || childJob.stage === 6 || childJob.stage === 7 || childJob.stage === 8) {
+    return { allowed: false, reason: 'Child job tidak dapat di-merge: LHPP atau proses Disnaker telah berjalan.' };
+  }
+  if (childJob.has_invoiced_line || childJob.stage === 10 || childJob.stage === 15) {
+    return { allowed: false, reason: 'Child job tidak dapat di-merge: Tagihan / invoice telah dibuat.' };
+  }
+  if (![16, 17, 13].includes(childJob.stage)) {
+    return { allowed: false, reason: 'Merge-back hanya diperbolehkan pada Stage 4b, 4c, atau 4d.' };
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Allocates a family payment explicitly to a designated job.
+ */
+export function allocatePaymentToFamilyJob({ payment_id, family_root_job_id, job_id, invoice_id = null, allocated_amount, approved_by_user_id, note = '' }) {
+  return {
+    id: `alloc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    payment_id,
+    family_root_job_id,
+    job_id,
+    invoice_id,
+    allocated_amount,
+    approved_by_user_id,
+    approved_at: new Date().toISOString(),
+    note
+  };
+}
+
+/**
+ * Splits a job into a passing parent job and a failing child job.
+ * (Backward compatible wrapper around executeAtomicJobSplit)
+ */
+export function splitJob(parentJob, childUnitIds = []) {
+  const result = executeAtomicJobSplit(parentJob, { selectedUnitIds: childUnitIds });
+  return {
+    parentJob: result.parentJob || parentJob,
+    childJob: result.childJob || null
+  };
+}
+
 

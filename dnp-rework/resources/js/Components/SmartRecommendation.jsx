@@ -96,9 +96,9 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                     </div>
                                     <div className="text-center">
                                         {(rec.bonuses || []).some(b => b.includes('Overload')) || rec.isEliminated ? (
-                                            <span className="inline-block bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded">⚠️ OVERLOAD</span>
+                                            <span className="inline-block bg-red-100 text-red-700 text-xs font-extrabold px-2.5 py-1 rounded">OVERLOAD</span>
                                         ) : (
-                                            <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-extrabold px-2.5 py-1 rounded">✓ AVAILABLE</span>
+                                            <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-extrabold px-2.5 py-1 rounded">AVAILABLE</span>
                                         )}
                                     </div>
                                 </div>
@@ -131,7 +131,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                             ? 'bg-green-600 border-green-600 text-white hover:bg-green-700'
                                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                     }`}>
-                                    <CheckSquare size={14} /> {selectedInspectorIds.includes(rec.user.id) ? 'Terpilih ✓' : `Pilih Top ${idx + 1}`}
+                                    <CheckSquare size={14} /> {selectedInspectorIds.includes(rec.user.id) ? 'Terpilih' : `Pilih Top ${idx + 1}`}
                                 </button>
                             </div>
                         ))}
@@ -185,19 +185,19 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                                     <span className={`font-bold truncate ${isSelected ? 'text-green-700' : ins.isEliminated ? 'text-gray-500' : 'text-gray-800'}`}>
                                         {ins.user.name}
                                     </span>
-                                    {isSelected && <span className="text-green-600 text-[10px] font-black ml-1">✓</span>}
+                                    {isSelected && <span className="text-green-600 text-[10px] font-black ml-1">Terpilih</span>}
                                 </div>
                                 <div className="flex flex-wrap gap-1 mt-0.5">
                                     <SubroleBadge profile={ins.profile} />
                                     {ins.isEliminated || (ins.bonuses || []).some(b => b.includes('Overload')) ? (
-                                        <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">⚠️ OVERLOAD</span>
+                                        <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">OVERLOAD</span>
                                     ) : (
-                                        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold">✓ AVAILABLE</span>
+                                        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold">AVAILABLE</span>
                                     )}
                                 </div>
                                 {ins.isEliminated && ins.eliminatedReason && (
                                     <div className="text-[9px] text-gray-400 mt-1 italic truncate" title={ins.eliminatedReason}>
-                                        ℹ {ins.eliminatedReason}
+                                        {ins.eliminatedReason}
                                     </div>
                                 )}
                                 {ins.profile?.domisili && (

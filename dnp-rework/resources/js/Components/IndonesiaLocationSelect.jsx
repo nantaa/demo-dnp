@@ -347,7 +347,7 @@ export default function IndonesiaLocationSelect({ value = '', onChange, required
                                 className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 whitespace-nowrap"
                                 title="Kembali ke Dropdown"
                             >
-                                📋 List
+                                List
                             </button>
                         </div>
                     ) : (
@@ -365,7 +365,7 @@ export default function IndonesiaLocationSelect({ value = '', onChange, required
                                 <option key={c.id} value={c.name}>{c.name}</option>
                             ))}
                             {selectedProvId && (
-                                <option value="__MANUAL__">✏️ Lainnya... (Ketik Manual)</option>
+                                <option value="__MANUAL__">Lainnya... (Ketik Manual)</option>
                             )}
                         </select>
                     )}

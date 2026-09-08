@@ -3,15 +3,39 @@ import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
+import JobFamilyDrawer from '@/Components/JobFamilyDrawer';
 import { STAGES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
-import { Trash2, Plus, ChevronLeft, ChevronRight, Layers, Sparkles } from 'lucide-react';
+import { Trash2, Plus, ChevronLeft, ChevronRight, Layers, Sparkles, GitFork, ArrowRight } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
     const [selectedJob, setSelectedJob] = useState(null);
+    const [familyDrawerJob, setFamilyDrawerJob] = useState(null);
     const [selectedPhase, setSelectedPhase] = useState('all');
     const boardRef = useRef(null);
+
+    // Helper to get actionable next prompt
+    const getNextActionPrompt = (job) => {
+        if (job.stage === 1) return 'MKT: Lengkapi PO & Verifikasi DP';
+        if (job.stage === 2) return 'Admin: Verifikasi 10 Dokumen Teknis';
+        if (job.stage === 3) return 'Admin: Terbitkan Surat Tugas & Tim';
+        if (job.stage === 4) return 'Inspektur: Pelaksanaan RU & Upload BAP';
+        if (job.stage === 13) return 'MKT: Rekonsiliasi & Opsi Job Split';
+        if (job.stage === 16) return 'Admin: Penjadwalan Ulang (S4c)';
+        if (job.stage === 17) return 'Inspektur: Pelaksanaan RU Ulang (S4d)';
+        if (job.stage === 5) return 'Tim Ahli: Penyusunan Konsep LHPP';
+        if (job.stage === 6) return 'Kadiv/QC: Review Kelayakan Teknis';
+        if (job.stage === 7) return 'Admin: Pembentukan Batch Disnaker';
+        if (job.stage === 8) return 'Admin: Monitoring Proses Dinas';
+        if (job.stage === 9) return 'Admin: Pengurusan Terbit SUKET';
+        if (job.stage === 10) return 'Finance: Penerbitan Faktur Invoice';
+        if (job.stage === 11) return 'MKT: Penagihan Pembayaran Klien';
+        if (job.stage === 15) return 'Finance: Validasi Mutasi Bank (11c)';
+        if (job.stage === 14) return 'MKT: Pengiriman SUKET (11b)';
+        if (job.stage === 12) return 'Selesai & Closed';
+        return null;
+    };
 
     // Live background polling sync to keep Kanban updated across all active users
     useEffect(() => {
@@ -101,7 +125,7 @@ export default function KanbanIndex({ jobs, auth }) {
                         Total {jobs.length} Job
                     </span>
                     <span className="text-xs bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
-                        <Sparkles size={12} className="text-amber-600" /> Delta v5-2-2 (17 Stages)
+                        <Sparkles size={12} className="text-amber-600" /> Delta v2.0 (17 Stages)
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -239,122 +263,165 @@ export default function KanbanIndex({ jobs, auth }) {
                             count={columnJobs.length}
                             isLocked={isLocked}
                         >
-                            {columnJobs.map(job => (
-                                <div 
-                                    key={job.id} 
-                                    onClick={() => setSelectedJob(job)}
-                                    className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
-                                >
-                                    {/* DNP Accent Line Indicator */}
-                                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {columnJobs.map(job => {
+                                const isParent = job.job_type === 'PARENT' || Boolean(job.has_split);
+                                const isChild = job.job_type === 'CHILD' || Boolean(job.parent_job_id);
+                                const nextPrompt = getNextActionPrompt(job);
 
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className="text-[11px] font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200">
-                                            {job.kode}
-                                        </span>
-                                        {job.units > 1 && (
-                                            <span className="text-[10px] font-extrabold px-2 py-0.5 bg-[#E0F2FE] text-[#0A385C] rounded-full border border-[#00A8E8]/30">
-                                                {job.units} Unit
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h3 className="font-bold text-sm text-slate-900 leading-tight mb-1 group-hover:text-[#0A385C] transition-colors">{job.klien}</h3>
-                                    <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
+                                return (
+                                    <div 
+                                        key={job.id} 
+                                        onClick={() => setSelectedJob(job)}
+                                        className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
+                                    >
+                                        {/* DNP Accent Line Indicator */}
+                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                    {/* Inspector / Tim Pill Badges if assigned */}
-                                    {job.inspectors && job.inspectors.length > 0 && (
-                                        <div className="flex items-center gap-1 my-2 overflow-x-auto">
-                                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-[#0A385C] text-white rounded-full">
-                                                TIM RIKSA UJI
-                                            </span>
-                                            {job.inspectors.slice(0, 2).map((ins, i) => (
-                                                <span key={i} className="text-[9px] font-semibold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full border border-slate-200 truncate max-w-[80px]">
-                                                    {ins.name || ins}
+                                        {/* Header Row: Kode & Parent/Child Badges */}
+                                        <div className="flex justify-between items-start mb-2 gap-1.5 flex-wrap">
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-[11px] font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200">
+                                                    {job.kode}
                                                 </span>
-                                            ))}
+                                                {isParent && (
+                                                    <span className="text-[9px] font-black bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded border border-indigo-200">
+                                                        PARENT
+                                                    </span>
+                                                )}
+                                                {isChild && (
+                                                    <span className="text-[9px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300">
+                                                        CHILD
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center gap-1">
+                                                {(isParent || isChild) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFamilyDrawerJob(job);
+                                                        }}
+                                                        className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                                                        title="Buka Pohon Keluarga PO (Job Family)"
+                                                    >
+                                                        <GitFork size={12} className="text-indigo-600" />
+                                                    </button>
+                                                )}
+                                                <span className="text-[10px] font-extrabold px-2 py-0.5 bg-[#E0F2FE] text-[#0A385C] rounded-full border border-[#00A8E8]/30">
+                                                    {job.units || 1} Unit
+                                                </span>
+                                            </div>
                                         </div>
-                                    )}
-                                    
-                                    <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-100 pt-2">
-                                        <span className="font-medium text-slate-500">MKT: <strong className="text-slate-700">{job.owner_marketing}</strong></span>
-                                        {(() => {
-                                            if (job.stage === 4 && job.tgl_pelaksanaan) {
-                                                const today = new Date();
-                                                today.setHours(0,0,0,0);
-                                                const pelDate = new Date(job.tgl_pelaksanaan);
-                                                pelDate.setHours(0,0,0,0);
-                                                const diffDays = Math.round((today - pelDate) / (1000 * 60 * 60 * 24));
-                                                
-                                                if (diffDays === 0) {
-                                                    return <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-extrabold border border-blue-300">HARI H</span>;
-                                                } else if (diffDays > 0) {
-                                                    return <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-extrabold border border-red-300">OVERDUE</span>;
-                                                } else {
-                                                    return <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold border border-amber-300">H {diffDays}</span>;
-                                                }
-                                            }
 
-                                            if (job.stage === 8 && job.s8_progress_status) {
-                                                const sMap = {
-                                                    progress: { label: 'PROGRESS', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
-                                                    stuck:    { label: 'STUCK',    cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                                                    ready:    { label: 'READY',    cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
-                                                };
-                                                const badge = sMap[job.s8_progress_status];
-                                                if (badge) {
-                                                    return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
-                                                }
-                                            }
+                                        <h3 className="font-bold text-sm text-slate-900 leading-tight mb-1 group-hover:text-[#0A385C] transition-colors">{job.klien}</h3>
+                                        <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
 
-                                            if (job.stage === 9 && job.s9_progress_status) {
-                                                const s9Map = {
-                                                    not_started: { label: 'NOT STARTED', cls: 'bg-gray-100 text-gray-700 border-gray-300' },
-                                                    delayed:     { label: 'DELAYED',     cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                                                    in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
-                                                    almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
-                                                    done:        { label: 'DONE',        cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
-                                                };
-                                                const badge = s9Map[job.s9_progress_status];
-                                                if (badge) {
-                                                    return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
-                                                }
-                                            }
+                                        {/* Next Required Action Prompter */}
+                                        {nextPrompt && (
+                                            <div className="my-2 p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[10px] text-slate-700 font-semibold flex items-center gap-1.5 truncate">
+                                                <ArrowRight size={12} className="text-[#00A8E8] shrink-0 font-bold" />
+                                                <span className="truncate">{nextPrompt}</span>
+                                            </div>
+                                        )}
 
-                                            const stageInfo = STAGES.find(s => s.id === job.stage);
-                                            if (!stageInfo?.sla) return null;
-                                            
-                                            let slaDays = stageInfo.sla;
-                                            if (job.stage === 6) slaDays *= (job.units || 1);
-                                            
-                                            const startDate = new Date(job.stage_started_at || job.updated_at);
-                                            const now = new Date();
-                                            const diffTime = Math.abs(now - startDate);
-                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                            
-                                            let status = 'ON TRACK';
-                                            let color = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold';
-                                            if (diffDays > slaDays) {
-                                                status = 'OVERDUE';
-                                                color = 'bg-red-100 text-red-800 font-bold border-red-300';
-                                            } else if (diffDays >= slaDays - 1) {
-                                                status = 'WARNING';
-                                                color = 'bg-amber-100 text-amber-800 font-bold border-amber-300';
-                                            }
-
-                                            return (
-                                                <span className={`px-2 py-0.5 rounded-full border ${color}`} title={`${diffDays} hari terpakai dari SLA ${slaDays} hari`}>
-                                                    {status} {diffDays}/{slaDays}d
+                                        {/* Inspector / Tim Pill Badges if assigned */}
+                                        {job.inspectors && job.inspectors.length > 0 && (
+                                            <div className="flex items-center gap-1 my-2 overflow-x-auto">
+                                                <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-[#0A385C] text-white rounded-full">
+                                                    TIM
                                                 </span>
-                                            );
-                                        })()}
+                                                {job.inspectors.slice(0, 2).map((ins, i) => (
+                                                    <span key={i} className="text-[9px] font-semibold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-full border border-slate-200 truncate max-w-[80px]">
+                                                        {ins.name || ins}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-100 pt-2">
+                                            <span className="font-medium text-slate-500">MKT: <strong className="text-slate-700">{job.owner_marketing}</strong></span>
+                                            {(() => {
+                                                if (job.stage === 4 && job.tgl_pelaksanaan) {
+                                                    const today = new Date();
+                                                    today.setHours(0,0,0,0);
+                                                    const pelDate = new Date(job.tgl_pelaksanaan);
+                                                    pelDate.setHours(0,0,0,0);
+                                                    const diffDays = Math.round((today - pelDate) / (1000 * 60 * 60 * 24));
+                                                    
+                                                    if (diffDays === 0) {
+                                                        return <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-extrabold border border-blue-300">HARI H</span>;
+                                                    } else if (diffDays > 0) {
+                                                        return <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-extrabold border border-red-300">OVERDUE</span>;
+                                                    } else {
+                                                        return <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold border border-amber-300">H {diffDays}</span>;
+                                                    }
+                                                }
+
+                                                if (job.stage === 8 && job.s8_progress_status) {
+                                                    const sMap = {
+                                                        progress: { label: 'PROGRESS', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
+                                                        stuck:    { label: 'STUCK',    cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                        ready:    { label: 'READY',    cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    };
+                                                    const badge = sMap[job.s8_progress_status];
+                                                    if (badge) {
+                                                        return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
+                                                    }
+                                                }
+
+                                                if (job.stage === 9 && job.s9_progress_status) {
+                                                    const s9Map = {
+                                                        not_started: { label: 'NOT STARTED', cls: 'bg-gray-100 text-gray-700 border-gray-300' },
+                                                        delayed:     { label: 'DELAYED',     cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                        in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                                                        almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                                                        done:        { label: 'DONE',        cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    };
+                                                    const badge = s9Map[job.s9_progress_status];
+                                                    if (badge) {
+                                                        return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
+                                                    }
+                                                }
+
+                                                const stageInfo = STAGES.find(s => s.id === job.stage);
+                                                if (!stageInfo?.sla) return null;
+                                                
+                                                let slaDays = stageInfo.sla;
+                                                if (job.stage === 6) slaDays *= (job.units || 1);
+                                                
+                                                const startDate = new Date(job.stage_started_at || job.updated_at);
+                                                const now = new Date();
+                                                const diffTime = Math.abs(now - startDate);
+                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                
+                                                let status = 'ON TRACK';
+                                                let color = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold';
+                                                if (diffDays > slaDays) {
+                                                    status = 'OVERDUE';
+                                                    color = 'bg-red-100 text-red-800 font-bold border-red-300';
+                                                } else if (diffDays >= slaDays - 1) {
+                                                    status = 'WARNING';
+                                                    color = 'bg-amber-100 text-amber-800 font-bold border-amber-300';
+                                                }
+
+                                                return (
+                                                    <span className={`px-2 py-0.5 rounded-full border ${color}`} title={`${diffDays} hari terpakai dari SLA ${slaDays} hari`}>
+                                                        {status} {diffDays}/{slaDays}d
+                                                    </span>
+                                                );
+                                            })()}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </KanbanColumn>
                     );
                 })}
             </div>
 
+            {/* Job Detail Sheet Modal */}
             {selectedJob && (
                 <JobDetailSheet 
                     key={selectedJob.id}
@@ -363,6 +430,17 @@ export default function KanbanIndex({ jobs, auth }) {
                     auth={auth} 
                 />
             )}
+
+            {/* Job Family Drawer Slide-over */}
+            {familyDrawerJob && (
+                <JobFamilyDrawer
+                    job={familyDrawerJob}
+                    allJobs={jobs}
+                    onClose={() => setFamilyDrawerJob(null)}
+                    onSelectJob={(j) => setSelectedJob(j)}
+                />
+            )}
         </AppLayout>
     );
 }
+

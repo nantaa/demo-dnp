@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import IndonesiaLocationSelect from './IndonesiaLocationSelect';
+import SplitJobModal from './SplitJobModal';
 import { showError, showSuccess, showConfirm, showWarning, MySwal } from '@/swal';
 import { Trash2 } from 'lucide-react';
 import {
@@ -34,7 +35,7 @@ const fmtCurrency = (n) =>
 
 const fmtSize = (bytes) => {
     if (!bytes) return '';
-    const k = 1024, s = ['B','KB','MB','GB'];
+    const k = 1024, s = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
 };
@@ -46,7 +47,7 @@ const daysElapsed = (from) => {
 
 const getSlaTag = (days, slaLimit) => {
     if (days == null || !slaLimit) return null;
-    if (days > slaLimit)  return { label: 'OVERDUE',  cls: 'bg-red-100 text-red-800 font-bold' };
+    if (days > slaLimit) return { label: 'OVERDUE', cls: 'bg-red-100 text-red-800 font-bold' };
     if (days >= slaLimit) return { label: 'LAST DAY', cls: 'bg-orange-100 text-orange-800 font-bold' };
     return { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
 };
@@ -55,8 +56,8 @@ const getSlaTag = (days, slaLimit) => {
 const DocChip = ({ doc, canManage, onDelete }) => (
     <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
         <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer"
-           className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
-            📎 {doc.name}
+            className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
+            {doc.name}
         </a>
         {canManage && (
             <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
@@ -89,7 +90,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
         <div className="mt-4 flex flex-col gap-2">
             {disabledMsg && (
                 <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                    ⚠️ {disabledMsg}
+                    {disabledMsg}
                 </div>
             )}
             <div className="flex gap-2">
@@ -152,15 +153,14 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
     };
 
     return (
-        <div 
+        <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-2.5 transition-all duration-200 ${
-                isDragging 
-                    ? 'border-blue-500 bg-blue-50/80 shadow-md scale-[1.01]' 
+            className={`border-2 border-dashed rounded-lg p-2.5 transition-all duration-200 ${isDragging
+                    ? 'border-blue-500 bg-blue-50/80 shadow-md scale-[1.01]'
                     : 'border-gray-200 bg-white hover:border-gray-300'
-            }`}
+                }`}
         >
             <div className="flex items-center justify-between gap-2 mb-1.5">
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -220,96 +220,96 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Forms ────────────────────────────────────────────────────────────────
     const { data, setData, post, processing, errors } = useForm({
-        next_stage:      getNextStageId(job.stage),
-        notes:           '',
-        inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
+        next_stage: getNextStageId(job.stage),
+        notes: '',
+        inspector_ids: job.inspectors ? job.inspectors.map(i => i.id) : [],
         report_writer_id: job.report_writer_id || '',
         tgl_pelaksanaan: job.tgl_pelaksanaan || '',
-        jam_mulai:       job.jam_mulai || '08:00',
-        durasi_hari:     job.durasi_hari || 1,
+        jam_mulai: job.jam_mulai || '08:00',
+        durasi_hari: job.durasi_hari || 1,
         disnaker_tujuan: job.disnaker_tujuan || '',
-        alat_ids:        parseJsonArray(job.alat_ids),
-        cert_ids:        parseJsonArray(job.cert_ids),
+        alat_ids: parseJsonArray(job.alat_ids),
+        cert_ids: parseJsonArray(job.cert_ids),
     });
 
     const editForm = useForm({
-        klien:   job.klien   || '',
+        klien: job.klien || '',
         pesawat: job.pesawat || '',
-        lokasi:  job.lokasi  || '',
-        nilai:   job.nilai   || '',
-        units:   job.units   || 1,
+        lokasi: job.lokasi || '',
+        nilai: job.nilai || '',
+        units: job.units || 1,
     });
 
     // ── UI State ─────────────────────────────────────────────────────────────
-    const [activeTab,    setActiveTab]    = useState('timeline');
-    const [isEditing,    setIsEditing]    = useState(false);
-    const [isUploading,  setIsUploading]  = useState(false);
-    const [uploadStage,  setUploadStage]  = useState(null);
-    const [uploadType,   setUploadType]   = useState('');
-    const [photoNotes,   setPhotoNotes]   = useState({});   // key: photo type
-    const [returnNotes,  setReturnNotes]  = useState('');
+    const [activeTab, setActiveTab] = useState('timeline');
+    const [isEditing, setIsEditing] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadStage, setUploadStage] = useState(null);
+    const [uploadType, setUploadType] = useState('');
+    const [photoNotes, setPhotoNotes] = useState({});   // key: photo type
+    const [returnNotes, setReturnNotes] = useState('');
     const fileInputRef = useRef(null);
 
     // Stage-specific form state
     const [s4, setS4] = useState({
-        actual_units:     job.actual_units     ?? job.units,
+        actual_units: job.actual_units ?? job.units,
         unit_count_notes: job.unit_count_notes ?? '',
     });
     const [s5, setS5] = useState({
         s5_review_decision: job.s5_review_decision ?? '',
-        s5_review_notes:    job.s5_review_notes    ?? '',
+        s5_review_notes: job.s5_review_notes ?? '',
     });
     const [s7, setS7] = useState({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
     const [s8, setS8] = useState({
         tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
-        tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
-        s8_progress_status:         job.s8_progress_status         ?? '',
+        tgl_doc_received_disnaker: job.tgl_doc_received_disnaker ?? '',
+        s8_progress_status: job.s8_progress_status ?? '',
     });
-    const [s9,  setS9]  = useState({ s9_progress_status: job.s9_progress_status  ?? '' });
+    const [s9, setS9] = useState({ s9_progress_status: job.s9_progress_status ?? '' });
     const [s10, setS10] = useState({
-        invoice_no:           job.invoice_no           ?? '',
+        invoice_no: job.invoice_no ?? '',
         total_invoice_amount: job.total_invoice_amount ?? '',
-        tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
-        s10_progress_status:  job.s10_progress_status  ?? '',
-        tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+        tgl_invoice_issued: job.tgl_invoice_issued ?? '',
+        s10_progress_status: job.s10_progress_status ?? '',
+        tgl_submit_mkt: job.tgl_submit_mkt ?? '',
     });
     const [s4c, setS4c] = useState({
         reschedule_reason: job.reschedule_reason ?? '',
-        tgl_reschedule:    job.tgl_reschedule    ?? '',
-        reschedule_notes:  job.reschedule_notes  ?? '',
+        tgl_reschedule: job.tgl_reschedule ?? '',
+        reschedule_notes: job.reschedule_notes ?? '',
     });
     const [s4d, setS4d] = useState({
-        actual_units:     job.actual_units ?? job.units ?? 1,
+        actual_units: job.actual_units ?? job.units ?? 1,
         unit_count_notes: job.unit_count_notes ?? '',
-        ru_ulang_status:  job.ru_ulang_status ?? 'lolos',
-        ru_ulang_notes:   job.ru_ulang_notes  ?? '',
+        ru_ulang_status: job.ru_ulang_status ?? 'lolos',
+        ru_ulang_notes: job.ru_ulang_notes ?? '',
     });
     const [s5Dates, setS5Dates] = useState({
         tgl_teknis_diserahkan: job.tgl_teknis_diserahkan ?? '',
-        tgl_laporan_mulai:    job.tgl_laporan_mulai    ?? '',
-        tgl_laporan_selesai:  job.tgl_laporan_selesai  ?? '',
+        tgl_laporan_mulai: job.tgl_laporan_mulai ?? '',
+        tgl_laporan_selesai: job.tgl_laporan_selesai ?? '',
     });
     const [s9Suket, setS9Suket] = useState({
-        tgl_input_suket:   job.tgl_input_suket   ?? '',
+        tgl_input_suket: job.tgl_input_suket ?? '',
         tgl_suket_selesai: job.tgl_suket_selesai ?? '',
     });
     const [s11Collection, setS11Collection] = useState({
         metode_penagihan: job.metode_penagihan ?? 'Email & WhatsApp',
         status_penagihan: job.status_penagihan ?? 'Dalam Follow-up',
-        tgl_penagihan:    job.tgl_penagihan    ?? new Date().toISOString().slice(0, 10),
+        tgl_penagihan: job.tgl_penagihan ?? new Date().toISOString().slice(0, 10),
         catatan_penagihan: job.catatan_penagihan ?? '',
     });
     const [s11c, setS11c] = useState({
         verification_status: job.payment_verification_status ?? (job.paid ? 'Lunas' : 'Partial / Pending'),
-        bank_ref:            job.bank_ref            ?? '',
-        amount_received:     job.amount_received     ?? (job.nilai || 0),
-        verification_notes:  job.payment_verification_notes ?? '',
+        bank_ref: job.bank_ref ?? '',
+        amount_received: job.amount_received ?? (job.nilai || 0),
+        verification_notes: job.payment_verification_notes ?? '',
     });
     const [s11bDelivery, setS11bDelivery] = useState({
-        no_resi:            job.no_resi            ?? '',
-        tgl_kirim_suket:    job.tgl_kirim_suket    ?? '',
-        ekspedisi:          job.ekspedisi          ?? 'Kurir Internal',
-        batch_no:           job.batch_no           ?? 'Batch 1',
+        no_resi: job.no_resi ?? '',
+        tgl_kirim_suket: job.tgl_kirim_suket ?? '',
+        ekspedisi: job.ekspedisi ?? 'Kurir Internal',
+        batch_no: job.batch_no ?? 'Batch 1',
         tanda_terima_klien: job.tanda_terima_klien ?? '',
     });
     const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
@@ -336,7 +336,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [scheduleDays, setScheduleDays] = useState(() => initScheduleDays(job));
     const [s14, setS14] = useState({
         s14_payment_status: job.s14_payment_status ?? 'pending',
-        s14_payment_notes:  job.s14_payment_notes  ?? '',
+        s14_payment_notes: job.s14_payment_notes ?? '',
     });
 
     // Stage 2 per-item verification status: { [type]: 'ok' | 'tidak' | 'na' | '' }
@@ -356,8 +356,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     // Master data & recommendations (Stage 3 & Stage 4c Reschedule)
-    const [masterData,       setMasterData]       = useState({ alat_uji: [], sertifikat_pjk3: [] });
-    const [recommendations,  setRecommendations]  = useState({ recommended: [], eliminated: [] });
+    const [masterData, setMasterData] = useState({ alat_uji: [], sertifikat_pjk3: [] });
+    const [recommendations, setRecommendations] = useState({ recommended: [], eliminated: [] });
     useEffect(() => {
         if (job.stage === 3 || job.stage === 16) {
             fetch('/api/master-data')
@@ -389,61 +389,61 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // Keep local form states synchronized when job prop updates
     useEffect(() => {
         setData({
-            next_stage:      getNextStageId(job.stage),
-            notes:           '',
-            inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
+            next_stage: getNextStageId(job.stage),
+            notes: '',
+            inspector_ids: job.inspectors ? job.inspectors.map(i => i.id) : [],
             report_writer_id: job.report_writer_id || '',
             tgl_pelaksanaan: job.tgl_pelaksanaan || '',
-            jam_mulai:       job.jam_mulai || '08:00',
-            durasi_hari:     job.durasi_hari || 1,
+            jam_mulai: job.jam_mulai || '08:00',
+            durasi_hari: job.durasi_hari || 1,
             disnaker_tujuan: job.disnaker_tujuan || '',
-            alat_ids:        parseJsonArray(job.alat_ids),
-            cert_ids:        parseJsonArray(job.cert_ids),
+            alat_ids: parseJsonArray(job.alat_ids),
+            cert_ids: parseJsonArray(job.cert_ids),
         });
         editForm.setData({
-            klien:   job.klien   || '',
+            klien: job.klien || '',
             pesawat: job.pesawat || '',
-            lokasi:  job.lokasi  || '',
-            nilai:   job.nilai   || '',
-            units:   job.units   || 1,
+            lokasi: job.lokasi || '',
+            nilai: job.nilai || '',
+            units: job.units || 1,
         });
         setS4({
-            actual_units:     job.actual_units     ?? job.units,
+            actual_units: job.actual_units ?? job.units,
             unit_count_notes: job.unit_count_notes ?? '',
         });
         setS5({
             s5_review_decision: job.s5_review_decision ?? '',
-            s5_review_notes:    job.s5_review_notes    ?? '',
+            s5_review_notes: job.s5_review_notes ?? '',
         });
         setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
         setS8({
             tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
-            tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
-            s8_progress_status:         job.s8_progress_status         ?? '',
+            tgl_doc_received_disnaker: job.tgl_doc_received_disnaker ?? '',
+            s8_progress_status: job.s8_progress_status ?? '',
         });
         setS9({ s9_progress_status: job.s9_progress_status ?? '' });
         setS10({
-            invoice_no:           job.invoice_no           ?? '',
+            invoice_no: job.invoice_no ?? '',
             total_invoice_amount: job.total_invoice_amount ?? '',
-            tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
-            s10_progress_status:  job.s10_progress_status  ?? '',
-            tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+            tgl_invoice_issued: job.tgl_invoice_issued ?? '',
+            s10_progress_status: job.s10_progress_status ?? '',
+            tgl_submit_mkt: job.tgl_submit_mkt ?? '',
         });
         setS4c({
             reschedule_reason: job.reschedule_reason ?? '',
-            tgl_reschedule:    job.tgl_reschedule    ?? '',
-            reschedule_notes:  job.reschedule_notes  ?? '',
+            tgl_reschedule: job.tgl_reschedule ?? '',
+            reschedule_notes: job.reschedule_notes ?? '',
         });
         setS4d({
-            actual_units:     job.actual_units     ?? job.units ?? 1,
+            actual_units: job.actual_units ?? job.units ?? 1,
             unit_count_notes: job.unit_count_notes ?? '',
-            ru_ulang_status:  job.ru_ulang_status  ?? 'lolos',
-            ru_ulang_notes:   job.ru_ulang_notes   ?? '',
+            ru_ulang_status: job.ru_ulang_status ?? 'lolos',
+            ru_ulang_notes: job.ru_ulang_notes ?? '',
         });
         setS11({ no_resi: job.no_resi ?? '' });
         setS14({
             s14_payment_status: job.s14_payment_status ?? 'pending',
-            s14_payment_notes:  job.s14_payment_notes  ?? '',
+            s14_payment_notes: job.s14_payment_notes ?? '',
         });
         setScheduleDays(initScheduleDays(job));
 
@@ -459,9 +459,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const { permissions, user } = auth || {};
     const isInspector = user?.role === 'inspektur';
     const isMGR = user?.role === 'manager';
-    const isAssignedInspector = (job.inspectors || []).some(ins => 
-        String(ins.id) === String(user?.id) || 
-        String(ins.user_id) === String(user?.id) || 
+    const isAssignedInspector = (job.inspectors || []).some(ins =>
+        String(ins.id) === String(user?.id) ||
+        String(ins.user_id) === String(user?.id) ||
         String(ins.pivot?.user_id) === String(user?.id)
     ) || String(job.report_writer_id) === String(user?.id);
 
@@ -488,7 +488,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     })();
 
     const canViewStageDocs = (sid) => {
-        if (['superadmin','admin','manager'].includes(user?.role)) return true;
+        if (['superadmin', 'admin', 'manager'].includes(user?.role)) return true;
         if (user?.role === 'marketing' && job.owner_marketing === user?.name) return true;
         if (isInspector) return true;
         const p = permissions?.[sid];
@@ -496,10 +496,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const canManageStageDocs = (sid) => {
-        if (['superadmin','manager'].includes(user?.role)) return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13,14].includes(sid)) return true;
-        if (user?.role === 'finance' && [10,15,12].includes(sid)) return true;
-        if (isInspector && [4,17].includes(sid) && sid === job.stage) return isAssignedInspector;
+        if (['superadmin', 'manager'].includes(user?.role)) return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1, 11, 13, 14].includes(sid)) return true;
+        if (user?.role === 'finance' && [10, 15, 12].includes(sid)) return true;
+        if (isInspector && [4, 17].includes(sid) && sid === job.stage) return isAssignedInspector;
         if (isInspector) return false;
         const p = permissions?.[sid];
         return p && p.is_owner;
@@ -536,17 +536,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             if (!s3ScheduleValid) return showError('Validasi', 'Lengkapi tanggal dan inspektur untuk setiap hari!');
             setIsMoving(true);
             router.post(`/jobs/${job.id}/move`, {
-                next_stage:      data.next_stage,
-                notes:           data.notes,
-                jam_mulai:       data.jam_mulai,
+                next_stage: data.next_stage,
+                notes: data.notes,
+                jam_mulai: data.jam_mulai,
                 disnaker_tujuan: data.disnaker_tujuan,
                 report_writer_id: data.report_writer_id,
-                alat_ids:        data.alat_ids,
-                cert_ids:        data.cert_ids,
-                schedule_days:   scheduleDays,
+                alat_ids: data.alat_ids,
+                cert_ids: data.cert_ids,
+                schedule_days: scheduleDays,
             }, {
                 onSuccess: () => { setIsMoving(false); onClose(); },
-                onError:   () => setIsMoving(false),
+                onError: () => setIsMoving(false),
             });
             return;
         }
@@ -555,8 +555,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             if (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) return showError('Validasi', 'Total Invoice (Nilai Tagihan) wajib diisi dengan benar.');
             const invDate = s10.tgl_invoice_issued || s10.invoice_date;
             if (!invDate) return showError('Validasi', 'Tanggal Invoice Diterbitkan wajib diisi.');
-            
-            const hasInvoiceDoc = (job.documents || []).some(d => 
+
+            const hasInvoiceDoc = (job.documents || []).some(d =>
                 ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi', 'Bukti Transfer'].includes(d.type) ||
                 d.stage === 10
             );
@@ -656,41 +656,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         });
     };
 
-    const handleJobSplit = async () => {
-        const maxSplit = Math.max(1, (job.units || 1) - 1);
-        const { value: numUnits, isConfirmed } = await MySwal.fire({
-            title: 'Pecah Pekerjaan (Job Split)',
-            text: `Masukkan jumlah unit yang gagal/tertunda untuk dipindahkan ke Job baru (maksimal ${maxSplit} unit):`,
-            input: 'number',
-            inputAttributes: {
-                min: 1,
-                max: maxSplit,
-                step: 1
-            },
-            inputValue: 1,
-            inputValidator: (val) => {
-                const n = parseInt(val);
-                if (isNaN(n) || n < 1 || n >= job.units) {
-                    return `Jumlah unit split harus antara 1 dan ${maxSplit}!`;
-                }
-            },
-            showCancelButton: true,
-            confirmButtonText: 'Pecah Job Sekarang',
-            cancelButtonText: 'Batal',
-            confirmButtonColor: '#3b82f6',
-        });
-        if (!isConfirmed || !numUnits) return;
-        const splitCount = parseInt(numUnits);
-        const childUnitIds = Array.from({ length: splitCount }, (_, i) => `unit-split-${i + 1}`);
-        router.post(`/api/jobs/${job.id}/split`, {
-            child_unit_ids: childUnitIds,
-            decision_maker: user?.name || 'Manager'
-        }, {
-            onSuccess: () => {
-                showSuccess('Job Split Berhasil', 'Job berhasil dipecah. Unit passing melanjutkan ke Stage 5.');
-                onClose();
-            }
-        });
+    const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+    const handleJobSplit = () => {
+        setIsSplitModalOpen(true);
     };
 
     const handleReopenJob = async () => {
@@ -727,20 +695,20 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
     };
 
-    const handleSaveS4   = () => router.post(`/jobs/${job.id}/stage4-data`, s4, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS4c  = () => router.post(`/jobs/${job.id}/stage4c-data`, s4c, { onSuccess: () => showSuccess('Berhasil', 'Data Reschedule tersimpan.') });
-    const handleSaveS4d  = () => router.post(`/jobs/${job.id}/stage4d-data`, s4d, { onSuccess: () => showSuccess('Berhasil', 'Data RU Ulang tersimpan.') });
+    const handleSaveS4 = () => router.post(`/jobs/${job.id}/stage4-data`, s4, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS4c = () => router.post(`/jobs/${job.id}/stage4c-data`, s4c, { onSuccess: () => showSuccess('Berhasil', 'Data Reschedule tersimpan.') });
+    const handleSaveS4d = () => router.post(`/jobs/${job.id}/stage4d-data`, s4d, { onSuccess: () => showSuccess('Berhasil', 'Data RU Ulang tersimpan.') });
     const handleSaveS5Dates = () => router.post(`/jobs/${job.id}/stage5-dates`, s5Dates, { onSuccess: () => showSuccess('Berhasil', 'Tracking Tanggal LHPP tersimpan.') });
     const handleSaveS9Suket = () => router.post(`/jobs/${job.id}/stage9-suket`, s9Suket, { onSuccess: () => showSuccess('Berhasil', 'Tracking Durasi SUKET tersimpan.') });
-    const handleSaveS5   = () => {
+    const handleSaveS5 = () => {
         if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
         router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.') });
     };
-    const handleSaveS7   = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS8   = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS9   = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS10  = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS11  = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'No. Resi tersimpan.') });
+    const handleSaveS7 = () => router.post(`/jobs/${job.id}/stage7-data`, s7, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS8 = () => router.post(`/jobs/${job.id}/stage8-data`, s8, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS9 = () => router.post(`/jobs/${job.id}/stage9-data`, s9, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'No. Resi tersimpan.') });
     const handleSaveS11c = (targetStatus) => {
         const finalStatus = targetStatus || s11c.verification_status;
         if (finalStatus === 'Partial / Pending' && !s11c.verification_notes?.trim()) {
@@ -759,7 +727,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             }
         });
     };
-    const handleSaveS14  = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
+    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -796,7 +764,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
             onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
-            onError:   () => setIsUploading(false),
+            onError: () => setIsUploading(false),
         });
         e.target.value = '';
     };
@@ -816,7 +784,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
             onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
-            onError:   () => setIsUploading(false),
+            onError: () => setIsUploading(false),
         });
     };
 
@@ -856,9 +824,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const daysInStage = daysElapsed(job.stage_started_at);
     const slaTag = getSlaTag(daysInStage, currentStageInfo?.sla);
 
-// ══ END PART A ══ (DO NOT ADD MORE CODE BELOW THIS LINE — combine with part_b then part_c)
+    // ══ END PART A ══ (DO NOT ADD MORE CODE BELOW THIS LINE — combine with part_b then part_c)
 
-// ══ BEGIN PART B ══
+    // ══ BEGIN PART B ══
 
     // ── Stage Action Panel ────────────────────────────────────────────────────
     const renderStageAction = () => {
@@ -889,7 +857,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {/* Status banners */}
                         {stage2Bypass && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded p-3 text-xs text-emerald-800 font-medium">
-                                ✅ Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
+                                Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
                             </div>
                         )}
                         {job.peer_review_status === 'requested' && isMGR && (
@@ -903,7 +871,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                         {job.peer_review_status === 'requested' && !isMGR && (
                             <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
-                                🔔 Menunggu persetujuan Kadiv/MGR…
+                                Menunggu persetujuan Kadiv/MGR…
                             </div>
                         )}
 
@@ -941,11 +909,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div className="px-3 py-3">
                                             <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                                                 <span className="font-medium text-gray-800">{item.label}</span>
-                                                <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold ${
-                                                    item.badge === 'WAJIB'
+                                                <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold ${item.badge === 'WAJIB'
                                                         ? 'border-red-400 text-red-600'
                                                         : 'border-gray-400 text-gray-500'
-                                                }`}>{item.badge}</span>
+                                                    }`}>{item.badge}</span>
                                                 {item.badge2 && (
                                                     <span className="px-1.5 py-0.5 rounded border border-blue-400 text-blue-600 text-[10px] font-bold">
                                                         {item.badge2}
@@ -961,7 +928,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div className="px-2 py-3 flex flex-col items-center gap-1">
                                             {item.noVerify ? (
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px] flex items-center gap-1 cursor-not-allowed" title="Dokumen bersifat privat & tidak perlu dibaca Admin">
-                                                    🔒 Privat / Unreadable
+                                                    Privat / Unreadable
                                                 </span>
                                             ) : item.isManual ? (
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
@@ -969,14 +936,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 docs.map(d => (
                                                     <a key={d.id} href={`/storage/${d.path}`} target="_blank" rel="noopener noreferrer"
                                                         className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
-                                                        📎 {d.name.split('.').pop().toUpperCase()}
+                                                        {d.name.split('.').pop().toUpperCase()}
                                                     </a>
                                                 ))
                                             ) : (
                                                 <button type="button"
                                                     onClick={() => triggerUpload(2, item.type)}
                                                     className="px-2 py-1 rounded bg-red-50 border border-red-300 text-red-600 font-semibold text-[10px] hover:bg-red-100 flex items-center gap-1">
-                                                    <span>✕</span> KOSONG
+                                                    KOSONG
                                                 </button>
                                             )}
                                             {hasFile && !item.noVerify && canManageStageDocs(2) && (
@@ -992,28 +959,25 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             ) : (
                                                 <>
                                                     <button type="button" onClick={() => setStatus(status === 'ok' ? '' : 'ok')}
-                                                        className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
-                                                            status === 'ok'
+                                                        className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${status === 'ok'
                                                                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
                                                                 : 'border-gray-300 text-gray-600 bg-white hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700'
-                                                        }`} title="Mark OK / Verified">
-                                                        ✓ OK
+                                                            }`} title="Mark OK / Verified">
+                                                        OK
                                                     </button>
                                                     <button type="button" onClick={() => setStatus(status === 'tidak' ? '' : 'tidak')}
-                                                        className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
-                                                            status === 'tidak'
+                                                        className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${status === 'tidak'
                                                                 ? 'bg-red-600 text-white border-red-600 shadow-xs scale-105'
                                                                 : 'border-gray-300 text-gray-600 bg-white hover:bg-red-50 hover:border-red-400 hover:text-red-700'
-                                                        }`} title="Mark TIDAK / Rejected">
-                                                        ✕ TIDAK
+                                                            }`} title="Mark TIDAK / Rejected">
+                                                        TIDAK
                                                     </button>
                                                     {item.hasNa && (
                                                         <button type="button" onClick={() => setStatus(status === 'na' ? '' : 'na')}
-                                                            className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
-                                                                status === 'na'
+                                                            className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${status === 'na'
                                                                     ? 'bg-gray-600 text-white border-gray-600 shadow-xs scale-105'
                                                                     : 'border-gray-300 text-gray-500 bg-white hover:bg-gray-100 hover:border-gray-400'
-                                                            }`} title="Not Applicable">
+                                                                }`} title="Not Applicable">
                                                             N/A
                                                         </button>
                                                     )}
@@ -1036,7 +1000,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {!stage2DocOk && !stage2Bypass && (isMGR || auth?.user?.role === 'superadmin') && (
                                 <button type="button" onClick={handleBypassStage2WithJustification}
                                     className="px-3 py-2 rounded text-sm bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-xs flex items-center gap-1">
-                                    🔓 Bypass Dokumen (Kadiv/MGR)
+                                    Bypass Dokumen (Kadiv/MGR)
                                 </button>
                             )}
                             {!stage2DocOk && !stage2Bypass && job.peer_review_status !== 'requested' && !isMGR && auth?.user?.role !== 'superadmin' && (
@@ -1047,7 +1011,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             )}
                             <button type="submit" disabled={processing || !stage2CanMove}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : '✓ Verifikasi Selesai — Lanjut Penjadwalan →'}
+                                {processing ? '...' : 'Verifikasi Selesai — Lanjut Penjadwalan →'}
                             </button>
                         </div>
                     </div>
@@ -1062,7 +1026,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {isDpUnpaid && (
                                 <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-xs text-red-900 font-semibold space-y-1">
                                     <div className="flex items-center gap-1.5 font-bold">
-                                        <span>🔒 Surat Tugas Diblokir (DP Hard-Gate)</span>
+                                        <span>Surat Tugas Diblokir (DP Hard-Gate)</span>
                                     </div>
                                     <p>
                                         Skema pembayaran job ini adalah <strong>Uang Muka (DP)</strong> senilai <strong>{fmtCurrency(dpAmt)}</strong>. Penerbitan Surat Tugas diblokir sampai Finance mengonfirmasi penerimaan DP.
@@ -1089,8 +1053,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         {data.disnaker_tujuan &&
                                             !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) &&
                                             !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
-                                            <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
-                                        )}
+                                                <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
+                                            )}
                                         {INDONESIA_PROVINCES.map(prov => {
                                             const val = `Disnaker Prov. ${prov}`;
                                             return <option key={prov} value={val}>{val}</option>;
@@ -1099,172 +1063,169 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </div>
                             </div>
 
-                        {/* ── Schedule Builder ── */}
-                        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
-                            {/* Header: title + add/remove day controls */}
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-indigo-900">📅 Jadwal Pelaksanaan</span>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] text-indigo-700">Hari:</span>
-                                    <button type="button"
-                                        onClick={() => scheduleDays.length > 1 && setScheduleDays(prev => prev.slice(0, -1))}
-                                        disabled={scheduleDays.length <= 1}
-                                        className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100 disabled:opacity-40">−</button>
-                                    <span className="text-sm font-bold text-indigo-900 w-5 text-center">{scheduleDays.length}</span>
-                                    <button type="button"
-                                        onClick={() => setScheduleDays(prev => [...prev, { date: '', inspector_ids: [] }])}
-                                        className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100">+</button>
+                            {/* ── Schedule Builder ── */}
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
+                                {/* Header: title + add/remove day controls */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-indigo-900">Jadwal Pelaksanaan</span>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[11px] text-indigo-700">Hari:</span>
+                                        <button type="button"
+                                            onClick={() => scheduleDays.length > 1 && setScheduleDays(prev => prev.slice(0, -1))}
+                                            disabled={scheduleDays.length <= 1}
+                                            className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100 disabled:opacity-40">−</button>
+                                        <span className="text-sm font-bold text-indigo-900 w-5 text-center">{scheduleDays.length}</span>
+                                        <button type="button"
+                                            onClick={() => setScheduleDays(prev => [...prev, { date: '', inspector_ids: [] }])}
+                                            className="w-6 h-6 rounded border border-indigo-300 bg-white text-indigo-700 font-bold text-sm leading-none flex items-center justify-center hover:bg-indigo-100">+</button>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Day rows */}
-                            {scheduleDays.map((day, dayIdx) => {
-                                const allInspectors = [
-                                    ...(recommendations.recommended || []),
-                                    ...(recommendations.eliminated  || []),
-                                ];
-                                return (
-                                    <div key={dayIdx} className="bg-white border border-indigo-200 rounded-lg p-3">
-                                        {/* Day header: label + date picker + remove */}
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded shrink-0">
-                                                Hari {dayIdx + 1}
-                                            </span>
-                                            <input
-                                                type="date"
-                                                value={day.date}
-                                                onChange={e => {
-                                                    const updated = scheduleDays.map((d, i) =>
-                                                        i === dayIdx ? { ...d, date: e.target.value } : d
-                                                    );
-                                                    setScheduleDays(updated);
-                                                }}
-                                                className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-indigo-400"
-                                            />
-                                            {scheduleDays.length > 1 && (
-                                                <button type="button"
-                                                    onClick={() => setScheduleDays(prev => prev.filter((_, i) => i !== dayIdx))}
-                                                    className="text-red-400 hover:text-red-600 text-base leading-none px-1 shrink-0" title="Hapus hari ini">✕</button>
+                                {/* Day rows */}
+                                {scheduleDays.map((day, dayIdx) => {
+                                    const allInspectors = [
+                                        ...(recommendations.recommended || []),
+                                        ...(recommendations.eliminated || []),
+                                    ];
+                                    return (
+                                        <div key={dayIdx} className="bg-white border border-indigo-200 rounded-lg p-3">
+                                            {/* Day header: label + date picker + remove */}
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded shrink-0">
+                                                    Hari {dayIdx + 1}
+                                                </span>
+                                                <input
+                                                    type="date"
+                                                    value={day.date}
+                                                    onChange={e => {
+                                                        const updated = scheduleDays.map((d, i) =>
+                                                            i === dayIdx ? { ...d, date: e.target.value } : d
+                                                        );
+                                                        setScheduleDays(updated);
+                                                    }}
+                                                    className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-indigo-400"
+                                                />
+                                                {scheduleDays.length > 1 && (
+                                                    <button type="button"
+                                                        onClick={() => setScheduleDays(prev => prev.filter((_, i) => i !== dayIdx))}
+                                                        className="text-red-400 hover:text-red-600 text-base leading-none px-1 shrink-0" title="Hapus hari ini">✕</button>
+                                                )}
+                                            </div>
+
+                                            {/* Inspector chips */}
+                                            <p className="text-[10px] text-gray-500 mb-1.5">Inspektur pada Hari {dayIdx + 1}:</p>
+                                            {allInspectors.length === 0 ? (
+                                                <p className="text-[11px] text-gray-400 italic">Memuat data inspektur...</p>
+                                            ) : (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {allInspectors.map(item => {
+                                                        const uid = item.user.id;
+                                                        const isSelected = day.inspector_ids.includes(uid);
+                                                        const isOverloaded = item.statuses
+                                                            ? item.statuses.some(st => st === 'Overload')
+                                                            : false;
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={uid}
+                                                                onClick={() => {
+                                                                    const updated = scheduleDays.map((d, i) => {
+                                                                        if (i !== dayIdx) return d;
+                                                                        const ids = d.inspector_ids.includes(uid)
+                                                                            ? d.inspector_ids.filter(id => id !== uid)
+                                                                            : [...d.inspector_ids, uid];
+                                                                        return { ...d, inspector_ids: ids };
+                                                                    });
+                                                                    setScheduleDays(updated);
+                                                                }}
+                                                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors ${isSelected
+                                                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                                                        : isOverloaded
+                                                                            ? 'bg-gray-50 text-gray-400 border-gray-200 hover:border-red-300 hover:text-red-500'
+                                                                            : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
+                                                                    }`}
+                                                            >
+                                                                {item.user.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                            {!day.date && (
+                                                <p className="text-[10px] text-red-500 mt-1">Pilih tanggal untuk hari ini</p>
+                                            )}
+                                            {day.inspector_ids.length === 0 && (
+                                                <p className="text-[10px] text-red-500 mt-0.5">Pilih minimal 1 inspektur untuk hari ini</p>
                                             )}
                                         </div>
-
-                                        {/* Inspector chips */}
-                                        <p className="text-[10px] text-gray-500 mb-1.5">Inspektur pada Hari {dayIdx + 1}:</p>
-                                        {allInspectors.length === 0 ? (
-                                            <p className="text-[11px] text-gray-400 italic">Memuat data inspektur...</p>
-                                        ) : (
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {allInspectors.map(item => {
-                                                    const uid = item.user.id;
-                                                    const isSelected = day.inspector_ids.includes(uid);
-                                                    const isOverloaded = item.statuses
-                                                        ? item.statuses.some(st => st === 'Overload')
-                                                        : false;
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            key={uid}
-                                                            onClick={() => {
-                                                                const updated = scheduleDays.map((d, i) => {
-                                                                    if (i !== dayIdx) return d;
-                                                                    const ids = d.inspector_ids.includes(uid)
-                                                                        ? d.inspector_ids.filter(id => id !== uid)
-                                                                        : [...d.inspector_ids, uid];
-                                                                    return { ...d, inspector_ids: ids };
-                                                                });
-                                                                setScheduleDays(updated);
-                                                            }}
-                                                            className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
-                                                                isSelected
-                                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                                                    : isOverloaded
-                                                                        ? 'bg-gray-50 text-gray-400 border-gray-200 hover:border-red-300 hover:text-red-500'
-                                                                        : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-                                                            }`}
-                                                        >
-                                                            {isSelected && <span>✓</span>}
-                                                            {item.user.name}
-                                                            {isOverloaded && !isSelected && <span className="text-red-400 text-[9px]">⚠</span>}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                        {!day.date && (
-                                            <p className="text-[10px] text-red-500 mt-1">⚠ Pilih tanggal untuk hari ini</p>
-                                        )}
-                                        {day.inspector_ids.length === 0 && (
-                                            <p className="text-[10px] text-red-500 mt-0.5">⚠ Pilih minimal 1 inspektur untuk hari ini</p>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Smart Recommendation — quick-fill to all days */}
-                        <SmartRecommendation
-                            job={job}
-                            selectedInspectorIds={allSelectedInspectorIds}
-                            onSelectInspector={(insUser) => {
-                                const uid = insUser.id;
-                                const isInAll = scheduleDays.every(d => d.inspector_ids.includes(uid));
-                                setScheduleDays(scheduleDays.map(d => ({
-                                    ...d,
-                                    inspector_ids: isInAll
-                                        ? d.inspector_ids.filter(id => id !== uid)
-                                        : d.inspector_ids.includes(uid)
-                                            ? d.inspector_ids
-                                            : [...d.inspector_ids, uid],
-                                })));
-                            }}
-                        />
-
-                        {/* Penanggung Jawab Laporan / Penyusun LHPP */}
-                        <div className="bg-white border rounded-lg p-3">
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                📝 Penanggung Jawab Laporan / Penyusun LHPP
-                            </label>
-                            <select
-                                value={data.report_writer_id || ''}
-                                onChange={e => setData('report_writer_id', e.target.value)}
-                                className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400"
-                            >
-                                <option value="">-- Pilih Penanggung Jawab Laporan (Opsional) --</option>
-                                {[
-                                    ...(recommendations.recommended || []),
-                                    ...(recommendations.eliminated || [])
-                                ].map(item => (
-                                    <option key={item.user.id} value={item.user.id}>
-                                        {item.user.name} ({item.user.role})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Alat Uji */}
-                        {masterData.alat_uji.length > 0 && (
-                            <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Alat Uji yang Digunakan</label>
-                                <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto border rounded p-2">
-                                    {masterData.alat_uji.map(a => (
-                                        <label key={a.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
-                                            <input type="checkbox" checked={data.alat_ids.includes(a.id)}
-                                                onChange={() => {
-                                                    const ids = data.alat_ids.includes(a.id) ? data.alat_ids.filter(x => x !== a.id) : [...data.alat_ids, a.id];
-                                                    setData('alat_ids', ids);
-                                                }} className="rounded" />
-                                            {a.nama}
-                                        </label>
-                                    ))}
-                                </div>
+                                    );
+                                })}
                             </div>
-                        )}
 
-                        {/* Download Surat Tugas (DISABLED - STILL ERROR)
+                            {/* Smart Recommendation — quick-fill to all days */}
+                            <SmartRecommendation
+                                job={job}
+                                selectedInspectorIds={allSelectedInspectorIds}
+                                onSelectInspector={(insUser) => {
+                                    const uid = insUser.id;
+                                    const isInAll = scheduleDays.every(d => d.inspector_ids.includes(uid));
+                                    setScheduleDays(scheduleDays.map(d => ({
+                                        ...d,
+                                        inspector_ids: isInAll
+                                            ? d.inspector_ids.filter(id => id !== uid)
+                                            : d.inspector_ids.includes(uid)
+                                                ? d.inspector_ids
+                                                : [...d.inspector_ids, uid],
+                                    })));
+                                }}
+                            />
+
+                            {/* Penanggung Jawab Laporan / Penyusun LHPP */}
+                            <div className="bg-white border rounded-lg p-3">
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                                    Penanggung Jawab Laporan / Penyusun LHPP
+                                </label>
+                                <select
+                                    value={data.report_writer_id || ''}
+                                    onChange={e => setData('report_writer_id', e.target.value)}
+                                    className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-blue-400"
+                                >
+                                    <option value="">-- Pilih Penanggung Jawab Laporan (Opsional) --</option>
+                                    {[
+                                        ...(recommendations.recommended || []),
+                                        ...(recommendations.eliminated || [])
+                                    ].map(item => (
+                                        <option key={item.user.id} value={item.user.id}>
+                                            {item.user.name} ({item.user.role})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Alat Uji */}
+                            {masterData.alat_uji.length > 0 && (
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Alat Uji yang Digunakan</label>
+                                    <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto border rounded p-2">
+                                        {masterData.alat_uji.map(a => (
+                                            <label key={a.id} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                                                <input type="checkbox" checked={data.alat_ids.includes(a.id)}
+                                                    onChange={() => {
+                                                        const ids = data.alat_ids.includes(a.id) ? data.alat_ids.filter(x => x !== a.id) : [...data.alat_ids, a.id];
+                                                        setData('alat_ids', ids);
+                                                    }} className="rounded" />
+                                                {a.nama}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Download Surat Tugas (DISABLED - STILL ERROR)
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm mb-2">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                                    📄
+                                    ST
                                 </div>
                                 <div>
                                     <p className="text-xs font-bold text-blue-950">Surat Tugas Riksa Uji</p>
@@ -1279,17 +1240,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 rel="noopener noreferrer"
                                 className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition flex items-center gap-1 cursor-pointer"
                             >
-                                📥 Download Surat Tugas (.docx)
+                                Download Surat Tugas (.docx)
                             </a>
                         </div>
                         */}
 
-                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
-                            disabled={!s3ScheduleValid || !data.disnaker_tujuan || isDpUnpaid}
-                            disabledMsg={isDpUnpaid ? 'Surat Tugas diblokir sampai DP terverifikasi' : !data.disnaker_tujuan ? 'Pilih Disnaker Tujuan' : !s3ScheduleValid ? 'Lengkapi jadwal dan inspektur tiap hari' : ''} />
-                    </div>
-                );})()}
+                            <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                            <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
+                                disabled={!s3ScheduleValid || !data.disnaker_tujuan || isDpUnpaid}
+                                disabledMsg={isDpUnpaid ? 'Surat Tugas diblokir sampai DP terverifikasi' : !data.disnaker_tujuan ? 'Pilih Disnaker Tujuan' : !s3ScheduleValid ? 'Lengkapi jadwal dan inspektur tiap hari' : ''} />
+                        </div>
+                    );
+                })()}
 
                 {/* ── STAGE 4 ─────────────────────────────────── */}
                 {s === 4 && (
@@ -1330,7 +1292,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div key={type} className="border border-dashed rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-xs font-medium text-gray-700">{type}</span>
-                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">✓ Terupload</span>}
+                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">Terupload</span>}
                                             </div>
                                             {existing.length > 0
                                                 ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}</div>
@@ -1341,8 +1303,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 onChange={e => setPhotoNotes({ ...photoNotes, [type]: e.target.value })}
                                                 className="w-full text-xs border border-gray-200 rounded px-2 py-1 mb-1" />
                                             <button type="button" onClick={() => uploadPhoto(type)}
-                                                className="text-xs px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100">
-                                                📷 Upload Foto
+                                                className="text-xs px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 font-semibold">
+                                                Upload Foto
                                             </button>
                                         </div>
                                     );
@@ -1350,11 +1312,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                         </div>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        
-                        {/* Stage 4 Three-Path Navigation per v2.0 Specification */}
+
+                        {/* Stage 4 Routing & Direct Job Split */}
                         <div className="border border-gray-200 rounded-lg p-3.5 bg-gray-50 space-y-2.5">
                             <p className="text-xs font-bold text-gray-800">
-                                🚦 Pilih Hasil & Jalur Lanjutan RU Lapangan (Three-Path Routing):
+                                Pilih Hasil & Jalur Lanjutan RU Lapangan:
                             </p>
                             <div className="flex flex-col gap-2">
                                 <button
@@ -1369,7 +1331,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     disabled={processing}
                                     className="w-full px-4 py-2.5 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1.5"
                                 >
-                                    ✅ Path A: Lolos Penuh (Semua Unit Sesuai) → Lanjut ke Stage 5 (LHPP)
+                                    Path A: Lolos Penuh (Semua Unit Sesuai) → Lanjut ke Stage 5 (LHPP)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleJobSplit}
+                                    className="w-full px-4 py-2 rounded text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs flex items-center justify-center gap-1.5"
+                                >
+                                    Pecah Job
                                 </button>
                                 <button
                                     type="button"
@@ -1377,7 +1346,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     disabled={processing}
                                     className="w-full px-4 py-2 rounded text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-xs flex items-center justify-center gap-1.5"
                                 >
-                                    📦 Path B: Unit Belum Siap / Mismatch Logistik → Stage 4b (Aktualisasi MKT)
+                                    Path B: Unit Belum Siap / Mismatch Logistik → Stage 4b (Aktualisasi MKT)
                                 </button>
                                 <button
                                     type="button"
@@ -1391,7 +1360,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     disabled={processing}
                                     className="w-full px-4 py-2 rounded text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-xs flex items-center justify-center gap-1.5"
                                 >
-                                    🔧 Path C: Unit Rusak / Temuan Teknis → Stage 6 (Review Laporan / Tidak Laik)
+                                    Path C: Unit Rusak / Temuan Teknis → Stage 6 (Review Laporan / Tidak Laik)
                                 </button>
                             </div>
                         </div>
@@ -1403,7 +1372,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-4">
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                             <h4 className="text-xs font-bold text-amber-900 mb-1">
-                                📝 Stage 4b: Aktualisasi Unit (Marketing)
+                                Stage 4b: Aktualisasi Unit (Marketing)
                             </h4>
                             <p className="text-xs text-amber-800">
                                 Hasil pemeriksaan lapangan: <strong>{job.actual_units ?? job.units} Unit</strong> (Unit awal: {job.units} Unit).
@@ -1459,6 +1428,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </button>
                             <button
                                 type="button"
+                                onClick={handleJobSplit}
+                                className="px-3 py-2 rounded text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm flex items-center gap-1"
+                            >
+                                Pecah Job
+                            </button>
+                            <button
+                                type="button"
                                 onClick={(e) => {
                                     e.preventDefault();
                                     post(`/jobs/${job.id}/move`, {
@@ -1469,7 +1445,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm"
                             >
-                                {processing ? '...' : '📅 Jadwalkan Ulang (Stage 4c) →'}
+                                {processing ? '...' : 'Jadwalkan Ulang (Stage 4c) →'}
                             </button>
                             <button
                                 type="button"
@@ -1483,7 +1459,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
                             >
-                                {processing ? '...' : '🚀 Bypass ke Stage 5 (LHPP) →'}
+                                {processing ? '...' : 'Bypass ke Stage 5 (LHPP) →'}
                             </button>
                         </div>
                     </div>
@@ -1495,7 +1471,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-amber-900 mb-1">
-                                    📅 Stage 4c: Penjadwalan Ulang / Reschedule (Admin)
+                                    Stage 4c: Penjadwalan Ulang / Reschedule (Admin)
                                 </h4>
                                 <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-black">
                                     Reschedule Loop: {job.reschedule_count || 0} / 3
@@ -1510,7 +1486,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {(job.reschedule_count || 0) >= 3 && (
                             <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3.5 space-y-2">
                                 <div className="text-xs font-bold text-red-900 flex items-center gap-1.5">
-                                    <span>⚠️ Batas Reschedule Tercapai ({job.reschedule_count || 3}/3)</span>
+                                    <span>Batas Reschedule Tercapai ({job.reschedule_count || 3}/3)</span>
                                 </div>
                                 <p className="text-xs text-red-800">
                                     Berdasarkan SOP v2.0, Kadiv / Manager Teknis wajib memutuskan tindak lanjut unit yang tertunda:
@@ -1521,14 +1497,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         onClick={handleJobSplit}
                                         className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded shadow-xs"
                                     >
-                                        ✂️ Opsi A: Pecah Job (Job Split)
+                                        Opsi A: Pecah Job (Job Split)
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => router.post(`/jobs/${job.id}/move`, { data: { ...data, next_stage: 12, notes: 'Ditutup sebagai Gagal Uji (Closed as Failed)' } })}
                                         className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded shadow-xs"
                                     >
-                                        ❌ Opsi B: Tutup Job Gagal
+                                        Opsi B: Tutup Job Gagal
                                     </button>
                                 </div>
                             </div>
@@ -1601,8 +1577,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         {data.disnaker_tujuan &&
                                             !INDONESIA_PROVINCES.includes(data.disnaker_tujuan) &&
                                             !INDONESIA_PROVINCES.map(p => `Disnaker Prov. ${p}`).includes(data.disnaker_tujuan) && (
-                                            <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
-                                        )}
+                                                <option value={data.disnaker_tujuan}>{data.disnaker_tujuan}</option>
+                                            )}
                                         {INDONESIA_PROVINCES.map(prov => {
                                             const val = `Disnaker Prov. ${prov}`;
                                             return <option key={prov} value={val}>{val}</option>;
@@ -1614,7 +1590,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {/* Jadwal Pelaksanaan Multi-Day */}
                             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-indigo-900">📅 Jadwal Pelaksanaan RU Ulang</span>
+                                    <span className="text-xs font-bold text-indigo-900">Jadwal Pelaksanaan RU Ulang</span>
                                     <div className="flex items-center gap-1.5">
                                         <span className="text-[11px] text-indigo-700">Hari:</span>
                                         <button type="button"
@@ -1631,7 +1607,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 {scheduleDays.map((day, dayIdx) => {
                                     const allInspectors = [
                                         ...(recommendations.recommended || []),
-                                        ...(recommendations.eliminated  || []),
+                                        ...(recommendations.eliminated || []),
                                     ];
                                     return (
                                         <div key={dayIdx} className="bg-white border border-indigo-200 rounded-lg p-3">
@@ -1682,17 +1658,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                     });
                                                                     setScheduleDays(updated);
                                                                 }}
-                                                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
-                                                                    isSelected
+                                                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium border transition-colors ${isSelected
                                                                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                                                                         : isOverloaded
                                                                             ? 'bg-gray-50 text-gray-400 border-gray-200 hover:border-red-300 hover:text-red-500'
                                                                             : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-                                                                }`}
+                                                                    }`}
                                                             >
-                                                                {isSelected && <span>✓</span>}
                                                                 {item.user.name}
-                                                                {isOverloaded && !isSelected && <span className="text-red-400 text-[9px]">⚠</span>}
                                                             </button>
                                                         );
                                                     })}
@@ -1724,7 +1697,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {/* Penanggung Jawab Laporan */}
                             <div className="bg-white border rounded-lg p-3">
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                    📝 Penanggung Jawab Laporan / Penyusun LHPP
+                                    Penanggung Jawab Laporan / Penyusun LHPP
                                 </label>
                                 <select
                                     value={data.report_writer_id || ''}
@@ -1769,7 +1742,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
 
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex gap-2 mt-4 flex-wrap">
                             <button
                                 type="button"
                                 onClick={handleRejectStage}
@@ -1777,6 +1750,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
                             >
                                 Kembalikan ke 4b (Aktualisasi)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleJobSplit}
+                                className="px-3 py-2 rounded text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm flex items-center gap-1"
+                            >
+                                Pecah Job
                             </button>
                             <button
                                 type="button"
@@ -1797,7 +1777,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm"
                             >
-                                {processing ? '...' : '🔍 Lanjut ke Riksa Uji Ulang (Stage 4d) →'}
+                                {processing ? '...' : 'Lanjut ke Riksa Uji Ulang (Stage 4d) →'}
                             </button>
                         </div>
                     </div>
@@ -1808,7 +1788,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-4">
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
                             <h4 className="text-xs font-bold text-indigo-900 mb-1">
-                                🔍 Stage 4d: Riksa Uji Ulang (Tim Ahli / Inspektur)
+                                Stage 4d: Riksa Uji Ulang (Tim Ahli / Inspektur)
                             </h4>
                             <p className="text-xs text-indigo-800">
                                 Pelaksanaan inspeksi ulang untuk unit yang sebelumnya tertunda/dijadwalkan ulang. Unggah BAP dan Foto RU Ulang.
@@ -1827,7 +1807,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             checked={s4d.ru_ulang_status === 'lolos'}
                                             onChange={() => setS4d({ ...s4d, ru_ulang_status: 'lolos' })}
                                         />
-                                        <span className="text-emerald-700">✅ Lolos Riksa Uji Ulang</span>
+                                        <span className="text-emerald-700">Lolos Riksa Uji Ulang</span>
                                     </label>
                                     <label className="flex items-center gap-1.5 cursor-pointer">
                                         <input
@@ -1837,7 +1817,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             checked={s4d.ru_ulang_status === 'gagal'}
                                             onChange={() => setS4d({ ...s4d, ru_ulang_status: 'gagal' })}
                                         />
-                                        <span className="text-red-700">❌ Gagal / Perlu Reschedule Lanjutan</span>
+                                        <span className="text-red-700">Gagal / Perlu Reschedule Lanjutan</span>
                                     </label>
                                 </div>
                             </div>
@@ -1871,7 +1851,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 {s4dUnitMismatch && (
                                     <div className="mt-2.5 p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 space-y-1.5">
                                         <p className="font-semibold">
-                                            ⚠️ Jumlah alat yang diperiksa ({s4d.actual_units}) belum sesuai dengan jumlah total unit ({job.units}).
+                                            Jumlah alat yang diperiksa ({s4d.actual_units}) belum sesuai dengan jumlah total unit ({job.units}).
                                         </p>
                                         <input
                                             type="text"
@@ -1925,7 +1905,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         disabled={processing}
                                         className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-sm"
                                     >
-                                        {processing ? '...' : '🔁 Gagal RU — Kembali ke Penjadwalan Ulang (Stage 4c) →'}
+                                        {processing ? '...' : 'Gagal RU — Kembali ke Penjadwalan Ulang (Stage 4c) →'}
                                     </button>
                                 ) : !s4dUnitMismatch ? (
                                     <button
@@ -1940,7 +1920,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         disabled={processing}
                                         className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
                                     >
-                                        {processing ? '...' : '🚀 Lolos Penuh — Lanjut ke Stage 5 (LHPP) →'}
+                                        {processing ? '...' : 'Lolos Penuh — Lanjut ke Stage 5 (LHPP) →'}
                                     </button>
                                 ) : null}
                             </div>
@@ -1949,7 +1929,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {s4d.ru_ulang_status === 'lolos' && s4dUnitMismatch && (
                                 <div className="border border-amber-300 rounded-lg p-3 bg-amber-50/90 space-y-2.5">
                                     <p className="text-xs font-semibold text-amber-900">
-                                        ⚠️ Jumlah unit yang diperiksa ({s4d.actual_units}) tidak sesuai dengan unit dalam Job ({job.units}). Pilih alur rekonsiliasi:
+                                        Jumlah unit yang diperiksa ({s4d.actual_units}) tidak sesuai dengan unit dalam Job ({job.units}). Pilih alur rekonsiliasi:
                                     </p>
                                     <div className="flex flex-col gap-2">
                                         <button
@@ -1964,7 +1944,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             disabled={processing}
                                             className="w-full px-3 py-2 rounded text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-xs"
                                         >
-                                            📝 Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
+                                            Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
                                         </button>
                                         <button
                                             type="button"
@@ -1978,7 +1958,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             disabled={processing}
                                             className="w-full px-3 py-2 rounded text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs"
                                         >
-                                            📅 Jadwalkan Sisa Unit di Stage 4c (Reschedule ADM) →
+                                            Jadwalkan Sisa Unit di Stage 4c (Reschedule ADM) →
                                         </button>
                                         <button
                                             type="button"
@@ -1992,7 +1972,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             disabled={processing}
                                             className="w-full px-3 py-2 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs"
                                         >
-                                            🚀 Sepakat Selesai & Lanjut ke Stage 5 (LHPP) →
+                                            Sepakat Selesai & Lanjut ke Stage 5 (LHPP) →
                                         </button>
                                     </div>
                                 </div>
@@ -2008,7 +1988,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-3">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-blue-900">
-                                    📊 Milestone Tracking Penyusunan LHPP (Per-Unit)
+                                    Milestone Tracking Penyusunan LHPP (Per-Unit)
                                 </h4>
                                 <span className="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded font-black">
                                     Delta v5-2-2
@@ -2053,7 +2033,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {/* Lead Time calculation badges */}
                             {s5Dates.tgl_teknis_diserahkan && s5Dates.tgl_laporan_selesai && (
                                 <div className="flex items-center gap-2 pt-2 border-t border-blue-200">
-                                    <span className="text-[11px] font-extrabold text-blue-900">⏱ Lead Time LHPP:</span>
+                                    <span className="text-[11px] font-extrabold text-blue-900">Lead Time LHPP:</span>
                                     <span className="text-[11px] font-bold bg-white text-blue-800 border border-blue-300 px-2 py-0.5 rounded shadow-2xs">
                                         Total Durasi: {Math.max(0, Math.round((new Date(s5Dates.tgl_laporan_selesai) - new Date(s5Dates.tgl_teknis_diserahkan)) / 86400000))} Hari
                                     </span>
@@ -2089,9 +2069,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <select value={s5.s5_review_decision} onChange={e => setS5({ ...s5, s5_review_decision: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 font-semibold">
                                 <option value="">-- Pilih Keputusan --</option>
-                                <option value="approved">✅ Setuju - Laik (Lanjut ke Stage 7 Dinas)</option>
-                                <option value="revision">📝 Tolak / Revisi Teknis (Kembalikan ke Stage 5)</option>
-                                <option value="tidak_laik">❌ Tidak Laik (Perbaikan Klien & Retest Stage 4c)</option>
+                                <option value="approved">Setuju - Laik (Lanjut ke Stage 7 Dinas)</option>
+                                <option value="revision">Tolak / Revisi Teknis (Kembalikan ke Stage 5)</option>
+                                <option value="tidak_laik">Tidak Laik (Perbaikan Klien & Retest Stage 4c)</option>
                             </select>
                         </div>
                         <div>
@@ -2105,7 +2085,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             Simpan Keputusan Review
                         </button>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        
+
                         {/* 3-Path Action Buttons for Stage 6 */}
                         <div className="flex flex-col sm:flex-row gap-2 pt-2">
                             <button
@@ -2124,7 +2104,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 }}
                                 className="px-3 py-2 rounded text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100"
                             >
-                                📝 Kembalikan ke Stage 5 (Revisi)
+                                Kembalikan ke Stage 5 (Revisi)
                             </button>
                             <button
                                 type="button"
@@ -2141,14 +2121,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 }}
                                 className="px-3 py-2 rounded text-xs font-bold bg-red-50 text-red-900 border border-red-300 hover:bg-red-100"
                             >
-                                ❌ Tidak Laik → Retest (Stage 4c)
+                                Tidak Laik → Retest (Stage 4c)
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing || !s5.s5_review_decision || s5.s5_review_decision !== 'approved'}
                                 className="flex-1 py-2 rounded text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 shadow-xs"
                             >
-                                {processing ? '...' : '✅ Approve Laik → Lanjut ke Stage 7 →'}
+                                {processing ? '...' : 'Approve Laik → Lanjut ke Stage 7 →'}
                             </button>
                         </div>
                     </div>
@@ -2224,7 +2204,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-emerald-900">
-                                    ⏱ Tracking Durasi Pengurusan SUKET Disnaker
+                                    Tracking Durasi Pengurusan SUKET Disnaker
                                 </h4>
                                 <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-black">
                                     Delta v5-2-2
@@ -2256,8 +2236,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div className="pt-2 border-t border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2">
                                     <span>Durasi Pengurusan:</span>
                                     <span className="bg-white px-2 py-0.5 rounded border border-emerald-300 shadow-2xs">
-                                        {s9Suket.tgl_suket_selesai 
-                                            ? `${Math.max(0, Math.round((new Date(s9Suket.tgl_suket_selesai) - new Date(s9Suket.tgl_input_suket)) / 86400000))} Hari Kalender (Selesai)` 
+                                        {s9Suket.tgl_suket_selesai
+                                            ? `${Math.max(0, Math.round((new Date(s9Suket.tgl_suket_selesai) - new Date(s9Suket.tgl_input_suket)) / 86400000))} Hari Kalender (Selesai)`
                                             : `${Math.max(0, Math.round((new Date() - new Date(s9Suket.tgl_input_suket)) / 86400000))} Hari Berjalan`}
                                     </span>
                                 </div>
@@ -2295,8 +2275,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     const s10CanMove = s10.invoice_no?.trim() && s10.total_invoice_amount && parseFloat(s10.total_invoice_amount) > 0 && s10.tgl_invoice_issued && hasInvoiceDoc10;
                     const s10DisabledMsg = !s10.invoice_no?.trim() ? 'Isi Nomor Invoice terlebih dahulu' :
                         (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) ? 'Isi Total Invoice (Nilai Tagihan) dengan benar' :
-                        !s10.tgl_invoice_issued ? 'Isi Tanggal Invoice Diterbitkan terlebih dahulu' :
-                        !hasInvoiceDoc10 ? 'Upload Dokumen "Invoice (PDF)" terlebih dahulu' : '';
+                            !s10.tgl_invoice_issued ? 'Isi Tanggal Invoice Diterbitkan terlebih dahulu' :
+                                !hasInvoiceDoc10 ? 'Upload Dokumen "Invoice (PDF)" terlebih dahulu' : '';
 
                     return (
                         <div className="space-y-3">
@@ -2351,7 +2331,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-4">
                         {job.payment_retry_count > 0 && (
                             <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 text-xs text-red-900 font-medium animate-pulse">
-                                ⚠️ <strong>Hasil Verifikasi Finance: Pembayaran Belum Lunas / Pending!</strong><br />
+                                <strong>Hasil Verifikasi Finance: Pembayaran Belum Lunas / Pending!</strong><br />
                                 Job dikembalikan dari Stage 11c untuk follow-up penagihan ulang oleh Marketing (Penagihan Ulang ke-{job.payment_retry_count}).
                                 {job.payment_verification_notes && (
                                     <span className="block mt-1 bg-white p-2 rounded border border-red-200 font-semibold text-red-800">
@@ -2364,7 +2344,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-bold text-blue-900">
-                                    💼 Penagihan & Follow-up Pembayaran (Marketing)
+                                    Penagihan & Follow-up Pembayaran (Marketing)
                                 </h4>
                                 <span className="text-[10px] bg-blue-200 text-blue-800 px-2 py-0.5 rounded font-black">
                                     Delta v5-2-2
@@ -2436,7 +2416,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm"
                             >
-                                {processing ? '...' : '💳 Serahkan ke Verifikasi Pembayaran (Stage 11c) →'}
+                                {processing ? '...' : 'Serahkan ke Verifikasi Pembayaran (Stage 11c) →'}
                             </button>
                         </div>
                     </div>
@@ -2448,7 +2428,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-3 space-y-2">
                             <div className="flex items-center justify-between">
                                 <h4 className="text-xs font-black text-purple-900 uppercase tracking-wide flex items-center gap-1.5">
-                                    <span>🔐 Stage 11c: Verifikasi Pembayaran (Finance)</span>
+                                    <span>Stage 11c: Verifikasi Pembayaran (Finance)</span>
                                 </h4>
                                 <div className="flex items-center gap-1.5">
                                     <span className="bg-purple-200 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full">
@@ -2466,7 +2446,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         {(job.payment_retry_count || 0) >= 5 && (
                             <div className="bg-red-50 border-2 border-red-400 rounded-lg p-3 text-xs text-red-900">
-                                <p className="font-extrabold text-sm mb-1">🚨 Eskalasi Pembayaran Macet (Maksimal 5x Terlampaui)!</p>
+                                <p className="font-extrabold text-sm mb-1">Eskalasi Pembayaran Macet (Maksimal 5x Terlampaui)!</p>
                                 <p>
                                     Penagihan telah gagal / partial sebanyak 5 kali. Sistem telah mengeskalasi kasus ini ke Kepala Divisi dan Manager untuk pembekuan job / tindakan penanganan khusus.
                                 </p>
@@ -2509,8 +2489,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         onChange={e => setS11c({ ...s11c, verification_status: e.target.value })}
                                         className="w-full border rounded px-2 py-1.5 font-bold"
                                     >
-                                        <option value="Lunas">✅ Lunas (Dana Diterima Penuh)</option>
-                                        <option value="Partial / Pending">⏳ Partial / Pending (Belum Lunas)</option>
+                                        <option value="Lunas">Lunas (Dana Diterima Penuh)</option>
+                                        <option value="Partial / Pending">Partial / Pending (Belum Lunas)</option>
                                     </select>
                                 </div>
                             </div>
@@ -2541,7 +2521,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="px-4 py-2 rounded text-sm font-bold bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 flex items-center gap-1"
                             >
-                                ↩️ Partial/Pending (Loop ke Stage 11)
+                                Partial/Pending (Loop ke Stage 11)
                             </button>
                             <button
                                 type="button"
@@ -2549,7 +2529,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm flex items-center justify-center gap-1"
                             >
-                                ✅ Verifikasi Lunas & Buka Kirim SUKET (Stage 11b) →
+                                Verifikasi Lunas & Buka Kirim SUKET (Stage 11b) →
                             </button>
                         </div>
                     </div>
@@ -2567,31 +2547,31 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {!canDeliver ? (
                                 <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 text-xs text-red-900 space-y-3">
                                     <div className="font-extrabold text-sm flex items-center gap-1.5 text-red-950">
-                                        🔒 Pengiriman SUKET Terkunci (Triple Hard-Gate v2.0)!
+                                        Pengiriman SUKET Terkunci (Triple Hard-Gate v2.0)!
                                     </div>
                                     <p>
                                         Berdasarkan SOP resmi dan spesifikasi v2.0, SUKET tidak dapat diserahkan/dikirim kepada klien sebelum 3 syarat gerbang berikut terpenuhi:
                                     </p>
                                     <div className="space-y-2 bg-white/80 p-3 rounded-lg border border-red-200">
                                         <div className="flex items-center gap-2">
-                                            <span className={isPaymentVerified ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
-                                                {isPaymentVerified ? "✓" : "✕"}
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${isPaymentVerified ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                                                {isPaymentVerified ? "Terpenuhi" : "Belum"}
                                             </span>
                                             <span className={isPaymentVerified ? "text-gray-700 font-medium" : "text-red-800 font-bold"}>
                                                 1. Pembayaran Diverifikasi Lunas di Stage 11c ({isPaymentVerified ? "Terverifikasi" : "Belum Lunas"})
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={hasBankStatement ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
-                                                {hasBankStatement ? "✓" : "✕"}
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${hasBankStatement ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                                                {hasBankStatement ? "Terpenuhi" : "Belum"}
                                             </span>
                                             <span className={hasBankStatement ? "text-gray-700 font-medium" : "text-red-800 font-bold"}>
                                                 2. Lampiran Bukti Mutasi Bank / Rekening Koran ({hasBankStatement ? "Terlampir" : "Belum Ada"})
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={!hasDocumentDebt ? "text-emerald-600 font-bold" : "text-red-600 font-bold"}>
-                                                {!hasDocumentDebt ? "✓" : "✕"}
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${!hasDocumentDebt ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                                                {!hasDocumentDebt ? "Terpenuhi" : "Belum"}
                                             </span>
                                             <span className={!hasDocumentDebt ? "text-gray-700 font-medium" : "text-red-800 font-bold"}>
                                                 3. Bebas Hutang Dokumen Stage 2 ({!hasDocumentDebt ? "Lengkap" : `Ada ${job.document_debt.length} Dokumen Tertunda: ${job.document_debt.join(', ')}`})
@@ -2610,7 +2590,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <>
                                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
                                         <h4 className="text-xs font-bold text-emerald-900 mb-1">
-                                            📦 Stage 11b: Pengiriman SUKET ke Klien (Marketing)
+                                            Stage 11b: Pengiriman SUKET ke Klien (Marketing)
                                         </h4>
                                         <p className="text-xs text-emerald-800">
                                             Pembayaran terverifikasi LUNAS, rekening koran terlampir, dan seluruh dokumen lengkap. Kirimkan SUKET fisik/digital ke klien secara bertahap atau sekaligus.
@@ -2702,7 +2682,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             disabled={processing}
                                             className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
                                         >
-                                            {processing ? '...' : '🎉 Selesaikan & Tutup Job (Stage 12 Closed) →'}
+                                            {processing ? '...' : 'Selesaikan & Tutup Job (Stage 12 Closed) →'}
                                         </button>
                                     </div>
                                 </>
@@ -2715,7 +2695,6 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {s === 12 && (
                     <div className="space-y-4">
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
-                            <span className="text-2xl">🎉</span>
                             <h4 className="text-sm font-bold text-emerald-900 mt-1">Pekerjaan Selesai & Ditutup (Closed)</h4>
                             <p className="text-xs text-emerald-700 mt-0.5">
                                 Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai.
@@ -2730,7 +2709,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     onClick={handleReopenJob}
                                     className="w-full px-4 py-2.5 rounded text-xs font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
                                 >
-                                    🔓 Buka Kembali Job (Reopen) ke Stage 5
+                                    Buka Kembali Job (Reopen) ke Stage 5
                                 </button>
                             </div>
                         )}
@@ -2740,9 +2719,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         );
     };
 
-// ══ END PART B ══
+    // ══ END PART B ══
 
-// ══ BEGIN PART C ══
+    // ══ BEGIN PART C ══
 
     // ── Completed Stage Summary ────────────────────────────────────────────────
     const renderCompletedStageSummary = (s) => {
@@ -2824,7 +2803,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
                         <div><span className="text-gray-400">Tim Inspektur:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
                         <div><span className="text-gray-400">Report Writer:</span> <span className="font-semibold text-gray-800">{job.report_writer ? job.report_writer.name : '-'}</span></div>
-                        <div><span className="text-gray-400">Checklist Lapangan:</span> <span className="font-semibold text-emerald-700">{checkedCount > 0 ? `✓ ${checkedCount} Item Terverifikasi` : '-'}</span></div>
+                        <div><span className="text-gray-400">Checklist Lapangan:</span> <span className="font-semibold text-emerald-700">{checkedCount > 0 ? `${checkedCount} Item Terverifikasi` : '-'}</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -2873,7 +2852,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Hasil Riksa Uji Ulang (Stage 4d):</p>
                     <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div><span className="text-gray-400">Status RU Ulang:</span> <span className="font-semibold text-emerald-700">{job.ru_ulang_status === 'lolos' ? '✅ Lolos RU Ulang' : (job.ru_ulang_status || 'Selesai RU Ulang')}</span></div>
+                        <div><span className="text-gray-400">Status RU Ulang:</span> <span className="font-semibold text-emerald-700">{job.ru_ulang_status === 'lolos' ? 'Lolos RU Ulang' : (job.ru_ulang_status || 'Selesai RU Ulang')}</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -2892,7 +2871,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><span className="text-gray-400">Data Teknis Diserahkan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_teknis_diserahkan) || '-'}</span></div>
                         <div><span className="text-gray-400">Pengerjaan Laporan Mulai:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_laporan_mulai) || '-'}</span></div>
                         <div><span className="text-gray-400">Laporan Selesai:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_laporan_selesai) || '-'}</span></div>
-                        <div><span className="text-gray-400">Status Dokumen:</span> <span className="font-semibold text-emerald-700">✓ Selesai Disusun</span></div>
+                        <div><span className="text-gray-400">Status Dokumen:</span> <span className="font-semibold text-emerald-700">Selesai Disusun</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -2906,10 +2885,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (s === 6) {
             const decisionObj = STAGE5_DECISIONS.find(d => d.value === job.s5_review_decision);
             const decisionLabel = decisionObj ? decisionObj.label : job.s5_review_decision;
-            const badgeCls = job.s5_review_decision === 'approved' 
-                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                : job.s5_review_decision === 'conditional' 
-                    ? 'bg-amber-100 text-amber-800 border-amber-300' 
+            const badgeCls = job.s5_review_decision === 'approved'
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                : job.s5_review_decision === 'conditional'
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
                     : 'bg-red-100 text-red-800 border-red-300';
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
@@ -3073,7 +3052,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-emerald-700">Pekerjaan Selesai (Closed):</p>
                     <div className="bg-emerald-50/70 p-2.5 rounded border border-emerald-200 text-emerald-900">
-                        <span>✓ Seluruh tahapan RU, LHPP, Disnaker, Pelunasan Keuangan, dan Pengiriman SUKET telah selesai sempurna.</span>
+                        <span>Seluruh tahapan RU, LHPP, Disnaker, Pelunasan Keuangan, dan Pengiriman SUKET telah selesai sempurna.</span>
                     </div>
                 </div>
             );
@@ -3096,11 +3075,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const renderTimeline = () => (
         <div className="space-y-6 py-2">
             <h3 className="font-bold text-gray-800 border-b pb-2">Status Pekerjaan: Stage {currentStageInfo?.displayId || job.stage} ({currentStageInfo?.name})</h3>
-            
+
             {/* SLA Badge for current stage */}
             {slaTag && (
                 <div className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold ${slaTag.cls}`}>
-                    ⏱ {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} — {slaTag.label}
+                    {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} — {slaTag.label}
                 </div>
             )}
 
@@ -3111,20 +3090,20 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     const isPast = currentStageIdx > stageIdx;
                     const isCurrent = currentStageIdx === stageIdx;
                     const isFuture = currentStageIdx < stageIdx;
-                    
+
                     let iconBg = 'bg-gray-100 border-gray-300';
                     if (isPast) iconBg = 'bg-emerald-500 border-emerald-600 text-white shadow-2xs';
                     if (isCurrent) iconBg = 'bg-gradient-to-tr from-[#0A385C] to-[#00A8E8] border-2 border-white text-white ring-4 ring-[#00A8E8]/30 shadow-md scale-110 font-extrabold';
 
                     const stageDocs = (job.documents || []).filter(d => d.stage === stage.id);
-                    
+
                     return (
                         <div key={stage.id} className={`relative ${isFuture ? 'opacity-40' : ''}`}>
                             {/* Connector Node */}
                             <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-transform ${iconBg}`}>
-                                {isPast ? '✓' : (stage.displayId || stage.id)}
+                                {isPast ? 'Selesai' : (stage.displayId || stage.id)}
                             </div>
-                            
+
                             <div className={`bg-white border rounded-xl shadow-xs p-4 transition-all ${isCurrent ? 'border-[#00A8E8] ring-1 ring-[#00A8E8]/40 shadow-sm' : 'border-slate-200'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                     <h4 className={`font-extrabold text-sm ${isCurrent ? 'text-[#0A385C]' : 'text-slate-800'}`}>
@@ -3134,7 +3113,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         PIC: {stage.role.toUpperCase()}
                                     </span>
                                 </div>
-                                
+
                                 {isCurrent && (
                                     <div className="mt-4 pt-4 border-t border-[#00A8E8]/20 bg-[#F8FAFC] -mx-4 -mb-4 p-4 rounded-b-xl">
                                         {canManage ? (
@@ -3177,18 +3156,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                 <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Manual</span>
                                                             ) : hasFile ? (
                                                                 <span className="text-[10px] text-green-700 font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
-                                                                    📎 Ada File
+                                                                    Ada File
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Kosong</span>
                                                             )}
-                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                                                status === 'ok' ? 'bg-green-600 text-white' :
-                                                                status === 'tidak' ? 'bg-red-600 text-white' :
-                                                                status === 'na' ? 'bg-gray-500 text-white' :
-                                                                'bg-gray-200 text-gray-600'
-                                                            }`}>
-                                                                {status === 'ok' ? '✓ OK' : status === 'tidak' ? '✕ Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
+                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${status === 'ok' ? 'bg-green-600 text-white' :
+                                                                    status === 'tidak' ? 'bg-red-600 text-white' :
+                                                                        status === 'na' ? 'bg-gray-500 text-white' :
+                                                                            'bg-gray-200 text-gray-600'
+                                                                }`}>
+                                                                {status === 'ok' ? 'OK' : status === 'tidak' ? 'Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -3233,7 +3211,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
                                     <div>
                                         <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
-                                            <span>📄</span> {doc.name}
+                                            {doc.name}
                                         </a>
                                         <div className="text-xs text-gray-500 mt-1 ml-6">
                                             {doc.type} • Uploaded by {doc.uploaded_by_user_id} • {fmt(doc.created_at)}
@@ -3253,7 +3231,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             {(!job.documents || job.documents.length === 0) && (
                 <div className="text-center py-10 text-gray-400">Belum ada dokumen yang diunggah.</div>
             )}
-            
+
             {/* Hidden generic file input for non-photo uploads */}
             <input type="file" ref={fileInputRef} className="hidden" onChange={onFileChange} />
         </div>
@@ -3276,7 +3254,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                         {log.returned_from_stage && (
                             <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
-                                🔄 DIKEMBALIKAN dari Stage {log.returned_from_stage}
+                                DIKEMBALIKAN dari Stage {log.returned_from_stage}
                             </span>
                         )}
                         <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
@@ -3332,7 +3310,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <h4 className="font-bold text-gray-800 border-b w-full pb-2 mb-2">Informasi Pekerjaan</h4>
                         {canManage && (
                             <button onClick={() => setIsEditing(true)} className="text-xs font-medium text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 ml-2">
-                                ✏️ Edit
+                                Edit
                             </button>
                         )}
                     </div>
@@ -3379,7 +3357,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-gray-900/60 backdrop-blur-sm">
             <div className="relative w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col h-[92vh] sm:h-[88vh] overflow-hidden">
-                
+
                 {/* Header — Fixed at top */}
                 <div className="px-4 sm:px-6 py-3 border-b flex items-center justify-between bg-gray-50 flex-shrink-0">
                     <div className="min-w-0 flex-1 mr-3">
@@ -3410,10 +3388,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* Tabs — Fixed immediately below header, clear text and spacing */}
                 <div className="flex px-2 sm:px-6 border-b bg-white flex-shrink-0 z-10 shadow-sm overflow-x-auto scrollbar-hide">
                     {[
-                        { id: 'timeline',  label: 'Status' },
-                        { id: 'docs',      label: 'Dokumen' },
-                        { id: 'history',   label: 'Riwayat' },
-                        { id: 'info',      label: 'Info & Edit' },
+                        { id: 'timeline', label: 'Status' },
+                        { id: 'docs', label: 'Dokumen' },
+                        { id: 'history', label: 'Riwayat' },
+                        { id: 'info', label: 'Info & Edit' },
                     ].map(t => (
                         <button key={t.id} onClick={() => setActiveTab(t.id)}
                             className={`py-3 px-4 sm:py-3.5 sm:px-6 font-bold text-sm sm:text-base whitespace-nowrap border-b-2 transition-colors ${activeTab === t.id ? 'border-blue-600 text-blue-600 bg-blue-50/50' : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'}`}>
@@ -3428,7 +3406,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     {job.document_debt && job.document_debt.length > 0 && (
                         <div className="mb-4 bg-amber-50 border-2 border-amber-300 rounded-lg p-3 text-xs text-amber-900 shadow-xs">
                             <div className="font-extrabold flex items-center gap-1.5 text-sm text-amber-950 mb-1">
-                                ⚠️ Hutang Dokumen (Document Debt) Aktif!
+                                Hutang Dokumen (Document Debt) Aktif!
                             </div>
                             <p className="mb-1">
                                 Pekerjaan ini memiliki dokumen yang di-bypass di Stage 2 dan <strong>wajib dilengkapi sebelum SUKET dapat dikirim ke klien (Stage 11b)</strong>:
@@ -3436,7 +3414,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <div className="flex flex-wrap gap-1.5 mt-1.5">
                                 {job.document_debt.map((docName, idx) => (
                                     <span key={idx} className="bg-amber-200/80 border border-amber-400 text-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">
-                                        📄 {docName}
+                                        {docName}
                                     </span>
                                 ))}
                             </div>
@@ -3449,9 +3427,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     )}
 
                     {activeTab === 'timeline' && renderTimeline()}
-                    {activeTab === 'docs'     && renderDocuments()}
-                    {activeTab === 'history'  && renderHistory()}
-                    {activeTab === 'info'     && renderEditInfo()}
+                    {activeTab === 'docs' && renderDocuments()}
+                    {activeTab === 'history' && renderHistory()}
+                    {activeTab === 'info' && renderEditInfo()}
                 </div>
 
                 {/* Hidden File Input for triggerUpload */}
@@ -3465,6 +3443,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <span className="font-semibold text-gray-700">Memproses...</span>
                         </div>
                     </div>
+                )}
+
+                {/* Split Job Wizard Modal */}
+                {isSplitModalOpen && (
+                    <SplitJobModal
+                        job={job}
+                        auth={auth}
+                        onClose={() => {
+                            setIsSplitModalOpen(false);
+                            onClose();
+                        }}
+                    />
                 )}
             </div>
         </div>

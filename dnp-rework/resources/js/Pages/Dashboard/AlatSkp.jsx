@@ -1288,7 +1288,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                         )}
                         
                         <div className="p-4 bg-gray-50 text-xs text-gray-500 border-t border-gray-200">
-                            💡 Data sinkronisasi master inventory.
+                            Data sinkronisasi master inventory.
                         </div>
                     </div>
                 </div>

@@ -398,7 +398,7 @@ function MktDashboard({ stats, onSelectJob }) {
                             {achievement}%
                         </div>
                         <div className="text-xs text-gray-500 font-medium mt-1">
-                            {achievement >= 100 ? '🎯 Target tercapai' : `${100 - achievement}% lagi ke target`}
+                            {achievement >= 100 ? 'Target tercapai' : `${100 - achievement}% lagi ke target`}
                         </div>
                     </div>
                 </div>
@@ -525,7 +525,7 @@ function AdmDashboard({ stats, onSelectJob, jobs, inspectors }) {
                 </div>
                 {logistikPending.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 text-sm">
-                        ✓ Semua job Tahap 3 sudah punya Surat Tugas & alat terassign.
+                        Semua job Tahap 3 sudah punya Surat Tugas & alat terassign.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -551,7 +551,7 @@ function AdmDashboard({ stats, onSelectJob, jobs, inspectors }) {
                                                 <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
                                                     stExists ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                    {stExists ? '✓ Terbit' : '× Belum'}
+                                                    {stExists ? 'Terbit' : 'Belum'}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right text-xs font-bold text-blue-600 hover:underline">
@@ -581,7 +581,7 @@ function H5BlinkKPI({ count }) {
             </div>
             <div className={`text-3xl font-extrabold tracking-tight mt-3 ${active ? 'text-red-700' : 'text-gray-900'}`}>{count}</div>
             <div className={`text-xs mt-2 font-bold ${active ? 'text-red-600' : 'text-gray-500'}`}>
-                {active ? '⚠ BELUM LAPOR Teman K3!' : 'Semua lapor terkirim'}
+                {active ? 'BELUM LAPOR Teman K3!' : 'Semua lapor terkirim'}
             </div>
         </div>
     );
@@ -694,7 +694,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                                 <div className="text-[9px] font-medium text-gray-600 truncate">{j.klien}</div>
                                 {insList.length > 0 && (
                                     <div className="text-[8px] font-semibold text-teal-800 bg-teal-50 border border-teal-200/60 rounded px-1 py-0.5 truncate mt-0.5">
-                                        👷 {leadIns}{secondIns ? `, ${secondIns}` : ''}{insList.length > 2 ? ` +${insList.length - 2}` : ''}
+                                        {leadIns}{secondIns ? `, ${secondIns}` : ''}{insList.length > 2 ? ` +${insList.length - 2}` : ''}
                                     </div>
                                 )}
                             </div>
@@ -786,7 +786,7 @@ function InsDashboard({ stats, user, onSelectJob }) {
             {/* Quick Upload Widget */}
             <div className="bg-orange-50/30 border-2 border-dashed border-orange-500/50 rounded-xl p-6 shadow-sm">
                 <div className="mb-4">
-                    <div className="text-xs text-orange-600 font-extrabold uppercase tracking-wider">⚡ QUICK UPLOAD WIDGET</div>
+                    <div className="text-xs text-orange-600 font-extrabold uppercase tracking-wider">QUICK UPLOAD WIDGET</div>
                     <h3 className="text-lg font-bold text-gray-800 mt-0.5">Upload Cepat dari HP</h3>
                 </div>
                 {!activeJob ? (
@@ -819,7 +819,7 @@ function InsDashboard({ stats, user, onSelectJob }) {
                             <input ref={fileRef} type="file" multiple className="hidden" accept="*" onChange={handleFileChange} />
                         </div>
                         <div className="text-[10px] text-gray-400 mt-3 leading-relaxed">
-                            💡 Widget ini shortcut. Setelah diklik/file dipilih, detail job akan terbuka untuk mengarahkan Anda ke tab Lapangan dan melengkapi dokumen.
+                            Widget ini shortcut. Setelah diklik/file dipilih, detail job akan terbuka untuk mengarahkan Anda ke tab Lapangan dan melengkapi dokumen.
                         </div>
                     </div>
                 )}
@@ -984,7 +984,7 @@ function MgrDashboard({ stats, onSelectJob }) {
                                         </div>
                                         {isBottleneck && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">
-                                                🚨 BOTTLENECK
+                                                BOTTLENECK
                                             </span>
                                         )}
                                     </div>
@@ -1039,10 +1039,10 @@ function MgrDashboard({ stats, onSelectJob }) {
                                         </div>
                                     </div>
                                     <div className="flex gap-4 mt-3 text-xs font-semibold">
-                                        {insp.lapanganCount > 0 && <span className="text-gray-500">🏗 {insp.lapanganCount} Lap</span>}
-                                        {insp.lhppCount > 0 && <span className="text-gray-500">📝 {insp.lhppCount} LHPP</span>}
-                                        {insp.overdueCount > 0 && <span className="text-red-600 font-extrabold">⚠ {insp.overdueCount} OVERDUE</span>}
-                                        {isIdle && <span className="text-green-600 italic">✓ Tersedia</span>}
+                                        {insp.lapanganCount > 0 && <span className="text-gray-500">{insp.lapanganCount} Lap</span>}
+                                        {insp.lhppCount > 0 && <span className="text-gray-500">{insp.lhppCount} LHPP</span>}
+                                        {insp.overdueCount > 0 && <span className="text-red-600 font-extrabold">{insp.overdueCount} OVERDUE</span>}
+                                        {isIdle && <span className="text-green-600 italic">Tersedia</span>}
                                     </div>
                                 </div>
                             );
@@ -1059,7 +1059,7 @@ function MgrDashboard({ stats, onSelectJob }) {
                 </div>
                 {tidakLaikUnits.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 text-sm">
-                        ✓ Tidak ada unit dengan kategori TIDAK LAIK / LAIK BERSYARAT saat ini.
+                        Tidak ada unit dengan kategori TIDAK LAIK / LAIK BERSYARAT saat ini.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -1165,7 +1165,7 @@ function FinDashboard({ stats, onSelectJob }) {
                 </div>
                 {tandaTerimaPending.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 text-sm">
-                        ✓ Semua dokumen kurir sudah kembali tanda terima.
+                        Semua dokumen kurir sudah kembali tanda terima.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -1210,7 +1210,7 @@ function FinDashboard({ stats, onSelectJob }) {
             {piutangOverdue.length > 0 && (
                 <div className="bg-red-50/50 border-2 border-red-500 rounded-xl overflow-hidden shadow-sm">
                     <div className="p-6 border-b border-red-100 bg-red-100/30">
-                        <div className="text-xs text-red-600 font-extrabold uppercase tracking-wider">🔴 PIUTANG JATUH TEMPO</div>
+                        <div className="text-xs text-red-600 font-extrabold uppercase tracking-wider">PIUTANG JATUH TEMPO</div>
                         <h3 className="text-lg font-bold text-red-900 mt-0.5">Overdue Accounts Receivable</h3>
                     </div>
                     <div className="overflow-x-auto bg-white">

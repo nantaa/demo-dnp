@@ -7,6 +7,7 @@ Dokumen ini adalah panduan teknis langkah demi langkah (*step-by-step*) untuk me
 - **Target IP VPS**: `157.10.160.135`
 - **Sistem Operasi**: Ubuntu 24.04 LTS (Noble Numbat)
 - **Web Server & Runtime**: Nginx, PHP 8.3-FPM, MySQL 8.0 / MariaDB, Node.js 20 LTS, Composer
+- **Git Repository**: `https://github.com/nantaa/demo-dnp.git` (Branch: `v3`)
 - **DNS & SSL Provider**: Cloudflare (Mode: Full / Full Strict)
 
 ---
@@ -16,7 +17,7 @@ Dokumen ini adalah panduan teknis langkah demi langkah (*step-by-step*) untuk me
 2. [Langkah 2: Inisialisasi & Pengamanan VPS (Ubuntu 24.04 LTS)](#langkah-2-inisialisasi--pengamanan-vps-ubuntu-2404-lts)
 3. [Langkah 3: Instalasi Nginx, PHP 8.3, MySQL, Composer & Node.js](#langkah-3-instalasi-nginx-php-83-mysql-composer--nodejs)
 4. [Langkah 4: Konfigurasi Database MySQL](#langkah-4-konfigurasi-database-mysql)
-5. [Langkah 5: Deployment Source Code Aplikasi](#langkah-5-deployment-source-code-aplikasi)
+5. [Langkah 5: Deployment Source Code Aplikasi (Branch v3)](#langkah-5-deployment-source-code-aplikasi-branch-v3)
 6. [Langkah 6: Konfigurasi Environment & Build Assets](#langkah-6-konfigurasi-environment--build-assets)
 7. [Langkah 7: Konfigurasi SSL Cloudflare Origin & Virtual Host Nginx](#langkah-7-konfigurasi-ssl-cloudflare-origin--virtual-host-nginx)
 8. [Langkah 8: Setup Background Worker & Cron Scheduler](#langkah-8-setup-background-worker--cron-scheduler)
@@ -66,8 +67,11 @@ Dokumen ini adalah panduan teknis langkah demi langkah (*step-by-step*) untuk me
 
 Login ke VPS via SSH menggunakan terminal / PowerShell:
 ```bash
-ssh root@157.10.160.135
+ssh delta@157.10.160.135
+# atau jika menggunakan root: ssh root@157.10.160.135
 ```
+
+*(Catatan: Jika muncul warning `REMOTE HOST IDENTIFICATION HAS CHANGED`, jalankan `ssh-keygen -R 157.10.160.135` di komputer lokal Anda terlebih dahulu)*.
 
 ### 2.1. Update & Upgrade Sistem
 ```bash
@@ -99,6 +103,11 @@ sudo ufw status
 ### 3.1. Instal Nginx Web Server
 ```bash
 sudo apt install -y nginx
+
+# Catatan penting: Jika VPS adalah IPv4-Only, nonaktifkan listen IPv6 pada default config agar tidak error:
+sudo sed -i 's/listen \[::\]:80/#listen [::]:80/g' /etc/nginx/sites-available/default 2>/dev/null || true
+sudo rm -f /etc/nginx/sites-enabled/default
+
 sudo systemctl enable nginx
 sudo systemctl start nginx
 ```
@@ -160,10 +169,10 @@ Masuk ke console MySQL:
 sudo mysql
 ```
 
-Jalankan query SQL berikut (ganti `PasswordKuatDNP2026!` dengan password aman pilihan Anda):
+Jalankan query SQL berikut (menggunakan user `dnp_user` dan password `DNP123!`):
 ```sql
 CREATE DATABASE dnp_monitor_v3 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'dnp_user'@'localhost' IDENTIFIED BY 'PasswordKuatDNP2026!';
+CREATE USER 'dnp_user'@'localhost' IDENTIFIED BY 'DNP123!';
 GRANT ALL PRIVILEGES ON dnp_monitor_v3.* TO 'dnp_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
@@ -171,7 +180,7 @@ EXIT;
 
 ---
 
-## LANGKAH 5: DEPLOYMENT SOURCE CODE APLIKASI
+## LANGKAH 5: DEPLOYMENT SOURCE CODE APLIKASI (BRANCH V3)
 
 ### 5.1. Siapkan Direktori Web
 ```bash
@@ -179,13 +188,17 @@ sudo mkdir -p /var/www/dnp-monitor
 sudo chown -R $USER:www-data /var/www/dnp-monitor
 ```
 
-### 5.2. Clone Repository
-Clone repo ke direktori server:
+### 5.2. Clone Repository Branch v3
+Clone repository langsung ke direktori `/var/www/dnp-monitor`:
 ```bash
 cd /var/www/dnp-monitor
-git clone <URL_GIT_REPOSITORY_ANDA> .
+git clone -b v3 https://github.com/nantaa/demo-dnp.git .
 ```
-*(Catatan: Jika repo berisi folder `dnp-rework`, pastikan struktur path sesuai. Dalam panduan ini root Laravel berada di `/var/www/dnp-monitor/dnp-rework`)*.
+
+Struktur folder di server:
+- Root Project: `/var/www/dnp-monitor`
+- Laravel App: `/var/www/dnp-monitor/dnp-rework`
+- Web Root (Public): `/var/www/dnp-monitor/dnp-rework/public`
 
 ---
 
@@ -216,7 +229,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=dnp_monitor_v3
 DB_USERNAME=dnp_user
-DB_PASSWORD=PasswordKuatDNP2026!
+DB_PASSWORD=DNP123!
 
 BROADCAST_DRIVER=log
 CACHE_DRIVER=file
@@ -287,7 +300,7 @@ sudo chmod 600 /etc/ssl/cloudflare/monitorv3_deltaindo.key
 sudo chmod 644 /etc/ssl/cloudflare/monitorv3_deltaindo.pem
 ```
 
-### 7.2. Buat Nginx Server Block Configuration
+### 7.2. Buat Nginx Server Block Configuration (IPv4-Only)
 Buat file konfigurasi Nginx:
 ```bash
 sudo nano /etc/nginx/sites-available/monitorv3.deltaindo.co.id
@@ -298,7 +311,6 @@ Masukkan konfigurasi lengkap berikut:
 # HTTP - Redirect seluruh request ke HTTPS
 server {
     listen 80;
-    listen [::]:80;
     server_name monitorv3.deltaindo.co.id;
 
     return 301 https://$host$request_uri;
@@ -307,7 +319,6 @@ server {
 # HTTPS - Konfigurasi Utama Laravel + Cloudflare SSL
 server {
     listen 443 ssl http2;
-    listen [::]:443 ssl http2;
     server_name monitorv3.deltaindo.co.id;
 
     root /var/www/dnp-monitor/dnp-rework/public;
@@ -486,8 +497,8 @@ echo "🚀 [1/6] Mengaktifkan mode maintenance..."
 cd /var/www/dnp-monitor/dnp-rework
 php artisan down || true
 
-echo "📥 [2/6] Mengambil update code dari Git..."
-git pull origin main
+echo "📥 [2/6] Mengambil update code dari Git (Branch v3)..."
+git pull origin v3
 
 echo "📦 [3/6] Mengupdate dependency Composer..."
 composer install --no-dev --optimize-autoloader

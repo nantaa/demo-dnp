@@ -126,8 +126,11 @@ export default function KanbanIndex({ jobs, auth }) {
                                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100 transition-opacity" />
 
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className="text-[11px] font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200">
-                                            {job.kode}
+                                        <span 
+                                            className="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200 truncate max-w-[170px]"
+                                            title={`No PO / SPK: ${job.no_po || '-'} | ID Sistem: ${job.kode}`}
+                                        >
+                                            {job.no_po ? `PO: ${job.no_po}` : job.kode}
                                         </span>
                                         {job.units > 1 && (
                                             <span className="text-[10px] font-extrabold px-2 py-0.5 bg-[#E0F2FE] text-[#0A385C] rounded-full border border-[#00A8E8]/30">

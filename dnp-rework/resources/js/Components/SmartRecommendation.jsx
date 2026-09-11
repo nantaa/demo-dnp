@@ -61,7 +61,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
                 <h3 className="font-bold text-lg mb-1">Smart Recommendation — Tim RU & Inspector Matching</h3>
                 <p className="text-xs text-gray-500 mb-3">Pilih Ahli K3 dan/atau Petugas / PIC Lapangan untuk penugasan Riksa Uji</p>
                 <div className="text-sm">
-                    <strong>Target Job: {job.kode} · {job.klien}</strong>
+                    <strong>Target Job: {job.no_po ? `PO: ${job.no_po}` : job.kode} · {job.klien}</strong>
                     <div className="text-gray-600 mt-1">Pesawat: {job.pesawat} ({job.units} unit) · Lokasi: {job.lokasi}</div>
                 </div>
             </div>

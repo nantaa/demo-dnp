@@ -165,8 +165,8 @@ export default function NotificationBell({ onSelectJob }) {
                                         </div>
                                         <p className="text-gray-600 line-clamp-2 leading-tight text-[11px]">{notif.body}</p>
                                         {notif.job && (
-                                            <div className="mt-1 flex items-center gap-1 text-[10px] font-mono text-gray-400">
-                                                <ExternalLink size={10} /> {notif.job.kode} · {notif.job.klien}
+                                            <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-400">
+                                                <ExternalLink size={10} /> <span className="font-semibold text-gray-600">{notif.job.no_po || notif.job.kode}</span> · {notif.job.klien}
                                             </div>
                                         )}
                                     </div>

@@ -228,6 +228,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     });
 
     const editForm = useForm({
+        no_po:   job.no_po   || '',
+        tgl_po:  job.tgl_po  || '',
         klien:   job.klien   || '',
         pesawat: job.pesawat || '',
         lokasi:  job.lokasi  || '',
@@ -1600,11 +1602,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Ringkasan Order Masuk:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
+                        <div><span className="text-gray-400">No. PO / SPK:</span> <span className="font-semibold text-gray-800">{job.no_po || '-'}</span></div>
+                        <div><span className="text-gray-400">Tgl PO:</span> <span className="font-semibold text-gray-800">{job.tgl_po ? fmt(job.tgl_po, { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span></div>
                         <div><span className="text-gray-400">Klien:</span> <span className="font-semibold text-gray-800">{job.klien || '-'}</span></div>
                         <div><span className="text-gray-400">Pesawat / Alat:</span> <span className="font-semibold text-gray-800">{job.pesawat || '-'}</span></div>
                         <div><span className="text-gray-400">Lokasi:</span> <span className="font-semibold text-gray-800">{job.lokasi || '-'}</span></div>
                         <div><span className="text-gray-400">Jumlah Unit:</span> <span className="font-semibold text-gray-800">{job.units || 1} Unit</span></div>
-                        <div><span className="text-gray-400">Nilai Kontrak:</span> <span className="font-semibold text-gray-800">{job.nilai ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '-'}</span></div>
+                        <div className="col-span-2"><span className="text-gray-400">Nilai Kontrak:</span> <span className="font-semibold text-gray-800">{job.nilai ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '-'}</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -2074,11 +2078,31 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <form onSubmit={handleUpdateJob} className="space-y-4 bg-gray-50 p-4 rounded-lg border">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 sm:col-span-1">
-                            <label className="block text-xs font-bold text-gray-700">Klien</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">No. PO / SPK / Proposal *</label>
+                            <input
+                                type="text"
+                                value={editForm.data.no_po}
+                                onChange={e => editForm.setData('no_po', e.target.value)}
+                                className="w-full text-sm border rounded px-2 py-1.5"
+                                placeholder="PO/SPK/PROPOSAL/2026/0123"
+                                required
+                            />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Tanggal PO / SPK / Proposal</label>
+                            <input
+                                type="date"
+                                value={editForm.data.tgl_po || ''}
+                                onChange={e => editForm.setData('tgl_po', e.target.value)}
+                                className="w-full text-sm border rounded px-2 py-1.5"
+                            />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Klien</label>
                             <input type="text" value={editForm.data.klien} onChange={e => editForm.setData('klien', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                            <label className="block text-xs font-bold text-gray-700">Jenis Alat</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Jenis Alat</label>
                             <input type="text" value={editForm.data.pesawat} onChange={e => editForm.setData('pesawat', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
                         </div>
                         <div className="col-span-2">
@@ -2088,12 +2112,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             />
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                            <label className="block text-xs font-bold text-gray-700">Jumlah Unit</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Jumlah Unit</label>
                             <input type="number" min="1" value={editForm.data.units} onChange={e => editForm.setData('units', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
                         </div>
                         {canSeeNilai && (
                             <div className="col-span-2 sm:col-span-1">
-                                <label className="block text-xs font-bold text-gray-700">Nilai Kontrak</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Kontrak</label>
                                 <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
                             </div>
                         )}
@@ -2116,8 +2140,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                     </div>
                     <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                        <div><p className="text-xs text-gray-500">Kode Job</p><p className="font-semibold">{job.kode}</p></div>
-                        <div><p className="text-xs text-gray-500">Marketing</p><p className="font-medium">{job.owner_marketing}</p></div>
+                        <div>
+                            <p className="text-xs text-gray-500">No. PO / SPK / Proposal</p>
+                            <p className="font-bold text-[#0A385C] text-sm break-all">{job.no_po || '—'}</p>
+                            {job.tgl_po && <p className="text-[11px] text-gray-400">Tgl: {fmt(job.tgl_po, { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500">Marketing</p>
+                            <p className="font-medium">{job.owner_marketing}</p>
+                            <p className="text-[10px] font-mono text-gray-400 mt-1" title="ID Sistem Otomatis">ID: {job.kode}</p>
+                        </div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Klien</p><p className="font-semibold text-base">{job.klien}</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">PIC Klien</p><p className="font-medium">{job.pic_klien || '—'} {job.pic_klien_phone ? `(${job.pic_klien_phone})` : ''}</p></div>
                         <div><p className="text-xs text-gray-500">Jenis Alat</p><p className="font-medium">{job.pesawat}</p></div>
@@ -2140,14 +2172,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const handleDeleteJob = async () => {
         const res = await showConfirm(
             'Hapus Job',
-            `Apakah Anda yakin ingin menghapus Job ${job.kode} (${job.klien})? Tindakan ini tidak dapat dibatalkan!`,
+            `Apakah Anda yakin ingin menghapus Job ${job.no_po || job.kode} (${job.klien})? Tindakan ini tidak dapat dibatalkan!`,
             'Ya, Hapus Job',
             'Batal'
         );
         if (res.isConfirmed) {
             router.delete(`/jobs/${job.id}`, {
                 onSuccess: () => {
-                    showSuccess('Berhasil', `Job ${job.kode} berhasil dihapus.`);
+                    showSuccess('Berhasil', `Job ${job.no_po || job.kode} berhasil dihapus.`);
                     onClose();
                 }
             });
@@ -2164,7 +2196,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="min-w-0 flex-1 mr-3">
                         <h2 className="text-base sm:text-xl font-black text-gray-900 tracking-tight truncate">{job.klien}</h2>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="font-mono bg-white px-2 py-0.5 rounded border shadow-sm text-xs font-semibold text-gray-600">{job.kode}</span>
+                            <span 
+                                className="font-bold bg-white px-2.5 py-0.5 rounded border border-slate-200 shadow-xs text-xs text-[#0A385C] truncate max-w-[240px]" 
+                                title={`ID Internal: ${job.kode}`}
+                            >
+                                {job.no_po ? `PO: ${job.no_po}` : job.kode}
+                            </span>
                             <span className="font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
                                 Stage {job.stage}
                             </span>

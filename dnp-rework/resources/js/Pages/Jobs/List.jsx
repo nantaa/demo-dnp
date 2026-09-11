@@ -49,14 +49,14 @@ export default function JobList({ jobs, auth }) {
         e.stopPropagation();
         const res = await showConfirm(
             'Hapus Job',
-            `Apakah Anda yakin ingin menghapus Job ${job.kode} (${job.klien})?`,
+            `Apakah Anda yakin ingin menghapus Job ${job.no_po || job.kode} (${job.klien})?`,
             'Ya, Hapus',
             'Batal'
         );
         if (res.isConfirmed) {
             router.delete(`/jobs/${job.id}`, {
                 onSuccess: () => {
-                    showSuccess('Berhasil', `Job ${job.kode} berhasil dihapus.`);
+                    showSuccess('Berhasil', `Job ${job.no_po || job.kode} berhasil dihapus.`);
                     if (selectedJob?.id === job.id) setSelectedJob(null);
                 }
             });
@@ -190,7 +190,12 @@ export default function JobList({ jobs, auth }) {
                             className="bg-white border rounded-lg p-3 shadow-sm cursor-pointer active:bg-gray-50 transition-colors"
                         >
                             <div className="flex items-start justify-between mb-1.5">
-                                <span className="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-700">{job.kode}</span>
+                                <span 
+                                    className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-[#0A385C] border border-slate-200 truncate max-w-[180px]"
+                                    title={`No PO / SPK: ${job.no_po || '-'} | ID Sistem: ${job.kode}`}
+                                >
+                                    {job.no_po ? `PO: ${job.no_po}` : job.kode}
+                                </span>
                                 <div className="flex items-center gap-1.5">
                                     {getSlaBadge(job)}
                                     <span className="text-xs bg-gray-100 border px-2 py-0.5 rounded font-medium">S{stageInfo?.displayId || job.stage}</span>
@@ -224,7 +229,7 @@ export default function JobList({ jobs, auth }) {
                 <table className="w-full text-left text-sm">
                     <thead className="bg-gray-50 border-b">
                         <tr>
-                            <th className="px-4 py-3 font-medium text-gray-600">Kode</th>
+                            <th className="px-4 py-3 font-medium text-gray-600">No. PO / SPK</th>
                             <th className="px-4 py-3 font-medium text-gray-600">Klien</th>
                             <th className="px-4 py-3 font-medium text-gray-600">Pesawat</th>
                             <th className="px-4 py-3 font-medium text-gray-600">Stage</th>
@@ -241,7 +246,10 @@ export default function JobList({ jobs, auth }) {
                                     onClick={() => setSelectedJob(job)}
                                     className="hover:bg-gray-50 cursor-pointer"
                                 >
-                                    <td className="px-4 py-3 font-mono text-xs">{job.kode}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="font-bold text-xs text-[#0A385C]">{job.no_po || '—'}</div>
+                                        <div className="font-mono text-[10px] text-gray-400" title="ID Sistem Otomatis">{job.kode}</div>
+                                    </td>
                                     <td className="px-4 py-3 font-bold">{job.klien}</td>
                                     <td className="px-4 py-3 text-gray-600">{job.pesawat} ({job.units} unit)</td>
                                     <td className="px-4 py-3">

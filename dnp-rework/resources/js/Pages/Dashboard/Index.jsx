@@ -310,7 +310,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                             <table className="w-full text-left border-collapse text-sm">
                                 <thead>
                                     <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
-                                        <th className="p-3">Kode</th>
+                                        <th className="p-3">No. PO / SPK</th>
                                         <th className="p-3">Stage</th>
                                         <th className="p-3">Aktivitas</th>
                                         <th className="p-3 text-right">Waktu</th>
@@ -319,7 +319,10 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                                 <tbody className="divide-y divide-gray-100">
                                     {list.map((h, i) => (
                                         <tr key={i} onClick={() => setSelectedJob(h.job)} className="hover:bg-gray-50 cursor-pointer transition-colors">
-                                            <td className="p-3 font-mono font-bold text-gray-800">{h.job.kode}</td>
+                                            <td className="p-3">
+                                                <div className="font-bold text-xs text-gray-800">{h.job.no_po || h.job.kode}</div>
+                                                <div className="font-mono text-[10px] text-gray-400" title="ID Sistem Otomatis">{h.job.kode}</div>
+                                            </td>
                                             <td className="p-3">
                                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-800 border">
                                                     S{getStageDisplayId(h.stage)}
@@ -462,7 +465,7 @@ function MktDashboard({ stats, onSelectJob }) {
                         <table className="w-full text-left border-collapse text-sm">
                             <thead>
                                 <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
-                                    <th className="p-4">Kode</th>
+                                    <th className="p-4">No. PO / SPK</th>
                                     <th className="p-4">Klien</th>
                                     <th className="p-4">Unit</th>
                                     <th className="p-4">Expire</th>
@@ -475,7 +478,10 @@ function MktDashboard({ stats, onSelectJob }) {
                                     const isUrg = s.days <= 30 && s.days >= 0;
                                     return (
                                         <tr key={s.kode} onClick={() => onSelectJob(s.job)} className="hover:bg-gray-50 cursor-pointer transition-colors">
-                                            <td className="p-4 font-mono font-bold text-gray-800">{s.job.kode}</td>
+                                            <td className="p-4">
+                                                <div className="font-bold text-xs text-gray-800">{s.job.no_po || s.job.kode}</div>
+                                                <div className="font-mono text-[10px] text-gray-400" title="ID Sistem Otomatis">{s.job.kode}</div>
+                                            </td>
                                             <td className="p-4 font-semibold text-gray-700">{s.job.klien}</td>
                                             <td className="p-4 text-gray-500">{s.unit?.unit_label || '—'}</td>
                                             <td className="p-4 font-mono text-gray-400">{formatDate(s.unit?.suket_expired_at)}</td>

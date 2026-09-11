@@ -112,6 +112,10 @@ class JobController extends Controller
             'tgl_po'          => 'nullable|date',
         ]);
 
+        if (empty($validated['tgl_po'])) {
+            $validated['tgl_po'] = null;
+        }
+
         if (Auth::user()->role === 'marketing') {
             $validated['owner_marketing'] = Auth::user()->name;
         }
@@ -144,7 +148,12 @@ class JobController extends Controller
             abort(403, 'Anda tidak memiliki izin untuk mengubah informasi job ini.');
         }
 
-        $job->update($request->except(['inspector_ids', '_method']));
+        $data = $request->except(['inspector_ids', '_method']);
+        if (array_key_exists('tgl_po', $data) && empty($data['tgl_po'])) {
+            $data['tgl_po'] = null;
+        }
+
+        $job->update($data);
 
         if ($request->has('inspector_ids')) {
             $job->inspectors()->sync($request->input('inspector_ids', []));

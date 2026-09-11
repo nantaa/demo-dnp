@@ -6,7 +6,7 @@ export const STAGES = [
     { id: 13, name: 'Aktualisasi Unit', short: 'Aktualisasi', role: 'marketing', sla: 1, displayId: '4b' },
     { id: 5, name: 'Penyusunan LHPP', short: 'LHPP', role: 'inspektur', sla: 3 },
     { id: 6, name: 'Review Laporan Teknis', short: 'Rev. Laporan', role: 'manager', sla: 1 },
-    { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'manager', sla: 1 },
+    { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'admin', sla: 1 },
     { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30 },
     { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
     { id: 10, name: 'Penagihan', short: 'Tagihan', role: 'finance', sla: 1 },

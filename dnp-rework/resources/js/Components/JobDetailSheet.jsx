@@ -92,7 +92,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
                 </div>
             )}
             <div className="flex gap-2">
-                {[2,4,5,8,9,10,13].includes(stage) && (
+                {[2,4,5,7,8,9,10,13].includes(stage) && (
                     <button type="button" onClick={onReject} disabled={processing}
                         className="px-4 py-2 rounded text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                         Tolak / Kembalikan
@@ -418,6 +418,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (propCanManage !== undefined) return propCanManage;
         if (!permissions) return false;
         if (permissions === 'superadmin') return true;
+        if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(job.stage)) return true;
         if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
         if (isInspector) {
             return [4, 6].includes(job.stage) && isAssignedInspector;
@@ -436,6 +437,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const canManageStageDocs = (sid) => {
         if (['superadmin','manager'].includes(user?.role)) return true;
+        if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sid)) return true;
         if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sid)) return true;
         if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return isAssignedInspector;
         if (isInspector) return false;
@@ -535,6 +537,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         let targetStage = Math.max(1, job.stage - 1);
         if (job.stage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
         else if (job.stage === 5) targetStage = 4;
+        else if (job.stage === 7) targetStage = 6;
         else if (job.stage === 8) targetStage = 6;
         else if (job.stage === 10) targetStage = 9;
         else if (job.stage === 14) targetStage = 11;
@@ -1334,7 +1337,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* ── STAGE 7 (Penyerahan ke Dinas — MGR) ────── */}
+                {/* ── STAGE 7 (Penyerahan ke Dinas — Admin) ──── */}
                 {s === 7 && (
                     <div className="space-y-3">
                         <div>

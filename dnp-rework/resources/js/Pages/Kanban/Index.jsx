@@ -26,6 +26,7 @@ export default function KanbanIndex({ jobs, auth }) {
 
     const canManageStage = (stageId) => {
         if (permissions === 'superadmin') return true;
+        if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(stageId)) return true;
         const perm = permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };

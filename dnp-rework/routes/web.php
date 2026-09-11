@@ -36,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/approve', [JobController::class, 'approveAsManager'])->name('jobs.approve');
     Route::post('/jobs/{job}/return-to-stage1', [JobController::class, 'returnToStage1'])->name('jobs.return-to-stage1');
     Route::post('/jobs/{job}/stage4-data', [JobController::class, 'saveStage4Data'])->name('jobs.stage4-data');
+    Route::post('/jobs/{job}/stage5-data', [JobController::class, 'saveStage5Data'])->name('jobs.stage5-data');
     Route::post('/jobs/{job}/stage5-review', [JobController::class, 'saveStage5Review'])->name('jobs.stage5-review');
     Route::post('/jobs/{job}/stage7-data', [JobController::class, 'saveStage7Data'])->name('jobs.stage7-data');
     Route::post('/jobs/{job}/stage8-data', [JobController::class, 'saveStage8Data'])->name('jobs.stage8-data');

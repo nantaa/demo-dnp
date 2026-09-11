@@ -232,13 +232,19 @@ class JobController extends Controller
         // Stage 4: move to Stage 5 or Stage 13 allowed
 
 
-        // Stage 5 → 6: require LHPP + BAP uploaded
+        // Stage 5 → 6: require link_lhpp OR LHPP / BAP uploaded
         if ($currentStage == 5) {
-            $hasLhpp = $job->documents()->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'])->exists();
-            $hasBap  = $job->documents()->whereIn('type', ['BAP', 'BAP (PDF)', 'BAP Final'])->exists();
-            if (!$hasLhpp || !$hasBap) {
+            if ($request->filled('link_lhpp')) {
+                $job->update(['link_lhpp' => $request->input('link_lhpp')]);
+            }
+            $linkLhpp = $request->input('link_lhpp') ?: $job->link_lhpp;
+            $hasLhpp = !empty($linkLhpp)
+                || $job->documents()->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'])->exists()
+                || $job->documents()->where('stage', 5)->exists();
+
+            if (!$hasLhpp) {
                 return back()->withErrors([
-                    'documents' => 'LHPP dan BAP wajib diunggah sebelum melanjutkan ke Stage 6 (Review Laporan Teknis).',
+                    'documents' => 'Link LHPP (Google Drive / Cloud) atau file LHPP wajib diisi sebelum melanjutkan ke Stage 6.',
                 ]);
             }
         }
@@ -595,6 +601,25 @@ class JobController extends Controller
         }
         $evaluation->delete();
         return back()->with('success', 'Evaluasi unit dihapus.');
+    }
+
+    /**
+     * Save Stage 5 data (Link LHPP submitted by personnel).
+     */
+    public function saveStage5Data(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if (!$this->canActOnStage(5, $job) && !$user->isSuperadmin()) {
+            abort(403, 'Unauthorized to update Stage 5 data.');
+        }
+
+        $validated = $request->validate([
+            'link_lhpp' => 'nullable|string|max:1000',
+        ]);
+
+        $job->update($validated);
+
+        return back()->with('success', 'Link LHPP berhasil disimpan.');
     }
 
     /**

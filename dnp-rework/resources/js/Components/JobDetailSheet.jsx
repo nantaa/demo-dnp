@@ -256,6 +256,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         s5_review_decision: job.s5_review_decision ?? '',
         s5_review_notes:    job.s5_review_notes    ?? '',
     });
+    const [lhppLink, setLhppLink] = useState(job.link_lhpp ?? '');
+    const [isSavingLink, setIsSavingLink] = useState(false);
     const [s7, setS7] = useState({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
     const [s8, setS8] = useState({
         tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
@@ -373,6 +375,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             s5_review_decision: job.s5_review_decision ?? '',
             s5_review_notes:    job.s5_review_notes    ?? '',
         });
+        setLhppLink(job.link_lhpp ?? '');
         setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
         setS8({
             tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
@@ -491,6 +494,35 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             });
             return;
         }
+        if (job.stage === 5) {
+            const hasLhppDoc = (job.documents || []).some(d => d.stage === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
+            if (!lhppLink?.trim() && !hasLhppDoc) {
+                return showError('Link LHPP Belum Diisi', 'Silakan isi link dokumen LHPP (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
+            }
+            setIsMoving(true);
+            router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLink }, {
+                onSuccess: () => {
+                    router.post(`/jobs/${job.id}/move`, {
+                        next_stage: data.next_stage || 6,
+                        notes: data.notes,
+                        link_lhpp: lhppLink,
+                    }, {
+                        onSuccess: () => { setIsMoving(false); onClose(); },
+                        onError: (errs) => {
+                            setIsMoving(false);
+                            const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
+                            showError('Gagal Pindah Stage', msg);
+                        },
+                    });
+                },
+                onError: (errs) => {
+                    setIsMoving(false);
+                    const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan link LHPP.';
+                    showError('Gagal Simpan', msg);
+                },
+            });
+            return;
+        }
         if (job.stage === 10) {
             if (!s10.invoice_no?.trim()) return showError('Validasi', 'Nomor Invoice wajib diisi.');
             if (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) return showError('Validasi', 'Total Invoice (Nilai Tagihan) wajib diisi dengan benar.');
@@ -570,6 +602,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveLhppLink = () => {
+        if (!lhppLink.trim()) return showError('Validasi', 'Isi link LHPP terlebih dahulu!');
+        setIsSavingLink(true);
+        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLink }, {
+            onSuccess: () => {
+                setIsSavingLink(false);
+                showSuccess('Berhasil', 'Link LHPP berhasil disimpan.');
+            },
+            onError: (errs) => {
+                setIsSavingLink(false);
+                const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan link LHPP.';
+                showError('Gagal Simpan', msg);
+            }
+        });
+    };
     const handleSaveS5  = () => {
         if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
         router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.') });
@@ -1289,11 +1336,91 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                 {/* ── STAGE 5 (Penyusunan LHPP — INS) ────────── */}
                 {s === 5 && (
-                    <div className="space-y-3">
-                        <p className="text-xs text-gray-500">Unggah dokumen LHPP dan BAP untuk penyusunan laporan teknis.</p>
-                        {(DOC_TYPES_BY_STAGE[5] || []).map(t => <UploadSlot key={t} type={t} stageId={5} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                    <div className="space-y-4">
+                        <div className="bg-blue-50/70 border border-blue-200 rounded-lg p-3 text-xs text-blue-900 space-y-1">
+                            <div className="font-semibold flex items-center gap-1.5">
+                                <span>📄</span> Penyusunan Dokumen LHPP (Tim Ahli / Inspektur)
+                            </div>
+                            <p className="text-blue-700">
+                                Personil / Tim Ahli dapat mengisi link Google Drive / OneDrive / Cloud Storage folder atau dokumen LHPP di bawah ini.
+                            </p>
+                        </div>
+
+                        {/* Direct Link Input for LHPP */}
+                        <div className="bg-white border-2 border-indigo-200 rounded-lg p-3 shadow-sm space-y-2.5">
+                            <div className="flex items-center justify-between">
+                                <label className="block text-xs font-bold text-gray-800">
+                                    🔗 Link Dokumen / Folder LHPP (Google Drive / Cloud) *
+                                </label>
+                                {job.link_lhpp && (
+                                    <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                        ✓ Link Tersimpan
+                                    </span>
+                                )}
+                            </div>
+                            <input
+                                type="url"
+                                value={lhppLink}
+                                onChange={e => setLhppLink(e.target.value)}
+                                placeholder="https://drive.google.com/drive/folders/... atau link cloud dokumen"
+                                className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                disabled={!canManage}
+                            />
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                                {canManage && (
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveLhppLink}
+                                        disabled={isSavingLink || !lhppLink.trim()}
+                                        className="px-3 py-1.5 rounded text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition"
+                                    >
+                                        {isSavingLink ? 'Menyimpan...' : '💾 Simpan Link'}
+                                    </button>
+                                )}
+                                {lhppLink.trim() && (
+                                    <a
+                                        href={lhppLink.startsWith('http') ? lhppLink : `https://${lhppLink}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition"
+                                    >
+                                        ↗ Buka Link LHPP
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Optional uploads or existing files */}
+                        <div className="space-y-2 pt-1 border-t border-gray-100">
+                            <p className="text-xs font-medium text-gray-500">Unggah Dokumen Tambahan (Opsional):</p>
+                            {(DOC_TYPES_BY_STAGE[5] || []).filter(t => t !== 'LHPP').map(t => (
+                                <UploadSlot
+                                    key={t}
+                                    type={t}
+                                    stageId={5}
+                                    docs={job.documents}
+                                    triggerUpload={triggerUpload}
+                                    uploadFileDirectly={uploadFileDirectly}
+                                    canManageStageDocs={canManageStageDocs}
+                                    deleteDoc={deleteDoc}
+                                />
+                            ))}
+
+                            {/* If there are previously uploaded LHPP files, display them */}
+                            {(job.documents || []).some(d => d.stage === 5 && d.type === 'LHPP') && (
+                                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
+                                    <p className="text-[11px] font-medium text-gray-600 mb-1.5">File LHPP yang sudah diunggah:</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {(job.documents || []).filter(d => d.stage === 5 && d.type === 'LHPP').map(doc => (
+                                            <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} />
                     </div>
                 )}
 
@@ -1301,6 +1428,29 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {s === 6 && (
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
+
+                        {/* LHPP Link preview for Manager */}
+                        {job.link_lhpp && (
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-1.5">
+                                <div className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                                    <span>📂</span> Dokumen / Folder LHPP dari Tim Ahli:
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <a
+                                        href={job.link_lhpp.startsWith('http') ? job.link_lhpp : `https://${job.link_lhpp}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition"
+                                    >
+                                        🔗 Buka Link LHPP (Drive / Cloud) ↗
+                                    </a>
+                                    <span className="text-[11px] text-gray-500 truncate max-w-[240px]" title={job.link_lhpp}>
+                                        {job.link_lhpp}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {job.s5_review_decision && (
                             <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
                                 Keputusan sebelumnya: <strong>{STAGE5_DECISIONS.find(d => d.value === job.s5_review_decision)?.label}</strong>
@@ -1704,8 +1854,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penyusunan LHPP:</p>
-                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div><span className="text-gray-400">Status LHPP & BAP:</span> <span className="font-semibold text-emerald-700">✓ Dokumen Selesai Diunggah & Disusun</span></div>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1.5">
+                        <div><span className="text-gray-400">Status LHPP:</span> <span className="font-semibold text-emerald-700">✓ Dokumen Selesai Disusun</span></div>
+                        {job.link_lhpp && (
+                            <div className="flex items-center gap-2 pt-0.5">
+                                <span className="text-gray-400">Link LHPP:</span>
+                                <a
+                                    href={job.link_lhpp.startsWith('http') ? job.link_lhpp : `https://${job.link_lhpp}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                                >
+                                    🔗 Buka Link Dokumen LHPP ↗
+                                </a>
+                            </div>
+                        )}
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">

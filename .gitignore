@@ -15,3 +15,5 @@
 # Standard Ignores
 .env
 .DS_Store
+.claude/
+.playwright-mcp/

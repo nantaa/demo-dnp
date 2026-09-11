@@ -102,11 +102,12 @@ export default function KanbanIndex({ jobs, auth }) {
                         if (auth.user.role === 'marketing') {
                             return j.owner_marketing === auth.user.name;
                         }
-                        if (auth.user.role === 'inspektur') {
-                            const uId = String(auth.user.id);
+                        if (['inspektur', 'inspector'].includes(auth.user?.role)) {
+                            const uId = String(auth.user?.id);
                             return (j.inspectors || []).some(ins => 
                                 String(ins.id) === uId || 
                                 String(ins.user_id) === uId || 
+                                String(ins.pivot?.inspector_id) === uId || 
                                 String(ins.pivot?.user_id) === uId
                             ) || String(j.report_writer_id) === uId;
                         }

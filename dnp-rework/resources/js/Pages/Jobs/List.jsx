@@ -14,8 +14,22 @@ export default function JobList({ jobs, auth }) {
     const [selectedJob, setSelectedJob] = useState(null);
 
     const visibleJobs = jobs.filter(job => {
-        if (permissions === 'superadmin' || auth.user.role === 'admin' || auth.user.role === 'manager') return true;
-        if (auth.user.role === 'marketing') return job.owner_marketing === auth.user.name;
+        if (permissions === 'superadmin' || auth.user?.role === 'admin' || auth.user?.role === 'manager') return true;
+        if (auth.user?.role === 'marketing') return job.owner_marketing === auth.user?.name;
+
+        // Assigned inspector or report writer access: keep visible across all stages even when moved backwards
+        if (['inspektur', 'inspector'].includes(auth.user?.role)) {
+            const uId = String(auth.user?.id);
+            const isAssigned = (job.inspectors || []).some(ins =>
+                String(ins.id) === uId ||
+                String(ins.user_id) === uId ||
+                String(ins.pivot?.inspector_id) === uId ||
+                String(ins.pivot?.user_id) === uId
+            ) || String(job.report_writer_id) === uId;
+
+            if (isAssigned) return true;
+        }
+
         const perm = permissions?.[job.stage];
         return perm && (
             perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||

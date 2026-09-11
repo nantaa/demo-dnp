@@ -68,7 +68,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
     const isMKT = user.role === 'marketing';
     const isADM = user.role === 'admin';
-    const isINS = user.role === 'inspektur';
+    const isINS = user.role === 'inspektur' || user.role === 'inspector';
     const isFIN = user.role === 'finance';
     const isMGR = user.role === 'manager';
     const isSuper = user.role === 'superadmin';
@@ -76,7 +76,17 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
     // Filtered jobs list based on personal scope / toggle (Only MGR has filter toggle)
     const personalFiltered = useMemo(() => {
         if (!isMGR || !filterMine) return jobs;
-        return jobs.filter(j => j.s5_reviewed_by === user.name || (j.inspectors || []).some(ins => ins.id === user.id));
+        const uId = String(user.id);
+        return jobs.filter(j => 
+            j.s5_reviewed_by === user.name || 
+            (j.inspectors || []).some(ins => 
+                String(ins.id) === uId || 
+                String(ins.user_id) === uId || 
+                String(ins.pivot?.inspector_id) === uId || 
+                String(ins.pivot?.user_id) === uId
+            ) || 
+            String(j.report_writer_id) === uId
+        );
     }, [jobs, filterMine, isMGR, user.name, user.id]);
 
     const stats = useMemo(() => {
@@ -94,8 +104,22 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             stage: s.id, name: s.name, count: personalFiltered.filter(j => j.stage === s.id).length
         }));
 
-        // INS-specific
-        const lhppJobs = isINS ? personalFiltered.filter(j => j.stage === 6 && (j.peer_review_status === 'draft' || !j.peer_review_status || j.peer_review_status === 'revision'))
+        const isAssignedToMe = (j) => {
+            const uId = String(user.id);
+            return (j.inspectors || []).some(ins => 
+                String(ins.id) === uId || 
+                String(ins.user_id) === uId || 
+                String(ins.pivot?.inspector_id) === uId || 
+                String(ins.pivot?.user_id) === uId
+            ) || String(j.report_writer_id) === uId;
+        };
+
+        // INS-specific: include Stage 5 (LHPP) and Stage 6 (Manager Review)
+        const lhppJobs = isINS ? personalFiltered.filter(j => 
+            isAssignedToMe(j) && 
+            (j.stage === 5 || j.stage === 6) && 
+            (j.peer_review_status === 'draft' || !j.peer_review_status || j.peer_review_status === 'revision')
+        )
             .map(j => {
                 const deadlineDays = (j.units || 1) * 3;
                 const elapsedDays = daysBetween(j.stage_started_at || j.updated_at, today());
@@ -103,7 +127,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                 return { ...j, deadlineDays, elapsedDays, remainingDays };
             }).sort((a, b) => a.remainingDays - b.remainingDays) : [];
 
-        const stage4Mine = isINS ? personalFiltered.filter(j => j.stage === 4 || j.stage === 13) : [];
+        const stage4Mine = isINS ? personalFiltered.filter(j => isAssignedToMe(j) && (j.stage === 4 || j.stage === 13)) : [];
 
         // MGR-specific
         const lhppNeedReview = jobs.filter(j => j.stage === 5 && j.peer_review_status === 'submitted');

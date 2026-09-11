@@ -491,6 +491,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const isAssignedInspector = (job.inspectors || []).some(ins => 
         String(ins.id) === String(user?.id) || 
         String(ins.user_id) === String(user?.id) || 
+        String(ins.pivot?.inspector_id) === String(user?.id) || 
         String(ins.pivot?.user_id) === String(user?.id)
     ) || String(job.report_writer_id) === String(user?.id);
 
@@ -663,8 +664,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         else if (curStage === 14) targetStage = 11;
         const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
-        post(`/jobs/${job.id}/reject`, {
-            data: { notes: data.notes, target_stage: targetStage },
+        router.post(`/jobs/${job.id}/reject`, {
+            notes: data.notes,
+            target_stage: targetStage
+        }, {
             onSuccess: () => onClose()
         });
     };

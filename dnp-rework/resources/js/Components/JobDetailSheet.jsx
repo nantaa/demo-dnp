@@ -423,7 +423,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(job.stage)) return true;
         if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
         if (isInspector) {
-            return [4, 6].includes(job.stage) && isAssignedInspector;
+            return [4, 5].includes(job.stage);
         }
         const p = permissions[job.stage];
         return p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1');
@@ -441,7 +441,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (['superadmin','manager'].includes(user?.role)) return true;
         if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sid)) return true;
         if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sid)) return true;
-        if (isInspector && [4,5,6].includes(sid) && sid === job.stage) return isAssignedInspector;
+        if (isInspector && [4, 5].includes(sid) && sid === job.stage) return true;
         if (isInspector) return false;
         const p = permissions?.[sid];
         return p && p.is_owner;

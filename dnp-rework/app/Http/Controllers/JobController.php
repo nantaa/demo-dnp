@@ -44,10 +44,10 @@ class JobController extends Controller
             return false;
         }
 
-        // If it's an inspector role, check if user is assigned to the specific job for inspector stages (4 or 5)
+        // Inspector role can act on inspector stages (4 and 5)
         if ($user->role === 'inspektur') {
-            if ($job && ($stage === 4 || $stage === 5)) {
-                return $job->inspectors()->where('users.id', $user->id)->exists();
+            if (in_array($stage, [4, 5])) {
+                return true;
             }
             return false;
         }
@@ -536,7 +536,9 @@ class JobController extends Controller
     public function saveStage4Data(Request $request, Job $job)
     {
         $user = Auth::user();
-        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists();
+        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists()
+            || (int)$job->report_writer_id === (int)$user->id
+            || $user->role === 'inspektur';
         if (!$isInspector && !$user->isSuperadmin() && $user->role !== 'manager') {
             abort(403, 'Only assigned inspectors can submit Stage 4 data.');
         }
@@ -941,13 +943,16 @@ class JobController extends Controller
         }
 
         $user = Auth::user();
-        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists();
+        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists()
+            || (int)$job->report_writer_id === (int)$user->id
+            || $user->role === 'inspektur';
 
         $canUpload = $user->isSuperadmin()
             || $user->role === 'manager'
             || ($user->role === 'marketing' && $job->owner_marketing === $user->name && in_array($request->stage, [1, 11]))
-            || ($isInspector && in_array($request->stage, [4, 5, 6]))
-            || ($user->role !== 'inspektur' && $user->canOwnStage($request->stage));
+            || ($user->role === 'admin' && in_array($request->stage, [2, 3, 7, 8, 9]))
+            || ($isInspector && in_array($request->stage, [4, 5]))
+            || $user->canOwnStage($request->stage);
 
         if (!$canUpload) {
             abort(403, 'You do not have permission to upload documents for this stage.');

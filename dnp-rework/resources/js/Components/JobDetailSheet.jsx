@@ -238,6 +238,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         lokasi: job.lokasi || '',
         nilai: job.nilai || '',
         units: job.units || 1,
+        no_po: job.no_po || '',
+        tgl_po: job.tgl_po || '',
+        termin_pembayaran: job.termin_pembayaran || 'FULL',
+        pic_klien: job.pic_klien || '',
+        pic_klien_phone: job.pic_klien_phone || '',
+    });
+
+    const [showReviseInvoiceModal, setShowReviseInvoiceModal] = useState(false);
+    const [reviseInvoiceForm, setReviseInvoiceForm] = useState({
+        invoice_no: job.invoice_no || '',
+        total_invoice_amount: job.total_invoice_amount || job.nilai || '',
+        tgl_invoice_issued: job.tgl_invoice_issued || new Date().toISOString().slice(0, 10),
+        revision_notes: '',
     });
 
     // ── UI State ─────────────────────────────────────────────────────────────
@@ -406,6 +419,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             lokasi: job.lokasi || '',
             nilai: job.nilai || '',
             units: job.units || 1,
+            no_po: job.no_po || '',
+            tgl_po: job.tgl_po || '',
+            termin_pembayaran: job.termin_pembayaran || 'FULL',
+            pic_klien: job.pic_klien || '',
+            pic_klien_phone: job.pic_klien_phone || '',
+        });
+        setReviseInvoiceForm({
+            invoice_no: job.invoice_no || '',
+            total_invoice_amount: job.total_invoice_amount || job.nilai || '',
+            tgl_invoice_issued: job.tgl_invoice_issued || new Date().toISOString().slice(0, 10),
+            revision_notes: '',
         });
         setS4({
             actual_units: job.actual_units ?? job.units,
@@ -3238,33 +3262,50 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     );
 
     // ── History Tab ──────────────────────────────────────────────────────────
-    const renderHistory = () => (
-        <div className="space-y-4">
-            {(job.historyLogs || job.history_logs || []).slice().reverse().map(log => (
-                <div key={log.id} className="border-l-2 border-gray-200 pl-4 py-1 relative">
-                    <div className="absolute w-2 h-2 bg-gray-400 rounded-full -left-[5px] top-3"></div>
-                    <div className="bg-gray-50 rounded p-3">
-                        <div className="flex justify-between items-start mb-1">
-                            <span className="text-xs font-bold text-gray-700">{log.user?.name || 'System'}</span>
-                            <span className="text-xs text-gray-500">{fmt(log.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="text-sm text-gray-800">{log.action}</p>
-                        {log.notes && (
-                            <p className="text-xs text-gray-600 mt-1 italic border-l-2 border-gray-300 pl-2">"{log.notes}"</p>
-                        )}
-                        {log.returned_from_stage && (
-                            <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
-                                DIKEMBALIKAN dari Stage {log.returned_from_stage}
+    const renderHistory = () => {
+        const rawLogs = (job.historyLogs || job.history_logs || []).slice();
+        const filteredLogs = rawLogs.filter((log, idx) => {
+            if (idx === 0) return true;
+            const prev = rawLogs[idx - 1];
+            const isSameAction = (log.action || '').trim() === (prev.action || '').trim();
+            const isSameStage = log.stage === prev.stage;
+            const tCurrent = log.created_at ? new Date(log.created_at).getTime() : 0;
+            const tPrev = prev.created_at ? new Date(prev.created_at).getTime() : 0;
+            const isWithin5s = Math.abs(tCurrent - tPrev) <= 5000;
+            return !(isSameAction && isSameStage && isWithin5s);
+        });
+
+        return (
+            <div className="space-y-4">
+                {filteredLogs.reverse().map((log, idx) => (
+                    <div key={log.id || `log-${idx}`} className="border-l-2 border-gray-200 pl-4 py-1 relative">
+                        <div className="absolute w-2 h-2 bg-gray-400 rounded-full -left-[5px] top-3"></div>
+                        <div className="bg-gray-50 rounded p-3">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className="text-xs font-bold text-gray-700">{log.user?.name || log.by || 'System'}</span>
+                                <span className="text-xs text-gray-500">{fmt(log.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <p className="text-sm text-gray-800">{log.action}</p>
+                            {log.notes && (
+                                <p className="text-xs text-gray-600 mt-1 italic border-l-2 border-gray-300 pl-2">"{log.notes}"</p>
+                            )}
+                            {log.returned_from_stage && (
+                                <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
+                                    DIKEMBALIKAN dari Stage {log.returned_from_stage}
+                                </span>
+                            )}
+                            <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
+                                Stage {STAGES.find(s => s.id === log.stage)?.displayId || log.stage}
                             </span>
-                        )}
-                        <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
-                            Stage {STAGES.find(s => s.id === log.stage)?.displayId || log.stage}
-                        </span>
+                        </div>
                     </div>
-                </div>
-            ))}
-        </div>
-    );
+                ))}
+                {filteredLogs.length === 0 && (
+                    <div className="text-center py-8 text-gray-400 text-sm">Belum ada riwayat aktivitas.</div>
+                )}
+            </div>
+        );
+    };
 
     // ── Edit Info Tab ────────────────────────────────────────────────────────
     const renderEditInfo = () => (
@@ -3280,6 +3321,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <label className="block text-xs font-bold text-gray-700">Jenis Alat</label>
                             <input type="text" value={editForm.data.pesawat} onChange={e => editForm.setData('pesawat', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
                         </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">PIC Klien</label>
+                            <input type="text" value={editForm.data.pic_klien} onChange={e => editForm.setData('pic_klien', e.target.value)} placeholder="Nama PIC" className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">No. Telepon PIC</label>
+                            <input type="text" value={editForm.data.pic_klien_phone} onChange={e => editForm.setData('pic_klien_phone', e.target.value)} placeholder="08xxxxxxxxxx" className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
                         <div className="col-span-2">
                             <IndonesiaLocationSelect
                                 value={editForm.data.lokasi}
@@ -3289,6 +3338,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="col-span-2 sm:col-span-1">
                             <label className="block text-xs font-bold text-gray-700">Jumlah Unit</label>
                             <input type="number" min="1" value={editForm.data.units} onChange={e => editForm.setData('units', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">No. PO / SPK</label>
+                            <input type="text" value={editForm.data.no_po} onChange={e => editForm.setData('no_po', e.target.value)} placeholder="PO/2026/..." className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">Tanggal PO</label>
+                            <input type="date" value={editForm.data.tgl_po} onChange={e => editForm.setData('tgl_po', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <label className="block text-xs font-bold text-gray-700">Termin Pembayaran</label>
+                            <select value={editForm.data.termin_pembayaran} onChange={e => editForm.setData('termin_pembayaran', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5 font-medium">
+                                <option value="FULL">FULL (Pelunasan 100%)</option>
+                                <option value="DP">DP (Termin / Uang Muka)</option>
+                            </select>
                         </div>
                         {canSeeNilai && (
                             <div className="col-span-2 sm:col-span-1">
@@ -3319,6 +3383,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><p className="text-xs text-gray-500">Marketing</p><p className="font-medium">{job.owner_marketing}</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Klien</p><p className="font-semibold text-base">{job.klien}</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">PIC Klien</p><p className="font-medium">{job.pic_klien || '—'} {job.pic_klien_phone ? `(${job.pic_klien_phone})` : ''}</p></div>
+                        <div><p className="text-xs text-gray-500">No. PO / SPK</p><p className="font-mono font-medium text-gray-900">{job.no_po || '—'}</p></div>
+                        <div><p className="text-xs text-gray-500">Tanggal PO</p><p className="font-medium">{job.tgl_po || '—'}</p></div>
+                        <div><p className="text-xs text-gray-500">Termin Pembayaran</p><p className="font-semibold">{job.termin_pembayaran === 'DP' ? 'DP (Termin / Uang Muka)' : 'FULL (Pelunasan 100%)'}</p></div>
                         <div><p className="text-xs text-gray-500">Jenis Alat</p><p className="font-medium">{job.pesawat}</p></div>
                         <div><p className="text-xs text-gray-500">Jumlah Unit</p><p className="font-bold">{job.units} Unit</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Lokasi</p><p>{job.lokasi}</p></div>
@@ -3335,6 +3402,37 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             )}
         </div>
     );
+
+    const handleReviseInvoice = async (e) => {
+        e?.preventDefault();
+        if (!reviseInvoiceForm.invoice_no?.trim()) {
+            showError('Validasi Gagal', 'Nomor invoice wajib diisi.');
+            return;
+        }
+        if (!reviseInvoiceForm.total_invoice_amount || parseFloat(reviseInvoiceForm.total_invoice_amount) <= 0) {
+            showError('Validasi Gagal', 'Total invoice harus lebih besar dari 0.');
+            return;
+        }
+        try {
+            const res = await fetch(`/api/jobs/${job.id}/invoice-revise`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(reviseInvoiceForm),
+            });
+            const resData = await res.json();
+            if (!res.ok) {
+                throw new Error(resData.message || 'Gagal merevisi invoice');
+            }
+            showSuccess('Berhasil', 'Data invoice berhasil direvisi tanpa mengubah stage.');
+            setShowReviseInvoiceModal(false);
+            router.reload({ preserveScroll: true });
+        } catch (err) {
+            showError('Error', err.message || 'Terjadi kesalahan saat merevisi invoice.');
+        }
+    };
 
     const handleDeleteJob = async () => {
         const res = await showConfirm(
@@ -3370,6 +3468,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                        {((auth?.user?.role === 'finance' || auth?.user?.role === 'superadmin') && (job.stage >= 10 || ['11c', '11b'].includes(job.stage))) && (
+                            <button
+                                onClick={() => setShowReviseInvoiceModal(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                                title="Revisi Data Invoice (Finance Direct Edit)"
+                            >
+                                📝 Revisi Invoice
+                            </button>
+                        )}
                         {(auth?.user?.role === 'superadmin' || auth?.permissions === 'superadmin') && (
                             <button
                                 onClick={handleDeleteJob}
@@ -3455,6 +3562,78 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             onClose();
                         }}
                     />
+                )}
+
+                {/* Revise Invoice Modal (Finance) */}
+                {showReviseInvoiceModal && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-gray-950/70 backdrop-blur-xs">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-5 space-y-4">
+                            <div className="border-b pb-2 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-base font-bold text-gray-900">Revisi Data Invoice (Finance)</h3>
+                                    <p className="text-xs text-gray-500">Perbarui invoice kapan saja tanpa mengubah stage alur kerja</p>
+                                </div>
+                                <button onClick={() => setShowReviseInvoiceModal(false)} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
+                            </div>
+                            <form onSubmit={handleReviseInvoice} className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Nomor Invoice *</label>
+                                    <input
+                                        type="text"
+                                        value={reviseInvoiceForm.invoice_no}
+                                        onChange={e => setReviseInvoiceForm({ ...reviseInvoiceForm, invoice_no: e.target.value })}
+                                        className="w-full text-sm border rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500"
+                                        placeholder="INV/2026/..."
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Total Nilai Tagihan (Rp) *</label>
+                                    <input
+                                        type="number"
+                                        value={reviseInvoiceForm.total_invoice_amount}
+                                        onChange={e => setReviseInvoiceForm({ ...reviseInvoiceForm, total_invoice_amount: e.target.value })}
+                                        className="w-full text-sm border rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Tanggal Invoice Diterbitkan</label>
+                                    <input
+                                        type="date"
+                                        value={reviseInvoiceForm.tgl_invoice_issued}
+                                        onChange={e => setReviseInvoiceForm({ ...reviseInvoiceForm, tgl_invoice_issued: e.target.value })}
+                                        className="w-full text-sm border rounded px-2.5 py-1.5"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Catatan Revisi / Alasan Perubahan</label>
+                                    <textarea
+                                        rows={2}
+                                        value={reviseInvoiceForm.revision_notes}
+                                        onChange={e => setReviseInvoiceForm({ ...reviseInvoiceForm, revision_notes: e.target.value })}
+                                        className="w-full text-sm border rounded px-2.5 py-1.5"
+                                        placeholder="Contoh: Koreksi PPN / perubahan termin sesuai kesepakatan klien..."
+                                    />
+                                </div>
+                                <div className="flex gap-2 justify-end pt-2 border-t">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviseInvoiceModal(false)}
+                                        className="px-3 py-1.5 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow-xs"
+                                    >
+                                        Simpan Revisi Invoice
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

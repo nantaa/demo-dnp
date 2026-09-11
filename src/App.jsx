@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { App as InertiaApp, router } from '@inertiajs/react';
 import KanbanIndex from '../dnp-rework/resources/js/Pages/Kanban/Index.jsx';
+import StageRailIndex from '../dnp-rework/resources/js/Pages/StageRail/Index.jsx';
 import JobList from '../dnp-rework/resources/js/Pages/Jobs/List.jsx';
 import JobCreate from '../dnp-rework/resources/js/Pages/Jobs/Create.jsx';
 import DashboardIndex from '../dnp-rework/resources/js/Pages/Dashboard/Index.jsx';
@@ -11,6 +12,7 @@ import PelaporanIndex from '../dnp-rework/resources/js/Pages/Pelaporan/Index.jsx
 
 const PAGES = {
   'Kanban/Index': KanbanIndex,
+  'StageRail/Index': StageRailIndex,
   'Jobs/List': JobList,
   'Jobs/Create': JobCreate,
   'Dashboard/Index': DashboardIndex,
@@ -27,6 +29,7 @@ if (typeof window !== 'undefined') {
     if (name === 'jobs.create') return '/jobs/create';
     if (name === 'jobs.index') return '/jobs';
     if (name === 'kanban') return '/kanban';
+    if (name === 'stagerail' || name === 'stage-rail') return '/stage-rail';
     if (name === 'dashboard') return '/';
     return '/' + (name || '').replace('.', '/');
   };

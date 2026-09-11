@@ -11,6 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'dnp-rework/resources/js'),
+      '@domain': path.resolve(__dirname, 'src/domain'),
     },
   },
   build: {
@@ -37,6 +38,15 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/kanban': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        bypass: (req) => {
+          if (!req.headers['x-inertia']) {
+            return '/index.html';
+          }
+        },
+      },
+      '/stage-rail': {
         target: 'http://localhost:3001',
         changeOrigin: true,
         bypass: (req) => {

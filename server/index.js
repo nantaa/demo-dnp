@@ -82,6 +82,36 @@ app.get('/kanban', (req, res) => {
   res.json(payload);
 });
 
+// Stage Rail endpoint (Stage Rail + Work Queue comparison view)
+app.get('/stage-rail', (req, res) => {
+  const rows = db.prepare('SELECT data FROM jobs ORDER BY created_at DESC').all();
+  const jobs = rows.map(r => JSON.parse(r.data));
+  const payload = {
+    component: 'StageRail/Index',
+    props: {
+      jobs,
+      auth: {
+        user: {
+          id: 1,
+          name: 'Super Administrator',
+          role: 'superadmin',
+          email: 'superadmin@deltaindo.co.id'
+        },
+        permissions: 'superadmin'
+      }
+    },
+    url: '/stage-rail',
+    version: '1.0'
+  };
+
+  if (req.headers['x-inertia']) {
+    res.setHeader('X-Inertia', 'true');
+    res.setHeader('Vary', 'X-Inertia');
+    return res.json(payload);
+  }
+  res.json(payload);
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   const jobCount = db.prepare('SELECT COUNT(*) as cnt FROM jobs').get().cnt;

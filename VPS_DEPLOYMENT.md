@@ -1,205 +1,203 @@
-# DNP Monitor - VPS Hosting & Deployment Guide
+# DNP Monitor V3 — Production VPS Hosting & Deployment Guide
 
-This guide provides step-by-step instructions to deploy the **DNP Monitor** (React Vite Frontend + Express Node.js Backend + SQLite Database) on a virtual private server (VPS) running Ubuntu Server (20.04 / 22.04 / 24.04 LTS).
+> **Version:** 3.0.0 (Supports 17-Column Kanban & Stage Rail + Work Queue Views)\
+> **Target OS:** Ubuntu Server 22.04 / 24.04 LTS\
+> **Stack:** React 18 (Vite SPA) + Inertia Client + Express.js Node Backend (Port 3001) + SQLite (WAL Mode) + Nginx + PM2 + Cloudflare / Let's Encrypt SSL
 
 ---
 
-## 🏗️ Deployment Architecture
+## 1. Production Architecture Overview
 
-In production, the application is set up as follows:
-1. **Nginx** serves as the front-facing web server. It handles incoming HTTP/HTTPS traffic:
-   - Serves the compiled static frontend files directly (efficiently handling assets, caching, and compression).
-   - Proxies API requests (`/api/*`) to the Node.js Express backend running locally on port `3001`.
-2. **PM2** (Process Manager) runs the Express backend in the background and restarts it automatically in case of crashes or system reboots.
-3. **SQLite** stores the data inside the `server/dnp.db` file.
+The DNP Monitor production stack separates static asset delivery from backend REST and Inertia JSON endpoints:
 
+```text
+                           ┌──────────────────────────────────────────────────────────┐
+                           │                     CLOUDFLARE CDN                       │
+                           │   (DNS + DDoS Protection + Full Strict SSL + WAF)        │
+                           └────────────────────────────┬─────────────────────────────┘
+                                                        │ HTTPS (Port 443)
+                                                        ▼
+                           ┌──────────────────────────────────────────────────────────┐
+                           │                     YOUR UBUNTU VPS                      │
+                           │                                                          │
+                           │                 ┌──────────────────────┐                 │
+                           │                 │   Nginx Web Server   │                 │
+                           │                 └──────────┬───────────┘                 │
+                           │                            │                             │
+                           │         ┌──────────────────┴──────────────────┐          │
+                           │         ▼                                     ▼          │
+                           │  Static SPA Assets                  Inertia & REST API   │
+                           │  (try_files /index.html)            (/api, /kanban, ...) │
+                           │  /var/www/dnp-monitor/dist          Proxy to Port 3001   │
+                           │                                               │          │
+                           │                                               ▼          │
+                           │                                     ┌──────────────────┐ │
+                           │                                     │  PM2 Cluster /   │ │
+                           │                                     │  Express Server  │ │
+                           │                                     └────────┬─────────┘ │
+                           │                                              │           │
+                           │                                              ▼           │
+                           │                                     ┌──────────────────┐ │
+                           │                                     │  SQLite Database │ │
+                           │                                     │  (server/dnp.db) │ │
+                           │                                     └──────────────────┘ │
+                           └──────────────────────────────────────────────────────────┘
 ```
-                  ┌──────────────────────────────────────────────┐
-                  │                  Your VPS                    │
-                  │                                              │
-                  │            ┌──────────────────────┐          │
-                  │            │     Nginx Web Server │          │
-                  │            └──────────┬───────────┘          │
-                  │                       │                      │
-       HTTP/HTTPS │        / (Frontend)   │    /api (API Proxy)  │
- ────────────────►│      ┌────────────────┴──────────────┐       │
-   (Ports 80/443) │      ▼                               ▼       │
-                  │ ┌───────────────┐           ┌────────────────┐│
-                  │ │ Static Assets │           │ Express Server ││
-                  │ │ (dist/ folder)│           │ (PM2 Port 3001)││
-                  │ └───────────────┘           └────────┬───────┘│
-                  │                                      │       │
-                  │                                      ▼       │
-                  │                             ┌────────────────┐│
-                  │                             │ SQLite Database││
-                  │                             │  (server/db)   ││
-                  │                             └────────────────┘│
-                  └──────────────────────────────────────────────┘
-```
 
 ---
 
-## 📋 Prerequisites
+## 2. Server Preparation & System Prerequisites
 
-Before starting, ensure you have:
-* An active VPS with **Ubuntu Server** (fresh installation recommended).
-* A **Domain Name** (e.g., `monitor.dnp.co.id` or `dnp-monitor.yourcompany.com`) pointed to your VPS public IP address via an **A Record** in your DNS provider settings.
-* Standard **SSH root/sudo access** to your VPS.
-
----
-
-## 🛠️ Step-by-Step Installation
-
-### Step 1: Connect and Update the VPS
-
-SSH into your server and update the local package list to ensure all dependencies are up to date:
-
+### Step 1: Connect and Update VPS Packages
 ```bash
-# Connect to your VPS (replace with your IP and username)
-ssh root@your_vps_ip
+# Connect to your VPS via SSH
+ssh root@YOUR_SERVER_IP
 
-# Update system repositories and upgrade installed packages
+# Update system repositories and upgrade base packages
 sudo apt update && sudo apt upgrade -y
 ```
 
----
-
-### Step 2: Install Node.js, Git, and Build Essentials
-
-The backend requires **Node.js LTS** (version 18 or 20). We will install it using the official NodeSource binary distribution. We also need `build-essential` and `sqlite3` to compile native SQLite modules if required.
+### Step 2: Install Node.js 20 LTS, Git, and Build Essentials
+`better-sqlite3` requires C++ build tools (`gcc`, `g++`, `make`, `python3`) to compile native bindings during `npm install`.
 
 ```bash
-# Download and import the NodeSource GPG key and add the repository
-sudo apt install -y curl git build-essential sqlite3
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Install core build utilities and sqlite3 tools
+sudo apt install -y curl git build-essential sqlite3 python3
 
-# Install Node.js
+# Install Node.js 20.x LTS via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
-# Verify the installed versions
-node -v
-npm -v
+# Verify versions
+node -v   # Expected: v20.x.x
+npm -v    # Expected: 10.x.x
+```
+
+### Step 3: Install Process Manager (PM2) Globally
+```bash
+sudo npm install -g pm2
 ```
 
 ---
 
-### Step 3: Clone and Setup the Project
+## 3. Application Setup & Deployment Directory
 
-We will place the project folder in `/var/www/dnp-monitor`.
-
+### Step 1: Create App Directory & Configure Permissions
 ```bash
-# Create the deployment directory and change ownership to your user
+# Create dedicated web root
 sudo mkdir -p /var/www/dnp-monitor
 sudo chown -R $USER:$USER /var/www/dnp-monitor
 
-# Navigate to the directory
+# Navigate into directory
 cd /var/www/dnp-monitor
+```
 
-# Clone your repository (replace with your actual git repository URL)
-# If using SSH, make sure your SSH keys are set up, otherwise use HTTPS:
+### Step 2: Clone Codebase from Git
+```bash
+# Clone the repository
 git clone https://github.com/nantaa/demo-dnp.git .
 
-# Install dependencies for both frontend and backend (root package.json)
+# Install dependencies (root package.json includes all Vite + Express + Inertia modules)
 npm install
 ```
 
-> [!IMPORTANT]
-> **Directory Permissions for SQLite**: 
-> SQLite creates temporary journaling files (`dnp.db-wal` and `dnp.db-shm`) in the same directory as the database file (`/var/www/dnp-monitor/server/`). The user running the Node.js application **must** have full write permissions to the `/var/www/dnp-monitor/server` directory.
-
----
-
-### Step 4: Run the Production Build
-
-Vite compiles all React components, styles, and assets into optimized static assets.
-
+### Step 3: Run Automated Verification Test Suite
+Before compiling for production, verify that all test suites pass on the server environment:
 ```bash
-# Build the frontend assets
+npm test
+# Expected Output: 65 tests passing across 27 suites (0 failures)
+```
+
+### Step 4: Compile Production Frontend Assets
+```bash
 npm run build
 ```
-
-This command will create a `dist/` directory inside `/var/www/dnp-monitor/`. This folder contains the raw `index.html` and assets that Nginx will serve directly.
+This compiles all React components, icons, and Tailwind utility classes into `/var/www/dnp-monitor/dist/`.
 
 ---
 
-### Step 5: Configure the Backend Server with PM2
+## 4. Backend Process Management (PM2)
 
-We will use **PM2** to run the Express API server. PM2 manages application clustering, logging, and handles automatic restarts if the server crashes or the VPS reboots.
-
+### Step 1: Start Express Backend under PM2
 ```bash
-# Install PM2 globally
-sudo npm install -g pm2
+# Start backend server under PM2 on port 3001
+pm2 start server/index.js --name "dnp-monitor"
 
-# Start the Express server
-pm2 start server/index.js --name "dnp-monitor-api"
-
-# Configure PM2 to launch on system startup
+# Configure PM2 to auto-start on server reboot
 pm2 startup
 ```
+*Copy and run the `sudo env PATH=...` command generated by `pm2 startup`.*
 
-Running `pm2 startup` will output a command that you **must copy and paste** into your terminal. It looks like:
-`sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u username --hp /home/username`
-
-Once you run that command, save the current process list so it persists across reboots:
-
+### Step 2: Save PM2 State
 ```bash
-# Save the running PM2 processes
 pm2 save
 ```
 
-#### Monitor PM2 Application Status
+### Useful PM2 Commands
 ```bash
-# Check status
-pm2 status
-
-# View real-time logs
-pm2 logs dnp-monitor-api
-
-# Restart the backend
-pm2 restart dnp-monitor-api
+pm2 status                  # Check process health and CPU/Memory usage
+pm2 logs dnp-monitor        # View real-time output and error logs
+pm2 reload dnp-monitor      # Zero-downtime reload
+pm2 restart dnp-monitor     # Hard restart
 ```
 
 ---
 
-### Step 6: Install and Configure Nginx
+## 5. Nginx Reverse Proxy Configuration
 
-Nginx will serve as the HTTP reverse proxy to handle requests.
+> [!IMPORTANT]
+> **Inertia.js Routing Gotcha:**\
+> DNP Monitor uses Inertia SPA routing. When a user requests `/kanban`, `/stage-rail`, or `/jobs` directly in a browser, Nginx serves `dist/index.html`. When React makes background data fetches (`X-Inertia: true`) or API calls, Nginx **must** proxy them to port `3001`.
 
+### Step 1: Install Nginx
 ```bash
-# Install Nginx
 sudo apt install nginx -y
 ```
 
-Create a new Nginx server configuration block for the DNP Monitor:
-
+### Step 2: Create Site Configuration File
 ```bash
 sudo nano /etc/nginx/sites-available/dnp-monitor
 ```
 
-Paste the following configuration, replacing `monitor.yourdomain.com` with your actual domain name:
+Paste the complete configuration block below (replace `monitor.yourdomain.com` with your actual domain):
 
 ```nginx
 server {
     listen 80;
     listen [::]:80;
-
     server_name monitor.yourdomain.com;
 
-    # Frontend compiled assets directory
+    # Static assets compiled from Vite
     root /var/www/dnp-monitor/dist;
     index index.html;
 
-    # Gzip Compression settings
+    # Gzip Compression for maximum page speed
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml+rss text/javascript;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml application/javascript application/json;
 
-    # Handle client-side routing in React (Single Page Application fallback)
-    location / {
-        try_files $uri $uri/ /index.html;
+    # Maximum file upload size for documents/photos (BAP, Surat Tugas, LHPP, Suket)
+    client_max_body_size 25M;
+
+    # 1. Static Assets Cache Optimization
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
     }
 
-    # Proxy API requests to Node.js Express server running on port 3001
-    location /api {
+    # 2. Uploaded Documents Storage (PDF, JPG, PNG)
+    location /storage/ {
+        alias /var/www/dnp-monitor/server/storage/;
+        try_files $uri =404;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # 3. Express REST API & Health Check Proxies
+    location ~ ^/(api|notifications)/ {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -211,155 +209,177 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Custom logs paths
-    access_log /var/log/nginx/dnp-monitor.access.log;
-    error_log /var/log/nginx/dnp-monitor.error.log;
+    # 4. Inertia Endpoints & Mutating Routes (Jobs, Kanban, Stage Rail)
+    location ~ ^/(jobs|kanban|stage-rail) {
+        # If request is an Inertia background JSON request or a mutating POST/PUT/DELETE
+        if ($http_x_inertia = "true") {
+            proxy_pass http://127.0.0.1:3001;
+            break;
+        }
+        if ($request_method != GET) {
+            proxy_pass http://127.0.0.1:3001;
+            break;
+        }
+
+        # Otherwise serve SPA frontend entry point
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 5. SPA Fallback for all other routes
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Custom Logging Paths
+    access_log /var/log/nginx/dnp_monitor_access.log;
+    error_log /var/log/nginx/dnp_monitor_error.log;
 }
 ```
 
-Enable the new site by creating a symlink to the `sites-enabled` directory:
-
+### Step 3: Enable Site & Test Configuration
 ```bash
-# Enable the configuration
+# Enable the site
 sudo ln -s /etc/nginx/sites-available/dnp-monitor /etc/nginx/sites-enabled/
 
-# Remove Nginx default index site configuration to avoid conflicts
-sudo rm /etc/nginx/sites-enabled/default
+# Remove default site
+sudo rm -f /etc/nginx/sites-enabled/default
 
-# Test Nginx configuration for syntax errors
+# Verify Nginx syntax
 sudo nginx -t
 
-# If syntax is OK, restart Nginx to apply changes
-sudo systemctl restart nginx
+# Reload Nginx
+sudo systemctl reload nginx
 ```
 
 ---
 
-### Step 7: Secure the Site with SSL/TLS (HTTPS)
+## 6. SSL / HTTPS Setup
 
-Deploy a free, automatic SSL certificate using **Let's Encrypt** and **Certbot**.
-
+### Option A: Automatic Let's Encrypt (Certbot)
 ```bash
-# Install Certbot and the Nginx plugin
-sudo apt install certbot python3-certbot-nginx -y
+# Install Certbot and Nginx plugin
+sudo apt install -y certbot python3-certbot-nginx
 
-# Obtain and install the SSL certificate
-# (Certbot will automatically modify your Nginx file to enable HTTPS and force redirects)
+# Obtain SSL Certificate (Certbot automatically updates Nginx configuration)
 sudo certbot --nginx -d monitor.yourdomain.com
-```
 
-Follow the prompts:
-1. Enter an email address (for renewal and security notices).
-2. Agree to the Terms of Service.
-3. Choose whether to share your email.
-4. Let's Encrypt will verify DNS, provision the certificates, and automatically configure Nginx to redirect HTTP to HTTPS.
-
-Certbot automatically schedules a cron job to renew the certificate before it expires. You can verify it works by running:
-```bash
+# Test automated certificate renewal
 sudo certbot renew --dry-run
 ```
 
+### Option B: Cloudflare SSL (Full / Strict Mode)
+If using Cloudflare:
+1. In Cloudflare Dashboard $\rightarrow$ **SSL/TLS** $\rightarrow$ Set encryption mode to **Full (strict)**.
+2. In **SSL/TLS** $\rightarrow$ **Origin Server** $\rightarrow$ Create Certificate $\rightarrow$ Save `cert.pem` and `key.pem` on your VPS at `/etc/ssl/certs/dnp.pem` and `/etc/ssl/private/dnp.key`.
+3. In Nginx configuration, point `ssl_certificate` and `ssl_certificate_key` to those files.
+
 ---
 
-## 💾 Database Maintenance & Backup Strategy
+## 7. SQLite Maintenance & Safe Automated Backups
 
-Since DNP Monitor uses **SQLite**, all data is stored inside a single file: `/var/www/dnp-monitor/server/dnp.db`. Because SQLite is in WAL (Write-Ahead Logging) mode, you should not copy the database directly during high traffic to avoid capturing a partial transaction state.
+Since SQLite operates with Write-Ahead Logging (WAL), copying `dnp.db` directly during live traffic may cause data corruption. Use SQLite's online `.backup` command.
 
-Here is a recommended script to safely backup the database using the official sqlite `.backup` tool.
-
-### 1. Create a Backup Script
-
-Create a script file at `/var/www/dnp-monitor/server/backup.sh`:
-
+### Step 1: Create Backup Script
 ```bash
 nano /var/www/dnp-monitor/server/backup.sh
 ```
 
-Paste the following script content:
-
+Paste the following script:
 ```bash
 #!/bin/bash
+set -e
 
-# Configuration
-DB_FILE="/var/www/dnp-monitor/server/dnp.db"
+DB_PATH="/var/www/dnp-monitor/server/dnp.db"
 BACKUP_DIR="/var/www/dnp-monitor/backups"
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_FILE="$BACKUP_DIR/dnp_backup_$TIMESTAMP.db"
+DATE=$(date +"%Y%m%d_%H%M%S")
+TARGET_FILE="$BACKUP_DIR/dnp_backup_$DATE.db"
 
-# Create backup directory if not exists
 mkdir -p "$BACKUP_DIR"
 
-# Perform online safe backup using SQLite CLI
-sqlite3 "$DB_FILE" ".backup '$BACKUP_FILE'"
+# Online safe SQLite backup
+sqlite3 "$DB_PATH" ".backup '$TARGET_FILE'"
 
-# Compress the backup
-gzip "$BACKUP_FILE"
+# Compress backup
+gzip "$TARGET_FILE"
 
-# Delete backups older than 30 days to save space
+# Rotate: remove backups older than 30 days
 find "$BACKUP_DIR" -type f -name "*.db.gz" -mtime +30 -delete
 
-echo "Backup created successfully: ${BACKUP_FILE}.gz"
+echo "[$(date)] Backup completed successfully: ${TARGET_FILE}.gz"
 ```
 
-Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`).
-
-Make the script executable:
+### Step 2: Make Executable and Schedule Cron Job
 ```bash
 chmod +x /var/www/dnp-monitor/server/backup.sh
-```
 
-### 2. Schedule Daily Automatic Backups
-
-Open your crontab editor:
-```bash
+# Open crontab
 crontab -e
 ```
-
-Add the following line at the bottom of the file to execute the backup script every night at 2:00 AM:
+Add this entry to run the backup every night at 02:00 AM:
 ```cron
-0 2 * * * /var/www/dnp-monitor/server/backup.sh >> /var/www/dnp-monitor/server/backup.log 2>&1
+0 2 * * * /var/www/dnp-monitor/server/backup.sh >> /var/www/dnp-monitor/backups/backup.log 2>&1
 ```
 
 ---
 
-## 🔄 Updating the Application (Continuous Deployment)
+## 8. One-Click Continuous Deployment Script (`deploy.sh`)
 
-When you make changes to the codebase and push them to GitHub, run these commands to update your live app:
+Create an automated deployment script in the project root to update the app with zero downtime whenever changes are pushed to GitHub:
 
 ```bash
+nano /var/www/dnp-monitor/deploy.sh
+```
+
+Paste:
+```bash
+#!/bin/bash
+set -e
+
+echo "🚀 Starting DNP Monitor V3 Deployment..."
+
 cd /var/www/dnp-monitor
 
-# 1. Fetch latest changes
+echo "📥 1. Pulling latest commits from GitHub..."
 git pull origin main
 
-# 2. Install any new dependencies
+echo "📦 2. Installing dependencies..."
 npm install
 
-# 3. Rebuild the React frontend
+echo "🧪 3. Running automated test suite..."
+npm test
+
+echo "🏗️ 4. Building production frontend bundle..."
 npm run build
 
-# 4. Restart backend processes to load new code
-pm2 restart dnp-monitor-api
+echo "🔄 5. Reloading backend with zero downtime..."
+pm2 reload dnp-monitor
+
+echo "🌐 6. Reloading Nginx..."
+sudo systemctl reload nginx
+
+echo "✅ Deployment completed successfully!"
+```
+
+Make it executable:
+```bash
+chmod +x /var/www/dnp-monitor/deploy.sh
+```
+
+Whenever you want to deploy an update in the future, simply run:
+```bash
+./deploy.sh
 ```
 
 ---
 
-## 🔍 Troubleshooting & Verification
+## 9. Deployment Verification & Troubleshooting Checklist
 
-### Check Server Health endpoint
-Verify the backend is serving requests properly from localhost:
-```bash
-curl http://localhost:3001/api/health
-# Expected Output: {"ok":true,"jobs":X,"timestamp":"..."}
-```
-
-### Common Commands Quick Reference
-| Service / Task | Command |
-| :--- | :--- |
-| **Check PM2 logs** | `pm2 logs` |
-| **Restart backend app** | `pm2 restart dnp-monitor-api` |
-| **Nginx Access logs** | `tail -f /var/log/nginx/dnp-monitor.access.log` |
-| **Nginx Error logs** | `tail -f /var/log/nginx/dnp-monitor.error.log` |
-| **Test Nginx config** | `sudo nginx -t` |
-| **Reload Nginx config** | `sudo systemctl reload nginx` |
-| **Inspect SQLite DB size** | `ls -la /var/www/dnp-monitor/server/` |
+| Check | Command | Expected Result |
+| :--- | :--- | :--- |
+| **1. Backend Health Check** | `curl http://localhost:3001/api/health` | `{"ok":true,"jobs":X,...}` |
+| **2. PM2 Status** | `pm2 status` | `dnp-monitor` status is `online` |
+| **3. Test Suite Integrity** | `npm test` | `pass 65, fail 0` |
+| **4. Nginx Configuration** | `sudo nginx -t` | `syntax is ok, test is successful` |
+| **5. Nginx Error Logs** | `tail -f /var/log/nginx/dnp_monitor_error.log` | No 502/504 errors |
+| **6. Stage Rail Endpoint** | `curl -H "x-inertia: true" http://localhost:3001/stage-rail` | Returns JSON with `"component":"StageRail/Index"` |
+| **7. Kanban Endpoint** | `curl -H "x-inertia: true" http://localhost:3001/kanban` | Returns JSON with `"component":"Kanban/Index"` |

@@ -6,7 +6,7 @@ import JobDetailSheet from '@/Components/JobDetailSheet';
 import JobFamilyDrawer from '@/Components/JobFamilyDrawer';
 import { STAGES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
-import { Trash2, Plus, ChevronLeft, ChevronRight, Layers, Sparkles, GitFork, ArrowRight } from 'lucide-react';
+import { Trash2, Plus, ChevronLeft, ChevronRight, Layers, Sparkles, GitFork, ArrowRight, Columns, SlidersHorizontal } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
@@ -119,8 +119,11 @@ export default function KanbanIndex({ jobs, auth }) {
             <Head title="Kanban Board" />
             
             <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                    <h1 className="text-xl font-bold text-gray-900">Kanban Board</h1>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <Columns size={20} className="text-[#00A8E8]" />
+                        Kanban Board
+                    </h1>
                     <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
                         Total {jobs.length} Job
                     </span>
@@ -128,7 +131,27 @@ export default function KanbanIndex({ jobs, auth }) {
                         <Sparkles size={12} className="text-amber-600" /> Delta v2.0 (17 Stages)
                     </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+                    {/* View Switcher Toggle */}
+                    <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl border border-slate-300">
+                        <button
+                            type="button"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black bg-white text-[#0A385C] shadow-sm"
+                            title="Active: 17-Column Kanban Board"
+                        >
+                            <Columns size={13} className="text-[#00A8E8]" />
+                            <span>Kanban</span>
+                        </button>
+                        <Link
+                            href="/stage-rail"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors"
+                            title="Buka Stage Rail & Work Queue View"
+                        >
+                            <SlidersHorizontal size={13} />
+                            <span>Stage Rail</span>
+                        </Link>
+                    </div>
+
                     {['marketing', 'manager'].includes(auth.user.role) && (
                         <Link href={route('jobs.create')} className="bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
                             <Plus size={14} /> Job Baru

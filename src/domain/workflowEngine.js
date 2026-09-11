@@ -1,10 +1,163 @@
 /**
- * DNP Monitor v3 — Core Domain Workflow Engine
- * Implements business rules specified in Laporan_Revisi_Sistem_DNP_Monitor_tahap_1_Rev6.md
+ * Stage Role Permission Matrix (RBAC).
  */
+export const STAGE_ROLE_PERMISSIONS = {
+  stage1_create: ['marketing', 'superadmin'],
+  stage2_verify: ['admin', 'superadmin'],
+  stage2_bypass: ['manager', 'kadiv', 'superadmin'],
+  stage3_schedule: ['admin', 'superadmin'],
+  stage4_inspection: ['inspektur', 'ahli_k3', 'tenaga_ahli', 'superadmin'],
+  stage4b_actualize: ['marketing', 'superadmin'],
+  stage4c_reschedule: ['admin', 'superadmin'],
+  stage4d_reinspection: ['inspektur', 'ahli_k3', 'tenaga_ahli', 'superadmin'],
+  stage5_draft: ['admin', 'superadmin'],
+  stage6_review: ['manager', 'kadiv', 'superadmin'],
+  stage7_dinas: ['admin', 'superadmin'],
+  stage8_disnaker: ['admin', 'superadmin'],
+  stage9_suket: ['admin', 'superadmin'],
+  stage10_invoice: ['finance', 'superadmin'],
+  invoice_revise: ['finance', 'superadmin'],
+  stage11_collection: ['marketing', 'superadmin'],
+  stage11c_verify: ['finance', 'superadmin'],
+  stage11b_dispatch: ['marketing', 'superadmin'],
+  stage12_reopen: ['manager', 'kadiv', 'superadmin'],
+};
+
+export function validateStageActionPermission(role, action, options = {}) {
+  if (!role) {
+    if (options.allowAnonymous) {
+      return { allowed: true };
+    }
+    return {
+      allowed: false,
+      reason: `Header identitas pengguna (x-user-role) wajib disertakan untuk aksi '${action}'.`,
+    };
+  }
+  const normalizedRole = String(role).toLowerCase().trim();
+  if (normalizedRole === 'superadmin') {
+    return { allowed: true };
+  }
+  const allowedRoles = STAGE_ROLE_PERMISSIONS[action];
+  if (!allowedRoles) {
+    return { allowed: true };
+  }
+  if (allowedRoles.includes(normalizedRole)) {
+    return { allowed: true };
+  }
+  return {
+    allowed: false,
+    reason: `Role '${role}' tidak memiliki hak akses untuk aksi '${action}'. Diperlukan salah satu dari: ${allowedRoles.join(', ')}.`,
+  };
+}
+
+/**
+ * Validates stage-to-stage transition permissions based on actor role and target stage.
+ */
+export function validateStageTransitionPermission(currentStage, targetStage, role) {
+  if (!role) {
+    return {
+      allowed: false,
+      reason: 'Header identitas pengguna (x-user-role) wajib disertakan untuk memindahkan stage.',
+    };
+  }
+  const normRole = String(role).toLowerCase().trim();
+  if (normRole === 'superadmin') {
+    return { allowed: true };
+  }
+
+  const curr = Number(currentStage);
+  const target = Number(targetStage);
+
+  // Transition-specific overrides
+  if (curr === 5 && target === 6) {
+    // Submitting LHPP draft to QC Review: Admin only
+    if (!['admin', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Admin atau Superadmin yang dapat mengajukan draf LHPP ke Stage 6 (Review QC). Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  if (curr === 4 && target === 6) {
+    // Technical finding / rusak from field to QC: Inspector or Admin/Superadmin
+    if (!['admin', 'inspektur', 'ahli_k3', 'tenaga_ahli', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Inspektur atau Admin yang dapat memindahkan temuan lapangan ke Stage 6. Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  if (target === 7) {
+    // Review QC approval into Stage 7: Manager/Kadiv only
+    if (!['manager', 'kadiv', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Manager Teknis atau Kadiv yang dapat menyetujui QC (Stage 6 -> 7). Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  if ([2, 3, 4, 8, 9, 17].includes(target)) {
+    const allowed = (target === 2) ? ['marketing', 'admin', 'superadmin'] : ['admin', 'superadmin'];
+    if (!allowed.includes(normRole)) {
+      return { allowed: false, reason: `Role '${role}' tidak memiliki wewenang untuk memindahkan job ke Stage ${target}.` };
+    }
+    return { allowed: true };
+  }
+
+  if (target === 10) {
+    if (!['admin', 'finance', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Finance atau Admin yang dapat memindahkan job ke Stage 10. Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  if (target === 11) {
+    if (!['finance', 'marketing', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Finance atau Marketing yang dapat memindahkan job ke Stage 11. Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  if (target === 12) {
+    if (!['marketing', 'finance', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Marketing atau Finance yang dapat menutup Job (Stage 12). Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  return { allowed: true };
+}
+
+
+/**
+ * Deduplicates sequential or rapid double/triple logs to prevent clutter.
+ */
+export function deduplicateHistoryLogs(logs = []) {
+  if (!Array.isArray(logs)) return [];
+  const deduped = [];
+  for (const entry of logs) {
+    if (!entry) continue;
+    const prev = deduped[deduped.length - 1];
+    if (prev) {
+      const sameStage = prev.stage === entry.stage;
+      const sameAction = prev.action === entry.action;
+      const sameBy = (prev.by || '') === (entry.by || '');
+      let withinTimeWindow = false;
+      if (prev.ts && entry.ts) {
+        const diff = Math.abs(new Date(entry.ts).getTime() - new Date(prev.ts).getTime());
+        if (diff < 5000) { // within 5 seconds
+          withinTimeWindow = true;
+        }
+      }
+      if (sameStage && sameAction && sameBy && (withinTimeWindow || !prev.ts || !entry.ts)) {
+        continue; // skip duplicate log
+      }
+    }
+    deduped.push(entry);
+  }
+  return deduped;
+}
 
 /**
  * Validates Stage 1 requirements (PO/SPK).
+
  * - termin_pembayaran must be 'DP' or 'FULL'
  * - no_seri is mandatory for 'Listrik' and 'Kebakaran' categories
  */
@@ -47,12 +200,28 @@ export function validateStage1(job) {
  */
 export function maskSensitiveData(data, role) {
   if (role === 'admin') {
-    return {
+    const masked = {
       ...data,
       nilai: null,
       total_invoice_amount: null,
       payment_amount_received: null,
     };
+
+    if (Array.isArray(data.documents)) {
+      masked.documents = data.documents.map((doc) => {
+        const hasPrice = doc.has_price || ['PO/SPK', 'Invoice', 'Kwitansi'].includes(doc.type);
+        if (hasPrice) {
+          return {
+            ...doc,
+            url: null,
+            masked: true,
+          };
+        }
+        return doc;
+      });
+    }
+
+    return masked;
   }
   return data;
 }
@@ -795,10 +964,6 @@ export function allocatePaymentToFamilyJob({ payment_id, family_root_job_id, job
   };
 }
 
-/**
- * Splits a job into a passing parent job and a failing child job.
- * (Backward compatible wrapper around executeAtomicJobSplit)
- */
 export function splitJob(parentJob, childUnitIds = []) {
   const result = executeAtomicJobSplit(parentJob, { selectedUnitIds: childUnitIds });
   return {
@@ -806,5 +971,205 @@ export function splitJob(parentJob, childUnitIds = []) {
     childJob: result.childJob || null
   };
 }
+
+/**
+ * Validates whether a specific Batch is eligible for Stage 11b SUKET dispatch.
+ */
+export function canReleaseSuketForBatch({ job, batchId }) {
+  if (!job || !Array.isArray(job.batches)) {
+    return { canRelease: false, reason: 'Job tidak memiliki daftar batch yang valid.' };
+  }
+
+  const batch = job.batches.find((b) => b.id === batchId);
+  if (!batch) {
+    return { canRelease: false, reason: `Batch dengan ID ${batchId} tidak ditemukan.` };
+  }
+
+  if (batch.suket_ready === false || (typeof batch.current_stage === 'number' && batch.current_stage < 9)) {
+    return { canRelease: false, reason: 'SUKET untuk batch ini belum selesai diproses di Disnaker.' };
+  }
+
+  if (batch.payment_status !== 'Verified') {
+    return {
+      canRelease: false,
+      reason: 'Pembayaran untuk batch ini belum lunas diverifikasi oleh Finance (Stage 11c).',
+    };
+  }
+
+  return { canRelease: true };
+}
+
+/**
+ * Records payment verification specifically for a designated Batch (Pro-rata settlement).
+ */
+export function verifyBatchPayment({ job, batchId, status, verifiedBy, amountReceived = 0 }) {
+  if (!job || !Array.isArray(job.batches)) {
+    return job;
+  }
+
+  const updatedBatches = job.batches.map((b) => {
+    if (b.id === batchId) {
+      const isVerified = status === 'Verified';
+      return {
+        ...b,
+        payment_status: status,
+        verified_by: verifiedBy,
+        verified_at: new Date().toISOString(),
+        amount_received: amountReceived,
+        current_stage: isVerified ? '11b' : 11,
+        retry_count: isVerified ? (b.retry_count || 0) : ((b.retry_count || 0) + 1),
+      };
+    }
+    return b;
+  });
+
+  return {
+    ...job,
+    batches: updatedBatches,
+  };
+}
+
+/**
+ * Records an invoice revision at any stage by Finance.
+ */
+export function recordInvoiceRevision({ job, invoiceData = {}, actorName = 'Finance', actorRole = 'finance' }) {
+  const ts = new Date().toISOString();
+  const revisionEntry = {
+    revision_id: `rev-${Date.now()}`,
+    invoice_no: invoiceData.invoice_no || job.invoice_no,
+    total_invoice_amount: invoiceData.total_invoice_amount != null ? Number(invoiceData.total_invoice_amount) : job.total_invoice_amount,
+    tgl_invoice_issued: invoiceData.tgl_invoice_issued || job.tgl_invoice_issued,
+    catatan_revisi: invoiceData.catatan_revisi || '',
+    revised_by: actorName,
+    revised_at: ts,
+  };
+
+  const invoice_revisions = [...(job.invoice_revisions || []), revisionEntry];
+  const history = [...(job.history || []), {
+    stage: job.stage,
+    ts,
+    by: actorName,
+    action: `Revisi Invoice oleh Finance: ${revisionEntry.invoice_no} (${revisionEntry.total_invoice_amount ? 'Rp ' + Number(revisionEntry.total_invoice_amount).toLocaleString('id-ID') : ''}). Catatan: "${revisionEntry.catatan_revisi}"`.trim(),
+  }];
+
+  return {
+    ...job,
+    invoice_no: revisionEntry.invoice_no,
+    total_invoice_amount: revisionEntry.total_invoice_amount,
+    tgl_invoice_issued: revisionEntry.tgl_invoice_issued,
+    invoice_revisions,
+    history: deduplicateHistoryLogs(history),
+    updated_at: ts,
+  };
+}
+
+/**
+ * Categorizes the stages into 3 operational phases with explicit Happy Path vs Exception Branch flags.
+ */
+export function categorizeStagesByPhase(stages = []) {
+  const phase1Ids = [1, 2, 3, 4, 13, 16, 17];
+  const phase2Ids = [5, 6, 7, 8, 9];
+  const phase3Ids = [10, 11, 15, 14, 12];
+  const exceptionIds = [13, 16, 17];
+
+  const mapStageWithMeta = (stageId) => {
+    const s = stages.find(item => item.id === stageId) || { id: stageId, name: `Stage ${stageId}`, displayId: `${stageId}` };
+    return {
+      ...s,
+      isException: exceptionIds.includes(stageId),
+    };
+  };
+
+  return [
+    {
+      id: 'ru_lapangan',
+      name: 'Phase 1 — RU Lapangan',
+      short: 'RU Lapangan',
+      description: 'Order PO, verifikasi dokumen, penjadwalan, dan pelaksanaan inspeksi teknis lapangan.',
+      stages: phase1Ids.map(mapStageWithMeta),
+    },
+    {
+      id: 'laporan_dinas',
+      name: 'Phase 2 — Laporan & Dinas',
+      short: 'Laporan & Dinas',
+      description: 'Penyusunan LHPP, review teknis, koordinasi Disnaker, dan penerbitan SKKP/SUKET.',
+      stages: phase2Ids.map(mapStageWithMeta),
+    },
+    {
+      id: 'invoice_delivery',
+      name: 'Phase 3 — Invoice & Delivery',
+      short: 'Invoice & Delivery',
+      description: 'Penerbitan faktur invoice, penagihan, verifikasi mutasi bank, pengiriman dokumen fisik.',
+      stages: phase3Ids.map(mapStageWithMeta),
+    },
+  ];
+}
+
+/**
+ * Filters jobs for the "My Work" view based on user identity and role.
+ */
+export function filterJobsForMyWork(jobs = [], user = {}) {
+  if (!user || !user.role) return jobs;
+  const role = user.role.toLowerCase();
+
+  if (role === 'superadmin' || role === 'manager') {
+    return jobs;
+  }
+
+  if (role === 'inspektur') {
+    return jobs.filter(j => {
+      const hasInspectors = (j.inspectors && j.inspectors.length > 0) || (j.inspector_ids && j.inspector_ids.length > 0);
+      if (hasInspectors) {
+        return (j.inspectors || []).some(insp => insp.id === user.id || insp.name === user.name) ||
+               (Array.isArray(j.inspector_ids) && j.inspector_ids.includes(user.id));
+      }
+      return [4, 17].includes(j.stage);
+    });
+  }
+
+  if (role === 'marketing') {
+    return jobs.filter(j => {
+      const isOwner = j.owner_marketing && (j.owner_marketing === user.name || j.owner_marketing === user.email);
+      return isOwner;
+    });
+  }
+
+  if (role === 'finance') {
+    return jobs.filter(j => [10, 15, 12].includes(j.stage));
+  }
+
+  if (role === 'admin') {
+    return jobs.filter(j => [2, 3, 16, 5, 7, 8, 9].includes(j.stage));
+  }
+
+  return jobs;
+}
+
+/**
+ * Computes summary counts, active jobs, and SLA health per stage for Stage Rail badges.
+ */
+export function computeStageSummaryStats(stages = [], jobs = []) {
+  return stages.map(st => {
+    const stageJobs = jobs.filter(j => j.stage === st.id);
+    const overdueCount = stageJobs.filter(j => {
+      const refDate = j.tgl_pelaksanaan || j.tgl_laporan_mulai || j.tgl_submit_disnaker || j.created_at;
+      if (!refDate) return false;
+      const days = Math.ceil((Date.now() - new Date(refDate).getTime()) / 86400000);
+      return days > 3; // Standard warning threshold
+    }).length;
+
+    return {
+      id: st.id,
+      displayId: st.displayId || st.id,
+      name: st.name,
+      short: st.short || st.name,
+      count: stageJobs.length,
+      overdueCount,
+    };
+  });
+}
+
+
+
 
 

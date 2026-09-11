@@ -68,7 +68,7 @@ describe('DNP Monitor v3 — API & Security Masking Integration Tests', () => {
 
     const res = await fetch(baseUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'marketing' },
       body: JSON.stringify(newJob),
     });
 

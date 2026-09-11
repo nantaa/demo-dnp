@@ -342,3 +342,25 @@ Setiap kali Anda selesai push update di komputer lokal, di server cukup jalankan
 ```bash
 /var/www/dnp-monitor/deploy.sh
 ```
+
+                       ┌─────────────────────────────────────────────────────────┐
+                       │                   KUNJUNGAN USER                        │
+                       └────────────────────────────┬────────────────────────────┘
+                                                    │
+                                     ┌──────────────┴──────────────┐
+                                     │   Nginx (Port 80 / 443)     │
+                                     └──────┬───────────────┬──────┘
+                                            │               │
+                     1. Buka Tampilan UI    │               │  2. Simpan Data / API
+              (HTML, CSS, React Buttons)    │               │  (Database SQLite)
+                                            ▼               ▼
+                                 ┌──────────────────┐  ┌──────────────────┐
+                                 │  `dist/` folder  │  │  Express Backend │
+                                 │ (npm run build)  │  │ (Dijalankan PM2) │
+                                 └──────────────────┘  └────────┬─────────┘
+                                                                │
+                                                                ▼
+                                                       ┌──────────────────┐
+                                                       │ Database SQLite  │
+                                                       │ (server/dnp.db)  │
+                                                       └──────────────────┘

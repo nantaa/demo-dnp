@@ -13,11 +13,19 @@ import {
   validateInspectionBatch,
   recordInspectionResultCorrection,
   validateMergeBackEligibility,
-  allocatePaymentToFamilyJob
+  allocatePaymentToFamilyJob,
+  validateStageActionPermission,
+  validateStageTransitionPermission,
+  evaluateStage11cPaymentVerification,
+  canReleaseSuketForBatch,
+  verifyBatchPayment,
+  deduplicateHistoryLogs,
+  recordInvoiceRevision
 } from '../../src/domain/workflowEngine.js';
 
 const router = Router();
 const now = () => new Date().toISOString();
+const getRole = (req) => req.headers['x-user-role'] || req.query.role || req.body?.role || req.body?.actor_role;
 
 // GET /api/jobs — list all, sorted newest first
 router.get('/', (req, res) => {
@@ -295,6 +303,12 @@ router.get('/:id', (req, res) => {
 // POST /api/jobs & /jobs — create new job
 router.post('/', (req, res) => {
   try {
+    const role = req.headers['x-user-role'] || req.query.role;
+    const perm = validateStageActionPermission(role, 'stage1_create');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const data = req.body || {};
     const ts = now();
     const id = data.id || `job_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
@@ -350,6 +364,12 @@ router.post('/', (req, res) => {
 // POST /api/jobs/:id/s4-save — save actual_units and unit_count_notes (S4 & S4d)
 router.post('/:id/s4-save', (req, res) => {
   try {
+    const role = req.headers['x-user-role'] || req.query.role;
+    const perm = validateStageActionPermission(role, 'stage4_inspection');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -371,6 +391,17 @@ router.post('/:id/s4-save', (req, res) => {
 // PUT /api/jobs/:id — upsert (create or update)
 router.put('/:id', (req, res) => {
   try {
+    const role = getRole(req);
+    const existingRow = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (existingRow) {
+      const existingJob = JSON.parse(existingRow.data);
+      if (req.body && req.body.stage !== undefined && Number(req.body.stage) !== Number(existingJob.stage)) {
+        const transitionCheck = validateStageTransitionPermission(existingJob.stage, req.body.stage, role);
+        if (!transitionCheck.allowed) {
+          return res.status(403).json({ ok: false, error: transitionCheck.reason });
+        }
+      }
+    }
     const job = req.body;
     const ts = now();
     db.prepare(`
@@ -396,6 +427,7 @@ router.delete('/clear-all', (req, res) => {
 // POST /api/jobs/:id/move — transition job stage
 router.post('/:id/move', (req, res) => {
   try {
+    const role = getRole(req);
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -403,21 +435,32 @@ router.post('/:id/move', (req, res) => {
     const nested = body.data || {};
     const oldStage = job.stage;
 
+    const next_stage = body.next_stage !== undefined ? body.next_stage : nested.next_stage;
+    if (next_stage !== undefined && Number(next_stage) !== Number(oldStage)) {
+      const transitionCheck = validateStageTransitionPermission(oldStage, next_stage, role);
+      if (!transitionCheck.allowed) {
+        return res.status(403).json({ ok: false, error: transitionCheck.reason });
+      }
+    } else if (!role) {
+      return res.status(403).json({ ok: false, error: 'Header identitas pengguna (x-user-role) wajib disertakan untuk memindahkan stage.' });
+    }
+
     // Merge attributes
     const merged = { ...job, ...nested, ...body };
-    const next_stage = body.next_stage !== undefined ? body.next_stage : nested.next_stage;
     if (next_stage !== undefined) {
       merged.stage = Number(next_stage);
       merged.stage_started_at = now();
     }
 
-    if (!merged.history) merged.history = [];
-    merged.history.push({
-      stage: merged.stage,
-      ts: now(),
-      by: body.actor || req.headers['x-user-name'] || 'User',
-      action: `Pindah dari Stage ${oldStage} ke Stage ${merged.stage}. ${body.notes || nested.notes || ''}`.trim()
-    });
+    merged.history = deduplicateHistoryLogs([
+      ...(job.history || []),
+      {
+        stage: merged.stage,
+        ts: now(),
+        by: body.actor || req.headers['x-user-name'] || 'User',
+        action: `Pindah dari Stage ${oldStage} ke Stage ${merged.stage}. ${body.notes || nested.notes || ''}`.trim()
+      }
+    ]);
 
     const ts = now();
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
@@ -428,6 +471,7 @@ router.post('/:id/move', (req, res) => {
       return res.redirect(303, '/kanban');
     }
     res.json({ ok: true, job: merged });
+
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
@@ -436,6 +480,12 @@ router.post('/:id/move', (req, res) => {
 // POST /api/jobs/:id/s2-verify — update stage 2 verification checklist
 router.post('/:id/s2-verify', (req, res) => {
   try {
+    const role = req.headers['x-user-role'] || req.query.role;
+    const perm = validateStageActionPermission(role, 'stage2_verify');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -453,9 +503,15 @@ router.post('/:id/s2-verify', (req, res) => {
   }
 });
 
-// POST /api/jobs/:id/payment-verification — update stage 11c payment verification (v5-2-2)
-router.post('/:id/payment-verification', (req, res) => {
+// POST /api/jobs/:id/payment-verification & /stage11c-verify — update stage 11c payment verification (v5-2-2)
+const handlePaymentVerification = (req, res) => {
   try {
+    const role = req.headers['x-user-role'] || req.query.role;
+    const perm = validateStageActionPermission(role, 'stage11c_verify');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -470,7 +526,7 @@ router.post('/:id/payment-verification', (req, res) => {
       amount: amount || amount_received,
       amount_received: amount_received || amount,
       bank_reference,
-      verified_by: verified_by || 'Finance',
+      verified_by: verified_by || req.headers['x-user-name'] || 'Finance',
       verified_at: now(),
       notes: notes || '',
       bukti_url
@@ -487,7 +543,7 @@ router.post('/:id/payment-verification', (req, res) => {
       job.history.push({
         stage: 14,
         ts: now(),
-        by: verified_by || 'Finance',
+        by: verified_by || req.headers['x-user-name'] || 'Finance',
         action: 'Verifikasi Pembayaran: LUNAS — SUKET siap dikirim ke klien (Stage 11b)',
         notes
       });
@@ -499,7 +555,7 @@ router.post('/:id/payment-verification', (req, res) => {
       job.history.push({
         stage: 11,
         ts: now(),
-        by: verified_by || 'Finance',
+        by: verified_by || req.headers['x-user-name'] || 'Finance',
         action: `Verifikasi Pembayaran: ${finalStatus.toUpperCase()} — Job dikembalikan ke Stage 11 untuk penagihan ulang (Retry #${job.payment_retry_count})`,
         notes
       });
@@ -516,11 +572,20 @@ router.post('/:id/payment-verification', (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-});
+};
+
+router.post('/:id/payment-verification', handlePaymentVerification);
+router.post('/:id/stage11c-verify', handlePaymentVerification);
 
 // POST /api/jobs/:id/stage4-data — save stage 4 execution & photos
 router.post('/:id/stage4-data', (req, res) => {
   try {
+    const role = getRole(req);
+    const perm = validateStageActionPermission(role, 'stage4_inspection');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -541,6 +606,12 @@ router.post('/:id/stage4-data', (req, res) => {
 // POST /api/jobs/:id/stage4c-data — save stage 4c reschedule data
 router.post('/:id/stage4c-data', (req, res) => {
   try {
+    const role = getRole(req);
+    const perm = validateStageActionPermission(role, 'stage4c_reschedule');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -564,6 +635,12 @@ router.post('/:id/stage4c-data', (req, res) => {
 // POST /api/jobs/:id/stage4d-data — save stage 4d RU Ulang data
 router.post('/:id/stage4d-data', (req, res) => {
   try {
+    const role = getRole(req);
+    const perm = validateStageActionPermission(role, 'stage4d_reinspection');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -588,6 +665,12 @@ router.post('/:id/stage4d-data', (req, res) => {
 // POST /api/jobs/:id/stage5-dates — save stage 5 milestone dates
 router.post('/:id/stage5-dates', (req, res) => {
   try {
+    const role = getRole(req);
+    const perm = validateStageActionPermission(role, 'stage5_draft');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -608,6 +691,12 @@ router.post('/:id/stage5-dates', (req, res) => {
 // POST /api/jobs/:id/stage9-suket — save stage 9 suket duration tracking
 router.post('/:id/stage9-suket', (req, res) => {
   try {
+    const role = getRole(req);
+    const perm = validateStageActionPermission(role, 'stage9_suket');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -674,6 +763,12 @@ router.post('/:id/bypass-stage2', (req, res) => {
 // POST /api/jobs/:id/splits or /api/jobs/:id/split — atomic job split
 const handleJobSplitRoute = (req, res) => {
   try {
+    const role = getRole(req);
+    const perm = validateStageActionPermission(role, 'stage4b_actualize');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -783,6 +878,11 @@ router.get('/:id/family', (req, res) => {
 // POST /api/jobs/:id/merge-back — controlled merge back of child job into parent
 router.post('/:id/merge-back', (req, res) => {
   try {
+    const role = getRole(req);
+    if (!role || !['admin', 'superadmin'].includes(String(role).toLowerCase().trim())) {
+      return res.status(403).json({ ok: false, error: 'Hanya Admin atau Superadmin yang dapat melakukan merge-back child job.' });
+    }
+
     const childRow = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!childRow) return res.status(404).json({ ok: false, error: 'Child job not found' });
     const childJob = JSON.parse(childRow.data);
@@ -944,9 +1044,15 @@ router.post('/:id/reopen', (req, res) => {
   }
 });
 
-// POST /api/jobs/:id/stage5-review — save stage 5 review decision
-router.post('/:id/stage5-review', (req, res) => {
+// POST /api/jobs/:id/stage5-review & /stage6-review — save stage 6 / review decision
+const handleStageReview = (req, res) => {
   try {
+    const role = req.headers['x-user-role'] || req.query.role;
+    const perm = validateStageActionPermission(role, 'stage6_review');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
@@ -975,6 +1081,43 @@ router.post('/:id/stage5-review', (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
+};
+
+router.post('/:id/stage5-review', handleStageReview);
+router.post('/:id/stage6-review', handleStageReview);
+
+// POST /api/jobs/:id/invoice-revise — revise invoice at any stage by Finance
+router.post('/:id/invoice-revise', (req, res) => {
+  try {
+    const role = req.headers['x-user-role'] || req.query.role;
+    const perm = validateStageActionPermission(role, 'invoice_revise');
+    if (!perm.allowed) {
+      return res.status(403).json({ ok: false, error: perm.reason });
+    }
+
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const job = JSON.parse(row.data);
+    const actorName = req.headers['x-user-name'] || req.body.revised_by || 'Finance';
+    const updatedJob = recordInvoiceRevision({
+      job,
+      invoiceData: req.body,
+      actorName,
+      actorRole: role || 'finance'
+    });
+
+    const ts = now();
+    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+      JSON.stringify(updatedJob), ts, req.params.id
+    );
+
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, job: updatedJob });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // POST /api/jobs/:id — partial update fields
@@ -984,6 +1127,9 @@ router.post('/:id', (req, res) => {
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
     const updated = { ...job, ...req.body };
+    if (updated.history) {
+      updated.history = deduplicateHistoryLogs(updated.history);
+    }
     const ts = now();
     db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
       JSON.stringify(updated), ts, req.params.id

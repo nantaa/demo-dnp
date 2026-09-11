@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { showError, showSuccess } from '@/swal';
 import { 
-    LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
+    LayoutDashboard, Columns, SlidersHorizontal, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
 import { ROLES } from '../Constants';
@@ -78,6 +78,7 @@ export default function AppLayout({ header, children }) {
     const navItems = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/kanban', label: 'Kanban', icon: Columns },
+        { href: '/stage-rail', label: 'Stage Rail', icon: SlidersHorizontal },
         { href: '/jobs', label: 'Daftar Job', icon: List },
         { href: '/jobs/create', label: 'Job Baru', icon: Plus, roles: ['marketing', 'superadmin'] },
         { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin', 'manager'] },

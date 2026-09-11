@@ -1,9 +1,44 @@
-import { describe, it } from 'node:test';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import express from 'express';
+import jobsRouter from '../server/routes/jobs.js';
+import db from '../server/db.js';
 
-const baseUrl = 'http://localhost:3001';
+let app;
+let server;
+let port;
+let baseUrl;
 
 describe('DNP Monitor v3 — S3 Personnel Recommendation & Master Data Engine', () => {
+
+  before(async () => {
+    app = express();
+    app.use(express.json());
+    app.use('/api/jobs', jobsRouter);
+    app.get('/api/master-data', (req, res) => {
+      try {
+        const row = db.prepare("SELECT value FROM app_state WHERE key = 'master:data'").get();
+        if (row) {
+          return res.json(JSON.parse(row.value));
+        }
+        res.json({ alat_uji: [{ id: 1, name: 'Default Test Tool' }], sertifikat_pjk3: [{ id: 1 }], regulasi: [], form_disnaker: [] });
+      } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+      }
+    });
+
+    await new Promise((resolve) => {
+      server = app.listen(0, () => {
+        port = server.address().port;
+        baseUrl = `http://localhost:${port}`;
+        resolve();
+      });
+    });
+  });
+
+  after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+  });
 
   it('GET /api/master-data returns alat_uji, sertifikat_pjk3, and inspectors', async () => {
     const res = await fetch(`${baseUrl}/api/master-data`);
@@ -57,7 +92,7 @@ describe('DNP Monitor v3 — S3 Personnel Recommendation & Master Data Engine', 
     const newJobId = `job-s3-test-${Date.now()}`;
     const createRes = await fetch(`${baseUrl}/api/jobs`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'marketing' },
       body: JSON.stringify({
         id: newJobId,
         klien: 'PT Schedule Test Client',
@@ -83,7 +118,7 @@ describe('DNP Monitor v3 — S3 Personnel Recommendation & Master Data Engine', 
 
     const moveRes = await fetch(`${baseUrl}/api/jobs/${newJobId}/move`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'admin' },
       body: JSON.stringify(movePayload),
     });
     assert.equal(moveRes.status, 200);

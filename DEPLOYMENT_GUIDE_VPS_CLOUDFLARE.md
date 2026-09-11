@@ -243,13 +243,8 @@ server {
     gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml application/javascript application/json;
     gzip_disable "MSIE [1-6]\.";
 
-    # React Client-side Routing Fallback
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Proxy API Requests ke Backend Express (Port 3001)
-    location /api {
+    # 1. Express REST API & Health Check Proxies
+    location ~ ^/(api|notifications)/ {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -263,7 +258,33 @@ server {
         proxy_connect_timeout 300;
     }
 
-    # Static Assets Caching
+    # 2. Uploaded Documents Storage (PDF, JPG, PNG)
+    location /storage/ {
+        alias /var/www/dnp-monitor/server/storage/;
+        try_files $uri =404;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # 3. Inertia Endpoints & Mutating Routes (Jobs, Kanban, Stage Rail)
+    location ~ ^/(jobs|kanban|stage-rail) {
+        if ($http_x_inertia = "true") {
+            proxy_pass http://127.0.0.1:3001;
+            break;
+        }
+        if ($request_method != GET) {
+            proxy_pass http://127.0.0.1:3001;
+            break;
+        }
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 4. React Client-side Routing Fallback (SPA)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 5. Static Assets Caching
     location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|svg|webp)$ {
         expires 30d;
         add_header Cache-Control "public, no-transform";

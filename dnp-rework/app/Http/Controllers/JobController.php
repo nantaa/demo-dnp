@@ -241,13 +241,38 @@ class JobController extends Controller
         // Stage 4: move to Stage 5 or Stage 13 allowed
 
 
-        // Stage 5 → 6: require link_lhpp OR LHPP / BAP uploaded
+        // Stage 5 → 6: require link_lhpp (at least one valid unit link) OR LHPP / BAP uploaded
         if ($currentStage == 5) {
             if ($request->filled('link_lhpp')) {
-                $job->update(['link_lhpp' => $request->input('link_lhpp')]);
+                $raw = $request->input('link_lhpp');
+                $job->update(['link_lhpp' => is_array($raw) ? json_encode($raw) : $raw]);
             }
             $linkLhpp = $request->input('link_lhpp') ?: $job->link_lhpp;
-            $hasLhpp = !empty($linkLhpp)
+            $hasFilledUrl = false;
+            if (!empty($linkLhpp)) {
+                if (is_array($linkLhpp)) {
+                    foreach ($linkLhpp as $item) {
+                        if (!empty($item['url']) && trim($item['url']) !== '') {
+                            $hasFilledUrl = true;
+                            break;
+                        }
+                    }
+                } elseif (is_string($linkLhpp) && str_starts_with(trim($linkLhpp), '[')) {
+                    $decoded = json_decode($linkLhpp, true);
+                    if (is_array($decoded)) {
+                        foreach ($decoded as $item) {
+                            if (!empty($item['url']) && trim($item['url']) !== '') {
+                                $hasFilledUrl = true;
+                                break;
+                            }
+                        }
+                    }
+                } elseif (is_string($linkLhpp) && !empty(trim($linkLhpp))) {
+                    $hasFilledUrl = true;
+                }
+            }
+
+            $hasLhpp = $hasFilledUrl
                 || $job->documents()->whereIn('type', ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'])->exists()
                 || $job->documents()->where('stage', 5)->exists();
 
@@ -613,7 +638,7 @@ class JobController extends Controller
     }
 
     /**
-     * Save Stage 5 data (Link LHPP submitted by personnel).
+     * Save Stage 5 data (Multi-Unit Links LHPP submitted by personnel).
      */
     public function saveStage5Data(Request $request, Job $job)
     {
@@ -622,13 +647,17 @@ class JobController extends Controller
             abort(403, 'Unauthorized to update Stage 5 data.');
         }
 
-        $validated = $request->validate([
-            'link_lhpp' => 'nullable|string|max:1000',
-        ]);
+        $raw = $request->input('link_lhpp');
+        $storedValue = null;
+        if (is_array($raw)) {
+            $storedValue = json_encode($raw);
+        } elseif (is_string($raw)) {
+            $storedValue = trim($raw);
+        }
 
-        $job->update($validated);
+        $job->update(['link_lhpp' => $storedValue]);
 
-        return back()->with('success', 'Link LHPP berhasil disimpan.');
+        return back()->with('success', 'Link LHPP unit berhasil disimpan.');
     }
 
     /**
@@ -993,12 +1022,33 @@ class JobController extends Controller
         }
 
         $uploadedFile = $request->file('file');
-        $path = $uploadedFile->store("job-documents/{$job->id}", 'public');
+        $originalName = $uploadedFile->getClientOriginalName();
+        // Remove dangerous characters while preserving original name (spaces, dots, parentheses)
+        $cleanName = preg_replace('~[/\\\\?%*:|"<>]+~', '_', trim($originalName));
+        $cleanName = preg_replace('~_+~', '_', $cleanName);
+        if (empty($cleanName)) $cleanName = 'document_' . time();
+
+        $targetDir = "job-documents/{$job->id}";
+        $filename = $cleanName;
+
+        // Check for duplicate filenames within the job folder to prevent accidental overwrites
+        if (Storage::disk('public')->exists("{$targetDir}/{$filename}")) {
+            $info = pathinfo($cleanName);
+            $base = $info['filename'];
+            $ext  = !empty($info['extension']) ? '.' . $info['extension'] : '';
+            $counter = 1;
+            while (Storage::disk('public')->exists("{$targetDir}/{$base} ({$counter}){$ext}")) {
+                $counter++;
+            }
+            $filename = "{$base} ({$counter}){$ext}";
+        }
+
+        $path = $uploadedFile->storeAs($targetDir, $filename, 'public');
 
         $doc = $job->documents()->create([
             'stage'               => $request->stage,
             'type'                => $request->type,
-            'name'                => $uploadedFile->getClientOriginalName(),
+            'name'                => $filename,
             'path'                => $path,
             'uploaded_by_user_id' => $user->id,
         ]);
@@ -1014,11 +1064,34 @@ class JobController extends Controller
 
         $job->historyLogs()->create([
             'stage'             => $job->stage,
-            'action'            => "Dokumen diunggah: [{$request->type}] {$uploadedFile->getClientOriginalName()}",
+            'action'            => "Dokumen diunggah: [{$request->type}] {$filename}",
             'action_by_user_id' => $user->id,
         ]);
 
         return back(303)->with('success', 'Dokumen berhasil diunggah.');
+    }
+
+    /**
+     * Download or view document preserving original filename with proper headers.
+     */
+    public function downloadDocument(Job $job, JobDocument $document)
+    {
+        if ($document->job_id !== $job->id) {
+            abort(404, 'Dokumen tidak ditemukan untuk pekerjaan ini.');
+        }
+
+        $disk = Storage::disk('public');
+        if (!$disk->exists($document->path)) {
+            abort(404, 'File dokumen tidak ditemukan di server.');
+        }
+
+        $fullPath = $disk->path($document->path);
+        $mimeType = $disk->mimeType($document->path) ?: 'application/octet-stream';
+
+        return response()->file($fullPath, [
+            'Content-Type'        => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . addslashes($document->name) . '"',
+        ]);
     }
 
     /**

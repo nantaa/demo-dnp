@@ -174,3 +174,143 @@ describe('Stage 5 Assigned Personnel Permissions Test Matrix', () => {
         assert.equal(canActOnStage(assignedUser, jobStage5String, '5'), true);
     });
 });
+
+/**
+ * Multi-Unit LHPP Links Helper Functions (to be used in JobDetailSheet and verified here)
+ */
+export function parseLhppLinks(rawLink, unitCount = 1) {
+    const count = Math.max(1, parseInt(unitCount) || 1);
+    if (!rawLink) {
+        return Array.from({ length: count }, (_, i) => ({
+            id: `unit-${i + 1}`,
+            unit_no: i + 1,
+            label: `Unit ${i + 1}`,
+            url: '',
+            notes: '',
+        }));
+    }
+
+    if (typeof rawLink === 'string' && rawLink.trim().startsWith('[')) {
+        try {
+            const parsed = JSON.parse(rawLink);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed.map((item, idx) => ({
+                    id: item.id || `unit-${idx + 1}`,
+                    unit_no: item.unit_no || idx + 1,
+                    label: item.label || `Unit ${idx + 1}`,
+                    url: item.url || '',
+                    notes: item.notes || '',
+                }));
+            }
+        } catch {
+            // fallback below
+        }
+    }
+
+    // Legacy plain string fallback
+    if (typeof rawLink === 'string' && rawLink.trim()) {
+        const singleUrl = rawLink.trim();
+        const rows = [
+            { id: 'unit-1', unit_no: 1, label: 'Unit 1 / Folder Utama', url: singleUrl, notes: '' },
+        ];
+        // If unitCount > 1, fill remaining rows
+        for (let i = 2; i <= count; i++) {
+            rows.push({ id: `unit-${i}`, unit_no: i, label: `Unit ${i}`, url: '', notes: '' });
+        }
+        return rows;
+    }
+
+    return Array.from({ length: count }, (_, i) => ({
+        id: `unit-${i + 1}`,
+        unit_no: i + 1,
+        label: `Unit ${i + 1}`,
+        url: '',
+        notes: '',
+    }));
+}
+
+export function hasValidLhppLink(links) {
+    if (!Array.isArray(links)) return false;
+    return links.some(item => typeof item.url === 'string' && item.url.trim().length > 0);
+}
+
+/**
+ * Filename sanitization & deduplication helper (to match PHP backend logic)
+ */
+export function sanitizeAndDeduplicateFilename(originalName, existingFiles = []) {
+    if (!originalName) return 'unnamed_document';
+    // Remove directory traversal and dangerous characters
+    let clean = originalName.replace(/[/\\?%*:|"<>]/g, '_').trim();
+    // Collapse consecutive underscores
+    clean = clean.replace(/_+/g, '_');
+
+    if (!existingFiles.includes(clean)) {
+        return clean;
+    }
+
+    const dotIdx = clean.lastIndexOf('.');
+    const base = dotIdx !== -1 ? clean.substring(0, dotIdx) : clean;
+    const ext = dotIdx !== -1 ? clean.substring(dotIdx) : '';
+
+    let counter = 1;
+    let candidate = `${base} (${counter})${ext}`;
+    while (existingFiles.includes(candidate)) {
+        counter++;
+        candidate = `${base} (${counter})${ext}`;
+    }
+    return candidate;
+}
+
+describe('Multi-Unit LHPP Links & File Storage Naming Test Matrix', () => {
+    test('parseLhppLinks: generates rows based on unit count when empty', () => {
+        const links = parseLhppLinks(null, 3);
+        assert.equal(links.length, 3);
+        assert.equal(links[0].label, 'Unit 1');
+        assert.equal(links[1].label, 'Unit 2');
+        assert.equal(links[2].label, 'Unit 3');
+        assert.equal(links[0].url, '');
+    });
+
+    test('parseLhppLinks: converts legacy single URL string to structured list preserving remaining units', () => {
+        const legacyUrl = 'https://drive.google.com/drive/folders/12345';
+        const links = parseLhppLinks(legacyUrl, 2);
+        assert.equal(links.length, 2);
+        assert.equal(links[0].url, legacyUrl);
+        assert.equal(links[1].url, '');
+    });
+
+    test('parseLhppLinks: parses JSON structured array with individual notes', () => {
+        const json = JSON.stringify([
+            { unit_no: 1, label: 'Unit 1 - Boiler Utama', url: 'https://drive.com/1', notes: 'Kapasitas 10 Ton' },
+            { unit_no: 2, label: 'Unit 2 - Boiler Cadangan', url: 'https://drive.com/2', notes: 'Pipa bocor' },
+        ]);
+        const links = parseLhppLinks(json, 2);
+        assert.equal(links.length, 2);
+        assert.equal(links[0].label, 'Unit 1 - Boiler Utama');
+        assert.equal(links[0].notes, 'Kapasitas 10 Ton');
+        assert.equal(links[1].label, 'Unit 2 - Boiler Cadangan');
+        assert.equal(links[1].notes, 'Pipa bocor');
+    });
+
+    test('hasValidLhppLink: returns true if at least one unit has a link filled', () => {
+        const emptyLinks = [{ url: '' }, { url: '   ' }];
+        assert.equal(hasValidLhppLink(emptyLinks), false);
+
+        const filledLinks = [{ url: '' }, { url: 'https://drive.google.com/123' }];
+        assert.equal(hasValidLhppLink(filledLinks), true);
+    });
+
+    test('sanitizeAndDeduplicateFilename: preserves human-readable original filename while cleaning dangerous chars', () => {
+        const safe1 = sanitizeAndDeduplicateFilename('01. COVER PETIR.docx', []);
+        assert.equal(safe1, '01. COVER PETIR.docx');
+
+        const safe2 = sanitizeAndDeduplicateFilename('../../unsafe?file*name.pdf', []);
+        assert.equal(safe2, '.._.._unsafe_file_name.pdf');
+    });
+
+    test('sanitizeAndDeduplicateFilename: deduplicates identical filenames with counter suffix', () => {
+        const existing = ['01. COVER PETIR.docx', '01. COVER PETIR (1).docx'];
+        const deduplicated = sanitizeAndDeduplicateFilename('01. COVER PETIR.docx', existing);
+        assert.equal(deduplicated, '01. COVER PETIR (2).docx');
+    });
+});

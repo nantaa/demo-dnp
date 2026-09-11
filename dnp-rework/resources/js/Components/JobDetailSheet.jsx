@@ -26,22 +26,83 @@ const parseJsonObject = (v) => {
     } catch { return {}; }
 };
 
+const parseLhppLinks = (rawLink, unitCount = 1) => {
+    const count = Math.max(1, parseInt(unitCount) || 1);
+    let list = [];
+
+    if (typeof rawLink === 'string' && rawLink.trim().startsWith('[')) {
+        try {
+            const parsed = JSON.parse(rawLink);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                list = parsed.map((item, idx) => ({
+                    id: item.id || `unit-${idx + 1}`,
+                    unit_no: item.unit_no || idx + 1,
+                    label: item.label || `Unit ${idx + 1}`,
+                    url: item.url || '',
+                    notes: item.notes || '',
+                }));
+            }
+        } catch {
+            list = [];
+        }
+    } else if (Array.isArray(rawLink) && rawLink.length > 0) {
+        list = rawLink.map((item, idx) => ({
+            id: item.id || `unit-${idx + 1}`,
+            unit_no: item.unit_no || idx + 1,
+            label: item.label || `Unit ${idx + 1}`,
+            url: item.url || '',
+            notes: item.notes || '',
+        }));
+    } else if (typeof rawLink === 'string' && rawLink.trim()) {
+        list = [
+            { id: 'unit-1', unit_no: 1, label: 'Unit 1 / Folder Utama', url: rawLink.trim(), notes: '' }
+        ];
+    }
+
+    if (list.length === 0) {
+        return Array.from({ length: count }, (_, i) => ({
+            id: `unit-${i + 1}`,
+            unit_no: i + 1,
+            label: `Unit ${i + 1}`,
+            url: '',
+            notes: '',
+        }));
+    }
+
+    // Ensure list has at least `count` rows based on units
+    while (list.length < count) {
+        const nextIdx = list.length + 1;
+        list.push({
+            id: `unit-${nextIdx}-${Date.now()}`,
+            unit_no: nextIdx,
+            label: `Unit ${nextIdx}`,
+            url: '',
+            notes: '',
+        });
+    }
+
+    return list;
+};
+
+const hasValidLhppLink = (links) => {
+    if (!Array.isArray(links)) return false;
+    return links.some(item => typeof item?.url === 'string' && item.url.trim().length > 0);
+};
+
 const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) =>
     d ? new Date(d).toLocaleDateString('id-ID', opts) : '—';
 
 const fmtCurrency = (n) =>
-    n != null ? 'Rp ' + Number(n).toLocaleString('id-ID') : '—';
+    n != null && n !== '' ? 'Rp ' + Number(n).toLocaleString('id-ID') : '—';
 
-const fmtSize = (bytes) => {
-    if (!bytes) return '';
-    const k = 1024, s = ['B','KB','MB','GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
-};
+const isSlaOverdue = (days, slaLimit) => days != null && slaLimit && days > slaLimit;
 
-const daysElapsed = (from) => {
-    if (!from) return null;
-    return Math.ceil((new Date() - new Date(from)) / 86400000);
+const getSlaBadge = (days, slaLimit) => {
+    if (days == null || !slaLimit) return null;
+    const diff = days - slaLimit;
+    if (diff > 0) return { text: `+${diff}h OVERDUE`, cls: 'bg-red-500 text-white' };
+    if (diff === 0) return { text: 'Hari Terakhir', cls: 'bg-orange-500 text-white' };
+    return { text: `${Math.abs(diff)}h tersisa`, cls: 'bg-green-600 text-white' };
 };
 
 const getSlaTag = (days, slaLimit) => {
@@ -52,18 +113,23 @@ const getSlaTag = (days, slaLimit) => {
 };
 
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
-const DocChip = ({ doc, canManage, onDelete }) => (
-    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
-        <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer"
-           className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
-            📎 {doc.name}
-        </a>
-        {canManage && (
-            <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
-                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
-        )}
-    </div>
-);
+const DocChip = ({ doc, canManage, onDelete }) => {
+    const fileUrl = doc.id && (doc.job_id || doc.jobId)
+        ? `/jobs/${doc.job_id || doc.jobId}/documents/${doc.id}/download`
+        : `/storage/${doc.path}`;
+    return (
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+               className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
+                📎 {doc.name}
+            </a>
+            {canManage && (
+                <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
+                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
+            )}
+        </div>
+    );
+};
 
 const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => {
     const getNextLabel = () => {
@@ -256,7 +322,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         s5_review_decision: job.s5_review_decision ?? '',
         s5_review_notes:    job.s5_review_notes    ?? '',
     });
-    const [lhppLink, setLhppLink] = useState(job.link_lhpp ?? '');
+    const [lhppLinks, setLhppLinks] = useState(() => parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
     const [isSavingLink, setIsSavingLink] = useState(false);
     const [s7, setS7] = useState({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
     const [s8, setS8] = useState({
@@ -375,7 +441,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             s5_review_decision: job.s5_review_decision ?? '',
             s5_review_notes:    job.s5_review_notes    ?? '',
         });
-        setLhppLink(job.link_lhpp ?? '');
+        setLhppLinks(parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
         setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
         setS8({
             tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
@@ -501,16 +567,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
         if (curStage === 5) {
             const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
-            if (!lhppLink?.trim() && !hasLhppDoc) {
-                return showError('Link LHPP Belum Diisi', 'Silakan isi link dokumen LHPP (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
+            const hasValidLink = hasValidLhppLink(lhppLinks);
+            if (!hasValidLink && !hasLhppDoc) {
+                return showError('Link LHPP Belum Diisi', 'Silakan isi minimal satu link dokumen LHPP unit (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
             }
             setIsMoving(true);
-            router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLink }, {
+            router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
                 onSuccess: () => {
                     router.post(`/jobs/${job.id}/move`, {
                         next_stage: data.next_stage || 6,
                         notes: data.notes,
-                        link_lhpp: lhppLink,
+                        link_lhpp: lhppLinks,
                     }, {
                         onSuccess: () => { setIsMoving(false); onClose(); },
                         onError: (errs) => {
@@ -608,13 +675,47 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveLhppLink = () => {
-        if (!lhppLink.trim()) return showError('Validasi', 'Isi link LHPP terlebih dahulu!');
+    const handleUpdateLhppLink = (index, field, value) => {
+        setLhppLinks(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: value };
+            return next;
+        });
+    };
+
+    const handleAddLhppLink = () => {
+        setLhppLinks(prev => [
+            ...prev,
+            {
+                id: `unit-${prev.length + 1}-${Date.now()}`,
+                unit_no: prev.length + 1,
+                label: `Unit ${prev.length + 1}`,
+                url: '',
+                notes: '',
+            }
+        ]);
+    };
+
+    const handleRemoveLhppLink = (index) => {
+        if (lhppLinks.length <= 1) {
+            setLhppLinks([{
+                id: 'unit-1',
+                unit_no: 1,
+                label: 'Unit 1',
+                url: '',
+                notes: '',
+            }]);
+            return;
+        }
+        setLhppLinks(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSaveLhppLinks = () => {
         setIsSavingLink(true);
-        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLink }, {
+        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
             onSuccess: () => {
                 setIsSavingLink(false);
-                showSuccess('Berhasil', 'Link LHPP berhasil disimpan.');
+                showSuccess('Berhasil', 'Daftar link LHPP unit berhasil disimpan.');
             },
             onError: (errs) => {
                 setIsSavingLink(false);
@@ -840,7 +941,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
                                             ) : hasFile ? (
                                                 docs.map(d => (
-                                                    <a key={d.id} href={`/storage/${d.path}`} target="_blank" rel="noopener noreferrer"
+                                                    <a key={d.id} href={d.id ? `/jobs/${d.job_id || job.id}/documents/${d.id}/download` : `/storage/${d.path}`} target="_blank" rel="noopener noreferrer"
                                                         className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
                                                         📎 {d.name.split('.').pop().toUpperCase()}
                                                     </a>
@@ -1352,48 +1453,117 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </p>
                         </div>
 
-                        {/* Direct Link Input for LHPP */}
-                        <div className="bg-white border-2 border-indigo-200 rounded-lg p-3 shadow-sm space-y-2.5">
-                            <div className="flex items-center justify-between">
-                                <label className="block text-xs font-bold text-gray-800">
-                                    🔗 Link Dokumen / Folder LHPP (Google Drive / Cloud) *
-                                </label>
-                                {job.link_lhpp && (
-                                    <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                        ✓ Link Tersimpan
-                                    </span>
-                                )}
+                        {/* Multi-Unit Link Drive / Cloud Storage for LHPP */}
+                        <div className="bg-white border-2 border-indigo-200 rounded-lg p-3.5 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-800">
+                                        🔗 Link Dokumen / Folder LHPP per Unit ({lhppLinks.length} Unit) *
+                                    </label>
+                                    <p className="text-[11px] text-gray-500">
+                                        Masukkan link cloud untuk tiap unit. Anda dapat menamai label dan memberikan catatan per unit.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    {hasValidLhppLink(lhppLinks) && (
+                                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                            ✓ Link Terisi
+                                        </span>
+                                    )}
+                                    {canManage && (
+                                        <button
+                                            type="button"
+                                            onClick={handleAddLhppLink}
+                                            className="text-xs font-semibold px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded transition"
+                                        >
+                                            + Tambah Unit
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                            <input
-                                type="url"
-                                value={lhppLink}
-                                onChange={e => setLhppLink(e.target.value)}
-                                placeholder="https://drive.google.com/drive/folders/... atau link cloud dokumen"
-                                className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                disabled={!canManage}
-                            />
-                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                                {canManage && (
+
+                            {/* Units List */}
+                            <div className="space-y-2.5">
+                                {lhppLinks.map((item, idx) => (
+                                    <div key={item.id || idx} className="bg-gray-50/70 border border-gray-200 rounded-lg p-2.5 space-y-2 transition-all hover:border-indigo-300">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 border border-indigo-200 flex-shrink-0">
+                                                Unit {item.unit_no || idx + 1}
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={item.label || ''}
+                                                onChange={e => handleUpdateLhppLink(idx, 'label', e.target.value)}
+                                                placeholder={`Nama / Label Unit ${idx + 1} (misal: Boiler Utama)`}
+                                                className="flex-1 min-w-0 text-xs font-semibold text-gray-800 border border-gray-300 rounded px-2.5 py-1 bg-white focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400"
+                                                disabled={!canManage}
+                                            />
+                                            {canManage && lhppLinks.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveLhppLink(idx)}
+                                                    className="text-xs font-semibold text-red-500 hover:text-red-700 px-2 py-0.5 rounded border border-red-200 bg-white hover:bg-red-50 flex-shrink-0"
+                                                    title="Hapus baris unit ini"
+                                                >
+                                                    ✕ Hapus
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="url"
+                                                value={item.url || ''}
+                                                onChange={e => handleUpdateLhppLink(idx, 'url', e.target.value)}
+                                                placeholder="https://drive.google.com/... (Link Google Drive / Cloud)"
+                                                className="flex-1 min-w-0 text-xs border border-gray-300 rounded px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 font-mono text-[11px]"
+                                                disabled={!canManage}
+                                            />
+                                            {item.url && item.url.trim() && (
+                                                <a
+                                                    href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition flex-shrink-0"
+                                                >
+                                                    ↗ Buka
+                                                </a>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <input
+                                                type="text"
+                                                value={item.notes || ''}
+                                                onChange={e => handleUpdateLhppLink(idx, 'notes', e.target.value)}
+                                                placeholder="Catatan per unit (opsional, misal: Kapasitas 10 Ton, SN: 12345, rev 1)..."
+                                                className="w-full text-[11px] text-gray-700 border border-gray-200 rounded px-2.5 py-1 bg-white/80 focus:ring-1 focus:ring-indigo-400"
+                                                disabled={!canManage}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {canManage && (
+                                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-100">
                                     <button
                                         type="button"
-                                        onClick={handleSaveLhppLink}
-                                        disabled={isSavingLink || !lhppLink.trim()}
-                                        className="px-3 py-1.5 rounded text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition"
+                                        onClick={handleSaveLhppLinks}
+                                        disabled={isSavingLink}
+                                        className="px-3.5 py-1.5 rounded text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition"
                                     >
-                                        {isSavingLink ? 'Menyimpan...' : '💾 Simpan Link'}
+                                        {isSavingLink ? 'Menyimpan...' : '💾 Simpan Semua Link LHPP'}
                                     </button>
-                                )}
-                                {lhppLink.trim() && (
-                                    <a
-                                        href={lhppLink.startsWith('http') ? lhppLink : `https://${lhppLink}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 transition"
+                                    <button
+                                        type="button"
+                                        onClick={handleAddLhppLink}
+                                        className="px-3 py-1.5 rounded text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition"
                                     >
-                                        ↗ Buka Link LHPP
-                                    </a>
-                                )}
-                            </div>
+                                        + Tambah Baris Unit Lainnya
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Optional uploads or existing files */}
@@ -1435,27 +1605,59 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
 
-                        {/* LHPP Link preview for Manager */}
-                        {job.link_lhpp && (
-                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-1.5">
-                                <div className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
-                                    <span>📂</span> Dokumen / Folder LHPP dari Tim Ahli:
+                        {/* Multi-Unit LHPP Links preview for Manager */}
+                        {(() => {
+                            const links = parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units);
+                            const hasLinks = hasValidLhppLink(links);
+                            if (!hasLinks && !job.link_lhpp) return null;
+                            return (
+                                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2.5">
+                                    <div className="text-xs font-bold text-indigo-900 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                            <span>📂</span> Dokumen / Folder LHPP dari Tim Ahli ({links.length} Unit):
+                                        </span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {links.map((item, idx) => (
+                                            <div key={item.id || idx} className="bg-white border border-indigo-100 rounded-lg p-2.5 text-xs shadow-sm space-y-1">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold text-[10px] flex-shrink-0">
+                                                            Unit {item.unit_no || idx + 1}
+                                                        </span>
+                                                        <span className="font-bold text-gray-800 truncate">
+                                                            {item.label || `Unit ${idx + 1}`}
+                                                        </span>
+                                                    </div>
+                                                    {item.url ? (
+                                                        <a
+                                                            href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition flex-shrink-0 shadow-sm"
+                                                        >
+                                                            ↗ Buka Link
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-[11px] text-gray-400 italic flex-shrink-0">Belum diisi link</span>
+                                                    )}
+                                                </div>
+                                                {item.url && (
+                                                    <div className="text-[11px] text-gray-500 font-mono truncate" title={item.url}>
+                                                        {item.url}
+                                                    </div>
+                                                )}
+                                                {item.notes && (
+                                                    <div className="text-[11px] text-amber-800 bg-amber-50 rounded px-2 py-0.5 border border-amber-200/60 mt-1">
+                                                        <span className="font-semibold">Catatan Unit:</span> {item.notes}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <a
-                                        href={job.link_lhpp.startsWith('http') ? job.link_lhpp : `https://${job.link_lhpp}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition"
-                                    >
-                                        🔗 Buka Link LHPP (Drive / Cloud) ↗
-                                    </a>
-                                    <span className="text-[11px] text-gray-500 truncate max-w-[240px]" title={job.link_lhpp}>
-                                        {job.link_lhpp}
-                                    </span>
-                                </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {job.s5_review_decision && (
                             <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
@@ -1857,22 +2059,45 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
 
         if (s === 5) {
+            const links = parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units);
+            const hasLinks = hasValidLhppLink(links);
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penyusunan LHPP:</p>
-                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1.5">
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-2">
                         <div><span className="text-gray-400">Status LHPP:</span> <span className="font-semibold text-emerald-700">✓ Dokumen Selesai Disusun</span></div>
-                        {job.link_lhpp && (
-                            <div className="flex items-center gap-2 pt-0.5">
-                                <span className="text-gray-400">Link LHPP:</span>
-                                <a
-                                    href={job.link_lhpp.startsWith('http') ? job.link_lhpp : `https://${job.link_lhpp}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
-                                >
-                                    🔗 Buka Link Dokumen LHPP ↗
-                                </a>
+                        {hasLinks && (
+                            <div className="space-y-1.5 pt-1 border-t border-gray-200/60">
+                                <span className="text-gray-500 font-semibold block">Daftar Link LHPP per Unit:</span>
+                                <div className="space-y-1.5">
+                                    {links.filter(item => item.url && item.url.trim()).map((item, idx) => (
+                                        <div key={item.id || idx} className="bg-white p-2 rounded border border-gray-200 shadow-2xs space-y-0.5">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <span className="px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 font-bold text-[10px]">
+                                                        Unit {item.unit_no || idx + 1}
+                                                    </span>
+                                                    <span className="font-semibold text-gray-800 truncate">
+                                                        {item.label || `Unit ${idx + 1}`}
+                                                    </span>
+                                                </div>
+                                                <a
+                                                    href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 font-semibold text-[11px] text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
+                                                >
+                                                    🔗 Buka ↗
+                                                </a>
+                                            </div>
+                                            {item.notes && (
+                                                <p className="text-[11px] text-gray-500 italic pl-1">
+                                                    Catatan: {item.notes}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -2184,7 +2409,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {docs.map(doc => (
                                 <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
                                     <div>
-                                        <a href={`/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
+                                        <a href={doc.id ? `/jobs/${doc.job_id || job.id}/documents/${doc.id}/download` : `/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
                                             <span>📄</span> {doc.name}
                                         </a>
                                         <div className="text-xs text-gray-500 mt-1 ml-6">

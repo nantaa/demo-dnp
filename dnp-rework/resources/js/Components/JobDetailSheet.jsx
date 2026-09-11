@@ -35,11 +35,11 @@ const parseLhppLinks = (rawLink, unitCount = 1) => {
             const parsed = JSON.parse(rawLink);
             if (Array.isArray(parsed) && parsed.length > 0) {
                 list = parsed.map((item, idx) => ({
-                    id: item.id || `unit-${idx + 1}`,
-                    unit_no: item.unit_no || idx + 1,
-                    label: item.label || `Unit ${idx + 1}`,
-                    url: item.url || '',
-                    notes: item.notes || '',
+                    id: item?.id || `unit-${idx + 1}`,
+                    unit_no: item?.unit_no || idx + 1,
+                    label: item?.label || (typeof item === 'string' ? `Unit ${idx + 1}` : `Unit ${idx + 1}`),
+                    url: item?.url || (typeof item === 'string' ? item : ''),
+                    notes: item?.notes || '',
                 }));
             }
         } catch {
@@ -47,11 +47,11 @@ const parseLhppLinks = (rawLink, unitCount = 1) => {
         }
     } else if (Array.isArray(rawLink) && rawLink.length > 0) {
         list = rawLink.map((item, idx) => ({
-            id: item.id || `unit-${idx + 1}`,
-            unit_no: item.unit_no || idx + 1,
-            label: item.label || `Unit ${idx + 1}`,
-            url: item.url || '',
-            notes: item.notes || '',
+            id: item?.id || `unit-${idx + 1}`,
+            unit_no: item?.unit_no || idx + 1,
+            label: item?.label || `Unit ${idx + 1}`,
+            url: item?.url || (typeof item === 'string' ? item : ''),
+            notes: item?.notes || '',
         }));
     } else if (typeof rawLink === 'string' && rawLink.trim()) {
         list = [
@@ -95,6 +95,18 @@ const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) =>
 const fmtCurrency = (n) =>
     n != null && n !== '' ? 'Rp ' + Number(n).toLocaleString('id-ID') : '—';
 
+const fmtSize = (bytes) => {
+    if (!bytes) return '';
+    const k = 1024, s = ['B','KB','MB','GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
+};
+
+const daysElapsed = (from) => {
+    if (!from) return null;
+    return Math.ceil((new Date() - new Date(from)) / 86400000);
+};
+
 const isSlaOverdue = (days, slaLimit) => days != null && slaLimit && days > slaLimit;
 
 const getSlaBadge = (days, slaLimit) => {
@@ -114,14 +126,15 @@ const getSlaTag = (days, slaLimit) => {
 
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
 const DocChip = ({ doc, canManage, onDelete }) => {
+    if (!doc) return null;
     const fileUrl = doc.id && (doc.job_id || doc.jobId)
         ? `/jobs/${doc.job_id || doc.jobId}/documents/${doc.id}/download`
-        : `/storage/${doc.path}`;
+        : `/storage/${doc.path || ''}`;
     return (
         <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
             <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-               className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name}>
-                📎 {doc.name}
+               className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name || 'Dokumen'}>
+                📎 {doc.name || 'Dokumen'}
             </a>
             {canManage && (
                 <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}

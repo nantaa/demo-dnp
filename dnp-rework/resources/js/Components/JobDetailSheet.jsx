@@ -407,7 +407,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};
-    const isInspector = user?.role === 'inspektur';
+    const isInspector = user?.role === 'inspektur' || user?.role === 'inspector';
     const isMGR = user?.role === 'manager';
     const isAssignedInspector = (job.inspectors || []).some(ins => 
         String(ins.id) === String(user?.id) || 
@@ -421,32 +421,36 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const canManage = (() => {
         if (propCanManage !== undefined) return propCanManage;
-        if (!permissions) return false;
-        if (permissions === 'superadmin') return true;
-        if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(job.stage)) return true;
-        if (isMGR && !MKT_STAGES.includes(job.stage) && !FIN_STAGES.includes(job.stage)) return true;
-        if (isInspector) {
-            return [4, 5].includes(job.stage);
+        const curStage = Number(job.stage);
+        if (user?.role === 'superadmin' || permissions === 'superadmin') return true;
+        if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(curStage)) return true;
+        if (isMGR && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
+        if (isInspector || isAssignedInspector) {
+            return [4, 5].includes(curStage);
         }
-        const p = permissions[job.stage];
+        if (!permissions) return false;
+        const p = permissions[curStage] || permissions[job.stage];
         return p && (p.is_owner === true || p.is_owner === 1 || p.is_owner === '1');
     })();
 
     const canViewStageDocs = (sid) => {
+        const sIdNum = Number(sid);
         if (['superadmin','admin','manager'].includes(user?.role)) return true;
         if (user?.role === 'marketing' && job.owner_marketing === user?.name) return true;
-        if (isInspector) return true;
-        const p = permissions?.[sid];
+        if (isInspector || isAssignedInspector) return true;
+        const p = permissions?.[sIdNum] || permissions?.[sid];
         return p && (p.can_view || p.is_owner);
     };
 
     const canManageStageDocs = (sid) => {
+        const sIdNum = Number(sid);
+        const curStageNum = Number(job.stage);
         if (['superadmin','manager'].includes(user?.role)) return true;
-        if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sid)) return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sid)) return true;
-        if (isInspector && [4, 5].includes(sid) && sid === job.stage) return true;
-        if (isInspector) return false;
-        const p = permissions?.[sid];
+        if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sIdNum)) return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sIdNum)) return true;
+        if ((isInspector || isAssignedInspector) && [4, 5].includes(sIdNum) && sIdNum === curStageNum) return true;
+        if (isInspector || isAssignedInspector) return false;
+        const p = permissions?.[sIdNum] || permissions?.[sid];
         return p && p.is_owner;
     };
 
@@ -473,9 +477,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // ── Handlers ─────────────────────────────────────────────────────────────
     const handleMoveStage = (e) => {
         e.preventDefault();
-        if (job.stage === 1 && !stage1DocOk) return showError('Upload Dokumen', 'Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
-        if (job.stage === 2 && !stage2CanMove) return showError('Dokumen Belum Lengkap', 'Lengkapi dokumen atau minta persetujuan Kadiv/MGR.');
-        if (job.stage === 3) {
+        const curStage = Number(job.stage);
+        if (curStage === 1 && !stage1DocOk) return showError('Upload Dokumen', 'Upload minimal satu dokumen PO/SPK, Surat Permohonan, atau Surat Kuasa!');
+        if (curStage === 2 && !stage2CanMove) return showError('Dokumen Belum Lengkap', 'Lengkapi dokumen atau minta persetujuan Kadiv/MGR.');
+        if (curStage === 3) {
             if (!data.disnaker_tujuan) return showError('Validasi', 'Pilih Disnaker Tujuan!');
             if (!s3ScheduleValid) return showError('Validasi', 'Lengkapi tanggal dan inspektur untuk setiap hari!');
             setIsMoving(true);
@@ -494,8 +499,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             });
             return;
         }
-        if (job.stage === 5) {
-            const hasLhppDoc = (job.documents || []).some(d => d.stage === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
+        if (curStage === 5) {
+            const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
             if (!lhppLink?.trim() && !hasLhppDoc) {
                 return showError('Link LHPP Belum Diisi', 'Silakan isi link dokumen LHPP (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
             }
@@ -523,7 +528,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             });
             return;
         }
-        if (job.stage === 10) {
+        if (curStage === 10) {
             if (!s10.invoice_no?.trim()) return showError('Validasi', 'Nomor Invoice wajib diisi.');
             if (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) return showError('Validasi', 'Total Invoice (Nilai Tagihan) wajib diisi dengan benar.');
             const invDate = s10.tgl_invoice_issued || s10.invoice_date;
@@ -568,13 +573,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const handleRejectStage = async () => {
         if (!data.notes?.trim()) return showError('Validasi', 'Isi catatan penolakan terlebih dahulu!');
-        let targetStage = Math.max(1, job.stage - 1);
-        if (job.stage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
-        else if (job.stage === 5) targetStage = 4;
-        else if (job.stage === 7) targetStage = 6;
-        else if (job.stage === 8) targetStage = 6;
-        else if (job.stage === 10) targetStage = 9;
-        else if (job.stage === 14) targetStage = 11;
+        const curStage = Number(job.stage);
+        let targetStage = Math.max(1, curStage - 1);
+        if (curStage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
+        else if (curStage === 5) targetStage = 4;
+        else if (curStage === 7) targetStage = 6;
+        else if (curStage === 8) targetStage = 6;
+        else if (curStage === 10) targetStage = 9;
+        else if (curStage === 14) targetStage = 11;
         const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
         post(`/jobs/${job.id}/reject`, {
@@ -730,7 +736,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // ── Stage Action Panel ────────────────────────────────────────────────────
     const renderStageAction = () => {
         if (!canManage) return null;
-        const s = job.stage;
+        const s = Number(job.stage);
 
         return (
             <form onSubmit={handleMoveStage}>

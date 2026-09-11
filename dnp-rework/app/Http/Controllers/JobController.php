@@ -45,11 +45,20 @@ class JobController extends Controller
         }
 
         // Inspector role can act on inspector stages (4 and 5)
-        if ($user->role === 'inspektur') {
+        if (in_array($user->role, ['inspektur', 'inspector'])) {
             if (in_array($stage, [4, 5])) {
                 return true;
             }
             return false;
+        }
+
+        // Assigned inspector or report writer can act on inspector stages (4 and 5)
+        if ($job && in_array($stage, [4, 5])) {
+            $isAssigned = $job->inspectors()->where('users.id', $user->id)->exists()
+                || (int)$job->report_writer_id === (int)$user->id;
+            if ($isAssigned) {
+                return true;
+            }
         }
 
         // Finance role can act on finance stages by default
@@ -968,9 +977,9 @@ class JobController extends Controller
         }
 
         $user = Auth::user();
-        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists()
-            || (int)$job->report_writer_id === (int)$user->id
-            || $user->role === 'inspektur';
+        $isInspector = in_array($user->role, ['inspektur', 'inspector'])
+            || $job->inspectors()->where('users.id', $user->id)->exists()
+            || (int)$job->report_writer_id === (int)$user->id;
 
         $canUpload = $user->isSuperadmin()
             || $user->role === 'manager'
@@ -1022,13 +1031,15 @@ class JobController extends Controller
         }
 
         $user = Auth::user();
-        $isInspector = $job->inspectors()->where('users.id', $user->id)->exists();
+        $isInspector = in_array($user->role, ['inspektur', 'inspector'])
+            || $job->inspectors()->where('users.id', $user->id)->exists()
+            || (int)$job->report_writer_id === (int)$user->id;
 
         $canDelete = $user->isSuperadmin()
             || $user->role === 'manager'
             || $document->uploaded_by_user_id === $user->id
             || ($isInspector && in_array($document->stage, [4, 5, 6]))
-            || ($user->role !== 'inspektur' && $user->canOwnStage($document->stage));
+            || (!in_array($user->role, ['inspektur', 'inspector']) && $user->canOwnStage($document->stage));
 
         if (!$canDelete) {
             abort(403, 'You do not have permission to delete this document.');

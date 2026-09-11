@@ -25,20 +25,22 @@ export default function KanbanIndex({ jobs, auth }) {
     }, []);
 
     const canManageStage = (stageId) => {
+        const sId = Number(stageId);
         if (permissions === 'superadmin') return true;
-        if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(stageId)) return true;
-        if (auth.user?.role === 'inspektur' && [4, 5].includes(stageId)) return true;
-        if (auth.user?.role === 'finance' && [10, 12, 14].includes(stageId)) return true;
-        if (auth.user?.role === 'marketing' && [1, 11, 13].includes(stageId)) return true;
-        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14].includes(stageId)) return true;
-        const perm = permissions?.[stageId];
+        if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sId)) return true;
+        if (['inspektur', 'inspector'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
+        if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
+        if (auth.user?.role === 'marketing' && [1, 11, 13].includes(sId)) return true;
+        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14].includes(sId)) return true;
+        const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };
 
     const canViewStage = (stageId) => {
-        if (permissions === 'superadmin' || auth.user.role === 'admin' || auth.user.role === 'manager') return true;
-        if (auth.user.role === 'inspektur') return true;
-        const perm = permissions?.[stageId];
+        const sId = Number(stageId);
+        if (permissions === 'superadmin' || auth.user?.role === 'admin' || auth.user?.role === 'manager') return true;
+        if (['inspektur', 'inspector'].includes(auth.user?.role)) return true;
+        const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (
             perm.can_view === true || perm.can_view === 1 || perm.can_view === '1' ||
             perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1'

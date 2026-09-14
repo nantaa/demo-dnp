@@ -733,10 +733,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return showError('Validasi Gagal', 'Total invoice harus lebih besar dari 0.');
         }
 
-        router.post(`/jobs/${job.id}/invoice-revise`, reviseInvoiceForm, {
+        const formData = new FormData();
+        formData.append('invoice_no', reviseInvoiceForm.invoice_no || '');
+        formData.append('total_invoice_amount', reviseInvoiceForm.total_invoice_amount || '');
+        if (reviseInvoiceForm.tgl_invoice_issued) formData.append('tgl_invoice_issued', reviseInvoiceForm.tgl_invoice_issued);
+        if (reviseInvoiceForm.no_faktur_pajak) formData.append('no_faktur_pajak', reviseInvoiceForm.no_faktur_pajak);
+        if (reviseInvoiceForm.tgl_faktur_pajak) formData.append('tgl_faktur_pajak', reviseInvoiceForm.tgl_faktur_pajak);
+        if (reviseInvoiceForm.revision_notes) formData.append('revision_notes', reviseInvoiceForm.revision_notes);
+        if (reviseInvoiceForm.invoice_file) formData.append('invoice_file', reviseInvoiceForm.invoice_file);
+        if (reviseInvoiceForm.faktur_file) formData.append('faktur_file', reviseInvoiceForm.faktur_file);
+
+        router.post(`/jobs/${job.id}/invoice-revise`, formData, {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
-                showSuccess('Berhasil', 'Data invoice berhasil direvisi tanpa mengubah stage alur kerja.');
+                showSuccess('Berhasil', 'Data invoice berhasil direvisi secara paralel tanpa mengubah stage alur kerja.');
                 setShowReviseInvoiceModal(false);
             },
             onError: (errs) => {
@@ -777,7 +788,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 '<select id="swal-target-stage" class="w-full border rounded p-2 text-sm">' +
                 '<option value="14">Stage 11b: Verifikasi Pembayaran (Finance)</option>' +
                 '<option value="11">Stage 11: Penyerahan Suket ke Klien</option>' +
-                '<option value="10">Stage 10: Penagihan / Invoice (Finance)</option>' +
+                '<option value="10">Stage 10: Pembuatan Invoice (Finance)</option>' +
                 '</select>' +
                 '<label class="block font-bold text-gray-700 mt-2">Alasan Pembukaan Kembali *:</label>' +
                 '<textarea id="swal-reopen-notes" class="w-full border rounded p-2 text-sm" placeholder="Tuliskan alasan lengkap pembukaan kembali..." rows="2"></textarea>' +
@@ -1132,7 +1143,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
                                             ) : hasFile ? (
                                                 docs.map(d => (
-                                                    <a key={d.id} href={d.id ? `/jobs/${d.job_id || job.id}/documents/${d.id}/download` : `/storage/${d.path}`} target="_blank" rel="noopener noreferrer"
+                                                    <a key={d.id} href={getDocDownloadUrl(d)} download target="_blank" rel="noopener noreferrer"
                                                         className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
                                                         {d.name.split('.').pop().toUpperCase()}
                                                     </a>
@@ -1602,11 +1613,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         ) : (
                                             <p className="text-sm font-medium text-gray-700">{fmtCurrency(editForm.data.nilai)}</p>
                                         )}
-                                        {editForm.data.nilai > 0 && (
-                                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1">
-                                                Sesudah PPN (12%): <strong>{fmtCurrency(Math.round(parseFloat(editForm.data.nilai || 0) * 1.12))}</strong>
-                                            </div>
-                                        )}
+                                        {editForm.data.nilai > 0 && (() => {
+                                            const total = parseFloat(editForm.data.nilai || 0);
+                                            const dpp = Math.round(total / 1.12);
+                                            const ppn = total - dpp;
+                                            return (
+                                                <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1 flex justify-between">
+                                                    <span>DPP: <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
+                                                    <span>PPN (12%): <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
@@ -2022,7 +2039,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* ── STAGE 10 (Penagihan — Finance) ──────────── */}
+                {/* ── STAGE 10 (Pembuatan Invoice — Finance) ──────────── */}
                 {s === 10 && (() => {
                     const hasInvoiceDoc10 = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'].includes(d.type));
                     const s10CanMove = s10.invoice_no?.trim() && s10.total_invoice_amount && parseFloat(s10.total_invoice_amount) > 0 && s10.tgl_invoice_issued && hasInvoiceDoc10;
@@ -2055,11 +2072,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         onChange={e => setS10({ ...s10, total_invoice_amount: e.target.value })}
                                         className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                         disabled={!canEditNilai} />
-                                    {s10.total_invoice_amount > 0 && (
-                                        <p className="text-[11px] text-amber-700 mt-1">
-                                            Sesudah PPN (12%): <strong>{fmtCurrency(Math.round(parseFloat(s10.total_invoice_amount || 0) * 1.12))}</strong>
-                                        </p>
-                                    )}
+                                    {s10.total_invoice_amount > 0 && (() => {
+                                        const total = parseFloat(s10.total_invoice_amount || 0);
+                                        const dpp = Math.round(total / 1.12);
+                                        const ppn = total - dpp;
+                                        return (
+                                            <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-1.5 mt-1 flex justify-between">
+                                                <span>DPP: <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
+                                                <span>PPN 12%: <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan *</label>
@@ -2103,7 +2126,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {canEditNilai && (
                                 <button type="button" onClick={handleSaveS10}
                                     className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                                    Simpan Data Penagihan & Faktur
+                                    Simpan Data Invoice & Faktur
                                 </button>
                             )}
                             {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
@@ -2116,6 +2139,26 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 11 (Pengiriman SUKET — MKT) ──────── */}
                 {s === 11 && (
                     <div className="space-y-3">
+                        {job.invoice_no && (
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div>
+                                    <span className="font-bold text-[#0A385C]">Invoice:</span> {job.invoice_no}
+                                    {canSeeNilai && job.total_invoice_amount > 0 && (
+                                        <span className="ml-2 font-semibold text-gray-800">• Rp {Number(job.total_invoice_amount).toLocaleString('id-ID')}</span>
+                                    )}
+                                    <span className="block text-[11px] text-gray-500">Revisi invoice ditangani Finance secara paralel tanpa menghambat pengiriman Suket.</span>
+                                </div>
+                                {canEditNilai && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviseInvoiceModal(true)}
+                                        className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold px-2 py-1 rounded self-start sm:self-auto"
+                                    >
+                                        Revisi Invoice
+                                    </button>
+                                )}
+                            </div>
+                        )}
                         <p className="text-xs text-gray-500">Upload dokumen (Opsional), kemudian tandai selesai.</p>
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
                             <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
@@ -2505,7 +2548,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (s === 10) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Detail Penagihan / Invoice:</p>
+                    <p className="font-bold text-gray-700">Detail Invoice & Faktur:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
                         {canSeeNilai && (
                             <div><span className="text-gray-400">Total Invoice:</span> <span className="font-semibold text-gray-800">{job.total_invoice_amount ? `Rp ${Number(job.total_invoice_amount).toLocaleString('id-ID')}` : '-'}</span></div>
@@ -2516,7 +2559,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
-                            <span className="font-semibold text-amber-800">Catatan Penagihan: </span> {stageNotes}
+                            <span className="font-semibold text-amber-800">Catatan Invoice: </span> {stageNotes}
                         </div>
                     )}
                 </div>
@@ -2663,7 +2706,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                     {docs.map(d => (
                                                                         <a
                                                                             key={d.id}
-                                                                            href={d.id ? `/jobs/${d.job_id || job.id}/documents/${d.id}/download` : `/storage/${d.path}`}
+                                                                            href={getDocDownloadUrl(d)}
+                                                                            download
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
@@ -2726,7 +2770,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {docs.map(doc => (
                                 <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
                                     <div>
-                                        <a href={doc.id ? `/jobs/${doc.job_id || job.id}/documents/${doc.id}/download` : `/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
+                                        <a href={getDocDownloadUrl(doc)} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
                                             <span>{doc.name}</span>
                                         </a>
                                         <div className="text-xs text-gray-500 mt-1 ml-6">
@@ -2900,12 +2944,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     </p>
                                     <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
                                 </div>
-                                {job.nilai > 0 && (
-                                    <div className="pt-1 border-t border-yellow-200/80 flex items-center justify-between text-xs text-yellow-800">
-                                        <span>Sesudah PPN (12%):</span>
-                                        <span className="font-bold text-yellow-950">{fmtCurrency(Math.round(parseFloat(job.nilai || 0) * 1.12))}</span>
-                                    </div>
-                                )}
+                                {job.nilai > 0 && (() => {
+                                    const total = parseFloat(job.nilai || 0);
+                                    const dpp = Math.round(total / 1.12);
+                                    const ppn = total - dpp;
+                                    return (
+                                        <div className="pt-1 border-t border-yellow-200/80 flex items-center justify-between text-xs text-yellow-800">
+                                            <span>DPP: <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
+                                            <span>PPN 12%: <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>
@@ -2963,16 +3012,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 >
                                     Revisi PO
                                 </button>
-                                {job.stage >= 10 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowReviseInvoiceModal(true)}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
-                                        title="Revisi Data Invoice & Faktur Pajak (Finance/Superadmin)"
-                                    >
-                                        Revisi Invoice
-                                    </button>
-                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReviseInvoiceModal(true)}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                                    title="Revisi / Terbitkan Data Invoice & Faktur Pajak secara Paralel (Finance/Superadmin)"
+                                >
+                                    Revisi Invoice
+                                </button>
                             </>
                         )}
                         {(auth?.user?.role === 'superadmin' || auth?.permissions === 'superadmin') && (
@@ -3083,11 +3130,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         onChange={e => setRevisePoForm(prev => ({ ...prev, nilai: e.target.value }))}
                                         className="w-full border rounded px-2.5 py-1.5 text-sm"
                                     />
-                                    {revisePoForm.nilai && parseFloat(revisePoForm.nilai) > 0 && (
-                                        <p className="text-[11px] text-emerald-700 mt-1">
-                                            Sesudah PPN (12%): <strong>{fmtCurrency(Math.round(parseFloat(revisePoForm.nilai || 0) * 1.12))}</strong>
-                                        </p>
-                                    )}
+                                    {revisePoForm.nilai && parseFloat(revisePoForm.nilai) > 0 && (() => {
+                                        const total = parseFloat(revisePoForm.nilai || 0);
+                                        const dpp = Math.round(total / 1.12);
+                                        const ppn = total - dpp;
+                                        return (
+                                            <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2 mt-1.5 flex justify-between">
+                                                <span>DPP (Sebelum PPN): <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
+                                                <span>PPN (12%): <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                                 <div>
                                     <label className="block font-bold text-gray-700 mb-1">Alasan / Catatan Revisi</label>
@@ -3126,7 +3179,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <div className="flex items-center justify-between border-b pb-3">
                                 <div>
                                     <h3 className="text-base font-black text-[#0A385C]">Revisi Data Invoice & Faktur Pajak</h3>
-                                    <p className="text-xs text-gray-500">Perbarui nomor atau tanggal invoice tanpa membatalkan penagihan.</p>
+                                    <p className="text-xs text-gray-500">Perbarui nomor atau tanggal invoice tanpa membatalkan proses.</p>
                                 </div>
                                 <button type="button" onClick={() => setShowReviseInvoiceModal(false)} className="text-gray-400 hover:text-gray-600 text-lg font-bold">x</button>
                             </div>
@@ -3194,6 +3247,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         placeholder="Catatan alasan perubahan data invoice..."
                                         className="w-full border rounded px-2.5 py-1.5 text-xs"
                                     />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t pt-3 border-gray-100">
+                                    <div>
+                                        <label className="block font-bold text-gray-700 mb-1" htmlFor="revise-invoice-file">Unggah File Invoice Baru (PDF)</label>
+                                        <input
+                                            id="revise-invoice-file"
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, invoice_file: e.target.files[0] }))}
+                                            className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block font-bold text-gray-700 mb-1" htmlFor="revise-faktur-file">Unggah File Faktur Pajak Baru (PDF)</label>
+                                        <input
+                                            id="revise-faktur-file"
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, faktur_file: e.target.files[0] }))}
+                                            className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex justify-end gap-2 pt-2 border-t">
                                     <button

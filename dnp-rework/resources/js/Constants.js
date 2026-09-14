@@ -9,7 +9,7 @@ export const STAGES = [
     { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'admin', sla: 1 },
     { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30 },
     { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
-    { id: 10, name: 'Penagihan', short: 'Tagihan', role: 'finance', sla: 1 },
+    { id: 10, name: 'Pembuatan Invoice', short: 'Invoice', role: 'finance', sla: 1 },
     { id: 11, name: 'Pengiriman SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null },
     { id: 14, name: 'Pembayaran / Pelunasan', short: 'Pembayaran', role: 'finance', sla: 1, displayId: '11b' },
     { id: 12, name: 'Selesai / Closed', short: 'Closed', role: 'finance', sla: null },

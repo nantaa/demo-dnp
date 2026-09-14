@@ -925,12 +925,12 @@ class JobController extends Controller
             NotificationService::send(
                 $recipients,
                 'stage_moved',
-                "Job {$job->kode} otomatis maju ke Stage 10 (Penagihan)",
+                "Job {$job->kode} otomatis maju ke Stage 10 (Pembuatan Invoice)",
                 "Semua unit Suket ({$totalExpected} unit) telah Issued. Job otomatis masuk ke Stage 10.",
                 $job->id
             );
 
-            return back()->with('success', 'Data Suket disimpan. Semua unit issued — job otomatis maju ke Stage 10 (Penagihan).');
+            return back()->with('success', 'Data Suket disimpan. Semua unit issued — job otomatis maju ke Stage 10 (Pembuatan Invoice).');
         }
 
         return back()->with('success', 'Data Suket unit berhasil disimpan.');
@@ -1228,6 +1228,8 @@ class JobController extends Controller
             'no_faktur_pajak'      => 'nullable|string|max:100',
             'tgl_faktur_pajak'     => 'nullable|date',
             'revision_notes'       => 'nullable|string',
+            'invoice_file'         => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
+            'faktur_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:20480',
         ]);
 
         $job->update([
@@ -1238,18 +1240,76 @@ class JobController extends Controller
             'tgl_faktur_pajak'     => $validated['tgl_faktur_pajak'] ?? $job->tgl_faktur_pajak,
         ]);
 
+        $attachedDocs = [];
+        $targetDir = "job-documents/{$job->id}";
+
+        if ($request->hasFile('invoice_file')) {
+            $invFile = $request->file('invoice_file');
+            $cleanName = preg_replace('~[/\\\\?%*:|"<>]+~', '_', trim($invFile->getClientOriginalName()));
+            $cleanName = preg_replace('~_+~', '_', $cleanName) ?: 'invoice_' . time() . '.pdf';
+            $filename = $cleanName;
+            if (Storage::disk('public')->exists("{$targetDir}/{$filename}")) {
+                $info = pathinfo($cleanName);
+                $base = $info['filename'];
+                $ext  = !empty($info['extension']) ? '.' . $info['extension'] : '';
+                $counter = 1;
+                while (Storage::disk('public')->exists("{$targetDir}/{$base} ({$counter}){$ext}")) {
+                    $counter++;
+                }
+                $filename = "{$base} ({$counter}){$ext}";
+            }
+            $path = $invFile->storeAs($targetDir, $filename, 'public');
+            $job->documents()->create([
+                'stage'               => 10,
+                'type'                => 'Invoice (PDF)',
+                'name'                => $filename,
+                'path'                => $path,
+                'uploaded_by_user_id' => $user->id,
+            ]);
+            $attachedDocs[] = "Invoice: {$filename}";
+        }
+
+        if ($request->hasFile('faktur_file')) {
+            $fakturFile = $request->file('faktur_file');
+            $cleanName = preg_replace('~[/\\\\?%*:|"<>]+~', '_', trim($fakturFile->getClientOriginalName()));
+            $cleanName = preg_replace('~_+~', '_', $cleanName) ?: 'faktur_' . time() . '.pdf';
+            $filename = $cleanName;
+            if (Storage::disk('public')->exists("{$targetDir}/{$filename}")) {
+                $info = pathinfo($cleanName);
+                $base = $info['filename'];
+                $ext  = !empty($info['extension']) ? '.' . $info['extension'] : '';
+                $counter = 1;
+                while (Storage::disk('public')->exists("{$targetDir}/{$base} ({$counter}){$ext}")) {
+                    $counter++;
+                }
+                $filename = "{$base} ({$counter}){$ext}";
+            }
+            $path = $fakturFile->storeAs($targetDir, $filename, 'public');
+            $job->documents()->create([
+                'stage'               => 10,
+                'type'                => 'Faktur Pajak',
+                'name'                => $filename,
+                'path'                => $path,
+                'uploaded_by_user_id' => $user->id,
+            ]);
+            $attachedDocs[] = "Faktur Pajak: {$filename}";
+        }
+
+        $docsNote = !empty($attachedDocs) ? ' (' . implode(', ', $attachedDocs) . ')' : '';
+        $logAction = "Revisi Invoice secara paralel oleh {$user->name}: {$validated['invoice_no']}{$docsNote}";
+
         $this->recordHistoryLog(
             $job,
             $job->stage,
-            "Revisi Invoice oleh {$user->name}: {$validated['invoice_no']}",
+            $logAction,
             $validated['revision_notes'] ?? null
         );
 
         if ($request->wantsJson()) {
-            return response()->json(['ok' => true, 'message' => 'Data invoice berhasil direvisi.']);
+            return response()->json(['ok' => true, 'message' => 'Data invoice berhasil direvisi secara paralel.']);
         }
 
-        return back(303)->with('success', 'Data invoice berhasil direvisi.');
+        return back(303)->with('success', 'Data invoice berhasil direvisi secara paralel tanpa mengubah stage pekerjaan.');
     }
 
     /**

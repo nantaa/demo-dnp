@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\JobDocument;
+use App\Models\JobHistory;
 use App\Models\AlatUji;
 use App\Models\SertifikatPjk3;
 use Illuminate\Http\Request;
@@ -135,11 +136,7 @@ class JobController extends Controller
 
         $job = Job::create($validated);
 
-        $job->historyLogs()->create([
-            'stage'             => 1,
-            'action'            => 'Job created (PO/SPK received)',
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog($job, 1, 'Job created (PO/SPK received)');
 
         return redirect()->route('dashboard')->with('success', 'Job created successfully.');
     }
@@ -399,12 +396,12 @@ class JobController extends Controller
             'stage_started_at' => now(),
         ]);
 
-        $job->historyLogs()->create([
-            'stage'             => $nextStage,
-            'action'            => 'Moved from stage ' . $currentStage . ' to ' . $nextStage,
-            'action_by_user_id' => Auth::id(),
-            'notes'             => $validated['notes'] ?? null,
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $nextStage,
+            'Moved from stage ' . $currentStage . ' to ' . $nextStage,
+            $validated['notes'] ?? null
+        );
 
         // Send notifications to all related users (next stage owners, marketing owner, inspectors, report writer, managers, superadmins)
         $recipients = NotificationService::getRelatedUserIds($job, $nextStage);
@@ -453,13 +450,13 @@ class JobController extends Controller
             'stage_started_at' => now(),
         ]);
 
-        $job->historyLogs()->create([
-            'stage'                => $prevStage,
-            'action'               => 'DITOLAK (Dikembalikan dari S' . $currentStage . ' ke S' . $prevStage . ')',
-            'returned_from_stage'  => $currentStage,
-            'action_by_user_id'    => Auth::id(),
-            'notes'                => $validated['notes'],
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $prevStage,
+            'DITOLAK (Dikembalikan dari S' . $currentStage . ' ke S' . $prevStage . ')',
+            $validated['notes'],
+            ['returned_from_stage' => $currentStage]
+        );
 
         // Send notification to all related users
         $recipients = NotificationService::getRelatedUserIds($job, $prevStage);
@@ -489,11 +486,11 @@ class JobController extends Controller
             'peer_review_submitted_by' => Auth::user()->name,
         ]);
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => 'Meminta persetujuan Kadiv/MGR (bypass kelengkapan dokumen)',
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            'Meminta persetujuan Kadiv/MGR (bypass kelengkapan dokumen)'
+        );
 
         // Notify managers
         $managers = NotificationService::getManagerUserIds();
@@ -524,11 +521,11 @@ class JobController extends Controller
             'peer_review_approved_by' => $user->name,
         ]);
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => 'Kadiv/MGR menyetujui bypass dokumen. Admin dapat melanjutkan ke stage berikutnya.',
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            'Kadiv/MGR menyetujui bypass dokumen. Admin dapat melanjutkan ke stage berikutnya.'
+        );
 
         // Notify stage owner
         $owners = NotificationService::getStageOwnerUserIds($job->stage);
@@ -556,13 +553,13 @@ class JobController extends Controller
             'stage_started_at' => now(),
         ]);
 
-        $job->historyLogs()->create([
-            'stage'               => 1,
-            'action'              => 'Job dikembalikan ke Stage 1 PO dari Stage ' . $fromStage . ' (jumlah alat tidak sesuai)',
-            'returned_from_stage' => $fromStage,
-            'action_by_user_id'   => Auth::id(),
-            'notes'               => $validated['notes'],
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            1,
+            'Job dikembalikan ke Stage 1 PO dari Stage ' . $fromStage . ' (jumlah alat tidak sesuai)',
+            $validated['notes'],
+            ['returned_from_stage' => $fromStage]
+        );
 
         $recipients = NotificationService::getRelatedUserIds($job, 1);
         NotificationService::send(
@@ -694,12 +691,12 @@ class JobController extends Controller
             'rejected'             => 'Laporan Teknis DITOLAK oleh MGR',
         };
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => $action,
-            'action_by_user_id' => Auth::id(),
-            'notes'             => $validated['s5_review_notes'],
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            $action,
+            $validated['s5_review_notes']
+        );
 
         return back()->with('success', 'Keputusan review berhasil disimpan.');
     }
@@ -736,6 +733,7 @@ class JobController extends Controller
             'tgl_doc_submitted_disnaker' => 'nullable|date',
             'tgl_doc_received_disnaker'  => 'nullable|date',
             's8_progress_status'         => 'nullable|in:progress,stuck,ready',
+            's8_delay_reason'            => 'nullable|string|max:500',
         ]);
 
         // Auto-calculate SLA status
@@ -777,11 +775,11 @@ class JobController extends Controller
             'action_by_user_id' => Auth::id(),
         ]);
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => 'Follow-up Disnaker dicatat: [' . strtoupper($validated['status']) . '] ' . $validated['notes'],
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            'Follow-up Disnaker dicatat: [' . strtoupper($validated['status']) . '] ' . $validated['notes']
+        );
 
         return back()->with('success', 'Follow-up Disnaker berhasil dicatat.');
     }
@@ -845,11 +843,11 @@ class JobController extends Controller
 
         if ($totalTracked >= $totalExpected && $issuedCount >= $totalExpected) {
             $job->update(['stage' => 10, 'stage_started_at' => now()]);
-            $job->historyLogs()->create([
-                'stage'             => 10,
-                'action'            => 'Auto-advanced ke Stage 10: Semua ' . $totalExpected . ' unit Suket berstatus Issued.',
-                'action_by_user_id' => Auth::id(),
-            ]);
+            $this->recordHistoryLog(
+                $job,
+                10,
+                'Auto-advanced ke Stage 10: Semua ' . $totalExpected . ' unit Suket berstatus Issued.'
+            );
 
             $recipients = NotificationService::getRelatedUserIds($job, 10);
             NotificationService::send(
@@ -916,11 +914,11 @@ class JobController extends Controller
         $fakturNote = !empty($validated['no_faktur_pajak'])
             ? ' | Faktur Pajak: ' . $validated['no_faktur_pajak']
             : '';
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => 'Data penagihan diperbarui oleh Finance.' . $fakturNote,
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            'Data penagihan diperbarui oleh Finance.' . $fakturNote
+        );
 
         return back()->with('success', 'Data penagihan berhasil disimpan.');
     }
@@ -942,11 +940,11 @@ class JobController extends Controller
 
         $job->update($validated);
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => 'Suket diserahkan ke klien pada ' . Carbon::parse($validated['tgl_submit_mkt'])->format('d M Y'),
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            'Suket diserahkan ke klien pada ' . Carbon::parse($validated['tgl_submit_mkt'])->format('d M Y')
+        );
 
         return back()->with('success', 'Tanggal penyerahan Suket ke klien berhasil disimpan.');
     }
@@ -972,12 +970,12 @@ class JobController extends Controller
             'paid'               => $validated['s14_payment_status'] === 'paid',
         ]);
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => 'Status Pembayaran (11b) diperbarui: ' . strtoupper($validated['s14_payment_status']),
-            'action_by_user_id' => Auth::id(),
-            'notes'             => $validated['s14_payment_notes'] ?? null,
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            'Status Pembayaran (11b) diperbarui: ' . strtoupper($validated['s14_payment_status']),
+            $validated['s14_payment_notes'] ?? null
+        );
 
         return back()->with('success', 'Status pembayaran berhasil disimpan.');
     }
@@ -1006,11 +1004,11 @@ class JobController extends Controller
             ? 'Job DITUTUP — Pembayaran LUNAS dikonfirmasi Finance. Jumlah: Rp ' . number_format($validated['payment_amount_received'], 0, ',', '.')
             : 'Data pembayaran Stage 12 diperbarui oleh Finance.';
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => $action,
-            'action_by_user_id' => Auth::id(),
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            $action
+        );
 
         return back()->with('success', $validated['paid'] ? 'Job berhasil ditutup sebagai LUNAS.' : 'Data pembayaran berhasil disimpan.');
     }
@@ -1081,18 +1079,18 @@ class JobController extends Controller
 
         // Store photo notes as a history log entry (Stage 4 photos)
         if ($request->photo_notes) {
-            $job->historyLogs()->create([
-                'stage'             => $job->stage,
-                'action'            => "Catatan foto [{$request->type}]: {$request->photo_notes}",
-                'action_by_user_id' => $user->id,
-            ]);
+            $this->recordHistoryLog(
+                $job,
+                $job->stage,
+                "Catatan foto [{$request->type}]: {$request->photo_notes}"
+            );
         }
 
-        $job->historyLogs()->create([
-            'stage'             => $job->stage,
-            'action'            => "Dokumen diunggah: [{$request->type}] {$filename}",
-            'action_by_user_id' => $user->id,
-        ]);
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            "Dokumen diunggah: [{$request->type}] {$filename}"
+        );
 
         return back(303)->with('success', 'Dokumen berhasil diunggah.');
     }
@@ -1419,5 +1417,47 @@ class JobController extends Controller
         } while ($exists);
 
         return $stNum;
+    }
+
+    /**
+     * Centralized history/audit logger with intelligent deduplication & coalescing.
+     * Prevents duplicate/noisy entries when actions occur within 120 seconds by the same user on the same stage.
+     */
+    protected function recordHistoryLog(Job $job, int $stage, string $action, ?string $notes = null, array $extra = []): JobHistory
+    {
+        $userId = Auth::id();
+
+        // Check if there is a recent log from the same user on this job in the last 2 minutes (120s)
+        $recentLog = $job->historyLogs()
+            ->where('action_by_user_id', $userId)
+            ->where('stage', $stage)
+            ->where('created_at', '>=', now()->subSeconds(120))
+            ->latest('id')
+            ->first();
+
+        if ($recentLog) {
+            // Coalesce / update existing log to avoid duplicate entries in audit trail
+            if (!str_contains($recentLog->action, $action)) {
+                $recentLog->action = $recentLog->action . ' • ' . $action;
+            }
+            if ($notes && !empty(trim($notes))) {
+                $recentLog->notes = $recentLog->notes ? ($recentLog->notes . "\n" . $notes) : $notes;
+            }
+            if (!empty($extra)) {
+                foreach ($extra as $k => $v) {
+                    $recentLog->{$k} = $v;
+                }
+            }
+            $recentLog->touch();
+            $recentLog->save();
+            return $recentLog;
+        }
+
+        return $job->historyLogs()->create(array_merge([
+            'stage'             => $stage,
+            'action'            => $action,
+            'action_by_user_id' => $userId,
+            'notes'             => $notes,
+        ], $extra));
     }
 }

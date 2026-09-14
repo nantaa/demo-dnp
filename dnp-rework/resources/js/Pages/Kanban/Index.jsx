@@ -148,6 +148,34 @@ export default function KanbanIndex({ jobs, auth }) {
                                     <h3 className="font-bold text-sm text-slate-900 leading-tight mb-1 group-hover:text-[#0A385C] transition-colors">{job.klien}</h3>
                                     <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
 
+                                    {/* Stage 8 Disnaker Status Banner & Delay Reason */}
+                                    {job.stage === 8 && job.s8_progress_status && (() => {
+                                        const sMap = {
+                                            progress: { label: '⏳ PROSES DISNAKER', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
+                                            stuck:    { label: '⚠️ TERKENDALA',       cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
+                                            ready:    { label: '✅ SELESAI DISNAKER', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
+                                        };
+                                        const badge = sMap[job.s8_progress_status];
+                                        if (!badge) return null;
+                                        return (
+                                            <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
+                                                <div className="flex items-center justify-between font-bold">
+                                                    <span>{badge.label}</span>
+                                                    {job.tgl_doc_submitted_disnaker && (
+                                                        <span className="text-[10px] font-normal opacity-80">
+                                                            {Math.max(0, Math.floor((new Date() - new Date(job.tgl_doc_submitted_disnaker)) / (1000 * 60 * 60 * 24)))} hr
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {job.s8_progress_status === 'stuck' && job.s8_delay_reason && (
+                                                    <p className="text-[10px] text-red-700 italic border-t border-red-200/70 pt-1 truncate" title={job.s8_delay_reason}>
+                                                        Kendala: {job.s8_delay_reason}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+
                                     {/* Inspector / Tim Pill Badges if assigned */}
                                     {job.inspectors && job.inspectors.length > 0 && (
                                         <div className="flex items-center gap-1 my-2 overflow-x-auto">
@@ -159,6 +187,12 @@ export default function KanbanIndex({ jobs, auth }) {
                                                     {ins.name || ins}
                                                 </span>
                                             ))}
+                                        </div>
+                                    )}
+
+                                    {job.stage === 8 && job.s8_progress_status === 'stuck' && job.s8_delay_reason && (
+                                        <div className="mt-1.5 mb-2 p-1.5 rounded bg-red-50 border border-red-200 text-[10px] text-red-800 font-medium line-clamp-2">
+                                            ⚠️ <strong className="font-semibold">Kendala:</strong> {job.s8_delay_reason}
                                         </div>
                                     )}
                                     
@@ -183,9 +217,9 @@ export default function KanbanIndex({ jobs, auth }) {
 
                                             if (job.stage === 8 && job.s8_progress_status) {
                                                 const sMap = {
-                                                    progress: { label: 'PROGRESS', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
-                                                    stuck:    { label: 'STUCK',    cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                                                    ready:    { label: 'READY',    cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    progress: { label: 'PROSES DISNAKER', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
+                                                    stuck:    { label: 'TERKENDALA',       cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                    ready:    { label: 'SELESAI DISNAKER', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
                                                 };
                                                 const badge = sMap[job.s8_progress_status];
                                                 if (badge) {

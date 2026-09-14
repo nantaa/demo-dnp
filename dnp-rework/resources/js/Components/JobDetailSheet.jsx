@@ -342,6 +342,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
         tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
         s8_progress_status:         job.s8_progress_status         ?? '',
+        s8_delay_reason:            job.s8_delay_reason            ?? '',
     });
     const [s9,  setS9]  = useState({ s9_progress_status: job.s9_progress_status  ?? '' });
     const [s10, setS10] = useState({
@@ -462,6 +463,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
             tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
             s8_progress_status:         job.s8_progress_status         ?? '',
+            s8_delay_reason:            job.s8_delay_reason            ?? '',
         });
         setS9({ s9_progress_status: job.s9_progress_status ?? '' });
         setS10({
@@ -921,9 +923,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
                         ))}
                         <p className="text-xs text-gray-400 mt-1">Dokumen opsional tambahan:</p>
-                        {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t)).map(t => (
+                        {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t) && t !== 'Dokumen Tambahan').map(t => (
                             <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
                         ))}
+                        <UploadSlot
+                            type="Dokumen Tambahan"
+                            stageId={1}
+                            docs={job.documents}
+                            triggerUpload={triggerUpload}
+                            uploadFileDirectly={uploadFileDirectly}
+                            canManageStageDocs={canManageStageDocs}
+                            deleteDoc={deleteDoc}
+                            isOptional={true}
+                        />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
                     </div>
@@ -1844,6 +1856,20 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 {STAGE8_DISNAKER_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                             </select>
                         </div>
+                        {s8.s8_progress_status === 'stuck' && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+                                <label className="block text-xs font-bold text-red-800">
+                                    ⚠️ Keterangan Kendala di Disnaker
+                                </label>
+                                <textarea
+                                    rows={2}
+                                    value={s8.s8_delay_reason || ''}
+                                    onChange={e => setS8({ ...s8, s8_delay_reason: e.target.value })}
+                                    placeholder="Jelaskan alasan terkendala (misal: Menunggu tanda tangan Kadis, pejabat dinas luar, dll)..."
+                                    className="w-full text-xs border border-red-300 rounded px-2.5 py-1.5 bg-white text-gray-800 focus:ring-1 focus:ring-red-400"
+                                />
+                            </div>
+                        )}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Dokumen Diserahkan ke Disnaker</label>

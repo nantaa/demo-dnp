@@ -131,6 +131,22 @@ export default function JobCreate({ auth }) {
                                     className="w-full px-3 py-2 border rounded"
                                     required
                                 />
+                                {data.nilai && parseFloat(data.nilai) > 0 && (
+                                    <div className="mt-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-md text-xs space-y-1">
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>DPP (Sebelum PPN):</span>
+                                            <span className="font-semibold text-gray-800">Rp {Number(data.nilai).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div className="flex justify-between text-amber-800">
+                                            <span>PPN (12%):</span>
+                                            <span className="font-semibold">Rp {Number(Math.round(parseFloat(data.nilai) * 0.12)).toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div className="flex justify-between text-amber-950 font-bold border-t border-amber-200/60 pt-1">
+                                            <span>Total Sesudah PPN (12%):</span>
+                                            <span>Rp {Number(Math.round(parseFloat(data.nilai) * 1.12)).toLocaleString('id-ID')}</span>
+                                        </div>
+                                    </div>
+                                )}
                                 {errors.nilai && <div className="text-red-500 text-xs mt-1">{errors.nilai}</div>}
                             </div>
                         </div>

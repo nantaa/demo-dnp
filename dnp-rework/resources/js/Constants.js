@@ -111,7 +111,7 @@ export const DOC_TYPES_BY_STAGE = {
     2: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
     3: ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
     4: ['Foto Nameplate', 'Foto Kondisi Fisik', 'BAP', 'Foto Hasil Pengukuran', 'Foto Alat Pengaman', 'Foto APD & Tim di Lokasi', 'Foto Dokumentasi Lapangan', 'Data Pengukuran'],
-    5: ['LHPP', 'BAP', 'Laporan Teknis Tambahan'],         // Stage 5 = Penyusunan LHPP (Admin)
+    5: ['LHPP'],                                         // Stage 5 = Penyusunan LHPP (Inspektur / Tim Ahli)
     6: ['LHPP Draft', 'BAP', 'Catatan Review MGR'],         // Stage 6 = Review Laporan Teknis (Manager)
     7: ['Bukti Penyerahan ke Disnaker'],
     8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],

@@ -3,6 +3,7 @@ import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import IndonesiaLocationSelect from './IndonesiaLocationSelect';
 import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
+import Swal from 'sweetalert2';
 import { Trash2 } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
@@ -132,7 +133,7 @@ const DocChip = ({ doc, canManage, onDelete }) => {
         : `/storage/${doc.path || ''}`;
     return (
         <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={doc.name || 'Dokumen'}
                className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name || 'Dokumen'}>
                 📎 {doc.name || 'Dokumen'}
             </a>
@@ -594,31 +595,22 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return;
         }
         if (curStage === 5) {
-            const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
+            const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final'].includes(d.type));
             const hasValidLink = hasValidLhppLink(lhppLinks);
             if (!hasValidLink && !hasLhppDoc) {
                 return showError('Link LHPP Belum Diisi', 'Silakan isi minimal satu link dokumen LHPP unit (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
             }
             setIsMoving(true);
-            router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
-                onSuccess: () => {
-                    router.post(`/jobs/${job.id}/move`, {
-                        next_stage: data.next_stage || 6,
-                        notes: data.notes,
-                        link_lhpp: lhppLinks,
-                    }, {
-                        onSuccess: () => { setIsMoving(false); onClose(); },
-                        onError: (errs) => {
-                            setIsMoving(false);
-                            const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
-                            showError('Gagal Pindah Stage', msg);
-                        },
-                    });
-                },
+            router.post(`/jobs/${job.id}/move`, {
+                next_stage: data.next_stage || 6,
+                notes: data.notes,
+                link_lhpp: lhppLinks,
+            }, {
+                onSuccess: () => { setIsMoving(false); onClose(); },
                 onError: (errs) => {
                     setIsMoving(false);
-                    const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan link LHPP.';
-                    showError('Gagal Simpan', msg);
+                    const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
+                    showError('Gagal Pindah Stage', msg);
                 },
             });
             return;
@@ -636,24 +628,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             if (!hasInvoiceDoc) return showError('Dokumen Belum Lengkap', 'Dokumen "Invoice (PDF)" atau dokumen penagihan wajib diunggah sebelum melanjutkan.');
 
             setIsMoving(true);
-            router.post(`/jobs/${job.id}/stage10-data`, s10, {
-                onSuccess: () => {
-                    router.post(`/jobs/${job.id}/move`, {
-                        next_stage: data.next_stage || 11,
-                        notes: data.notes,
-                    }, {
-                        onSuccess: () => { setIsMoving(false); onClose(); },
-                        onError: (errs) => {
-                            setIsMoving(false);
-                            const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
-                            showError('Gagal Pindah Stage', msg);
-                        },
-                    });
-                },
+            router.post(`/jobs/${job.id}/move`, {
+                next_stage: data.next_stage || 11,
+                notes: data.notes,
+                ...s10,
+            }, {
+                onSuccess: () => { setIsMoving(false); onClose(); },
                 onError: (errs) => {
                     setIsMoving(false);
-                    const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan data penagihan.';
-                    showError('Gagal Simpan', msg);
+                    const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
+                    showError('Gagal Pindah Stage', msg);
                 },
             });
             return;
@@ -662,7 +646,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const handleBypassStage5 = async () => {
-        const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
+        const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final'].includes(d.type));
         const hasValidLink = hasValidLhppLink(lhppLinks);
         if (!hasValidLink && !hasLhppDoc) {
             return showError('Link LHPP Belum Diisi', 'Silakan isi minimal satu link dokumen LHPP unit (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
@@ -677,31 +661,67 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (!res.isConfirmed) return;
 
         setIsMoving(true);
-        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
+        const bypassNote = `[BYPASS REVIEW] ${data.notes || ''}`.trim();
+        router.post(`/jobs/${job.id}/move`, {
+            next_stage: 6,
+            notes: bypassNote,
+            link_lhpp: lhppLinks,
+            is_bypass: true,
+        }, {
             onSuccess: () => {
-                const bypassNote = `[BYPASS REVIEW] ${data.notes || ''}`.trim();
-                router.post(`/jobs/${job.id}/move`, {
-                    next_stage: 6,
-                    notes: bypassNote,
-                    link_lhpp: lhppLinks,
-                }, {
-                    onSuccess: () => {
-                        setIsMoving(false);
-                        showSuccess('Bypass Berhasil', 'LHPP berhasil disimpan dan diteruskan ke Stage 6 dengan status Bypass.');
-                        onClose();
-                    },
-                    onError: (errs) => {
-                        setIsMoving(false);
-                        const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
-                        showError('Gagal Pindah Stage', msg);
-                    },
-                });
+                setIsMoving(false);
+                showSuccess('Bypass Berhasil', 'LHPP berhasil diteruskan ke Stage 6 dengan status Bypass.');
+                onClose();
             },
             onError: (errs) => {
                 setIsMoving(false);
-                const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan link LHPP.';
-                showError('Gagal Simpan', msg);
+                const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
+                showError('Gagal Pindah Stage', msg);
             },
+        });
+    };
+
+    const handleReopenJob = async () => {
+        const { value: formValues } = await Swal.fire({
+            title: 'Buka Kembali Job',
+            html:
+                '<div class="text-left text-xs space-y-2">' +
+                '<label class="block font-bold text-gray-700">Kembalikan ke Stage:</label>' +
+                '<select id="swal-target-stage" class="w-full border rounded p-2 text-sm">' +
+                '<option value="14">Stage 11b: Verifikasi Pembayaran (Finance)</option>' +
+                '<option value="11">Stage 11: Penyerahan Suket ke Klien</option>' +
+                '<option value="10">Stage 10: Penagihan / Invoice (Finance)</option>' +
+                '</select>' +
+                '<label class="block font-bold text-gray-700 mt-2">Alasan Pembukaan Kembali *:</label>' +
+                '<textarea id="swal-reopen-notes" class="w-full border rounded p-2 text-sm" placeholder="Tuliskan alasan lengkap pembukaan kembali..." rows="2"></textarea>' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Buka Kembali Job',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#d97706',
+            preConfirm: () => {
+                const targetStage = document.getElementById('swal-target-stage').value;
+                const notes = document.getElementById('swal-reopen-notes').value;
+                if (!notes || notes.trim().length < 3) {
+                    Swal.showValidationMessage('Alasan pembukaan kembali wajib diisi (minimal 3 karakter)!');
+                    return false;
+                }
+                return { target_stage: parseInt(targetStage, 10), notes: notes.trim() };
+            }
+        });
+
+        if (!formValues) return;
+
+        router.post(`/jobs/${job.id}/reopen`, formValues, {
+            onSuccess: () => {
+                showSuccess('Berhasil', `Job berhasil dibuka kembali ke Stage ${formValues.target_stage}.`);
+                onClose();
+            },
+            onError: (errs) => {
+                const msg = Object.values(errs).flat().join('\n') || 'Gagal membuka kembali job.';
+                showError('Gagal Re-open', msg);
+            }
         });
     };
 
@@ -2126,13 +2146,31 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {/* ── STAGE 12 (Selesai / Closed) ────────── */}
                 {s === 12 && (
                     <div className="space-y-4">
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
-                            <span className="text-2xl">🎉</span>
-                            <h4 className="text-sm font-bold text-emerald-900 mt-1">Pekerjaan Selesai & Ditutup (Closed)</h4>
-                            <p className="text-xs text-emerald-700 mt-0.5">
-                                Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai.
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
+                            <span className="text-3xl">🎉</span>
+                            <h4 className="text-base font-bold text-emerald-900 mt-2">Pekerjaan Selesai & Ditutup (Closed)</h4>
+                            <p className="text-xs text-emerald-700 mt-1 max-w-md mx-auto">
+                                Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai dan terverifikasi.
                             </p>
                         </div>
+
+                        {(user?.role === 'superadmin' || permissions === 'superadmin') && (
+                            <div className="bg-amber-50 border border-amber-300 rounded-lg p-3.5 space-y-2">
+                                <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                                    <span>🔓</span> Fitur Khusus Superadmin: Buka Kembali Pekerjaan
+                                </div>
+                                <p className="text-[11px] text-amber-800">
+                                    Jika terdapat revisi pembayaran, perbaikan data, atau pembatalan penutupan, Superadmin dapat membuka kembali pekerjaan ini ke stage sebelumnya.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleReopenJob}
+                                    className="px-3.5 py-2 rounded text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition flex items-center gap-1.5"
+                                >
+                                    🔓 Buka Kembali Pekerjaan (Re-open Job)
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </form>
@@ -2721,8 +2759,34 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
                         {canSeeNilai && (
                             <div className="col-span-2 sm:col-span-1">
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Kontrak</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Kontrak (Total Sesudah PPN 12%)</label>
+                                {showTgl15Warning && (
+                                    <p className="text-[11px] text-red-600 mb-1 font-medium">
+                                        ⚠️ Sudah lewat tanggal 15 bulan ini (Closing Pajak). Perubahan data keuangan berisiko terhadap pelaporan pajak.
+                                    </p>
+                                )}
                                 <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
+                                {editForm.data.nilai && parseFloat(editForm.data.nilai) > 0 && (() => {
+                                    const total = parseFloat(editForm.data.nilai);
+                                    const dpp = Math.round(total / 1.12);
+                                    const ppn = total - dpp;
+                                    return (
+                                        <div className="mt-1.5 p-2 bg-amber-50/80 border border-amber-200 rounded text-[11px] space-y-0.5">
+                                            <div className="flex justify-between text-gray-600">
+                                                <span>DPP:</span>
+                                                <span className="font-semibold text-gray-800">Rp {Number(dpp).toLocaleString('id-ID')}</span>
+                                            </div>
+                                            <div className="flex justify-between text-amber-800">
+                                                <span>PPN (12%):</span>
+                                                <span className="font-semibold">Rp {Number(ppn).toLocaleString('id-ID')}</span>
+                                            </div>
+                                            <div className="flex justify-between text-amber-950 font-bold border-t border-amber-200/60 pt-0.5">
+                                                <span>Total:</span>
+                                                <span>Rp {Number(total).toLocaleString('id-ID')}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         )}
                     </div>

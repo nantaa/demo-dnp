@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/unit-tracking', [JobController::class, 'saveUnitTracking'])->name('jobs.unit-tracking');
     Route::get('/jobs/{job}/download-surat-tugas', [JobController::class, 'downloadSuratTugas'])->name('jobs.download-surat-tugas');
     Route::delete('/jobs/clear-all', [JobController::class, 'clearAll'])->name('jobs.clear-all');
+    Route::post('/jobs/{job}/reopen', [JobController::class, 'reopenJob'])->name('jobs.reopen');
     Route::delete('/jobs/{job}', [JobController::class, 'destroy'])->name('jobs.destroy');
 
     // Master data & Smart Recommendations API

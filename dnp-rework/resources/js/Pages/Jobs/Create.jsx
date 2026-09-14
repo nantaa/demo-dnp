@@ -122,31 +122,44 @@ export default function JobCreate({ auth }) {
                                 {errors.units && <div className="text-red-500 text-xs mt-1">{errors.units}</div>}
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Nilai Kontrak (Rp) <span className="font-normal text-xs text-gray-500">(belum termasuk PPN)</span></label>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">
+                                    Nilai Kontrak (Rp) <span className="font-normal text-xs text-gray-500">(Total Sesudah PPN 12%)</span>
+                                </label>
                                 <input
                                     type="number"
                                     min="0"
                                     value={data.nilai}
                                     onChange={e => setData('nilai', e.target.value)}
                                     className="w-full px-3 py-2 border rounded"
+                                    placeholder="Contoh: 3000000"
                                     required
                                 />
-                                {data.nilai && parseFloat(data.nilai) > 0 && (
-                                    <div className="mt-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-md text-xs space-y-1">
-                                        <div className="flex justify-between text-gray-600">
-                                            <span>DPP (Sebelum PPN):</span>
-                                            <span className="font-semibold text-gray-800">Rp {Number(data.nilai).toLocaleString('id-ID')}</span>
-                                        </div>
-                                        <div className="flex justify-between text-amber-800">
-                                            <span>PPN (12%):</span>
-                                            <span className="font-semibold">Rp {Number(Math.round(parseFloat(data.nilai) * 0.12)).toLocaleString('id-ID')}</span>
-                                        </div>
-                                        <div className="flex justify-between text-amber-950 font-bold border-t border-amber-200/60 pt-1">
-                                            <span>Total Sesudah PPN (12%):</span>
-                                            <span>Rp {Number(Math.round(parseFloat(data.nilai) * 1.12)).toLocaleString('id-ID')}</span>
-                                        </div>
-                                    </div>
+                                {new Date().getDate() > 15 && (
+                                    <p className="text-[11px] text-red-600 mt-1 font-medium">
+                                        ⚠️ Sudah lewat tgl 15 bulan ini (Closing Pajak). Pastikan nilai PO/SPK sudah final.
+                                    </p>
                                 )}
+                                {data.nilai && parseFloat(data.nilai) > 0 && (() => {
+                                    const total = parseFloat(data.nilai);
+                                    const dpp = Math.round(total / 1.12);
+                                    const ppn = total - dpp;
+                                    return (
+                                        <div className="mt-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-md text-xs space-y-1">
+                                            <div className="flex justify-between text-gray-600">
+                                                <span>DPP (Sebelum PPN):</span>
+                                                <span className="font-semibold text-gray-800">Rp {Number(dpp).toLocaleString('id-ID')}</span>
+                                            </div>
+                                            <div className="flex justify-between text-amber-800">
+                                                <span>PPN (12%):</span>
+                                                <span className="font-semibold">Rp {Number(ppn).toLocaleString('id-ID')}</span>
+                                            </div>
+                                            <div className="flex justify-between text-amber-950 font-bold border-t border-amber-200/60 pt-1">
+                                                <span>Total Kontrak Sesudah PPN (Tersimpan di DB):</span>
+                                                <span>Rp {Number(total).toLocaleString('id-ID')}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                                 {errors.nilai && <div className="text-red-500 text-xs mt-1">{errors.nilai}</div>}
                             </div>
                         </div>

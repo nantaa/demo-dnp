@@ -244,6 +244,12 @@ class JobController extends Controller
                 $raw = $request->input('link_lhpp');
                 $job->update(['link_lhpp' => is_array($raw) ? json_encode($raw) : $raw]);
             }
+            if ($request->boolean('is_bypass')) {
+                $job->update([
+                    's5_review_decision' => 'approved',
+                    's5_review_notes'    => '[BYPASS REVIEW] Disetujui otomatis melalui jalur bypass.',
+                ]);
+            }
             $linkLhpp = $request->input('link_lhpp') ?: $job->link_lhpp;
             $hasFilledUrl = false;
             if (!empty($linkLhpp)) {
@@ -300,6 +306,20 @@ class JobController extends Controller
 
         // Stage 10 → 11: require Invoice details + Invoice (PDF) document
         if ($currentStage == 10) {
+            $stage10Data = array_filter($request->only([
+                'invoice_no',
+                'total_invoice_amount',
+                'tgl_invoice_issued',
+                'invoice_date',
+                's10_progress_status',
+                'tgl_submit_mkt',
+                'no_faktur_pajak',
+                'tgl_faktur_pajak',
+            ]), fn($v) => !is_null($v) && $v !== '');
+            if (!empty($stage10Data)) {
+                $job->update($stage10Data);
+            }
+
             if (empty($job->invoice_no)) {
                 return back()->withErrors([
                     'invoice_no' => 'Nomor Invoice wajib diisi sebelum melanjutkan ke Stage 11.',
@@ -414,6 +434,40 @@ class JobController extends Controller
         );
 
         return back()->with('success', 'Job moved to Stage ' . $nextStage . ' successfully.');
+    }
+
+    /**
+     * Re-open a closed or finished job (Superadmin only - Task Item 16).
+     */
+    public function reopenJob(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if (!$user->isSuperadmin() && $user->role !== 'superadmin') {
+            abort(403, 'Hanya Superadmin yang berwenang membuka kembali pekerjaan yang telah selesai (Closed).');
+        }
+
+        $validated = $request->validate([
+            'target_stage' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,13,14',
+            'notes'        => 'required|string|min:3',
+        ]);
+
+        $prevStage = $job->stage;
+        $targetStage = (int)$validated['target_stage'];
+
+        $job->update([
+            'stage'            => $targetStage,
+            'stage_started_at' => now(),
+        ]);
+
+        $this->recordHistoryLog(
+            $job,
+            $targetStage,
+            'Dibuka Kembali oleh Superadmin dari Stage ' . $prevStage . ' ke Stage ' . $targetStage,
+            $validated['notes'],
+            ['returned_from_stage' => $prevStage]
+        );
+
+        return back()->with('success', 'Pekerjaan berhasil dibuka kembali ke Stage ' . $targetStage . '.');
     }
 
     /**
@@ -1122,9 +1176,18 @@ class JobController extends Controller
         $fullPath = $disk->path($document->path);
         $mimeType = $disk->mimeType($document->path) ?: 'application/octet-stream';
 
-        return response()->file($fullPath, [
-            'Content-Type'        => $mimeType,
-            'Content-Disposition' => 'inline; filename="' . addslashes($document->name) . '"',
+        if (request()->query('preview') === '1' || request()->query('inline') === '1') {
+            $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($fullPath);
+            $response->headers->set('Content-Type', $mimeType);
+            $response->setContentDisposition(
+                \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE,
+                $document->name
+            );
+            return $response;
+        }
+
+        return response()->download($fullPath, $document->name, [
+            'Content-Type' => $mimeType,
         ]);
     }
 

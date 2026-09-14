@@ -73,7 +73,16 @@ export const STAGE8_DISNAKER_STATUSES = [
     { value: 'ready', label: 'Ready (Selesai Disnaker)' },
 ];
 
-// Stage 9 progress statuses (Task 17)
+// Stage 9 Suket operational workflow statuses
+export const STAGE9_SUKET_STATUSES = [
+    { value: 'diterima', label: 'Diterima' },
+    { value: 'scan', label: 'Scan' },
+    { value: 'penamaan_cover', label: 'Penamaan Cover' },
+    { value: 'pembuatan_tanda_terima', label: 'Pembuatan Tanda Terima' },
+    { value: 'selesai', label: 'Selesai' },
+];
+
+// Legacy Stage 9 progress statuses (Retained for historical records)
 export const PROGRESS_STATUSES = [
     { value: 'not_started', label: 'Not Started' },
     { value: 'delayed', label: 'Delayed' },
@@ -84,7 +93,7 @@ export const PROGRESS_STATUSES = [
 
 // Stage 2 verification checklist (Task 6)
 export const STAGE2_VERIFY_CHECKLIST = [
-    { no: '01', type: 'PO/SPK', label: 'PO / SPK / Proposal dari Klien', badge: 'PRIVAT', hasNa: false, noVerify: true, hint: 'Dokumen PO/SPK bersifat privat & tidak perlu diverifikasi Admin' },
+    { no: '01', type: 'PO/SPK', label: 'PO / SPK / Proposal dari Klien', badge: 'WAJIB', hasNa: true, hint: null },
     { no: '02', type: 'Surat Permohonan', label: 'Surat Permohonan Riksa Uji (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '03', type: 'Surat Kuasa', label: 'Surat Kuasa dari Pemilik (bermaterai)', badge: 'WAJIB', hasNa: false, hint: null },
     { no: '04', type: 'Pernyataan Keabsahan', label: 'Surat Pernyataan Keabsahan Data', badge: 'OPSIONAL', hasNa: true, hint: null },
@@ -107,11 +116,11 @@ export const DOC_TYPES_BY_STAGE = {
     7: ['Bukti Penyerahan ke Disnaker'],
     8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],
     9: ['Suket (Asli) dari Disnaker'],
-    10: ['Invoice (PDF)', 'Kwitansi', 'Faktur Pajak', 'Bukti Transfer'],
+    10: ['Invoice (PDF)', 'Kwitansi', 'Faktur Pajak'],
     11: ['Tanda Terima Suket'],
     12: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas'],
     13: [],
-    14: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
+    14: ['Bukti Transfer', 'Bukti Transfer / Pembayaran', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
 };
 
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)

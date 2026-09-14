@@ -318,7 +318,7 @@ class JobController extends Controller
             }
             $hasInvoiceDoc = $job->documents()
                 ->where(function ($q) {
-                    $q->whereIn('type', ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi', 'Bukti Transfer'])
+                    $q->whereIn('type', ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi'])
                       ->orWhere('stage', 10);
                 })
                 ->exists();
@@ -736,6 +736,16 @@ class JobController extends Controller
             's8_delay_reason'            => 'nullable|string|max:500',
         ]);
 
+        // Reset delay reason if status is not stuck
+        if (($validated['s8_progress_status'] ?? '') !== 'stuck') {
+            $validated['s8_delay_reason'] = null;
+        }
+
+        // Defensive: if database migration hasn't been executed on server, do not fail query
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('dnp_jobs', 's8_delay_reason')) {
+            unset($validated['s8_delay_reason']);
+        }
+
         // Auto-calculate SLA status
         $slaStatus = null;
         if (!empty($validated['tgl_doc_submitted_disnaker'])) {
@@ -794,7 +804,7 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            's9_progress_status' => 'required|in:not_started,delayed,in_progress,almost_done,done',
+            's9_progress_status' => 'required|in:diterima,scan,penamaan_cover,pembuatan_tanda_terima,selesai,not_started,delayed,in_progress,almost_done,done',
         ]);
 
         $job->update($validated);
@@ -1438,7 +1448,8 @@ class JobController extends Controller
         if ($recentLog) {
             // Coalesce / update existing log to avoid duplicate entries in audit trail
             if (!str_contains($recentLog->action, $action)) {
-                $recentLog->action = $recentLog->action . ' • ' . $action;
+                $combined = $recentLog->action . ' • ' . $action;
+                $recentLog->action = \Illuminate\Support\Str::limit($combined, 250, '...');
             }
             if ($notes && !empty(trim($notes))) {
                 $recentLog->notes = $recentLog->notes ? ($recentLog->notes . "\n" . $notes) : $notes;
@@ -1455,7 +1466,7 @@ class JobController extends Controller
 
         return $job->historyLogs()->create(array_merge([
             'stage'             => $stage,
-            'action'            => $action,
+            'action'            => \Illuminate\Support\Str::limit($action, 250, '...'),
             'action_by_user_id' => $userId,
             'notes'             => $notes,
         ], $extra));

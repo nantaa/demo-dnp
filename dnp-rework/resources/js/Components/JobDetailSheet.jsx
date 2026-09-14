@@ -6,7 +6,7 @@ import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import { Trash2 } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
-    PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
+    STAGE9_SUKET_STATUSES, PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
     STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES
 } from '@/Constants';
 
@@ -1908,11 +1908,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {s === 9 && (
                     <div className="space-y-3">
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Status Suket (Stage 9)</label>
                             <select value={s9.s9_progress_status} onChange={e => setS9({ s9_progress_status: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
-                                <option value="">-- Pilih Status --</option>
-                                {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                                <option value="">-- Pilih Status Suket --</option>
+                                {STAGE9_SUKET_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                             </select>
                         </div>
                         <button type="button" onClick={handleSaveS9}
@@ -2160,7 +2160,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><span className="text-gray-400">Pesawat / Alat:</span> <span className="font-semibold text-gray-800">{job.pesawat || '-'}</span></div>
                         <div><span className="text-gray-400">Lokasi:</span> <span className="font-semibold text-gray-800">{job.lokasi || '-'}</span></div>
                         <div><span className="text-gray-400">Jumlah Unit:</span> <span className="font-semibold text-gray-800">{job.units || 1} Unit</span></div>
-                        <div className="col-span-2"><span className="text-gray-400">Nilai Kontrak:</span> <span className="font-semibold text-gray-800">{job.nilai ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '-'}</span></div>
+                        {canSeeNilai && (
+                            <div className="col-span-2"><span className="text-gray-400">Nilai Kontrak:</span> <span className="font-semibold text-gray-800">{job.nilai ? `Rp ${Number(job.nilai).toLocaleString('id-ID')}` : '-'}</span></div>
+                        )}
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -2374,7 +2376,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
 
         if (s === 9) {
-            const s9StatusObj = PROGRESS_STATUSES.find(p => p.value === job.s9_progress_status);
+            const s9StatusObj = STAGE9_SUKET_STATUSES.find(p => p.value === job.s9_progress_status)
+                || PROGRESS_STATUSES.find(p => p.value === job.s9_progress_status);
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Informasi Suket:</p>
@@ -2397,7 +2400,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penagihan / Invoice:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
-                        <div><span className="text-gray-400">Total Invoice:</span> <span className="font-semibold text-gray-800">{job.total_invoice_amount ? `Rp ${Number(job.total_invoice_amount).toLocaleString('id-ID')}` : '-'}</span></div>
+                        {canSeeNilai && (
+                            <div><span className="text-gray-400">Total Invoice:</span> <span className="font-semibold text-gray-800">{job.total_invoice_amount ? `Rp ${Number(job.total_invoice_amount).toLocaleString('id-ID')}` : '-'}</span></div>
+                        )}
                         <div><span className="text-gray-400">Tgl Invoice Diterbitkan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_invoice_issued) || '-'}</span></div>
                         <div><span className="text-gray-400">Status Progress:</span> <span className="font-semibold text-gray-800">{job.s10_progress_status || '-'}</span></div>
                         <div><span className="text-gray-400">Tgl Submit MKT:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_submit_mkt) || '-'}</span></div>
@@ -2547,9 +2552,20 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                             {item.isManual ? (
                                                                 <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Manual</span>
                                                             ) : hasFile ? (
-                                                                <span className="text-[10px] text-green-700 font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
-                                                                    📎 Ada File
-                                                                </span>
+                                                                <div className="flex items-center gap-1 flex-wrap">
+                                                                    {docs.map(d => (
+                                                                        <a
+                                                                            key={d.id}
+                                                                            href={d.id ? `/jobs/${d.job_id || job.id}/documents/${d.id}/download` : `/storage/${d.path}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
+                                                                            title={`Unduh / Lihat ${d.name}`}
+                                                                        >
+                                                                            📎 {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
+                                                                        </a>
+                                                                    ))}
+                                                                </div>
                                                             ) : (
                                                                 <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Kosong</span>
                                                             )}

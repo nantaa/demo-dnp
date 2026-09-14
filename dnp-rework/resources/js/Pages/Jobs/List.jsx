@@ -121,11 +121,18 @@ export default function JobList({ jobs, auth }) {
 
         if (job.stage === 9 && job.s9_progress_status) {
             const s9Map = {
-                not_started: { label: 'NOT STARTED', cls: 'bg-gray-100 text-gray-700 border-gray-300' },
-                delayed:     { label: 'DELAYED',     cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
-                almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
-                done:        { label: 'DONE',        cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                // New Operational Suket Workflow Statuses
+                diterima:               { label: 'DITERIMA',               cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                scan:                   { label: 'SCAN',                   cls: 'bg-purple-100 text-purple-800 font-bold border-purple-300' },
+                penamaan_cover:         { label: 'PENAMAAN COVER',         cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                pembuatan_tanda_terima: { label: 'TANDA TERIMA',           cls: 'bg-cyan-100 text-cyan-800 font-bold border-cyan-300' },
+                selesai:                { label: 'SELESAI',                cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                // Legacy fallbacks
+                not_started:            { label: 'NOT STARTED',            cls: 'bg-gray-100 text-gray-700 border-gray-300' },
+                delayed:                { label: 'DELAYED',                cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                in_progress:            { label: 'IN PROGRESS',            cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                almost_done:            { label: 'ALMOST DONE',            cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                done:                   { label: 'DONE',                   cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
             };
             const badge = s9Map[job.s9_progress_status];
             if (badge) return <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] border ${badge.cls}`}>{badge.label}</span>;

@@ -16,14 +16,13 @@ return new class extends Migration
         Schema::table('dnp_jobs', function (Blueprint $table) {
             $table->string('no_faktur_pajak')->nullable()->after('invoice_no');
             $table->date('tgl_faktur_pajak')->nullable()->after('no_faktur_pajak');
-            $table->text('s8_delay_reason')->nullable()->after('s8_progress_status');
         });
     }
 
     public function down(): void
     {
         Schema::table('dnp_jobs', function (Blueprint $table) {
-            $table->dropColumn(['no_faktur_pajak', 'tgl_faktur_pajak', 's8_delay_reason']);
+            $table->dropColumn(['no_faktur_pajak', 'tgl_faktur_pajak']);
         });
     }
 };

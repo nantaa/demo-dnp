@@ -149,14 +149,13 @@ export default function KanbanIndex({ jobs, auth }) {
                                     <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
 
                                     {/* Stage 8 Disnaker Status Banner & Delay Reason */}
-                                    {job.stage === 8 && job.s8_progress_status && (() => {
+                                    {job.stage === 8 && (() => {
                                         const sMap = {
                                             progress: { label: '⏳ PROSES DISNAKER', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
                                             stuck:    { label: '⚠️ TERKENDALA',       cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
                                             ready:    { label: '✅ SELESAI DISNAKER', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
                                         };
-                                        const badge = sMap[job.s8_progress_status];
-                                        if (!badge) return null;
+                                        const badge = sMap[job.s8_progress_status] || { label: '⏳ DISNAKER (BELUM DIUPDATE)', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
                                         return (
                                             <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
                                                 <div className="flex items-center justify-between font-bold">
@@ -168,7 +167,7 @@ export default function KanbanIndex({ jobs, auth }) {
                                                     )}
                                                 </div>
                                                 {job.s8_progress_status === 'stuck' && job.s8_delay_reason && (
-                                                    <p className="text-[10px] text-red-700 italic border-t border-red-200/70 pt-1 truncate" title={job.s8_delay_reason}>
+                                                    <p className="text-[10px] text-red-700 italic border-t border-red-200/70 pt-1" title={job.s8_delay_reason}>
                                                         Kendala: {job.s8_delay_reason}
                                                     </p>
                                                 )}
@@ -187,12 +186,6 @@ export default function KanbanIndex({ jobs, auth }) {
                                                     {ins.name || ins}
                                                 </span>
                                             ))}
-                                        </div>
-                                    )}
-
-                                    {job.stage === 8 && job.s8_progress_status === 'stuck' && job.s8_delay_reason && (
-                                        <div className="mt-1.5 mb-2 p-1.5 rounded bg-red-50 border border-red-200 text-[10px] text-red-800 font-medium line-clamp-2">
-                                            ⚠️ <strong className="font-semibold">Kendala:</strong> {job.s8_delay_reason}
                                         </div>
                                     )}
                                     
@@ -229,11 +222,18 @@ export default function KanbanIndex({ jobs, auth }) {
 
                                             if (job.stage === 9 && job.s9_progress_status) {
                                                 const s9Map = {
-                                                    not_started: { label: 'NOT STARTED', cls: 'bg-gray-100 text-gray-700 border-gray-300' },
-                                                    delayed:     { label: 'DELAYED',     cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                                                    in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
-                                                    almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
-                                                    done:        { label: 'DONE',        cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    // New Operational Suket Workflow Statuses
+                                                    diterima:               { label: 'DITERIMA',               cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                                                    scan:                   { label: 'SCAN',                   cls: 'bg-purple-100 text-purple-800 font-bold border-purple-300' },
+                                                    penamaan_cover:         { label: 'PENAMAAN COVER',         cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                                                    pembuatan_tanda_terima: { label: 'TANDA TERIMA',           cls: 'bg-cyan-100 text-cyan-800 font-bold border-cyan-300' },
+                                                    selesai:                { label: 'SELESAI',                cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    // Legacy fallbacks
+                                                    not_started:            { label: 'NOT STARTED',            cls: 'bg-gray-100 text-gray-700 border-gray-300' },
+                                                    delayed:                { label: 'DELAYED',                cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                    in_progress:            { label: 'IN PROGRESS',            cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                                                    almost_done:            { label: 'ALMOST DONE',            cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                                                    done:                   { label: 'DONE',                   cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
                                                 };
                                                 const badge = s9Map[job.s9_progress_status];
                                                 if (badge) {

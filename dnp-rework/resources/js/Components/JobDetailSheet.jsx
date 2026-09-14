@@ -350,6 +350,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
         s10_progress_status:  job.s10_progress_status  ?? '',
         tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+        no_faktur_pajak:      job.no_faktur_pajak      ?? '',
+        tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
     });
     const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
     const [isMoving, setIsMoving] = useState(false);
@@ -468,6 +470,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
             s10_progress_status:  job.s10_progress_status  ?? '',
             tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+            no_faktur_pajak:      job.no_faktur_pajak      ?? '',
+            tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
         });
         setS11({ no_resi: job.no_resi ?? '' });
         setS14({
@@ -495,9 +499,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         String(ins.pivot?.user_id) === String(user?.id)
     ) || String(job.report_writer_id) === String(user?.id);
 
-    const canSeeNilai = user?.role === 'superadmin'
-        || user?.role === 'finance'
-        || (user?.role === 'marketing' && job.owner_marketing === user?.name);
+    // INS (inspektur/inspector) is the ONLY role that cannot see pricing/nilai data.
+    // All other roles (admin, marketing, finance, manager, superadmin) can see it.
+    const isINS = ['inspektur', 'inspector'].includes(user?.role);
+    const canSeeNilai = !isINS;
+
+    // Finance is the sole owner/editor of invoice & PO pricing.
+    // TODO: [LOCKED-AFTER-TGL-15] When lock is activated, also gate by !isPastTgl15
+    const _today = new Date();
+    const isPastTgl15 = _today.getDate() > 15;
+    const canEditNilai = user?.role === 'finance' || user?.role === 'superadmin';
+    const showTgl15Warning = canEditNilai && isPastTgl15;
 
     const canManage = (() => {
         if (propCanManage !== undefined) return propCanManage;
@@ -645,6 +657,50 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return;
         }
         post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
+    };
+
+    const handleBypassStage5 = async () => {
+        const hasLhppDoc = (job.documents || []).some(d => Number(d.stage) === 5 || ['LHPP', 'LHPP (PDF)', 'LHPP Draft', 'LHPP Final', 'Laporan Teknis Tambahan'].includes(d.type));
+        const hasValidLink = hasValidLhppLink(lhppLinks);
+        if (!hasValidLink && !hasLhppDoc) {
+            return showError('Link LHPP Belum Diisi', 'Silakan isi minimal satu link dokumen LHPP unit (Google Drive / Cloud) atau unggah dokumen LHPP terlebih dahulu.');
+        }
+
+        const res = await showConfirm(
+            'Bypass Review Berjenjang',
+            'Apakah Anda yakin ingin melakukan Bypass pada penyusunan LHPP ini? Pekerjaan akan diteruskan ke Stage 6 dengan penandaan Bypass untuk penanganan khusus.',
+            'Ya, Lakukan Bypass',
+            'Batal'
+        );
+        if (!res.isConfirmed) return;
+
+        setIsMoving(true);
+        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
+            onSuccess: () => {
+                const bypassNote = `[BYPASS REVIEW] ${data.notes || ''}`.trim();
+                router.post(`/jobs/${job.id}/move`, {
+                    next_stage: 6,
+                    notes: bypassNote,
+                    link_lhpp: lhppLinks,
+                }, {
+                    onSuccess: () => {
+                        setIsMoving(false);
+                        showSuccess('Bypass Berhasil', 'LHPP berhasil disimpan dan diteruskan ke Stage 6 dengan status Bypass.');
+                        onClose();
+                    },
+                    onError: (errs) => {
+                        setIsMoving(false);
+                        const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
+                        showError('Gagal Pindah Stage', msg);
+                    },
+                });
+            },
+            onError: (errs) => {
+                setIsMoving(false);
+                const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan link LHPP.';
+                showError('Gagal Simpan', msg);
+            },
+        });
     };
 
     const handleRouteTo13 = (e) => {
@@ -1409,12 +1465,29 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 {canSeeNilai && (
                                     <div>
                                         <label className="block text-gray-600 mb-1">Nilai Kontrak / Invoice (Rp)</label>
-                                        <input
-                                            type="number"
-                                            value={editForm.data.nilai}
-                                            onChange={e => editForm.setData('nilai', e.target.value)}
-                                            className="w-full border rounded px-2 py-1.5 text-sm"
-                                        />
+                                        {canEditNilai ? (
+                                            <>
+                                                {showTgl15Warning && (
+                                                    <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1.5 mb-1">
+                                                        ⚠️ Sudah lewat tanggal 15 bulan ini. Perubahan data keuangan berisiko terhadap pelaporan pajak.
+                                                        {/* TODO: [LOCKED-AFTER-TGL-15] Aktifkan lock jika rule sudah disepakati */}
+                                                    </div>
+                                                )}
+                                                <input
+                                                    type="number"
+                                                    value={editForm.data.nilai}
+                                                    onChange={e => editForm.setData('nilai', e.target.value)}
+                                                    className="w-full border rounded px-2 py-1.5 text-sm"
+                                                />
+                                            </>
+                                        ) : (
+                                            <p className="text-sm font-medium text-gray-700">{fmtCurrency(editForm.data.nilai)}</p>
+                                        )}
+                                        {editForm.data.nilai > 0 && (
+                                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1">
+                                                Sesudah PPN (12%): <strong>{fmtCurrency(Math.round(parseFloat(editForm.data.nilai || 0) * 1.12))}</strong>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1612,7 +1685,35 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} />
+                        
+                        <div className="mt-4 flex flex-col gap-2">
+                            <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleRejectStage}
+                                    disabled={processing || isMoving}
+                                    className="px-3.5 py-2 rounded text-xs sm:text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition whitespace-nowrap"
+                                >
+                                    Tolak / Kembalikan
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={processing || isMoving}
+                                    className="flex-1 px-4 py-2 rounded text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 transition"
+                                >
+                                    {processing || isMoving ? '...' : '📋 Kirim ke Manager (Minta Approval) →'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleBypassStage5}
+                                    disabled={processing || isMoving}
+                                    className="px-3.5 py-2 rounded text-xs sm:text-sm font-bold text-amber-900 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 transition border border-amber-500 whitespace-nowrap"
+                                    title="Bypass langsung ke Manager untuk penanganan khusus"
+                                >
+                                    {processing || isMoving ? '...' : '⚡ Bypass Langsung'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -1816,45 +1917,79 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                     return (
                         <div className="space-y-3">
+                            {showTgl15Warning && (
+                                <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
+                                    ⚠️ <strong>Peringatan Tanggal 15:</strong> Sudah melewati batas tanggal 15 bulan berjalan. Perubahan data nilai invoice dan faktur pajak berisiko terhadap pelaporan pajak.
+                                    {/* TODO: [LOCKED-AFTER-TGL-15] Aktifkan disable form jika lock disepakati */}
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nomor Invoice</label>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nomor Invoice *</label>
                                     <input type="text" value={s10.invoice_no}
                                         placeholder="Contoh: INV/2026/001"
                                         onChange={e => setS10({ ...s10, invoice_no: e.target.value })}
-                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai} />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Total Invoice (Rp)</label>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Total Invoice (Rp) *</label>
                                     <input type="number" value={s10.total_invoice_amount}
                                         onChange={e => setS10({ ...s10, total_invoice_amount: e.target.value })}
-                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai} />
+                                    {s10.total_invoice_amount > 0 && (
+                                        <p className="text-[11px] text-amber-700 mt-1">
+                                            Sesudah PPN (12%): <strong>{fmtCurrency(Math.round(parseFloat(s10.total_invoice_amount || 0) * 1.12))}</strong>
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan</label>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan *</label>
                                     <input type="date" value={s10.tgl_invoice_issued}
                                         onChange={e => setS10({ ...s10, tgl_invoice_issued: e.target.value })}
-                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai} />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Submit ke MKT</label>
                                     <input type="date" value={s10.tgl_submit_mkt}
                                         onChange={e => setS10({ ...s10, tgl_submit_mkt: e.target.value })}
-                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nomor Faktur Pajak</label>
+                                    <input type="text" value={s10.no_faktur_pajak || ''}
+                                        placeholder="Contoh: 010.000-26.00000001"
+                                        onChange={e => setS10({ ...s10, no_faktur_pajak: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Faktur Pajak</label>
+                                    <input type="date" value={s10.tgl_faktur_pajak || ''}
+                                        onChange={e => setS10({ ...s10, tgl_faktur_pajak: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai} />
                                 </div>
                                 <div className="col-span-2">
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Status Progress</label>
                                     <select value={s10.s10_progress_status} onChange={e => setS10({ ...s10, s10_progress_status: e.target.value })}
-                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5">
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
+                                        disabled={!canEditNilai}>
                                         <option value="">-- Pilih Status --</option>
                                         {PROGRESS_STATUSES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
                                 </div>
                             </div>
-                            <button type="button" onClick={handleSaveS10}
-                                className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                                Simpan Data Penagihan
-                            </button>
+                            {canEditNilai && (
+                                <button type="button" onClick={handleSaveS10}
+                                    className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
+                                    Simpan Data Penagihan & Faktur
+                                </button>
+                            )}
                             {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
                             <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                             <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} disabled={!s10CanMove} disabledMsg={s10DisabledMsg} />
@@ -1909,6 +2044,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 value={s14.s14_payment_status || 'pending'}
                                 onChange={e => setS14({ ...s14, s14_payment_status: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 font-medium"
+                                disabled={user?.role !== 'finance' && !user?.isSuperadmin && user?.role !== 'superadmin'}
                             >
                                 <option value="pending">⏳ Pending (Belum Lunas)</option>
                                 <option value="partial">🌗 Partial (Dibayar Sebagian)</option>
@@ -1924,16 +2060,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 onChange={e => setS14({ ...s14, s14_payment_notes: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
                                 placeholder="Contoh: Transfer via BCA tgl 20 Aug, lunas 100%..."
+                                disabled={user?.role !== 'finance' && !user?.isSuperadmin && user?.role !== 'superadmin'}
                             />
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={handleSaveS14}
-                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm"
-                        >
-                            💾 Simpan Status Pembayaran 11b
-                        </button>
+                        {(user?.role === 'finance' || user?.role === 'superadmin') && (
+                            <button
+                                type="button"
+                                onClick={handleSaveS14}
+                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm"
+                            >
+                                💾 Simpan Status Pembayaran 11b
+                            </button>
+                        )}
 
                         <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran (Opsional)</p>
                         {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
@@ -1941,7 +2080,20 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         ))}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                        
+                        {(user?.role === 'finance' || user?.role === 'superadmin') ? (
+                            <MoveRow
+                                stage={s}
+                                processing={processing || isMoving}
+                                onReject={handleRejectStage}
+                                disabled={s14.s14_payment_status !== 'paid'}
+                                disabledMsg={s14.s14_payment_status !== 'paid' ? 'Pekerjaan hanya dapat ditutup (Closed) setelah status pembayaran Lunas (Paid).' : ''}
+                            />
+                        ) : (
+                            <div className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded p-3 text-center">
+                                🔒 Hanya <strong>Finance</strong> yang berwenang memverifikasi pembayaran dan menutup (Close) pekerjaan ini.
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -2566,11 +2718,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><p className="text-xs text-gray-500">Jumlah Unit</p><p className="font-bold">{job.units} Unit</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Lokasi</p><p>{job.lokasi}</p></div>
                         {canSeeNilai && (
-                            <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200">
-                                <p className="text-xs text-yellow-800 font-bold">
-                                    Nilai Kontrak <span className="font-normal opacity-80">(belum termasuk PPN)</span>
-                                </p>
-                                <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
+                            <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200 space-y-1">
+                                <div>
+                                    <p className="text-xs text-yellow-800 font-bold">
+                                        Nilai Kontrak <span className="font-normal opacity-80">(sebelum PPN)</span>
+                                    </p>
+                                    <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
+                                </div>
+                                {job.nilai > 0 && (
+                                    <div className="pt-1 border-t border-yellow-200/80 flex items-center justify-between text-xs text-yellow-800">
+                                        <span>Sesudah PPN (12%):</span>
+                                        <span className="font-bold text-yellow-950">{fmtCurrency(Math.round(parseFloat(job.nilai || 0) * 1.12))}</span>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

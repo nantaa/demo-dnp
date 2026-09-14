@@ -98,7 +98,7 @@ export const STAGE2_VERIFY_CHECKLIST = [
 
 // Required document types per stage
 export const DOC_TYPES_BY_STAGE = {
-    1: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama'],
+    1: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama', 'Dokumen Tambahan'],
     2: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
     3: ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
     4: ['Foto Nameplate', 'Foto Kondisi Fisik', 'BAP', 'Foto Hasil Pengukuran', 'Foto Alat Pengaman', 'Foto APD & Tim di Lokasi', 'Foto Dokumentasi Lapangan', 'Data Pengukuran'],
@@ -107,7 +107,7 @@ export const DOC_TYPES_BY_STAGE = {
     7: ['Bukti Penyerahan ke Disnaker'],
     8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],
     9: ['Suket (Asli) dari Disnaker'],
-    10: ['Invoice (PDF)', 'Kwitansi', 'Bukti Transfer'],
+    10: ['Invoice (PDF)', 'Kwitansi', 'Faktur Pajak', 'Bukti Transfer'],
     11: ['Tanda Terima Suket'],
     12: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas'],
     13: [],

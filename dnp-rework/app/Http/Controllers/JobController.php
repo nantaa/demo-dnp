@@ -20,7 +20,7 @@ class JobController extends Controller
     // Stages exclusively owned by MKT (MGR cannot intercept)
     private const MKT_STAGES = [1, 11];
     // Stages exclusively owned by FIN (MGR cannot intercept)
-    private const FIN_STAGES = [10, 12];
+    private const FIN_STAGES = [10, 12, 14];
 
     /**
      * Check if the current user can act on a stage.
@@ -340,8 +340,14 @@ class JobController extends Controller
             }
         }
 
-        // Stage 14 → 12: require paid status
-        if ($currentStage == 14) {
+        // Stage 14 → 12: require paid status + trigger close is exclusively Finance
+        if ($currentStage == 14 || ($request->input('next_stage') == 12)) {
+            $user = Auth::user();
+            if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+                return back()->withErrors([
+                    'stage' => 'Hanya Finance yang berwenang menutup (Close) pekerjaan ini.',
+                ]);
+            }
             if (!$job->paid && $job->payment_status !== 'paid') {
                 return back()->withErrors([
                     'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum menutup (Close) pekerjaan ini.',
@@ -862,13 +868,21 @@ class JobController extends Controller
 
     /**
      * Save Stage 10 data (Finance billing — Task 18).
-     * Saves all invoice fields: amount, no, date, top, payment_status, progress.
+     * Saves all invoice fields: amount, no, date, faktur pajak, top, payment_status, progress.
+     * Finance is the sole owner of billing/pricing data.
      */
     public function saveStage10Data(Request $request, Job $job)
     {
         $user = Auth::user();
-        if ($user->role !== 'finance' && $user->role !== 'admin' && !$user->isSuperadmin() && !$this->canActOnStage(10, $job)) {
-            abort(403, 'Hanya Finance atau Admin yang dapat mengubah data Stage 10.');
+
+        // Finance is the ONLY role that can edit billing/invoice data.
+        // TODO: [LOCKED-AFTER-TGL-15] Uncomment below to enforce date-15 lock:
+        // $isPastTgl15 = now()->day > 15;
+        // if ($isPastTgl15 && $user->role !== 'superadmin') {
+        //     abort(403, 'Data keuangan tidak dapat diubah setelah tanggal 15 bulan berjalan.');
+        // }
+        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+            abort(403, 'Hanya Finance yang dapat mengubah data penagihan Stage 10.');
         }
 
         $validated = $request->validate([
@@ -880,6 +894,8 @@ class JobController extends Controller
             'payment_status'       => 'nullable|in:pending,sent,paid',
             's10_progress_status'  => 'nullable|in:not_started,delayed,in_progress,almost_done,done',
             'tgl_submit_mkt'       => 'nullable|date',
+            'no_faktur_pajak'      => 'nullable|string|max:255',
+            'tgl_faktur_pajak'     => 'nullable|date',
         ]);
 
         // Auto-calculate payment due date and sync date fields
@@ -895,6 +911,16 @@ class JobController extends Controller
         }
 
         $job->update($validated);
+
+        // Audit trail: record every billing save with Finance user name
+        $fakturNote = !empty($validated['no_faktur_pajak'])
+            ? ' | Faktur Pajak: ' . $validated['no_faktur_pajak']
+            : '';
+        $job->historyLogs()->create([
+            'stage'             => $job->stage,
+            'action'            => 'Data penagihan diperbarui oleh Finance.' . $fakturNote,
+            'action_by_user_id' => Auth::id(),
+        ]);
 
         return back()->with('success', 'Data penagihan berhasil disimpan.');
     }

@@ -51,6 +51,7 @@ class Job extends Model
         'nilai'                       => 'decimal:2',
         'payment_amount_received'     => 'decimal:2',
         'total_invoice_amount'        => 'decimal:2',
+        'tgl_faktur_pajak'            => 'date',
         'alat_ids'                    => 'array',
         'cert_ids'                    => 'array',
         's2_verify_data'              => 'array',

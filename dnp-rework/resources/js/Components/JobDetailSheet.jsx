@@ -135,6 +135,8 @@ const getDocumentUrl = (doc, fallbackJobId) => {
     return doc.path ? `/storage/${doc.path}` : '#';
 };
 
+const getDocDownloadUrl = (doc, fallbackJobId) => getDocumentUrl(doc, fallbackJobId);
+
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
 const DocChip = ({ doc, canManage, onDelete, jobId }) => {
     if (!doc) return null;

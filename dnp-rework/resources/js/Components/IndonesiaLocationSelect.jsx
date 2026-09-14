@@ -347,7 +347,7 @@ export default function IndonesiaLocationSelect({ value = '', onChange, required
                                 className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 whitespace-nowrap"
                                 title="Kembali ke Dropdown"
                             >
-                                📋 List
+                                 List
                             </button>
                         </div>
                     ) : (

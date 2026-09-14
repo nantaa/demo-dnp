@@ -62,6 +62,14 @@ class JobController extends Controller
             }
         }
 
+        // Tim Ahli role can act on review stage 6
+        if (in_array($user->role, ['tim_ahli', 'ahli'])) {
+            if ($stage === 6) {
+                return true;
+            }
+            return $user->canOwnStage($stage);
+        }
+
         // Finance role can act on finance stages by default
         if ($user->role === 'finance') {
             if (in_array($stage, [10, 12, 14])) {
@@ -1162,7 +1170,7 @@ class JobController extends Controller
     /**
      * Download or view document preserving original filename with proper headers.
      */
-    public function downloadDocument(Job $job, JobDocument $document)
+    public function downloadDocument(Job $job, JobDocument $document, ?string $filename = null)
     {
         if ($document->job_id !== $job->id) {
             abort(404, 'Dokumen tidak ditemukan untuk pekerjaan ini.');
@@ -1176,19 +1184,111 @@ class JobController extends Controller
         $fullPath = $disk->path($document->path);
         $mimeType = $disk->mimeType($document->path) ?: 'application/octet-stream';
 
-        if (request()->query('preview') === '1' || request()->query('inline') === '1') {
-            $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($fullPath);
-            $response->headers->set('Content-Type', $mimeType);
-            $response->setContentDisposition(
-                \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE,
-                $document->name
-            );
-            return $response;
+        $docName = $filename ?: ($document->name ?: 'Dokumen');
+        // Ensure extension exists
+        $ext = pathinfo($document->path, PATHINFO_EXTENSION);
+        if ($ext && !str_ends_with(strtolower($docName), '.' . strtolower($ext))) {
+            $docName .= '.' . $ext;
         }
 
-        return response()->download($fullPath, $document->name, [
-            'Content-Type' => $mimeType,
+        $cleanAscii = preg_replace('/[^\w\s\.-]/', '_', $docName);
+
+        // If explicitly forced download query param ?download=1
+        if (request()->query('download') === '1') {
+            return response()->download($fullPath, $cleanAscii, [
+                'Content-Type' => $mimeType,
+            ]);
+        }
+
+        // Default to inline viewing so opening in browser tab (Chrome PDF viewer) renders properly with real tab name
+        $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($fullPath);
+        $response->headers->set('Content-Type', $mimeType);
+        $response->setContentDisposition(
+            \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE,
+            $cleanAscii,
+            $docName
+        );
+        return $response;
+    }
+
+    /**
+     * Revise invoice details by Finance or Superadmin without altering workflow stage.
+     */
+    public function reviseInvoice(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+            abort(403, 'Hanya Finance dan Superadmin yang berwenang merevisi data invoice.');
+        }
+
+        $validated = $request->validate([
+            'invoice_no'           => 'required|string|max:100',
+            'total_invoice_amount' => 'required|numeric|min:1',
+            'tgl_invoice_issued'   => 'nullable|date',
+            'no_faktur_pajak'      => 'nullable|string|max:100',
+            'tgl_faktur_pajak'     => 'nullable|date',
+            'revision_notes'       => 'nullable|string',
         ]);
+
+        $job->update([
+            'invoice_no'           => $validated['invoice_no'],
+            'total_invoice_amount' => $validated['total_invoice_amount'],
+            'tgl_invoice_issued'   => $validated['tgl_invoice_issued'] ?? $job->tgl_invoice_issued,
+            'no_faktur_pajak'      => $validated['no_faktur_pajak'] ?? $job->no_faktur_pajak,
+            'tgl_faktur_pajak'     => $validated['tgl_faktur_pajak'] ?? $job->tgl_faktur_pajak,
+        ]);
+
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            "Revisi Invoice oleh {$user->name}: {$validated['invoice_no']}",
+            $validated['revision_notes'] ?? null
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Data invoice berhasil direvisi.']);
+        }
+
+        return back(303)->with('success', 'Data invoice berhasil direvisi.');
+    }
+
+    /**
+     * Revise PO/SPK details by Finance or Superadmin without altering workflow stage.
+     */
+    public function revisePo(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+            abort(403, 'Hanya Finance dan Superadmin yang berwenang merevisi data PO.');
+        }
+
+        $validated = $request->validate([
+            'no_po'             => 'required|string|max:100',
+            'tgl_po'            => 'nullable|date',
+            'nilai'             => 'required|numeric|min:0',
+            'termin_pembayaran' => 'nullable|string',
+            'revision_notes'    => 'nullable|string',
+        ]);
+
+        $job->update([
+            'no_po'             => $validated['no_po'],
+            'tgl_po'            => $validated['tgl_po'] ?? $job->tgl_po,
+            'nilai'             => $validated['nilai'],
+            'termin_pembayaran' => $validated['termin_pembayaran'] ?? $job->termin_pembayaran,
+        ]);
+
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            "Revisi PO oleh {$user->name}: {$validated['no_po']}",
+            $validated['revision_notes'] ?? null
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json(['ok' => true, 'message' => 'Data PO berhasil direvisi.']);
+        }
+
+        return back(303)->with('success', 'Data PO berhasil direvisi.');
     }
 
     /**

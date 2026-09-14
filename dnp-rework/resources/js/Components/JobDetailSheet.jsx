@@ -125,21 +125,29 @@ const getSlaTag = (days, slaLimit) => {
     return { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
 };
 
+const getDocumentUrl = (doc, fallbackJobId) => {
+    if (!doc) return '#';
+    const jId = doc.job_id || doc.jobId || fallbackJobId;
+    if (doc.id && jId) {
+        const encodedName = encodeURIComponent(doc.name || 'Dokumen.pdf');
+        return `/jobs/${jId}/documents/${doc.id}/file/${encodedName}`;
+    }
+    return doc.path ? `/storage/${doc.path}` : '#';
+};
+
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
-const DocChip = ({ doc, canManage, onDelete }) => {
+const DocChip = ({ doc, canManage, onDelete, jobId }) => {
     if (!doc) return null;
-    const fileUrl = doc.id && (doc.job_id || doc.jobId)
-        ? `/jobs/${doc.job_id || doc.jobId}/documents/${doc.id}/download`
-        : `/storage/${doc.path || ''}`;
+    const fileUrl = getDocumentUrl(doc, jobId);
     return (
         <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
             <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={doc.name || 'Dokumen'}
                className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name || 'Dokumen'}>
-                📎 {doc.name || 'Dokumen'}
+                {doc.name || 'Dokumen'}
             </a>
             {canManage && (
                 <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
-                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">✕</button>
+                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">x</button>
             )}
         </div>
     );
@@ -168,7 +176,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
         <div className="mt-4 flex flex-col gap-2">
             {disabledMsg && (
                 <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                    ⚠️ {disabledMsg}
+                    {disabledMsg}
                 </div>
             )}
             <div className="flex gap-2">
@@ -267,7 +275,7 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
             ) : (
                 <div className="text-center py-1.5 px-2 bg-gray-50/50 rounded border border-dashed border-gray-100">
                     <p className="text-[11px] text-gray-400 italic">
-                        {isDragging ? '📂 Lepaskan file di sini untuk upload' : 'Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload'}
+                        {isDragging ? 'Lepaskan file di sini untuk upload' : 'Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload'}
                     </p>
                 </div>
             )}
@@ -382,6 +390,25 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         s14_payment_notes:  job.s14_payment_notes  ?? '',
     });
 
+    const [showReviseInvoiceModal, setShowReviseInvoiceModal] = useState(false);
+    const [reviseInvoiceForm, setReviseInvoiceForm] = useState({
+        invoice_no:           job.invoice_no           ?? '',
+        total_invoice_amount: job.total_invoice_amount ?? job.nilai ?? '',
+        tgl_invoice_issued:   job.tgl_invoice_issued   ?? new Date().toISOString().slice(0, 10),
+        no_faktur_pajak:      job.no_faktur_pajak      ?? '',
+        tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
+        revision_notes:       '',
+    });
+
+    const [showRevisePoModal, setShowRevisePoModal] = useState(false);
+    const [revisePoForm, setRevisePoForm] = useState({
+        no_po:             job.no_po             ?? '',
+        tgl_po:            job.tgl_po            ?? '',
+        nilai:             job.nilai             ?? '',
+        termin_pembayaran: job.termin_pembayaran ?? 'FULL',
+        revision_notes:    '',
+    });
+
     // Stage 2 per-item verification status: { [type]: 'ok' | 'tidak' | 'na' | '' }
     const [s2Verify, setS2Verify] = useState(() => {
         const saved = parseJsonObject(job.s2_verify_data);
@@ -481,6 +508,21 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             s14_payment_status: job.s14_payment_status ?? 'pending',
             s14_payment_notes:  job.s14_payment_notes  ?? '',
         });
+        setReviseInvoiceForm({
+            invoice_no:           job.invoice_no           ?? '',
+            total_invoice_amount: job.total_invoice_amount ?? job.nilai ?? '',
+            tgl_invoice_issued:   job.tgl_invoice_issued   ?? new Date().toISOString().slice(0, 10),
+            no_faktur_pajak:      job.no_faktur_pajak      ?? '',
+            tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
+            revision_notes:       '',
+        });
+        setRevisePoForm({
+            no_po:             job.no_po             ?? '',
+            tgl_po:            job.tgl_po            ?? '',
+            nilai:             job.nilai             ?? '',
+            termin_pembayaran: job.termin_pembayaran ?? 'FULL',
+            revision_notes:    '',
+        });
         setScheduleDays(initScheduleDays(job));
 
         const saved = parseJsonObject(job.s2_verify_data);
@@ -519,6 +561,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const curStage = Number(job.stage);
         if (user?.role === 'superadmin' || permissions === 'superadmin') return true;
         if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(curStage)) return true;
+        if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
         if (isMGR && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
         if (isInspector || isAssignedInspector) {
             return [4, 5].includes(curStage);
@@ -654,7 +697,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
         const res = await showConfirm(
             'Bypass Review Berjenjang',
-            'Apakah Anda yakin ingin melakukan Bypass pada penyusunan LHPP ini? Pekerjaan akan diteruskan ke Stage 6 dengan penandaan Bypass untuk penanganan khusus.',
+            'Apakah Anda yakin ingin melakukan Bypass pada penyusunan LHPP ini? Pekerjaan akan langsung diteruskan ke Stage 7 (Verifikasi ke Dinas) tanpa melalui review Stage 6.',
             'Ya, Lakukan Bypass',
             'Batal'
         );
@@ -663,14 +706,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         setIsMoving(true);
         const bypassNote = `[BYPASS REVIEW] ${data.notes || ''}`.trim();
         router.post(`/jobs/${job.id}/move`, {
-            next_stage: 6,
+            next_stage: 7,
             notes: bypassNote,
             link_lhpp: lhppLinks,
             is_bypass: true,
         }, {
             onSuccess: () => {
                 setIsMoving(false);
-                showSuccess('Bypass Berhasil', 'LHPP berhasil diteruskan ke Stage 6 dengan status Bypass.');
+                showSuccess('Bypass Berhasil', 'LHPP disetujui otomatis dan pekerjaan berhasil diteruskan ke Stage 7 (Verifikasi ke Dinas).');
                 onClose();
             },
             onError: (errs) => {
@@ -678,6 +721,50 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
                 showError('Gagal Pindah Stage', msg);
             },
+        });
+    };
+
+    const handleReviseInvoice = (e) => {
+        e?.preventDefault();
+        if (!reviseInvoiceForm.invoice_no?.trim()) {
+            return showError('Validasi Gagal', 'Nomor invoice wajib diisi.');
+        }
+        if (!reviseInvoiceForm.total_invoice_amount || parseFloat(reviseInvoiceForm.total_invoice_amount) <= 0) {
+            return showError('Validasi Gagal', 'Total invoice harus lebih besar dari 0.');
+        }
+
+        router.post(`/jobs/${job.id}/invoice-revise`, reviseInvoiceForm, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showSuccess('Berhasil', 'Data invoice berhasil direvisi tanpa mengubah stage alur kerja.');
+                setShowReviseInvoiceModal(false);
+            },
+            onError: (errs) => {
+                const msg = Object.values(errs).flat().join('\n') || 'Gagal merevisi invoice.';
+                showError('Gagal Revisi Invoice', msg);
+            }
+        });
+    };
+
+    const handleRevisePo = (e) => {
+        e?.preventDefault();
+        if (!revisePoForm.no_po?.trim()) {
+            return showError('Validasi Gagal', 'Nomor PO wajib diisi.');
+        }
+        if (revisePoForm.nilai === '' || parseFloat(revisePoForm.nilai) < 0) {
+            return showError('Validasi Gagal', 'Nilai kontrak PO wajib diisi dengan benar.');
+        }
+
+        router.post(`/jobs/${job.id}/po-revise`, revisePoForm, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showSuccess('Berhasil', 'Data PO/SPK berhasil direvisi.');
+                setShowRevisePoModal(false);
+            },
+            onError: (errs) => {
+                const msg = Object.values(errs).flat().join('\n') || 'Gagal merevisi PO.';
+                showError('Gagal Revisi PO', msg);
+            }
         });
     };
 
@@ -967,7 +1054,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {/* Status banners */}
                         {stage2Bypass && (
                             <div className="bg-emerald-50 border border-emerald-200 rounded p-3 text-xs text-emerald-800 font-medium">
-                                ✅ Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
+                                Persetujuan: Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
                             </div>
                         )}
                         {job.peer_review_status === 'requested' && isMGR && (
@@ -981,7 +1068,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                         {job.peer_review_status === 'requested' && !isMGR && (
                             <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
-                                🔔 Menunggu persetujuan Kadiv/MGR…
+                                Menunggu persetujuan Kadiv/MGR…
                             </div>
                         )}
 
@@ -1039,7 +1126,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div className="px-2 py-3 flex flex-col items-center gap-1">
                                             {item.noVerify ? (
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px] flex items-center gap-1 cursor-not-allowed" title="Dokumen bersifat privat & tidak perlu dibaca Admin">
-                                                    🔒 Privat / Unreadable
+                                                    Privat / Unreadable
                                                 </span>
                                             ) : item.isManual ? (
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
@@ -1047,14 +1134,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 docs.map(d => (
                                                     <a key={d.id} href={d.id ? `/jobs/${d.job_id || job.id}/documents/${d.id}/download` : `/storage/${d.path}`} target="_blank" rel="noopener noreferrer"
                                                         className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
-                                                        📎 {d.name.split('.').pop().toUpperCase()}
+                                                        {d.name.split('.').pop().toUpperCase()}
                                                     </a>
                                                 ))
                                             ) : (
                                                 <button type="button"
                                                     onClick={() => triggerUpload(2, item.type)}
                                                     className="px-2 py-1 rounded bg-red-50 border border-red-300 text-red-600 font-semibold text-[10px] hover:bg-red-100 flex items-center gap-1">
-                                                    <span>✕</span> KOSONG
+                                                    <span>x</span> KOSONG
                                                 </button>
                                             )}
                                             {hasFile && !item.noVerify && canManageStageDocs(2) && (
@@ -1075,7 +1162,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs scale-105'
                                                                 : 'border-gray-300 text-gray-600 bg-white hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700'
                                                         }`} title="Mark OK / Verified">
-                                                        ✓ OK
+                                                        OK
                                                     </button>
                                                     <button type="button" onClick={() => setStatus(status === 'tidak' ? '' : 'tidak')}
                                                         className={`px-2 py-1 rounded border text-[10px] font-bold transition-all ${
@@ -1083,7 +1170,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                 ? 'bg-red-600 text-white border-red-600 shadow-xs scale-105'
                                                                 : 'border-gray-300 text-gray-600 bg-white hover:bg-red-50 hover:border-red-400 hover:text-red-700'
                                                         }`} title="Mark TIDAK / Rejected">
-                                                        ✕ TIDAK
+                                                        TIDAK
                                                     </button>
                                                     {item.hasNa && (
                                                         <button type="button" onClick={() => setStatus(status === 'na' ? '' : 'na')}
@@ -1119,7 +1206,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             )}
                             <button type="submit" disabled={processing || !stage2CanMove}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
-                                {processing ? '...' : '✓ Verifikasi Selesai — Lanjut Penjadwalan →'}
+                                {processing ? '...' : 'Verifikasi Selesai — Lanjut Penjadwalan →'}
                             </button>
                         </div>
                     </div>
@@ -1161,7 +1248,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-3">
                             {/* Header: title + add/remove day controls */}
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-indigo-900">📅 Jadwal Pelaksanaan</span>
+                                <span className="text-xs font-bold text-indigo-900">Jadwal Pelaksanaan</span>
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-[11px] text-indigo-700">Hari:</span>
                                     <button type="button"
@@ -1202,7 +1289,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             {scheduleDays.length > 1 && (
                                                 <button type="button"
                                                     onClick={() => setScheduleDays(prev => prev.filter((_, i) => i !== dayIdx))}
-                                                    className="text-red-400 hover:text-red-600 text-base leading-none px-1 shrink-0" title="Hapus hari ini">✕</button>
+                                                    className="text-red-400 hover:text-red-600 text-base leading-none px-1 shrink-0" title="Hapus hari ini">x</button>
                                             )}
                                         </div>
 
@@ -1242,17 +1329,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                         >
                                                             {isSelected && <span>✓</span>}
                                                             {item.user.name}
-                                                            {isOverloaded && !isSelected && <span className="text-red-400 text-[9px]">⚠</span>}
+                                                            {isOverloaded && !isSelected && <span className="text-red-400 text-[9px] font-bold">!</span>}
                                                         </button>
                                                     );
                                                 })}
                                             </div>
                                         )}
                                         {!day.date && (
-                                            <p className="text-[10px] text-red-500 mt-1">⚠ Pilih tanggal untuk hari ini</p>
+                                            <p className="text-[10px] text-red-500 mt-1">Pilih tanggal untuk hari ini</p>
                                         )}
                                         {day.inspector_ids.length === 0 && (
-                                            <p className="text-[10px] text-red-500 mt-0.5">⚠ Pilih minimal 1 inspektur untuk hari ini</p>
+                                            <p className="text-[10px] text-red-500 mt-0.5">Pilih minimal 1 inspektur untuk hari ini</p>
                                         )}
                                     </div>
                                 );
@@ -1280,7 +1367,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {/* Penanggung Jawab Laporan / Penyusun LHPP */}
                         <div className="bg-white border rounded-lg p-3">
                             <label className="block text-xs font-semibold text-gray-700 mb-1">
-                                📝 Penanggung Jawab Laporan / Penyusun LHPP
+                                Penanggung Jawab Laporan / Penyusun LHPP
                             </label>
                             <select
                                 value={data.report_writer_id || ''}
@@ -1322,7 +1409,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm mb-2">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                                    📄
+                                    Doc
                                 </div>
                                 <div>
                                     <p className="text-xs font-bold text-blue-950">Surat Tugas Riksa Uji</p>
@@ -1337,7 +1424,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 rel="noopener noreferrer"
                                 className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition flex items-center gap-1 cursor-pointer"
                             >
-                                📥 Download Surat Tugas (.docx)
+                                Download Surat Tugas (.docx)
                             </a>
                         </div>
                         */}
@@ -1356,7 +1443,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                                    📄
+                                    Doc
                                 </div>
                                 <div>
                                     <p className="text-xs font-bold text-blue-950">Surat Tugas Riksa Uji</p>
@@ -1371,7 +1458,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 rel="noopener noreferrer"
                                 className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-sm transition flex items-center gap-1 cursor-pointer"
                             >
-                                📥 Download Surat Tugas (.docx)
+                                Download Surat Tugas (.docx)
                             </a>
                         </div>
                         */}
@@ -1411,7 +1498,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         <div key={type} className="border border-dashed rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1">
                                                 <span className="text-xs font-medium text-gray-700">{type}</span>
-                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">✓ Terupload</span>}
+                                                {existing.length > 0 && <span className="text-xs text-green-600 font-bold">Terupload</span>}
                                             </div>
                                             {existing.length > 0
                                                 ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}</div>
@@ -1423,7 +1510,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 className="w-full text-xs border border-gray-200 rounded px-2 py-1 mb-1" />
                                             <button type="button" onClick={() => uploadPhoto(type)}
                                                 className="text-xs px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100">
-                                                📷 Upload Foto
+                                                Upload Foto
                                             </button>
                                         </div>
                                     );
@@ -1435,7 +1522,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {s4UnitMismatch ? (
                             <div className="border border-amber-200 rounded-lg p-3.5 bg-amber-50/80 space-y-3">
                                 <p className="text-xs font-semibold text-amber-900">
-                                    ⚠️ Jumlah alat yang diperiksa ({s4.actual_units}) tidak sesuai dengan jumlah unit awal ({job.units}).
+                                    Perhatian: Jumlah alat yang diperiksa ({s4.actual_units}) tidak sesuai dengan jumlah unit awal ({job.units}).
                                 </p>
                                 <div className="flex flex-col gap-2">
                                     <button
@@ -1450,7 +1537,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         disabled={processing}
                                         className="w-full px-4 py-2.5 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1"
                                     >
-                                        🚀 Lanjut ke Stage 5 (Penyusunan LHPP) →
+                                        Lanjut ke Stage 5 (Penyusunan LHPP) →
                                     </button>
                                     <button
                                         type="button"
@@ -1458,7 +1545,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         disabled={processing}
                                         className="w-full px-4 py-2 rounded text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 shadow-xs flex items-center justify-center gap-1"
                                     >
-                                        📝 Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
+                                        Perbarui Unit di Stage 4b (Aktualisasi Unit MKT) →
                                     </button>
                                 </div>
                             </div>
@@ -1473,7 +1560,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-4">
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                             <h4 className="text-xs font-bold text-amber-900 mb-1">
-                                📝 Stage 4b: Aktualisasi Unit (Marketing)
+                                Stage 4b: Aktualisasi Unit (Marketing)
                             </h4>
                             <p className="text-xs text-amber-800">
                                 Hasil pemeriksaan lapangan: <strong>{job.actual_units ?? job.units} Unit</strong> (Unit awal: {job.units} Unit).
@@ -1501,7 +1588,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             <>
                                                 {showTgl15Warning && (
                                                     <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1.5 mb-1">
-                                                        ⚠️ Sudah lewat tanggal 15 bulan ini. Perubahan data keuangan berisiko terhadap pelaporan pajak.
+                                                        Perhatian: Sudah lewat tanggal 15 bulan ini. Perubahan data keuangan berisiko terhadap pelaporan pajak.
                                                         {/* TODO: [LOCKED-AFTER-TGL-15] Aktifkan lock jika rule sudah disepakati */}
                                                     </div>
                                                 )}
@@ -1556,7 +1643,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 disabled={processing}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
                             >
-                                {processing ? '...' : '🚀 Lanjut ke Stage 5 (LHPP) →'}
+                                {processing ? '...' : 'Lanjut ke Stage 5 (LHPP) →'}
                             </button>
                         </div>
                     </div>
@@ -1567,7 +1654,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-4">
                         <div className="bg-blue-50/70 border border-blue-200 rounded-lg p-3 text-xs text-blue-900 space-y-1">
                             <div className="font-semibold flex items-center gap-1.5">
-                                <span>📄</span> Penyusunan Dokumen LHPP (Tim Ahli / Inspektur)
+                                <span>Penyusunan Dokumen LHPP (Tim Ahli / Inspektur)</span>
                             </div>
                             <p className="text-blue-700">
                                 Personil / Tim Ahli dapat mengisi link Google Drive / OneDrive / Cloud Storage folder atau dokumen LHPP di bawah ini.
@@ -1579,7 +1666,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <div className="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-800">
-                                        🔗 Link Dokumen / Folder LHPP per Unit ({lhppLinks.length} Unit) *
+                                        Link Dokumen / Folder LHPP per Unit ({lhppLinks.length} Unit) *
                                     </label>
                                     <p className="text-[11px] text-gray-500">
                                         Masukkan link cloud untuk tiap unit. Anda dapat menamai label dan memberikan catatan per unit.
@@ -1588,7 +1675,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div className="flex items-center gap-1.5 flex-shrink-0">
                                     {hasValidLhppLink(lhppLinks) && (
                                         <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                            ✓ Link Terisi
+                                            Link Terisi
                                         </span>
                                     )}
                                     {canManage && (
@@ -1626,7 +1713,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                     className="text-xs font-semibold text-red-500 hover:text-red-700 px-2 py-0.5 rounded border border-red-200 bg-white hover:bg-red-50 flex-shrink-0"
                                                     title="Hapus baris unit ini"
                                                 >
-                                                    ✕ Hapus
+                                                    Hapus
                                                 </button>
                                             )}
                                         </div>
@@ -1674,12 +1761,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         disabled={isSavingLink}
                                         className="px-3.5 py-1.5 rounded text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition"
                                     >
-                                        {isSavingLink ? 'Menyimpan...' : '💾 Simpan Semua Link LHPP'}
+                                        {isSavingLink ? 'Menyimpan...' : 'Simpan Semua Link LHPP'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={handleAddLhppLink}
-                                        className="px-3 py-1.5 rounded text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition"
+                                        className="px-3.5 py-1.5 rounded text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition"
                                     >
                                         + Tambah Baris Unit Lainnya
                                     </button>
@@ -1687,34 +1774,17 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             )}
                         </div>
 
-                        {/* Optional uploads or existing files */}
-                        <div className="space-y-2 pt-1 border-t border-gray-100">
-                            <p className="text-xs font-medium text-gray-500">Unggah Dokumen Tambahan (Opsional):</p>
-                            {(DOC_TYPES_BY_STAGE[5] || []).filter(t => t !== 'LHPP').map(t => (
-                                <UploadSlot
-                                    key={t}
-                                    type={t}
-                                    stageId={5}
-                                    docs={job.documents}
-                                    triggerUpload={triggerUpload}
-                                    uploadFileDirectly={uploadFileDirectly}
-                                    canManageStageDocs={canManageStageDocs}
-                                    deleteDoc={deleteDoc}
-                                />
-                            ))}
-
-                            {/* If there are previously uploaded LHPP files, display them */}
-                            {(job.documents || []).some(d => d.stage === 5 && d.type === 'LHPP') && (
-                                <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
-                                    <p className="text-[11px] font-medium text-gray-600 mb-1.5">File LHPP yang sudah diunggah:</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {(job.documents || []).filter(d => d.stage === 5 && d.type === 'LHPP').map(doc => (
-                                            <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} />
-                                        ))}
-                                    </div>
+                        {/* If there are previously uploaded LHPP files, display them */}
+                        {(job.documents || []).some(d => d.stage === 5 && d.type === 'LHPP') && (
+                            <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
+                                <p className="text-[11px] font-medium text-gray-600 mb-1.5">File LHPP yang sudah diunggah:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {(job.documents || []).filter(d => d.stage === 5 && d.type === 'LHPP').map(doc => (
+                                        <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} jobId={job.id} />
+                                    ))}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         
@@ -1733,26 +1803,26 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     disabled={processing || isMoving}
                                     className="flex-1 px-4 py-2 rounded text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 transition"
                                 >
-                                    {processing || isMoving ? '...' : '📋 Kirim ke Manager (Minta Approval) →'}
+                                    {processing || isMoving ? '...' : 'Kirim ke Tim Ahli (Minta Approval) →'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleBypassStage5}
                                     disabled={processing || isMoving}
                                     className="px-3.5 py-2 rounded text-xs sm:text-sm font-bold text-amber-900 bg-amber-400 hover:bg-amber-500 disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 transition border border-amber-500 whitespace-nowrap"
-                                    title="Bypass langsung ke Manager untuk penanganan khusus"
+                                    title="Bypass langsung ke Stage 7 (Verifikasi ke Dinas)"
                                 >
-                                    {processing || isMoving ? '...' : '⚡ Bypass Langsung'}
+                                    {processing || isMoving ? '...' : 'Bypass Langsung'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* ── STAGE 6 (Review Laporan Teknis — MGR) ───── */}
+                {/* ── STAGE 6 (Review Laporan Teknis — Tim Ahli / MGR) ───── */}
                 {s === 6 && (
                     <div className="space-y-3">
-                        <p className="text-xs text-gray-500">Sebagai Kadiv/MGR, tinjau laporan teknis dari Tim Ahli.</p>
+                        <p className="text-xs text-gray-500">Sebagai Tim Ahli / Kadiv Teknis, tinjau laporan teknis pekerjaan ini.</p>
 
                         {/* Multi-Unit LHPP Links preview for Manager */}
                         {(() => {
@@ -1763,7 +1833,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2.5">
                                     <div className="text-xs font-bold text-indigo-900 flex items-center justify-between">
                                         <span className="flex items-center gap-1.5">
-                                            <span>📂</span> Dokumen / Folder LHPP dari Tim Ahli ({links.length} Unit):
+                                            <span>Dokumen / Folder LHPP dari Tim Ahli ({links.length} Unit):</span>
                                         </span>
                                     </div>
                                     <div className="space-y-2">
@@ -1879,7 +1949,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {s8.s8_progress_status === 'stuck' && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
                                 <label className="block text-xs font-bold text-red-800">
-                                    ⚠️ Keterangan Kendala di Disnaker
+                                    Keterangan Kendala di Disnaker
                                 </label>
                                 <textarea
                                     rows={2}
@@ -1965,7 +2035,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="space-y-3">
                             {showTgl15Warning && (
                                 <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
-                                    ⚠️ <strong>Peringatan Tanggal 15:</strong> Sudah melewati batas tanggal 15 bulan berjalan. Perubahan data nilai invoice dan faktur pajak berisiko terhadap pelaporan pajak.
+                                    <strong>Peringatan Tanggal 15:</strong> Sudah melewati batas tanggal 15 bulan berjalan. Perubahan data nilai invoice dan faktur pajak berisiko terhadap pelaporan pajak.
                                     {/* TODO: [LOCKED-AFTER-TGL-15] Aktifkan disable form jika lock disepakati */}
                                 </div>
                             )}
@@ -2052,7 +2122,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         ))}
                         {/* No. Resi — tracking number for Suket shipment */}
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                            <label className="block text-xs font-semibold text-blue-800">📦 No. Resi Pengiriman <span className="font-normal text-blue-600">(Opsional)</span></label>
+                            <label className="block text-xs font-semibold text-blue-800">No. Resi Pengiriman <span className="font-normal text-blue-600">(Opsional)</span></label>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
@@ -2077,7 +2147,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-4">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <h4 className="text-xs font-bold text-blue-900 mb-1">
-                                💳 Verifikasi Pembayaran / Pelunasan (Finance)
+                                Verifikasi Pembayaran / Pelunasan (Finance)
                             </h4>
                             <p className="text-xs text-blue-700">
                                 Verifikasi status pelunasan pembayaran dari klien sebelum proyek ditutup (Closed).
@@ -2092,9 +2162,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5 font-medium"
                                 disabled={user?.role !== 'finance' && !user?.isSuperadmin && user?.role !== 'superadmin'}
                             >
-                                <option value="pending">⏳ Pending (Belum Lunas)</option>
-                                <option value="partial">🌗 Partial (Dibayar Sebagian)</option>
-                                <option value="paid">✅ Paid (Lunas Sempurna)</option>
+                                <option value="pending">Pending (Belum Lunas)</option>
+                                <option value="partial">Partial (Dibayar Sebagian)</option>
+                                <option value="paid">Paid (Lunas Sempurna)</option>
                             </select>
                         </div>
 
@@ -2116,7 +2186,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 onClick={handleSaveS14}
                                 className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm"
                             >
-                                💾 Simpan Status Pembayaran 11b
+                                Simpan Status Pembayaran 11b
                             </button>
                         )}
 
@@ -2137,7 +2207,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             />
                         ) : (
                             <div className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded p-3 text-center">
-                                🔒 Hanya <strong>Finance</strong> yang berwenang memverifikasi pembayaran dan menutup (Close) pekerjaan ini.
+                                Hanya <strong>Finance</strong> yang berwenang memverifikasi pembayaran dan menutup (Close) pekerjaan ini.
                             </div>
                         )}
                     </div>
@@ -2147,7 +2217,6 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 {s === 12 && (
                     <div className="space-y-4">
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
-                            <span className="text-3xl">🎉</span>
                             <h4 className="text-base font-bold text-emerald-900 mt-2">Pekerjaan Selesai & Ditutup (Closed)</h4>
                             <p className="text-xs text-emerald-700 mt-1 max-w-md mx-auto">
                                 Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai dan terverifikasi.
@@ -2157,7 +2226,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         {(user?.role === 'superadmin' || permissions === 'superadmin') && (
                             <div className="bg-amber-50 border border-amber-300 rounded-lg p-3.5 space-y-2">
                                 <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
-                                    <span>🔓</span> Fitur Khusus Superadmin: Buka Kembali Pekerjaan
+                                    Fitur Khusus Superadmin: Buka Kembali Pekerjaan
                                 </div>
                                 <p className="text-[11px] text-amber-800">
                                     Jika terdapat revisi pembayaran, perbaikan data, atau pembatalan penutupan, Superadmin dapat membuka kembali pekerjaan ini ke stage sebelumnya.
@@ -2167,7 +2236,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     onClick={handleReopenJob}
                                     className="px-3.5 py-2 rounded text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition flex items-center gap-1.5"
                                 >
-                                    🔓 Buka Kembali Pekerjaan (Re-open Job)
+                                    Buka Kembali Pekerjaan (Re-open Job)
                                 </button>
                             </div>
                         )}
@@ -2265,7 +2334,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
                         <div><span className="text-gray-400">Tim Inspektur:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
                         <div><span className="text-gray-400">Report Writer:</span> <span className="font-semibold text-gray-800">{job.report_writer ? job.report_writer.name : '-'}</span></div>
-                        <div><span className="text-gray-400">Checklist Lapangan:</span> <span className="font-semibold text-emerald-700">{checkedCount > 0 ? `✓ ${checkedCount} Item Terverifikasi` : '-'}</span></div>
+                        <div><span className="text-gray-400">Checklist Lapangan:</span> <span className="font-semibold text-emerald-700">{checkedCount > 0 ? `${checkedCount} Item Terverifikasi` : '-'}</span></div>
                     </div>
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
@@ -2299,7 +2368,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Detail Penyusunan LHPP:</p>
                     <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-2">
-                        <div><span className="text-gray-400">Status LHPP:</span> <span className="font-semibold text-emerald-700">✓ Dokumen Selesai Disusun</span></div>
+                        <div><span className="text-gray-400">Status LHPP:</span> <span className="font-semibold text-emerald-700">Dokumen Selesai Disusun</span></div>
                         {hasLinks && (
                             <div className="space-y-1.5 pt-1 border-t border-gray-200/60">
                                 <span className="text-gray-500 font-semibold block">Daftar Link LHPP per Unit:</span>
@@ -2321,7 +2390,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1 font-semibold text-[11px] text-indigo-600 hover:text-indigo-800 hover:underline flex-shrink-0"
                                                 >
-                                                    🔗 Buka ↗
+                                                    Buka ↗
                                                 </a>
                                             </div>
                                             {item.notes && (
@@ -2459,7 +2528,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Pengiriman Suket ke Klien:</p>
                     <div className="grid grid-cols-2 gap-2 bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div className="col-span-2"><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">✓ Suket telah diserahkan ke Klien</span></div>
+                        <div className="col-span-2"><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">Suket telah diserahkan ke Klien</span></div>
                         {job.no_resi && (
                             <div className="col-span-2"><span className="text-gray-400">No. Resi:</span> <span className="font-semibold text-blue-700 font-mono">{job.no_resi}</span></div>
                         )}
@@ -2474,7 +2543,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
 
         if (s === 14 || s === 12) {
-            const statusLabel = job.s14_payment_status === 'paid' ? '✅ Paid (Lunas Sempurna)' : job.s14_payment_status === 'partial' ? '🌗 Partial (Dibayar Sebagian)' : '⏳ Pending';
+            const statusLabel = job.s14_payment_status === 'paid' ? 'Paid (Lunas Sempurna)' : job.s14_payment_status === 'partial' ? 'Partial (Dibayar Sebagian)' : 'Pending';
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Status Pelunasan Pembayaran:</p>
@@ -2600,7 +2669,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                             className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
                                                                             title={`Unduh / Lihat ${d.name}`}
                                                                         >
-                                                                            📎 {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
+                                                                            {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
                                                                         </a>
                                                                     ))}
                                                                 </div>
@@ -2613,7 +2682,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                 status === 'na' ? 'bg-gray-500 text-white' :
                                                                 'bg-gray-200 text-gray-600'
                                                             }`}>
-                                                                {status === 'ok' ? '✓ OK' : status === 'tidak' ? '✕ Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
+                                                                {status === 'ok' ? 'OK' : status === 'tidak' ? 'Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -2658,7 +2727,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
                                     <div>
                                         <a href={doc.id ? `/jobs/${doc.job_id || job.id}/documents/${doc.id}/download` : `/storage/${doc.path}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
-                                            <span>📄</span> {doc.name}
+                                            <span>{doc.name}</span>
                                         </a>
                                         <div className="text-xs text-gray-500 mt-1 ml-6">
                                             {doc.type} • Uploaded by {doc.uploaded_by_user_id} • {fmt(doc.created_at)}
@@ -2701,7 +2770,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                         {log.returned_from_stage && (
                             <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
-                                🔄 DIKEMBALIKAN dari Stage {log.returned_from_stage}
+                                DIKEMBALIKAN dari Stage {log.returned_from_stage}
                             </span>
                         )}
                         <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
@@ -2762,7 +2831,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Kontrak (Total Sesudah PPN 12%)</label>
                                 {showTgl15Warning && (
                                     <p className="text-[11px] text-red-600 mb-1 font-medium">
-                                        ⚠️ Sudah lewat tanggal 15 bulan ini (Closing Pajak). Perubahan data keuangan berisiko terhadap pelaporan pajak.
+                                        Perhatian: Sudah lewat tanggal 15 bulan ini (Closing Pajak). Perubahan data keuangan berisiko terhadap pelaporan pajak.
                                     </p>
                                 )}
                                 <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
@@ -2803,7 +2872,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <h4 className="font-bold text-gray-800 border-b w-full pb-2 mb-2">Informasi Pekerjaan</h4>
                         {canManage && (
                             <button onClick={() => setIsEditing(true)} className="text-xs font-medium text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 ml-2">
-                                ✏️ Edit
+                                Edit
                             </button>
                         )}
                     </div>
@@ -2827,7 +2896,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200 space-y-1">
                                 <div>
                                     <p className="text-xs text-yellow-800 font-bold">
-                                        Nilai Kontrak <span className="font-normal opacity-80">(sebelum PPN)</span>
+                                        Nilai Kontrak <span className="font-normal opacity-80">(Sesudah PPN 12%)</span>
                                     </p>
                                     <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
                                 </div>
@@ -2884,6 +2953,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                        {(auth?.user?.role === 'finance' || auth?.user?.role === 'superadmin' || auth?.permissions === 'superadmin') && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRevisePoModal(true)}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                                    title="Revisi Data PO/SPK (Finance/Superadmin)"
+                                >
+                                    Revisi PO
+                                </button>
+                                {job.stage >= 10 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviseInvoiceModal(true)}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                                        title="Revisi Data Invoice & Faktur Pajak (Finance/Superadmin)"
+                                    >
+                                        Revisi Invoice
+                                    </button>
+                                )}
+                            </>
+                        )}
                         {(auth?.user?.role === 'superadmin' || auth?.permissions === 'superadmin') && (
                             <button
                                 onClick={handleDeleteJob}
@@ -2931,6 +3022,195 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                             <span className="font-semibold text-gray-700">Memproses...</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Modal Revisi PO (Finance / Superadmin) ── */}
+                {showRevisePoModal && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-5 space-y-4 border border-slate-200">
+                            <div className="flex items-center justify-between border-b pb-3">
+                                <div>
+                                    <h3 className="text-base font-black text-[#0A385C]">Revisi Data PO / SPK</h3>
+                                    <p className="text-xs text-gray-500">Ubah detail PO tanpa mengubah alur tahapan/stage job.</p>
+                                </div>
+                                <button type="button" onClick={() => setShowRevisePoModal(false)} className="text-gray-400 hover:text-gray-600 text-lg font-bold">x</button>
+                            </div>
+                            <form onSubmit={handleRevisePo} className="space-y-3 text-xs">
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1">Nomor PO / SPK / Proposal *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={revisePoForm.no_po}
+                                        onChange={e => setRevisePoForm(prev => ({ ...prev, no_po: e.target.value }))}
+                                        className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                        placeholder="PO/SPK/..."
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block font-bold text-gray-700 mb-1">Tanggal PO</label>
+                                        <input
+                                            type="date"
+                                            value={revisePoForm.tgl_po || ''}
+                                            onChange={e => setRevisePoForm(prev => ({ ...prev, tgl_po: e.target.value }))}
+                                            className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block font-bold text-gray-700 mb-1">Termin Pembayaran</label>
+                                        <select
+                                            value={revisePoForm.termin_pembayaran || 'FULL'}
+                                            onChange={e => setRevisePoForm(prev => ({ ...prev, termin_pembayaran: e.target.value }))}
+                                            className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                        >
+                                            <option value="FULL">FULL</option>
+                                            <option value="TERMIN">TERMIN</option>
+                                            <option value="CBD">CBD</option>
+                                            <option value="DP">DP</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1">Nilai Kontrak (Sesudah PPN 12%) *</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        required
+                                        value={revisePoForm.nilai}
+                                        onChange={e => setRevisePoForm(prev => ({ ...prev, nilai: e.target.value }))}
+                                        className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                    />
+                                    {revisePoForm.nilai && parseFloat(revisePoForm.nilai) > 0 && (
+                                        <p className="text-[11px] text-emerald-700 mt-1">
+                                            Sesudah PPN (12%): <strong>{fmtCurrency(Math.round(parseFloat(revisePoForm.nilai || 0) * 1.12))}</strong>
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1">Alasan / Catatan Revisi</label>
+                                    <textarea
+                                        rows={2}
+                                        value={revisePoForm.revision_notes || ''}
+                                        onChange={e => setRevisePoForm(prev => ({ ...prev, revision_notes: e.target.value }))}
+                                        placeholder="Catatan alasan perubahan data PO..."
+                                        className="w-full border rounded px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-2 border-t">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRevisePoModal(false)}
+                                        className="px-3 py-1.5 rounded text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 rounded text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-xs"
+                                    >
+                                        Simpan Revisi PO
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Modal Revisi Invoice & Faktur (Finance / Superadmin) ── */}
+                {showReviseInvoiceModal && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-5 space-y-4 border border-slate-200">
+                            <div className="flex items-center justify-between border-b pb-3">
+                                <div>
+                                    <h3 className="text-base font-black text-[#0A385C]">Revisi Data Invoice & Faktur Pajak</h3>
+                                    <p className="text-xs text-gray-500">Perbarui nomor atau tanggal invoice tanpa membatalkan penagihan.</p>
+                                </div>
+                                <button type="button" onClick={() => setShowReviseInvoiceModal(false)} className="text-gray-400 hover:text-gray-600 text-lg font-bold">x</button>
+                            </div>
+                            <form onSubmit={handleReviseInvoice} className="space-y-3 text-xs">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="block font-bold text-gray-700 mb-1">Nomor Invoice *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={reviseInvoiceForm.invoice_no}
+                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, invoice_no: e.target.value }))}
+                                            className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                            placeholder="INV/2026/..."
+                                        />
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="block font-bold text-gray-700 mb-1">Total Tagihan (Rp) *</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            required
+                                            value={reviseInvoiceForm.total_invoice_amount}
+                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, total_invoice_amount: e.target.value }))}
+                                            className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block font-bold text-gray-700 mb-1">Tanggal Terbit Invoice</label>
+                                        <input
+                                            type="date"
+                                            value={reviseInvoiceForm.tgl_invoice_issued || ''}
+                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, tgl_invoice_issued: e.target.value }))}
+                                            className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block font-bold text-gray-700 mb-1">Nomor Faktur Pajak</label>
+                                        <input
+                                            type="text"
+                                            value={reviseInvoiceForm.no_faktur_pajak || ''}
+                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, no_faktur_pajak: e.target.value }))}
+                                            className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                            placeholder="010.000-..."
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1">Tanggal Faktur Pajak</label>
+                                    <input
+                                        type="date"
+                                        value={reviseInvoiceForm.tgl_faktur_pajak || ''}
+                                        onChange={e => setReviseInvoiceForm(prev => ({ ...prev, tgl_faktur_pajak: e.target.value }))}
+                                        className="w-full border rounded px-2.5 py-1.5 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-bold text-gray-700 mb-1">Alasan / Catatan Revisi</label>
+                                    <textarea
+                                        rows={2}
+                                        value={reviseInvoiceForm.revision_notes || ''}
+                                        onChange={e => setReviseInvoiceForm(prev => ({ ...prev, revision_notes: e.target.value }))}
+                                        placeholder="Catatan alasan perubahan data invoice..."
+                                        className="w-full border rounded px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-2 border-t">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviseInvoiceModal(false)}
+                                        className="px-3 py-1.5 rounded text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 rounded text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs"
+                                    >
+                                        Simpan Revisi Invoice
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}

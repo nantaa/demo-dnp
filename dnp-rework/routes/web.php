@@ -46,8 +46,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/stage14-data', [JobController::class, 'saveStage14Data'])->name('jobs.stage14-data');
     Route::post('/jobs/{job}/stage12-data', [JobController::class, 'saveStage12Data'])->name('jobs.stage12-data');
     Route::post('/jobs/{job}/documents', [JobController::class, 'uploadDocument'])->name('jobs.documents.upload');
+    Route::get('/jobs/{job}/documents/{document}/file/{filename?}', [JobController::class, 'downloadDocument'])->name('jobs.documents.file');
+    Route::get('/jobs/{job}/documents/{document}/download/{filename?}', [JobController::class, 'downloadDocument'])->name('jobs.documents.download.named');
     Route::get('/jobs/{job}/documents/{document}/download', [JobController::class, 'downloadDocument'])->name('jobs.documents.download');
     Route::delete('/jobs/{job}/documents/{document}', [JobController::class, 'deleteDocument'])->name('jobs.documents.delete');
+    Route::post('/jobs/{job}/invoice-revise', [JobController::class, 'reviseInvoice'])->name('jobs.invoice-revise');
+    Route::post('/jobs/{job}/po-revise', [JobController::class, 'revisePo'])->name('jobs.po-revise');
     Route::post('/jobs/{job}/s2-verify', [JobController::class, 'saveS2Verify'])->name('jobs.s2-verify');
     Route::post('/jobs/{job}/evaluations', [JobController::class, 'saveEvaluation'])->name('jobs.evaluations.save');
     Route::delete('/jobs/{job}/evaluations/{evaluation}', [JobController::class, 'deleteEvaluation'])->name('jobs.evaluations.delete');

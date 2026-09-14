@@ -5,7 +5,7 @@ export const STAGES = [
     { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi', role: 'inspektur', sla: null },
     { id: 13, name: 'Aktualisasi Unit', short: 'Aktualisasi', role: 'marketing', sla: 1, displayId: '4b' },
     { id: 5, name: 'Penyusunan LHPP', short: 'LHPP', role: 'inspektur', sla: 3 },
-    { id: 6, name: 'Review Laporan Teknis', short: 'Rev. Laporan', role: 'manager', sla: 1 },
+    { id: 6, name: 'Review Laporan Teknis', short: 'Rev. Laporan', role: 'tim_ahli', sla: 1 },
     { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'admin', sla: 1 },
     { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30 },
     { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
@@ -23,7 +23,8 @@ export const getStageDisplayId = (stageId) => {
 export const ROLES = {
     marketing: { name: 'Marketing', label: 'MKT' },
     admin: { name: 'Admin Dokumen & RU', label: 'ADM' },
-    inspektur: { name: 'Tim Ahli / Inspektur', label: 'INS' },
+    inspektur: { name: 'Tim Riksa Uji', label: 'TRU' },
+    tim_ahli: { name: 'Tim Ahli', label: 'AHLI' },
     manager: { name: 'Kadiv RU / Manager', label: 'MGR' },
     finance: { name: 'Admin Keuangan', label: 'FIN' },
     superadmin: { name: 'Super Administrator', label: 'SUP' },

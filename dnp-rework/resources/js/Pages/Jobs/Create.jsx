@@ -136,7 +136,7 @@ export default function JobCreate({ auth }) {
                                 />
                                 {new Date().getDate() > 15 && (
                                     <p className="text-[11px] text-red-600 mt-1 font-medium">
-                                        ⚠️ Sudah lewat tgl 15 bulan ini (Closing Pajak). Pastikan nilai PO/SPK sudah final.
+                                        Perhatian: Sudah lewat tgl 15 bulan ini (Closing Pajak). Pastikan nilai PO/SPK sudah final.
                                     </p>
                                 )}
                                 {data.nilai && parseFloat(data.nilai) > 0 && (() => {

@@ -151,11 +151,11 @@ export default function KanbanIndex({ jobs, auth }) {
                                     {/* Stage 8 Disnaker Status Banner & Delay Reason */}
                                     {job.stage === 8 && (() => {
                                         const sMap = {
-                                            progress: { label: '⏳ PROSES DISNAKER', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
-                                            stuck:    { label: '⚠️ TERKENDALA',       cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
-                                            ready:    { label: '✅ SELESAI DISNAKER', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
+                                            progress: { label: 'PROSES DISNAKER', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
+                                            stuck:    { label: 'TERKENDALA',       cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
+                                            ready:    { label: 'SELESAI DISNAKER', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
                                         };
-                                        const badge = sMap[job.s8_progress_status] || { label: '⏳ DISNAKER (BELUM DIUPDATE)', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+                                        const badge = sMap[job.s8_progress_status] || { label: 'DISNAKER (BELUM DIUPDATE)', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
                                         return (
                                             <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
                                                 <div className="flex items-center justify-between font-bold">
@@ -171,6 +171,30 @@ export default function KanbanIndex({ jobs, auth }) {
                                                         Kendala: {job.s8_delay_reason}
                                                     </p>
                                                 )}
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Stage 9 Suket Status Banner */}
+                                    {job.stage === 9 && (() => {
+                                        const s9Map = {
+                                            diterima:               { label: 'DITERIMA',               cls: 'bg-blue-50 text-blue-800 border-blue-200' },
+                                            scan:                   { label: 'SCAN',                   cls: 'bg-purple-50 text-purple-800 border-purple-200' },
+                                            penamaan_cover:         { label: 'PENAMAAN COVER',         cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+                                            pembuatan_tanda_terima: { label: 'PEMBUATAN TANDA TERIMA', cls: 'bg-amber-50 text-amber-800 border-amber-200' },
+                                            selesai:                { label: 'SELESAI',                cls: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+                                        };
+                                        const badge = s9Map[job.s9_progress_status] || { label: 'SUKET (DALAM PROSES)', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+                                        return (
+                                            <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
+                                                <div className="flex items-center justify-between font-bold">
+                                                    <span>{badge.label}</span>
+                                                    {job.stage_started_at && (
+                                                        <span className="text-[10px] font-normal opacity-80">
+                                                            {Math.max(0, Math.floor((new Date() - new Date(job.stage_started_at)) / (1000 * 60 * 60 * 24)))} hr
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })()}

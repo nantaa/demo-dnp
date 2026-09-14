@@ -18,15 +18,18 @@ export default function KanbanIndex({ jobs, auth }) {
     // Helper to get actionable next prompt
     const getNextActionPrompt = (job) => {
         if (job.stage === 1) return 'MKT: Lengkapi PO & Verifikasi DP';
-        if (job.stage === 2) return 'Admin: Verifikasi 10 Dokumen Teknis';
+        if (job.stage === 18) return 'Finance: Terbitkan Invoice DP (1b)';
+        if (job.stage === 19) return 'MKT: Penagihan Pembayaran DP (1c)';
+        if (job.stage === 20) return 'Finance: Konfirmasi Bayar DP (1d)';
+        if (job.stage === 2) return 'Admin: Verifikasi Dokumen Teknis';
         if (job.stage === 3) return 'Admin: Terbitkan Surat Tugas & Tim';
         if (job.stage === 4) return 'Inspektur: Pelaksanaan RU & Upload BAP';
         if (job.stage === 13) return 'MKT: Rekonsiliasi & Opsi Job Split';
         if (job.stage === 16) return 'Admin: Penjadwalan Ulang (S4c)';
         if (job.stage === 17) return 'Inspektur: Pelaksanaan RU Ulang (S4d)';
-        if (job.stage === 5) return 'Tim Ahli: Penyusunan Konsep LHPP';
+        if (job.stage === 5) return 'Admin: Penyusunan Konsep LHPP';
         if (job.stage === 6) return 'Kadiv/QC: Review Kelayakan Teknis';
-        if (job.stage === 7) return 'Admin: Pembentukan Batch Disnaker';
+        if (job.stage === 7) return 'Admin: Penyerahan ke Dinas';
         if (job.stage === 8) return 'Admin: Monitoring Proses Dinas';
         if (job.stage === 9) return 'Admin: Pengurusan Terbit SUKET';
         if (job.stage === 10) return 'Finance: Penerbitan Faktur Invoice';
@@ -52,11 +55,11 @@ export default function KanbanIndex({ jobs, auth }) {
 
     const canManageStage = (stageId) => {
         if (permissions === 'superadmin' || auth.user.role === 'superadmin') return true;
-        if (auth.user.role === 'marketing' && [1, 13, 11, 14].includes(stageId)) return true;
+        if (auth.user.role === 'marketing' && [1, 19, 13, 11, 14].includes(stageId)) return true;
         if (auth.user.role === 'admin' && [2, 3, 16, 5, 7, 8, 9].includes(stageId)) return true;
         if (auth.user.role === 'inspektur' && [4, 17].includes(stageId)) return true;
         if (auth.user.role === 'manager' && [6, 2, 3, 5, 7, 8, 9].includes(stageId)) return true;
-        if (auth.user.role === 'finance' && [10, 15, 12].includes(stageId)) return true;
+        if (auth.user.role === 'finance' && [18, 20, 10, 15, 12].includes(stageId)) return true;
         const perm = permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };
@@ -104,11 +107,11 @@ export default function KanbanIndex({ jobs, auth }) {
         }
     };
 
-    const isDeltaStage = (displayId) => ['4b', '4c', '4d', '11c', '11b'].includes(String(displayId).toLowerCase());
+    const isDeltaStage = (displayId) => ['1b', '1c', '1d', '4b', '4c', '4d', '11c', '11b'].includes(String(displayId).toLowerCase());
 
     const filteredStages = STAGES.filter(stage => {
         if (selectedPhase === 'all') return true;
-        if (selectedPhase === 'ru') return [1, 2, 3, 4, 13, 16, 17].includes(stage.id);
+        if (selectedPhase === 'ru') return [1, 18, 19, 20, 2, 3, 4, 13, 16, 17].includes(stage.id);
         if (selectedPhase === 'teknis') return [5, 6, 7, 8, 9].includes(stage.id);
         if (selectedPhase === 'finance') return [10, 11, 15, 14, 12].includes(stage.id);
         return true;
@@ -128,7 +131,7 @@ export default function KanbanIndex({ jobs, auth }) {
                         Total {jobs.length} Job
                     </span>
                     <span className="text-xs bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full font-black flex items-center gap-1">
-                        <Sparkles size={12} className="text-amber-600" /> Delta v2.0 (17 Stages)
+                        <Sparkles size={12} className="text-amber-600" /> Delta v3 (20 Stages)
                     </span>
                 </div>
                 <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
@@ -137,7 +140,7 @@ export default function KanbanIndex({ jobs, auth }) {
                         <button
                             type="button"
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black bg-white text-[#0A385C] shadow-sm"
-                            title="Active: 17-Column Kanban Board"
+                            title="Active: 20-Column Kanban Board"
                         >
                             <Columns size={13} className="text-[#00A8E8]" />
                             <span>Kanban</span>
@@ -180,13 +183,13 @@ export default function KanbanIndex({ jobs, auth }) {
                             onClick={() => setSelectedPhase('all')}
                             className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${selectedPhase === 'all' ? 'bg-[#0A385C] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                         >
-                            Semua Stage (17)
+                            Semua Stage (20)
                         </button>
                         <button
                             onClick={() => setSelectedPhase('ru')}
                             className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${selectedPhase === 'ru' ? 'bg-[#0A385C] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                         >
-                            Fase 1: RU Lapangan (1 - 4d)
+                            Fase 1: Pre-Field & RU (1 - 4d)
                         </button>
                         <button
                             onClick={() => setSelectedPhase('teknis')}

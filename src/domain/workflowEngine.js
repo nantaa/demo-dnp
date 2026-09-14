@@ -93,8 +93,22 @@ export function validateStageTransitionPermission(currentStage, targetStage, rol
     return { allowed: true };
   }
 
+  if ([18, 20].includes(target)) {
+    if (!['finance', 'admin', 'marketing', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Finance atau Superadmin yang dapat memproses Stage ${target}. Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
+  if (target === 19) {
+    if (!['marketing', 'finance', 'admin', 'superadmin'].includes(normRole)) {
+      return { allowed: false, reason: `Hanya Marketing atau Superadmin yang dapat memproses Penagihan DP (Stage 19). Role '${role}' ditolak.` };
+    }
+    return { allowed: true };
+  }
+
   if ([2, 3, 4, 8, 9, 17].includes(target)) {
-    const allowed = (target === 2) ? ['marketing', 'admin', 'superadmin'] : ['admin', 'superadmin'];
+    const allowed = (target === 2) ? ['marketing', 'admin', 'finance', 'superadmin'] : ['admin', 'superadmin'];
     if (!allowed.includes(normRole)) {
       return { allowed: false, reason: `Role '${role}' tidak memiliki wewenang untuk memindahkan job ke Stage ${target}.` };
     }

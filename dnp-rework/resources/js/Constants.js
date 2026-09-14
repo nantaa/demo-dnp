@@ -1,5 +1,8 @@
 export const STAGES = [
     { id: 1, name: 'PO / SPK / Proposal', short: 'PO', role: 'marketing', sla: null, displayId: '1' },
+    { id: 18, name: 'Invoicing DP', short: 'Invoice DP', role: 'finance', sla: 1, displayId: '1b' },
+    { id: 19, name: 'Penagihan DP', short: 'Tagih DP', role: 'marketing', sla: 2, displayId: '1c' },
+    { id: 20, name: 'Konfirmasi Bayar DP', short: 'Verif DP', role: 'finance', sla: 1, displayId: '1d' },
     { id: 2, name: 'Verifikasi Dokumen', short: 'Verifikasi', role: 'admin', sla: 1, displayId: '2' },
     { id: 3, name: 'Penjadwalan & Surat Tugas', short: 'Jadwal', role: 'admin', sla: 1, displayId: '3' },
     { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi', role: 'inspektur', sla: null, displayId: '4' },
@@ -33,9 +36,9 @@ export const ROLES = {
 };
 
 // Marketing-only stages (locked for MGR intercept)
-export const MKT_STAGES = [1, 13, 11, 14];
+export const MKT_STAGES = [1, 19, 13, 11, 14];
 // Finance-only stages (locked for MGR intercept)
-export const FIN_STAGES = [10, 15, 12];
+export const FIN_STAGES = [18, 20, 10, 15, 12];
 // Admin stages
 export const ADM_STAGES = [2, 3, 16, 5, 7, 8, 9];
 // Inspector stages
@@ -106,6 +109,9 @@ export const STAGE2_VERIFY_CHECKLIST = [
 // Required document types per stage
 export const DOC_TYPES_BY_STAGE = {
     1: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama'],
+    18: ['Invoice DP (PDF)', 'Kwitansi DP', 'Faktur Pajak DP'], // Stage 1b: Invoicing DP (Finance)
+    19: ['Bukti Kirim Invoice DP', 'Surat Pengantar DP'],      // Stage 1c: Penagihan DP (Marketing)
+    20: ['Bukti Transfer DP (Rekening Koran)', 'Konfirmasi Pembayaran DP'], // Stage 1d: Konfirmasi Bayar DP (Finance)
     2: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
     3: ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
     4: ['Foto Nameplate', 'Foto Kondisi Fisik', 'BAP', 'Foto Hasil Pengukuran', 'Foto Alat Pengaman', 'Foto APD & Tim di Lokasi', 'Foto Dokumentasi Lapangan', 'Data Pengukuran'],
@@ -225,3 +231,33 @@ export const INDONESIA_PROVINCES = [
     'Sumatera Selatan',
     'Sumatera Utara',
 ];
+
+// Helper Parsers & SLA calculators
+export const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+
+export const parseJsonArray = (v) => {
+    if (!v) return [];
+    if (Array.isArray(v)) return v;
+    try { return JSON.parse(v); } catch { return []; }
+};
+
+export const parseJsonObject = (v) => {
+    if (!v) return {};
+    if (typeof v === 'object' && !Array.isArray(v) && v !== null) return v;
+    try {
+        const parsed = JSON.parse(v);
+        return (typeof parsed === 'object' && parsed !== null) ? parsed : {};
+    } catch { return {}; }
+};
+
+export const daysElapsed = (from) => {
+    if (!from) return null;
+    return Math.ceil((new Date() - new Date(from)) / 86400000);
+};
+
+export const getSlaTag = (days, slaLimit) => {
+    if (days == null || !slaLimit) return null;
+    if (days > slaLimit) return { label: 'OVERDUE', cls: 'bg-red-100 text-red-800 font-bold' };
+    if (days >= slaLimit) return { label: 'LAST DAY', cls: 'bg-orange-100 text-orange-800 font-bold' };
+    return { label: 'ON TRACK', cls: 'bg-green-100 text-green-800' };
+};

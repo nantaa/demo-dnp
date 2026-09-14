@@ -16,3 +16,9 @@ playwright-video/
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Temp & Lock Files
+~$*
+.serena/
+scratch/
+

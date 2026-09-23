@@ -7,7 +7,7 @@ import { PESAWAT_TYPES } from '@/Constants';
 export default function JobCreate({ auth }) {
     const isMkt = auth?.user?.role === 'marketing';
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, transform } = useForm({
         klien: '',
         pesawat: [],
         lokasi: '',
@@ -39,6 +39,10 @@ export default function JobCreate({ auth }) {
 
     const submit = (e) => {
         e.preventDefault();
+        transform((raw) => ({
+            ...raw,
+            nilai: Math.round(parseFloat(raw.nilai || 0) * 1.12),
+        }));
         post(route('jobs.store'));
     };
 
@@ -123,7 +127,7 @@ export default function JobCreate({ auth }) {
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">
-                                    Nilai Kontrak (Rp) <span className="font-normal text-xs text-gray-500">(Total Sesudah PPN 12%)</span>
+                                    Nilai Kontrak (DPP / Sebelum PPN) <span className="font-normal text-xs text-gray-500">(Rp)</span>
                                 </label>
                                 <input
                                     type="number"
@@ -140,9 +144,9 @@ export default function JobCreate({ auth }) {
                                     </p>
                                 )}
                                 {data.nilai && parseFloat(data.nilai) > 0 && (() => {
-                                    const total = parseFloat(data.nilai);
-                                    const dpp = Math.round(total / 1.12);
-                                    const ppn = total - dpp;
+                                    const dpp = parseFloat(data.nilai);
+                                    const ppn = Math.round(dpp * 0.12);
+                                    const total = Math.round(dpp * 1.12);
                                     return (
                                         <div className="mt-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-md text-xs space-y-1">
                                             <div className="flex justify-between text-gray-600">

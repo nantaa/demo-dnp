@@ -497,6 +497,8 @@ class JobController extends Controller
         $prevStage = max(1, $currentStage - 1);
         if ($currentStage === 13 || $currentStage === 5) {
             $prevStage = 4;
+        } elseif ($currentStage === 7) {
+            $prevStage = 5;
         } elseif ($currentStage === 8) {
             $prevStage = 6;
         } elseif ($currentStage === 14) {
@@ -1172,6 +1174,18 @@ class JobController extends Controller
      */
     public function downloadDocument(Job $job, JobDocument $document, ?string $filename = null)
     {
+        $user = Auth::user();
+        $isIns = $user && in_array($user->role, ['inspektur', 'inspector']);
+        $isPoDoc = (
+            stripos($document->type ?? '', 'PO') !== false ||
+            stripos($document->name ?? '', 'PO') !== false ||
+            stripos($document->type ?? '', 'SPK') !== false
+        );
+
+        if ($isIns && $isPoDoc) {
+            abort(403, 'Akses ke dokumen PO/SPK dibatasi untuk role Inspektur.');
+        }
+
         if ($document->job_id !== $job->id) {
             abort(404, 'Dokumen tidak ditemukan untuk pekerjaan ini.');
         }
@@ -1219,6 +1233,13 @@ class JobController extends Controller
         $user = Auth::user();
         if ($user->role !== 'finance' && !$user->isSuperadmin()) {
             abort(403, 'Hanya Finance dan Superadmin yang berwenang merevisi data invoice.');
+        }
+
+        $currentMonth = now()->format('Y-m');
+        $refDate = $job->tgl_invoice_issued ?: $job->created_at;
+        $invoiceMonth = \Illuminate\Support\Carbon::parse($refDate)->format('Y-m');
+        if ($currentMonth !== $invoiceMonth) {
+            abort(403, 'Revisi Invoice hanya dapat dilakukan pada bulan yang sama dengan penerbitan invoice.');
         }
 
         $validated = $request->validate([
@@ -1320,6 +1341,12 @@ class JobController extends Controller
         $user = Auth::user();
         if ($user->role !== 'finance' && !$user->isSuperadmin()) {
             abort(403, 'Hanya Finance dan Superadmin yang berwenang merevisi data PO.');
+        }
+
+        $currentMonth = now()->format('Y-m');
+        $jobCreatedMonth = \Illuminate\Support\Carbon::parse($job->created_at)->format('Y-m');
+        if ($currentMonth !== $jobCreatedMonth) {
+            abort(403, 'Revisi PO hanya dapat dilakukan pada bulan yang sama dengan pembuatan job oleh Marketing.');
         }
 
         $validated = $request->validate([

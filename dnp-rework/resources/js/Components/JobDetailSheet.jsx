@@ -137,9 +137,29 @@ const getDocumentUrl = (doc, fallbackJobId) => {
 
 const getDocDownloadUrl = (doc, fallbackJobId) => getDocumentUrl(doc, fallbackJobId);
 
+const isPoLockedForIns = (doc, isINS) => {
+    if (!isINS || !doc) return false;
+    const type = String(doc.type || '').toUpperCase();
+    const name = String(doc.name || '').toUpperCase();
+    return (
+        type.includes('PO') ||
+        type.includes('SPK') ||
+        name.includes('PO') ||
+        name.includes('SPK')
+    );
+};
+
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
-const DocChip = ({ doc, canManage, onDelete, jobId }) => {
+const DocChip = ({ doc, canManage, onDelete, jobId, isINS }) => {
     if (!doc) return null;
+    if (isPoLockedForIns(doc, isINS)) {
+        return (
+            <div className="flex items-center gap-1.5 bg-gray-100 border border-gray-300 rounded px-2 py-1 text-xs text-gray-400 italic cursor-not-allowed" title="Dokumen PO/SPK terkunci untuk Inspektur">
+                <span>🔒</span>
+                <span className="font-medium text-gray-500">Dokumen PO/SPK (Terkunci)</span>
+            </div>
+        );
+    }
     const fileUrl = getDocumentUrl(doc, jobId);
     return (
         <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
@@ -212,7 +232,7 @@ const NoteField = React.memo(function NoteField({ value, onChange }) {
     );
 });
 
-const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional }) => {
+const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional, isINS = false }) => {
     const [isDragging, setIsDragging] = useState(false);
     const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));
 
@@ -271,7 +291,7 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
             {existing.length > 0 ? (
                 <div className="flex flex-wrap gap-1 mt-1">
                     {existing.map(d => (
-                        <DocChip key={d.id} doc={d} canManage={canManageStageDocs ? canManageStageDocs(d.stage) : true} onDelete={deleteDoc} />
+                        <DocChip key={d.id} doc={d} canManage={canManageStageDocs ? canManageStageDocs(d.stage) : true} onDelete={deleteDoc} isINS={isINS} />
                     ))}
                 </div>
             ) : (
@@ -550,6 +570,24 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // All other roles (admin, marketing, finance, manager, superadmin) can see it.
     const isINS = ['inspektur', 'inspector'].includes(user?.role);
     const canSeeNilai = !isINS;
+
+    // Revision month cutoffs:
+    // Revisi PO is allowed as long as still in the same calendar month as job.created_at
+    const canRevisePoMonth = (() => {
+        if (!job.created_at) return true;
+        const now = new Date();
+        const d = new Date(job.created_at);
+        return now.getFullYear() === d.getFullYear() && now.getMonth() === d.getMonth();
+    })();
+
+    // Revisi Invoice is allowed as long as still in the same calendar month as invoice issue date (or created_at)
+    const canReviseInvoiceMonth = (() => {
+        const ref = job.tgl_invoice_issued || job.created_at;
+        if (!ref) return true;
+        const now = new Date();
+        const d = new Date(ref);
+        return now.getFullYear() === d.getFullYear() && now.getMonth() === d.getMonth();
+    })();
 
     // Finance is the sole owner/editor of invoice & PO pricing.
     // TODO: [LOCKED-AFTER-TGL-15] When lock is activated, also gate by !isPastTgl15
@@ -836,7 +874,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         let targetStage = Math.max(1, curStage - 1);
         if (curStage === 13) targetStage = 4; // Stage 4b (Aktualisasi Unit) rejects to Stage 4 (Pelaksanaan RU)
         else if (curStage === 5) targetStage = 4;
-        else if (curStage === 7) targetStage = 6;
+        else if (curStage === 7) targetStage = 5;
         else if (curStage === 8) targetStage = 6;
         else if (curStage === 10) targetStage = 9;
         else if (curStage === 14) targetStage = 11;
@@ -2074,17 +2112,6 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         onChange={e => setS10({ ...s10, total_invoice_amount: e.target.value })}
                                         className="w-full text-sm border border-gray-300 rounded px-2 py-1.5"
                                         disabled={!canEditNilai} />
-                                    {s10.total_invoice_amount > 0 && (() => {
-                                        const total = parseFloat(s10.total_invoice_amount || 0);
-                                        const dpp = Math.round(total / 1.12);
-                                        const ppn = total - dpp;
-                                        return (
-                                            <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded p-1.5 mt-1 flex justify-between">
-                                                <span>DPP: <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
-                                                <span>PPN 12%: <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
-                                            </div>
-                                        );
-                                    })()}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal Invoice Diterbitkan *</label>
@@ -2154,7 +2181,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     <button
                                         type="button"
                                         onClick={() => setShowReviseInvoiceModal(true)}
-                                        className="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold px-2 py-1 rounded self-start sm:self-auto"
+                                        disabled={!canReviseInvoiceMonth}
+                                        className={`text-xs font-bold px-2 py-1 rounded self-start sm:self-auto border transition-colors ${
+                                            canReviseInvoiceMonth
+                                                ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                                                : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                        }`}
+                                        title={canReviseInvoiceMonth ? 'Revisi Invoice' : 'Batas waktu revisi invoice (bulan yang sama) telah berakhir'}
                                     >
                                         Revisi Invoice
                                     </button>
@@ -3009,16 +3042,26 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <button
                                     type="button"
                                     onClick={() => setShowRevisePoModal(true)}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
-                                    title="Revisi Data PO/SPK (Finance/Superadmin)"
+                                    disabled={!canRevisePoMonth}
+                                    className={`px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors ${
+                                        canRevisePoMonth
+                                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
+                                    }`}
+                                    title={canRevisePoMonth ? "Revisi Data PO/SPK (Finance/Superadmin)" : "Batas waktu revisi PO (bulan yang sama dengan pembuatan job) telah berakhir"}
                                 >
                                     Revisi PO
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowReviseInvoiceModal(true)}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
-                                    title="Revisi / Terbitkan Data Invoice & Faktur Pajak secara Paralel (Finance/Superadmin)"
+                                    disabled={!canReviseInvoiceMonth}
+                                    className={`px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors ${
+                                        canReviseInvoiceMonth
+                                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
+                                    }`}
+                                    title={canReviseInvoiceMonth ? "Revisi / Terbitkan Data Invoice & Faktur Pajak secara Paralel (Finance/Superadmin)" : "Batas waktu revisi invoice (bulan yang sama) telah berakhir"}
                                 >
                                     Revisi Invoice
                                 </button>

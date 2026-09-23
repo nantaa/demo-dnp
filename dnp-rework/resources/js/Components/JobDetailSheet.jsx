@@ -2794,7 +2794,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         <div className="space-y-4">
             {STAGES.map(stage => {
                 if (!canViewStageDocs(stage.id)) return null;
-                const docs = getDocs(stage.id);
+                const rawDocs = getDocs(stage.id);
+                const docs = isINS
+                    ? rawDocs.filter(d => !isPoLockedForIns(d, isINS))
+                    : rawDocs;
                 if (docs.length === 0) return null;
                 return (
                     <div key={stage.id} className="border rounded-lg p-4">
@@ -2833,33 +2836,57 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     );
 
     // ── History Tab ──────────────────────────────────────────────────────────
-    const renderHistory = () => (
-        <div className="space-y-4">
-            {(job.historyLogs || job.history_logs || []).slice().reverse().map(log => (
-                <div key={log.id} className="border-l-2 border-gray-200 pl-4 py-1 relative">
-                    <div className="absolute w-2 h-2 bg-gray-400 rounded-full -left-[5px] top-3"></div>
-                    <div className="bg-gray-50 rounded p-3">
-                        <div className="flex justify-between items-start mb-1">
-                            <span className="text-xs font-bold text-gray-700">{log.user?.name || 'System'}</span>
-                            <span className="text-xs text-gray-500">{fmt(log.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <p className="text-sm text-gray-800">{log.action}</p>
-                        {log.notes && (
-                            <p className="text-xs text-gray-600 mt-1 italic border-l-2 border-gray-300 pl-2">"{log.notes}"</p>
-                        )}
-                        {log.returned_from_stage && (
-                            <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
-                                DIKEMBALIKAN dari Stage {log.returned_from_stage}
+    const renderHistory = () => {
+        const rawLogs = (job.historyLogs || job.history_logs || []).slice().reverse();
+        // If user is INS, filter out PO revision logs and mask PO numbers/references in actions & notes
+        const logs = isINS
+            ? rawLogs.filter(log => !String(log.action || '').toLowerCase().includes('revisi po'))
+            : rawLogs;
+
+        const formatActionForIns = (action) => {
+            if (!isINS || !action) return action;
+            return action
+                .replace(/PO\/SPK received/gi, 'Pekerjaan Terdaftar')
+                .replace(/PO\/SPK/gi, 'Pekerjaan')
+                .replace(/PO:\s*[^\s,)]+/gi, 'PO: [Terkunci]')
+                .replace(/No\.?\s*PO\s*:[^\s,)]+/gi, 'No. PO: [Terkunci]');
+        };
+
+        const formatNotesForIns = (notes) => {
+            if (!isINS || !notes) return notes;
+            return notes
+                .replace(/PO\/SPK/gi, 'Pekerjaan')
+                .replace(/PO:\s*[^\s,)]+/gi, 'PO: [Terkunci]');
+        };
+
+        return (
+            <div className="space-y-4">
+                {logs.map(log => (
+                    <div key={log.id} className="border-l-2 border-gray-200 pl-4 py-1 relative">
+                        <div className="absolute w-2 h-2 bg-gray-400 rounded-full -left-[5px] top-3"></div>
+                        <div className="bg-gray-50 rounded p-3">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className="text-xs font-bold text-gray-700">{log.user?.name || 'System'}</span>
+                                <span className="text-xs text-gray-500">{fmt(log.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <p className="text-sm text-gray-800">{formatActionForIns(log.action)}</p>
+                            {log.notes && (
+                                <p className="text-xs text-gray-600 mt-1 italic border-l-2 border-gray-300 pl-2">"{formatNotesForIns(log.notes)}"</p>
+                            )}
+                            {log.returned_from_stage && (
+                                <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
+                                    DIKEMBALIKAN dari Stage {log.returned_from_stage}
+                                </span>
+                            )}
+                            <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
+                                Stage {STAGES.find(s => s.id === log.stage)?.displayId || log.stage}
                             </span>
-                        )}
-                        <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
-                            Stage {STAGES.find(s => s.id === log.stage)?.displayId || log.stage}
-                        </span>
+                        </div>
                     </div>
-                </div>
-            ))}
-        </div>
-    );
+                ))}
+            </div>
+        );
+    };
 
     // ── Edit Info Tab ────────────────────────────────────────────────────────
     const renderEditInfo = () => (
@@ -3029,7 +3056,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="font-bold bg-white px-2.5 py-0.5 rounded border border-slate-200 shadow-xs text-xs text-[#0A385C] truncate max-w-[240px]" 
                                 title={`ID Internal: ${job.kode}`}
                             >
-                                {job.no_po ? `PO: ${job.no_po}` : job.kode}
+                                {(!isINS && job.no_po) ? `PO: ${job.no_po}` : job.kode}
                             </span>
                             <span className="font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs">
                                 Stage {job.stage}

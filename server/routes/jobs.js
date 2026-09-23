@@ -350,7 +350,7 @@ router.post('/', (req, res) => {
     };
 
     db.prepare(
-      'INSERT INTO jobs (id, data, created_at, updated_at) VALUES (?, ?, ?, ?)'
+      'INSERT INTO jobs (id, data, created_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at'
     ).run(id, JSON.stringify(newJob), ts, ts);
 
     if (req.headers['x-inertia']) {

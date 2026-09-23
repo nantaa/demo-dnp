@@ -26,7 +26,7 @@ export default function JobDetailSheet({ job, onClose, auth, inspectores = [], r
 
     const user = auth?.user;
     const permissions = useJobPermissions(job, auth);
-    const { canManage, canSeeNilai, isMGR, isKadiv, stage1DocOk, stage2DocOk, stage2Bypass, stage2CanMove } = permissions;
+    const { canManage, canSeeNilai, isMGR, isKadiv, stage1DocOk, stage2DocOk, stage2Bypass, stage2CanMove, canReviseInvoice } = permissions;
 
     const [activeTab, setActiveTab] = useState('timeline');
     const [isEditing, setIsEditing] = useState(false);
@@ -225,8 +225,12 @@ export default function JobDetailSheet({ job, onClose, auth, inspectores = [], r
             confirmButtonColor: '#ef4444',
         });
         if (!isConfirmed || !text) return;
+        const payload = { notes: text.trim() };
+        if (job.stage === 7) {
+            payload.target_stage = 5;
+        }
         post(`/jobs/${job.id}/reject`, {
-            data: { notes: text.trim() },
+            data: payload,
             onSuccess: () => {
                 showSuccess('Dikembalikan', 'Tahapan berhasil dikembalikan.');
                 onClose();
@@ -572,11 +576,16 @@ export default function JobDetailSheet({ job, onClose, auth, inspectores = [], r
                     <div className="flex items-center gap-2 flex-shrink-0">
                         {((auth?.user?.role === 'finance' || auth?.user?.role === 'superadmin') && (job.stage >= 10 || [15, 14].includes(job.stage))) && (
                             <button
-                                onClick={() => setShowReviseInvoiceModal(true)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
-                                title="Revisi Data Invoice (Finance Direct Edit)"
+                                onClick={() => canReviseInvoice && setShowReviseInvoiceModal(true)}
+                                disabled={!canReviseInvoice}
+                                className={`px-2.5 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition-colors ${
+                                    canReviseInvoice
+                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300'
+                                }`}
+                                title={canReviseInvoice ? "Revisi Data Invoice (Finance Direct Edit)" : "Revisi Invoice terkunci karena sudah melewati bulan pembuatan/penerbitan (Tutup Buku Bulanan)"}
                             >
-                                📝 Revisi Invoice
+                                📝 Revisi Invoice {!canReviseInvoice && '🔒'}
                             </button>
                         )}
                         {(auth?.user?.role === 'superadmin' || auth?.permissions === 'superadmin') && (

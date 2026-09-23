@@ -7,11 +7,16 @@ export default function DocumentsTab({
     permissions,
     actions,
 }) {
-    const { canViewStageDocs, canManageStageDocs } = permissions;
+    const { canViewStageDocs, canManageStageDocs, canViewDoc } = permissions;
     const { deleteDoc } = actions;
 
     const getDocs = (stageId) => {
-        return (job.documents || []).filter(d => d.stage === stageId);
+        return (job.documents || []).filter(d => {
+            if (d.stage !== stageId) return false;
+            if (d.masked) return false;
+            if (canViewDoc && !canViewDoc(d)) return false;
+            return true;
+        });
     };
 
     return (

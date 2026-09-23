@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{job}/stage10-data', [JobController::class, 'saveStage10Data'])->name('jobs.stage10-data');
     Route::post('/jobs/{job}/stage11-data', [JobController::class, 'saveStage11Data'])->name('jobs.stage11-data');
     Route::post('/jobs/{job}/stage14-data', [JobController::class, 'saveStage14Data'])->name('jobs.stage14-data');
+    Route::post('/jobs/{job}/stage15-data', [JobController::class, 'saveStage15Data'])->name('jobs.stage15-data');
     Route::post('/jobs/{job}/stage12-data', [JobController::class, 'saveStage12Data'])->name('jobs.stage12-data');
     Route::post('/jobs/{job}/documents', [JobController::class, 'uploadDocument'])->name('jobs.documents.upload');
     Route::get('/jobs/{job}/documents/{document}/file/{filename?}', [JobController::class, 'downloadDocument'])->name('jobs.documents.file');

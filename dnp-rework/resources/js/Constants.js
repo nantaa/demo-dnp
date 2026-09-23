@@ -9,10 +9,11 @@ export const STAGES = [
     { id: 7, name: 'Verifikasi ke Dinas', short: 'Penyerahan', role: 'admin', sla: 1 },
     { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'admin', sla: 30 },
     { id: 9, name: 'Pengurusan Suket', short: 'Suket', role: 'admin', sla: 1 },
-    { id: 10, name: 'Pembuatan Invoice', short: 'Invoice', role: 'finance', sla: 1 },
-    { id: 11, name: 'Pengiriman SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null },
-    { id: 14, name: 'Pembayaran / Pelunasan', short: 'Pembayaran', role: 'finance', sla: 1, displayId: '11b' },
-    { id: 12, name: 'Selesai / Closed', short: 'Closed', role: 'finance', sla: null },
+    { id: 10, name: 'Invoice & Kwitansi', short: 'Invoice', role: 'finance', sla: 1 },
+    { id: 11, name: 'Penagihan / Follow-up', short: 'Penagihan', role: 'marketing', sla: null },
+    { id: 14, name: 'Verifikasi Bayar & PPh: Lunas', short: 'Verifikasi Bayar', role: 'finance', sla: 1, displayId: '11b' },
+    { id: 15, name: 'Kirim SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null, displayId: '11c' },
+    { id: 12, name: 'Final Financial Closing', short: 'Closing', role: 'finance', sla: null },
 ];
 
 export const getStageDisplayId = (stageId) => {
@@ -31,7 +32,7 @@ export const ROLES = {
 };
 
 // Marketing-only stages (locked for MGR intercept)
-export const MKT_STAGES = [1, 11, 13];
+export const MKT_STAGES = [1, 11, 13, 15];
 // Finance-only stages (locked for MGR intercept)
 export const FIN_STAGES = [10, 14, 12];
 
@@ -118,10 +119,11 @@ export const DOC_TYPES_BY_STAGE = {
     8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],
     9: ['Suket (Asli) dari Disnaker'],
     10: ['Invoice (PDF)', 'Kwitansi', 'Faktur Pajak'],
-    11: ['Tanda Terima Suket'],
-    12: ['Bukti Transfer / Pembayaran', 'Kwitansi Lunas'],
+    11: ['Bukti Follow-up / Penagihan', 'Surat Pengantar Tagihan', 'Dokumen Tagihan Tambahan'],
+    14: ['Bukti Transfer', 'Bukti Transfer / Pembayaran', 'Bukti Potong PPh', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
+    15: ['Tanda Terima Suket', 'Bukti Pengiriman / Resi', 'Dokumen Penyerahan'],
+    12: ['Dokumen Closing Final', 'Rekap Keuangan'],
     13: [],
-    14: ['Bukti Transfer', 'Bukti Transfer / Pembayaran', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
 };
 
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)

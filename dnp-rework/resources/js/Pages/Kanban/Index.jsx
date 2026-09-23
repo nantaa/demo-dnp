@@ -31,8 +31,8 @@ export default function KanbanIndex({ jobs, auth }) {
         if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sId)) return true;
         if (['inspektur', 'inspector'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
         if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
-        if (auth.user?.role === 'marketing' && [1, 11, 13].includes(sId)) return true;
-        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14].includes(sId)) return true;
+        if (auth.user?.role === 'marketing' && [1, 11, 13, 15].includes(sId)) return true;
+        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14, 15].includes(sId)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };

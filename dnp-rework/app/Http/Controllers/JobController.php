@@ -19,7 +19,7 @@ use Carbon\Carbon;
 class JobController extends Controller
 {
     // Stages exclusively owned by MKT (MGR cannot intercept)
-    private const MKT_STAGES = [1, 11];
+    private const MKT_STAGES = [1, 11, 13, 15];
     // Stages exclusively owned by FIN (MGR cannot intercept)
     private const FIN_STAGES = [10, 12, 14];
 
@@ -39,7 +39,7 @@ class JobController extends Controller
             if ($job && !empty($job->owner_marketing) && $job->owner_marketing !== $user->name) {
                 return false;
             }
-            if (in_array($stage, [1, 11, 13])) {
+            if (in_array($stage, [1, 11, 13, 15])) {
                 return $user->canOwnStage($stage);
             }
             return false;
@@ -188,7 +188,7 @@ class JobController extends Controller
         }
 
         $validationRules = [
-            'next_stage'    => 'required|integer|min:1|max:14',
+            'next_stage'    => 'required|integer|min:1|max:15',
             'notes'         => 'nullable|string',
             'inspector_ids' => 'nullable|array',
             'inspector_ids.*' => 'exists:users,id',
@@ -357,23 +357,53 @@ class JobController extends Controller
             }
         }
 
-        // Stage 11 → 14 (11b): document is optional, auto-set delivery date if empty
+        // Stage 11 → 14 (11b): Penagihan / Follow-up (Marketing)
         if ($currentStage == 11) {
-            if (empty($job->tgl_submit_mkt)) {
+            if ($request->filled('tgl_submit_mkt')) {
+                $job->tgl_submit_mkt = $request->input('tgl_submit_mkt');
+                $job->save();
+            } elseif (empty($job->tgl_submit_mkt)) {
                 $job->tgl_submit_mkt = now()->toDateString();
                 $job->save();
             }
         }
 
-        // Stage 14 → 12: require paid status + trigger close is exclusively Finance
-        if ($currentStage == 14 || ($request->input('next_stage') == 12)) {
+        // Stage 14 (11b) → 15 (11c): Verifikasi Bayar & PPh: Lunas (Finance)
+        // Suket CANNOT be sent until payment is verified Lunas (paid) by Finance!
+        if ($currentStage == 14) {
+            $user = Auth::user();
+            if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+                return back()->withErrors([
+                    'stage' => 'Hanya Finance yang berwenang memverifikasi pembayaran dan melanjutkan ke Pengiriman SUKET.',
+                ]);
+            }
+            if (!$job->paid && $job->payment_status !== 'paid' && $job->s14_payment_status !== 'paid') {
+                return back()->withErrors([
+                    'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum SUKET dapat dikirimkan ke klien.',
+                ]);
+            }
+        }
+
+        // Stage 15 (11c) → 12: Kirim SUKET ke Klien (Marketing)
+        if ($currentStage == 15) {
+            if ($request->filled('no_resi')) {
+                $job->no_resi = $request->input('no_resi');
+            }
+            if ($request->filled('tgl_submit_mkt')) {
+                $job->tgl_submit_mkt = $request->input('tgl_submit_mkt');
+            }
+            $job->save();
+        }
+
+        // Moving to Stage 12 (Close) or acting on Stage 12: require paid status + trigger close is exclusively Finance
+        if ($currentStage == 12 || ($request->input('next_stage') == 12)) {
             $user = Auth::user();
             if ($user->role !== 'finance' && !$user->isSuperadmin()) {
                 return back()->withErrors([
                     'stage' => 'Hanya Finance yang berwenang menutup (Close) pekerjaan ini.',
                 ]);
             }
-            if (!$job->paid && $job->payment_status !== 'paid') {
+            if (!$job->paid && $job->payment_status !== 'paid' && $job->s14_payment_status !== 'paid') {
                 return back()->withErrors([
                     'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum menutup (Close) pekerjaan ini.',
                 ]);
@@ -455,7 +485,7 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'target_stage' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,13,14',
+            'target_stage' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,13,14,15',
             'notes'        => 'required|string|min:3',
         ]);
 
@@ -503,6 +533,10 @@ class JobController extends Controller
             $prevStage = 6;
         } elseif ($currentStage === 14) {
             $prevStage = 11;
+        } elseif ($currentStage === 15) {
+            $prevStage = 14;
+        } elseif ($currentStage === 12) {
+            $prevStage = 15;
         }
 
         if (!empty($validated['target_stage'])) {
@@ -998,7 +1032,7 @@ class JobController extends Controller
     }
 
     /**
-     * Save Stage 11 data — Marketing records delivery of Suket to client.
+     * Save Stage 11 data — Marketing records billing follow-up to client.
      */
     public function saveStage11Data(Request $request, Job $job)
     {
@@ -1008,19 +1042,56 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'tgl_submit_mkt' => 'required|date',
+            'tgl_submit_mkt' => 'nullable|date',
             'no_resi'        => 'nullable|string|max:100',
+            'notes'          => 'nullable|string',
         ]);
 
-        $job->update($validated);
+        $job->update(array_filter($validated, fn($v) => !is_null($v)));
 
         $this->recordHistoryLog(
             $job,
             $job->stage,
-            'Suket diserahkan ke klien pada ' . Carbon::parse($validated['tgl_submit_mkt'])->format('d M Y')
+            'Follow-up Penagihan Marketing: ' . ($validated['notes'] ?? 'Updated'),
+            $validated['notes'] ?? null
         );
 
-        return back()->with('success', 'Tanggal penyerahan Suket ke klien berhasil disimpan.');
+        return back()->with('success', 'Data follow-up penagihan berhasil disimpan.');
+    }
+
+    /**
+     * Save Stage 15 (11c) data — Marketing records delivery of Suket to client.
+     */
+    public function saveStage15Data(Request $request, Job $job)
+    {
+        $user = Auth::user();
+        if ($user->role !== 'marketing' && !$user->isSuperadmin()) {
+            abort(403, 'Only Marketing can update Stage 11c (Pengiriman SUKET) data.');
+        }
+
+        $validated = $request->validate([
+            'tgl_submit_mkt' => 'nullable|date',
+            'no_resi'        => 'nullable|string|max:100',
+        ]);
+
+        $job->update(array_filter($validated, fn($v) => !is_null($v)));
+
+        $desc = 'SUKET diserahkan/dikirim ke klien';
+        if (!empty($validated['tgl_submit_mkt'])) {
+            $desc .= ' pada ' . Carbon::parse($validated['tgl_submit_mkt'])->format('d M Y');
+        }
+        if (!empty($validated['no_resi'])) {
+            $desc .= ' (Resi: ' . $validated['no_resi'] . ')';
+        }
+
+        $this->recordHistoryLog(
+            $job,
+            $job->stage,
+            $desc,
+            $validated['no_resi'] ?? null
+        );
+
+        return back()->with('success', 'Informasi pengiriman SUKET berhasil disimpan.');
     }
 
     /**

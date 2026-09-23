@@ -179,8 +179,10 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
     const getNextLabel = () => {
         if (stage === 4) return 'Lanjut ke Stage 5 (LHPP) →';
         if (stage === 13) return 'Lanjut ke Stage 5 (LHPP) →';
-        if (stage === 11) return 'Lanjut ke Stage 11b (Pembayaran) →';
-        if (stage === 14) return 'Lanjut ke Stage 12 (Closed) →';
+        if (stage === 10) return 'Lanjut ke Stage 11 (Penagihan) →';
+        if (stage === 11) return 'Lanjut ke Stage 11b (Verifikasi Bayar) →';
+        if (stage === 14) return 'Lanjut ke Stage 11c (Kirim SUKET) →';
+        if (stage === 15) return 'Lanjut ke Stage 12 (Final Closing) →';
         const currIdx = STAGES.findIndex(s => s.id === stage);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
             let next = STAGES[currIdx + 1];
@@ -310,8 +312,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const getNextStageId = (currentStageId) => {
         if (currentStageId === 4) return 5;
         if (currentStageId === 13) return 5;
+        if (currentStageId === 10) return 11;
         if (currentStageId === 11) return 14;
-        if (currentStageId === 14) return 12;
+        if (currentStageId === 14) return 15;
+        if (currentStageId === 15) return 12;
         const currIdx = STAGES.findIndex(s => s.id === currentStageId);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
             let next = STAGES[currIdx + 1];
@@ -385,7 +389,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         no_faktur_pajak:      job.no_faktur_pajak      ?? '',
         tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
     });
-    const [s11, setS11] = useState({ no_resi: job.no_resi ?? '' });
+    const [s11, setS11] = useState({
+        tgl_submit_mkt: job.tgl_submit_mkt ?? '',
+        notes: '',
+    });
+    const [s15, setS15] = useState({
+        no_resi: job.no_resi ?? '',
+        tgl_submit_mkt: job.tgl_submit_mkt ?? '',
+    });
     const [isMoving, setIsMoving] = useState(false);
 
     // ── Schedule builder state (Stage 3) ─────────────────────────────────────
@@ -525,7 +536,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             no_faktur_pajak:      job.no_faktur_pajak      ?? '',
             tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
         });
-        setS11({ no_resi: job.no_resi ?? '' });
+        setS11({
+            tgl_submit_mkt: job.tgl_submit_mkt ?? '',
+            notes: '',
+        });
+        setS15({
+            no_resi: job.no_resi ?? '',
+            tgl_submit_mkt: job.tgl_submit_mkt ?? '',
+        });
         setS14({
             s14_payment_status: job.s14_payment_status ?? 'pending',
             s14_payment_notes:  job.s14_payment_notes  ?? '',
@@ -625,7 +643,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const curStageNum = Number(job.stage);
         if (['superadmin','manager'].includes(user?.role)) return true;
         if (user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sIdNum)) return true;
-        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13].includes(sIdNum)) return true;
+        if (user?.role === 'marketing' && job.owner_marketing === user?.name && [1,11,13,15].includes(sIdNum)) return true;
         if ((isInspector || isAssignedInspector) && [4, 5].includes(sIdNum) && sIdNum === curStageNum) return true;
         if (isInspector || isAssignedInspector) return false;
         const p = permissions?.[sIdNum] || permissions?.[sid];
@@ -826,9 +844,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 '<div class="text-left text-xs space-y-2">' +
                 '<label class="block font-bold text-gray-700">Kembalikan ke Stage:</label>' +
                 '<select id="swal-target-stage" class="w-full border rounded p-2 text-sm">' +
-                '<option value="14">Stage 11b: Verifikasi Pembayaran (Finance)</option>' +
-                '<option value="11">Stage 11: Penyerahan Suket ke Klien</option>' +
-                '<option value="10">Stage 10: Pembuatan Invoice (Finance)</option>' +
+                '<option value="15">Stage 11c: Kirim SUKET ke Klien (Marketing)</option>' +
+                '<option value="14">Stage 11b: Verifikasi Bayar & PPh (Finance)</option>' +
+                '<option value="11">Stage 11: Penagihan / Follow-up (Marketing)</option>' +
+                '<option value="10">Stage 10: Invoice & Kwitansi (Finance)</option>' +
                 '</select>' +
                 '<label class="block font-bold text-gray-700 mt-2">Alasan Pembukaan Kembali *:</label>' +
                 '<textarea id="swal-reopen-notes" class="w-full border rounded p-2 text-sm" placeholder="Tuliskan alasan lengkap pembukaan kembali..." rows="2"></textarea>' +
@@ -877,7 +896,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         else if (curStage === 7) targetStage = 5;
         else if (curStage === 8) targetStage = 6;
         else if (curStage === 10) targetStage = 9;
+        else if (curStage === 11) targetStage = 10;
         else if (curStage === 14) targetStage = 11;
+        else if (curStage === 15) targetStage = 14;
+        else if (curStage === 12) targetStage = 15;
         const res = await showConfirm('Tolak / Kembalikan Job', `Kembalikan job ini ke Stage ${targetStage}?`);
         if (!res.isConfirmed) return;
         router.post(`/jobs/${job.id}/reject`, {
@@ -964,8 +986,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
     const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'No. Resi tersimpan.') });
+    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'Data follow-up penagihan tersimpan.') });
     const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
+    const handleSaveS15 = () => router.post(`/jobs/${job.id}/stage15-data`, s15, { onSuccess: () => showSuccess('Berhasil', 'Informasi pengiriman SUKET tersimpan.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -2179,9 +2202,18 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     );
                 })()}
 
-                {/* ── STAGE 11 (Pengiriman SUKET — MKT) ──────── */}
+                {/* ── STAGE 11 (Penagihan / Follow-up — Marketing) ──────── */}
                 {s === 11 && (
                     <div className="space-y-3">
+                        <div className="bg-sky-50 border border-sky-200 rounded-lg p-3">
+                            <h4 className="text-xs font-bold text-sky-900 mb-1">
+                                Stage 11 — Penagihan / Follow-up (Marketing)
+                            </h4>
+                            <p className="text-xs text-sky-700">
+                                Lakukan follow-up dan penagihan ke klien atas invoice yang telah diterbitkan Finance.
+                            </p>
+                        </div>
+
                         {job.invoice_no && (
                             <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
@@ -2189,7 +2221,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     {canSeeNilai && job.total_invoice_amount > 0 && (
                                         <span className="ml-2 font-semibold text-gray-800">• Rp {Number(job.total_invoice_amount).toLocaleString('id-ID')}</span>
                                     )}
-                                    <span className="block text-[11px] text-gray-500">Revisi invoice ditangani Finance secara paralel tanpa menghambat pengiriman Suket.</span>
+                                    {job.tgl_invoice_issued && (
+                                        <span className="ml-2 text-gray-500">• Tgl: {fmt(job.tgl_invoice_issued)}</span>
+                                    )}
+                                    <span className="block text-[11px] text-gray-500">Revisi invoice ditangani Finance secara paralel tanpa menghambat alur kerja.</span>
                                 </div>
                                 {canEditNilai && (
                                     <button
@@ -2208,43 +2243,63 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 )}
                             </div>
                         )}
-                        <p className="text-xs text-gray-500">Upload dokumen (Opsional), kemudian tandai selesai.</p>
+
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 space-y-2">
+                            <label className="block text-xs font-semibold text-gray-800">Tanggal Follow-up / Penyerahan Tagihan</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input
+                                    type="date"
+                                    value={s11.tgl_submit_mkt || ''}
+                                    onChange={e => setS11({ ...s11, tgl_submit_mkt: e.target.value })}
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                />
+                                <input
+                                    type="text"
+                                    value={s11.notes || ''}
+                                    onChange={e => setS11({ ...s11, notes: e.target.value })}
+                                    placeholder="Catatan respon klien (Opsional)"
+                                    className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleSaveS11}
+                                className="px-3 py-1.5 rounded text-xs font-semibold bg-gray-700 text-white hover:bg-gray-800 transition"
+                            >
+                                Simpan Data Follow-up
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-gray-500 font-medium">Dokumen Pendukung Tagihan / Follow-up (Opsional):</p>
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
                             <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
                         ))}
-                        {/* No. Resi — tracking number for Suket shipment */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                            <label className="block text-xs font-semibold text-blue-800">No. Resi Pengiriman <span className="font-normal text-blue-600">(Opsional)</span></label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={s11.no_resi}
-                                    onChange={e => setS11({ ...s11, no_resi: e.target.value })}
-                                    placeholder="Contoh: JNE-123456789, SiCepat-987..."
-                                    className="flex-1 text-sm border border-blue-300 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                                <button type="button" onClick={handleSaveS11}
-                                    className="px-3 py-1.5 rounded text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap">
-                                    Simpan Resi
-                                </button>
-                            </div>
-                        </div>
+
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} />
                     </div>
                 )}
 
-                {/* ── STAGE 14 (Pembayaran / Pelunasan — 11b FIN) ── */}
+                {/* ── STAGE 14 (Verifikasi Bayar & PPh: Lunas — 11b FIN) ── */}
                 {s === 14 && (
                     <div className="space-y-4">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <h4 className="text-xs font-bold text-blue-900 mb-1">
-                                Verifikasi Pembayaran / Pelunasan (Finance)
+                                Stage 11b — Verifikasi Bayar & PPh: Lunas (Finance)
                             </h4>
                             <p className="text-xs text-blue-700">
-                                Verifikasi status pelunasan pembayaran dari klien sebelum proyek ditutup (Closed).
+                                Verifikasi status pembayaran dan bukti potong PPh dari klien. Dokumen SUKET hanya dapat dikirim ke klien setelah status pembayaran diverifikasi LUNAS.
                             </p>
                         </div>
+
+                        {job.invoice_no && (
+                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-700">
+                                <span className="font-bold text-[#0A385C]">Invoice:</span> {job.invoice_no}
+                                {canSeeNilai && job.total_invoice_amount > 0 && (
+                                    <span className="ml-2 font-semibold text-gray-800">• Tagihan: Rp {Number(job.total_invoice_amount).toLocaleString('id-ID')}</span>
+                                )}
+                            </div>
+                        )}
                         
                         <div>
                             <label className="block text-xs font-semibold text-gray-700 mb-1">Status Pembayaran 11b *</label>
@@ -2261,13 +2316,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">Catatan Pembayaran / Transfer</label>
+                            <label className="block text-xs font-semibold text-gray-700 mb-1">Catatan Pembayaran & Potong PPh</label>
                             <textarea
                                 rows={2}
                                 value={s14.s14_payment_notes || ''}
                                 onChange={e => setS14({ ...s14, s14_payment_notes: e.target.value })}
                                 className="w-full text-sm border border-gray-300 rounded px-2.5 py-1.5"
-                                placeholder="Contoh: Transfer via BCA tgl 20 Aug, lunas 100%..."
+                                placeholder="Contoh: Transfer BCA tgl 20 Aug, Bukti Potong PPh 23 terlampir 2%, lunas..."
                                 disabled={user?.role !== 'finance' && !user?.isSuperadmin && user?.role !== 'superadmin'}
                             />
                         </div>
@@ -2276,13 +2331,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <button
                                 type="button"
                                 onClick={handleSaveS14}
-                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm"
+                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm transition"
                             >
                                 Simpan Status Pembayaran 11b
                             </button>
                         )}
 
-                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran (Opsional)</p>
+                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran & PPh (Opsional):</p>
                         {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
                             <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
                         ))}
@@ -2295,25 +2350,85 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 processing={processing || isMoving}
                                 onReject={handleRejectStage}
                                 disabled={s14.s14_payment_status !== 'paid'}
-                                disabledMsg={s14.s14_payment_status !== 'paid' ? 'Pekerjaan hanya dapat ditutup (Closed) setelah status pembayaran Lunas (Paid).' : ''}
+                                disabledMsg={s14.s14_payment_status !== 'paid' ? 'Pekerjaan hanya dapat dilanjutkan ke Pengiriman SUKET (11c) setelah status pembayaran Lunas (Paid).' : ''}
                             />
                         ) : (
                             <div className="text-xs text-blue-800 bg-blue-50 border border-blue-200 rounded p-3 text-center">
-                                Hanya <strong>Finance</strong> yang berwenang memverifikasi pembayaran dan menutup (Close) pekerjaan ini.
+                                Hanya <strong>Finance</strong> yang berwenang memverifikasi pembayaran dan meloloskan ke Pengiriman SUKET.
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* ── STAGE 12 (Selesai / Closed) ────────── */}
+                {/* ── STAGE 15 (Kirim SUKET ke Klien — 11c MKT) ──────── */}
+                {s === 15 && (
+                    <div className="space-y-3">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                            <h4 className="text-xs font-bold text-emerald-900 mb-1 flex items-center gap-1.5">
+                                <span>✅</span> Stage 11c — Kirim SUKET ke Klien (Marketing)
+                            </h4>
+                            <p className="text-xs text-emerald-700">
+                                Pembayaran LUNAS telah diverifikasi oleh Finance. Silakan serahkan atau kirimkan dokumen resmi SUKET ke Klien.
+                            </p>
+                        </div>
+
+                        {/* No. Resi & Tgl Kirim */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-3 space-y-2">
+                            <label className="block text-xs font-semibold text-gray-800">Informasi Pengiriman / Penyerahan SUKET</label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                    <label className="block text-[11px] text-gray-500 mb-1">No. Resi / Kurir (Opsional)</label>
+                                    <input
+                                        type="text"
+                                        value={s15.no_resi || ''}
+                                        onChange={e => setS15({ ...s15, no_resi: e.target.value })}
+                                        placeholder="Contoh: JNE-123456789, SiCepat-987..."
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] text-gray-500 mb-1">Tanggal Penyerahan (Opsional)</label>
+                                    <input
+                                        type="date"
+                                        value={s15.tgl_submit_mkt || ''}
+                                        onChange={e => setS15({ ...s15, tgl_submit_mkt: e.target.value })}
+                                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleSaveS15}
+                                className="px-3 py-1.5 rounded text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap transition"
+                            >
+                                Simpan Informasi SUKET
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-gray-500 font-medium">Upload Tanda Terima / Bukti Pengiriman SUKET (Opsional):</p>
+                        {(DOC_TYPES_BY_STAGE[15] || []).map(t => (
+                            <UploadSlot key={t} type={t} stageId={15} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
+                        ))}
+
+                        <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} />
+                    </div>
+                )}
+
+                {/* ── STAGE 12 (Final Financial Closing — FIN) ────────── */}
                 {s === 12 && (
                     <div className="space-y-4">
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
-                            <h4 className="text-base font-bold text-emerald-900 mt-2">Pekerjaan Selesai & Ditutup (Closed)</h4>
+                            <h4 className="text-base font-bold text-emerald-900 mt-2">Stage 12 — Final Financial Closing (Closed)</h4>
                             <p className="text-xs text-emerald-700 mt-1 max-w-md mx-auto">
-                                Seluruh proses sertifikasi, penyerahan Suket, dan pelunasan pembayaran telah selesai dan terverifikasi.
+                                Seluruh proses sertifikasi, penagihan, verifikasi pelunasan pembayaran, dan penyerahan SUKET ke klien telah selesai dan terverifikasi.
                             </p>
                         </div>
+
+                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Rekap & Closing Final (Opsional):</p>
+                        {(DOC_TYPES_BY_STAGE[12] || []).map(t => (
+                            <UploadSlot key={t} type={t} stageId={12} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
+                        ))}
 
                         {(user?.role === 'superadmin' || permissions === 'superadmin') && (
                             <div className="bg-amber-50 border border-amber-300 rounded-lg p-3.5 space-y-2">
@@ -2618,11 +2733,51 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (s === 11) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Pengiriman Suket ke Klien:</p>
+                    <p className="font-bold text-gray-700">Penagihan / Follow-up (Marketing):</p>
                     <div className="grid grid-cols-2 gap-2 bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
-                        <div className="col-span-2"><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">Suket telah diserahkan ke Klien</span></div>
+                        <div><span className="text-gray-400">Tgl Follow-up / Submit:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_submit_mkt) || '-'}</span></div>
+                        <div className="col-span-2"><span className="text-gray-400">Status:</span> <span className="font-semibold text-blue-700">Invoice telah ditagihkan ke Klien</span></div>
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan Penagihan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 14) {
+            const statusLabel = job.s14_payment_status === 'paid' ? 'Paid (Lunas Sempurna)' : job.s14_payment_status === 'partial' ? 'Partial (Dibayar Sebagian)' : 'Pending';
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Verifikasi Pembayaran & PPh (Finance):</p>
+                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1">
+                        <div><span className="text-gray-400">Status Pembayaran 11b:</span> <span className="font-bold text-gray-800">{statusLabel}</span></div>
+                        {job.s14_payment_notes && (
+                            <div><span className="text-gray-400">Catatan Pembayaran & PPh:</span> <span className="font-medium text-gray-800">{job.s14_payment_notes}</span></div>
+                        )}
+                    </div>
+                    {stageNotes && !job.s14_payment_notes && (
+                        <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 15) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">Pengiriman SUKET ke Klien (Marketing):</p>
+                    <div className="grid grid-cols-2 gap-2 bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600">
+                        <div className="col-span-2"><span className="text-gray-400">Status Pengiriman:</span> <span className="font-semibold text-emerald-700">SUKET telah diserahkan / dikirimkan ke Klien</span></div>
                         {job.no_resi && (
                             <div className="col-span-2"><span className="text-gray-400">No. Resi:</span> <span className="font-semibold text-blue-700 font-mono">{job.no_resi}</span></div>
+                        )}
+                        {job.tgl_submit_mkt && (
+                            <div><span className="text-gray-400">Tgl Penyerahan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_submit_mkt)}</span></div>
                         )}
                     </div>
                     {stageNotes && (
@@ -2634,20 +2789,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             );
         }
 
-        if (s === 14 || s === 12) {
-            const statusLabel = job.s14_payment_status === 'paid' ? 'Paid (Lunas Sempurna)' : job.s14_payment_status === 'partial' ? 'Partial (Dibayar Sebagian)' : 'Pending';
+        if (s === 12) {
             return (
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
-                    <p className="font-bold text-gray-700">Status Pelunasan Pembayaran:</p>
-                    <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1">
-                        <div><span className="text-gray-400">Status Pembayaran 11b:</span> <span className="font-bold text-gray-800">{statusLabel}</span></div>
-                        {job.s14_payment_notes && (
-                            <div><span className="text-gray-400">Catatan Pembayaran:</span> <span className="font-medium text-gray-800">{job.s14_payment_notes}</span></div>
-                        )}
+                    <p className="font-bold text-gray-700">Final Financial Closing (Finance):</p>
+                    <div className="bg-emerald-50/70 p-2.5 rounded border border-emerald-100 text-emerald-800 text-xs font-semibold">
+                        Pekerjaan Selesai dan Ditutup Penuh.
                     </div>
-                    {stageNotes && !job.s14_payment_notes && (
+                    {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
-                            <span className="font-semibold text-amber-800">Catatan: </span> {stageNotes}
+                            <span className="font-semibold text-amber-800">Catatan Closing: </span> {stageNotes}
                         </div>
                     )}
                 </div>

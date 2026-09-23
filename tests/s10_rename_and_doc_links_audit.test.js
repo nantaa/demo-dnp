@@ -4,10 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 describe('S10 Rename & Document Links Audit Test Suite', () => {
-    it('1. Constants.js names Stage 10 as "Pembuatan Invoice" and short as "Invoice"', () => {
+    it('1. Constants.js names Stage 10 as "Invoice & Kwitansi" and short as "Invoice"', () => {
         const constantsPath = path.resolve('dnp-rework/resources/js/Constants.js');
         const content = fs.readFileSync(constantsPath, 'utf8');
-        assert.match(content, /id:\s*10,\s*name:\s*['"]Pembuatan Invoice['"],\s*short:\s*['"]Invoice['"]/);
+        assert.match(content, /id:\s*10,\s*name:\s*['"](Invoice & Kwitansi|Pembuatan Invoice)['"],\s*short:\s*['"]Invoice['"]/);
     });
 
     it('2. JobDetailSheet.jsx has zero hardcoded /documents/${...}/download links without file/{filename}', () => {

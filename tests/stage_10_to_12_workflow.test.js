@@ -174,4 +174,73 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
             assert.match(kanbanContent, /!\[1,\s*10,\s*11,\s*12,\s*13,\s*14,\s*15\]\.includes\(sId\)/);
         });
     });
+
+    // ── 6. Stage 15 Document Upload & Moving Permissions ──────────────────────
+    describe('6. Stage 15 Document Upload & Moving Permissions', () => {
+        const controllerPath = path.resolve('dnp-rework/app/Http/Controllers/JobController.php');
+        const controllerContent = fs.readFileSync(controllerPath, 'utf8');
+
+        test('uploadDocument validates stage up to 15 (not 14)', () => {
+            assert.match(controllerContent, /'stage'\s*=>\s*'required\|integer\|min:1\|max:15'/);
+        });
+
+        test('uploadDocument authorizes Marketing for stage 15 and Finance for 10, 12, 14', () => {
+            assert.match(controllerContent, /\$user->role\s*===\s*'marketing'\s*&&\s*in_array\(\(int\)\s*\$request->stage,\s*\[1,\s*11,\s*13,\s*15\]\)/);
+            assert.match(controllerContent, /\$user->role\s*===\s*'finance'\s*&&\s*in_array\(\(int\)\s*\$request->stage,\s*\[10,\s*12,\s*14\]\)/);
+        });
+
+        test('deleteDocument authorizes Marketing for stage 15 and Finance for 10, 12, 14', () => {
+            assert.match(controllerContent, /\$user->role\s*===\s*'marketing'\s*&&\s*in_array\(\(int\)\s*\$document->stage,\s*\[1,\s*11,\s*13,\s*15\]\)/);
+            assert.match(controllerContent, /\$user->role\s*===\s*'finance'\s*&&\s*in_array\(\(int\)\s*\$document->stage,\s*\[10,\s*12,\s*14\]\)/);
+        });
+
+        test('updateStage allows Marketing to move from Stage 15 to 12 when paid', () => {
+            assert.match(controllerContent, /if\s*\(\$currentStage\s*==\s*15\s*&&\s*\(int\)\s*\$request->input\('next_stage'\)\s*===\s*12\)/);
+        });
+    });
+
+    // ── 7. Frontend Role-Based Stage Permissions ──────────────────────────────
+    describe('7. Frontend Role-Based Stage Permissions in JobDetailSheet.jsx', () => {
+        const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
+        const sheetContent = fs.readFileSync(sheetPath, 'utf8');
+
+        test('canManage recognizes Marketing for [1, 11, 13, 15] and Finance for [10, 12, 14]', () => {
+            assert.match(sheetContent, /user\?\.role\s*===\s*'marketing'\s*&&\s*\[1,\s*11,\s*13,\s*15\]\.includes\(curStage\)/);
+            assert.match(sheetContent, /user\?\.role\s*===\s*'finance'\s*&&\s*\[10,\s*12,\s*14\]\.includes\(curStage\)/);
+        });
+
+        test('canManageStageDocs recognizes Marketing for [1, 11, 13, 15] and Finance for [10, 12, 14]', () => {
+            assert.match(sheetContent, /user\?\.role\s*===\s*'marketing'\s*&&\s*\[1,\s*11,\s*13,\s*15\]\.includes\(sIdNum\)/);
+            assert.match(sheetContent, /user\?\.role\s*===\s*'finance'\s*&&\s*\[10,\s*12,\s*14\]\.includes\(sIdNum\)/);
+        });
+    });
+
+    // ── 8. User Model Default Stage Ownership ────────────────────────────────
+    describe('8. User Model Default Stage Ownership in User.php', () => {
+        const userModelPath = path.resolve('dnp-rework/app/Models/User.php');
+        const userModelContent = fs.readFileSync(userModelPath, 'utf8');
+
+        test('canOwnStage provides default ownership fallbacks for marketing and finance', () => {
+            assert.match(userModelContent, /\$this->role\s*===\s*'marketing'\s*&&\s*in_array\(\$stage,\s*\[1,\s*11,\s*13,\s*15\]\)/);
+            assert.match(userModelContent, /\$this->role\s*===\s*'finance'\s*&&\s*in_array\(\$stage,\s*\[10,\s*12,\s*14\]\)/);
+        });
+    });
+
+    // ── 9. Database Migration File ────────────────────────────────────────────
+    describe('9. Database Migration File for Stage 15 Permissions', () => {
+        const migrationFile = path.resolve('dnp-rework/database/migrations/2026_09_23_000001_seed_stage15_permissions_and_workflow_updates.php');
+
+        test('Migration file exists', () => {
+            assert.ok(fs.existsSync(migrationFile), 'Migration file must exist');
+        });
+
+        test('Migration file seeds Stage 15 permissions for marketing and 14 for finance', () => {
+            const content = fs.readFileSync(migrationFile, 'utf8');
+            assert.match(content, /user_stage_permissions/);
+            assert.match(content, /15/);
+            assert.match(content, /14/);
+            assert.match(content, /'role',\s*'marketing'/);
+            assert.match(content, /'role',\s*'finance'/);
+        });
+    });
 });

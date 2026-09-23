@@ -395,8 +395,14 @@ class JobController extends Controller
             $job->save();
         }
 
-        // Moving to Stage 12 (Close) or acting on Stage 12: require paid status + trigger close is exclusively Finance
-        if ($currentStage == 12 || ($request->input('next_stage') == 12)) {
+        // Advancing from Stage 15 to Stage 12: Marketing (or Finance/Admin) completes and moves to closing
+        if ($currentStage == 15 && (int)$request->input('next_stage') === 12) {
+            if (!$job->paid && $job->payment_status !== 'paid' && $job->s14_payment_status !== 'paid') {
+                return back()->withErrors([
+                    'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum SUKET diserahkan dan pekerjaan ditutup.',
+                ]);
+            }
+        } elseif ($currentStage == 12 || (int)$request->input('next_stage') === 12) {
             $user = Auth::user();
             if ($user->role !== 'finance' && !$user->isSuperadmin()) {
                 return back()->withErrors([
@@ -1165,7 +1171,7 @@ class JobController extends Controller
     {
         $request->validate([
             'type'  => 'required|string|max:100',
-            'stage' => 'required|integer|min:1|max:14',
+            'stage' => 'required|integer|min:1|max:15',
             'file'  => 'required|file|max:25600',
             'photo_notes' => 'nullable|string|max:500',
         ]);
@@ -1181,10 +1187,12 @@ class JobController extends Controller
 
         $canUpload = $user->isSuperadmin()
             || $user->role === 'manager'
-            || ($user->role === 'marketing' && $job->owner_marketing === $user->name && in_array($request->stage, [1, 11]))
-            || ($user->role === 'admin' && in_array($request->stage, [2, 3, 7, 8, 9]))
-            || ($isInspector && in_array($request->stage, [4, 5]))
-            || $user->canOwnStage($request->stage);
+            || ($user->role === 'marketing' && in_array((int)$request->stage, [1, 11, 13, 15]))
+            || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14]))
+            || ($user->role === 'admin')
+            || ($isInspector && in_array((int)$request->stage, [4, 5]))
+            || (in_array($user->role, ['tim_ahli', 'ahli']) && (int)$request->stage === 6)
+            || $user->canOwnStage((int)$request->stage);
 
         if (!$canUpload) {
             abort(403, 'You do not have permission to upload documents for this stage.');
@@ -1466,9 +1474,12 @@ class JobController extends Controller
 
         $canDelete = $user->isSuperadmin()
             || $user->role === 'manager'
+            || $user->role === 'admin'
             || $document->uploaded_by_user_id === $user->id
-            || ($isInspector && in_array($document->stage, [4, 5, 6]))
-            || (!in_array($user->role, ['inspektur', 'inspector']) && $user->canOwnStage($document->stage));
+            || ($user->role === 'marketing' && in_array((int)$document->stage, [1, 11, 13, 15]))
+            || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14]))
+            || ($isInspector && in_array((int)$document->stage, [4, 5, 6]))
+            || (!in_array($user->role, ['inspektur', 'inspector']) && $user->canOwnStage((int)$document->stage));
 
         if (!$canDelete) {
             abort(403, 'You do not have permission to delete this document.');

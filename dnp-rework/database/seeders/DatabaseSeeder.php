@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // 2. Marketing
-        User::firstOrCreate(
+        $mkt = User::firstOrCreate(
             ['email' => 'andini@deltaindo.co.id'],
             [
                 'name' => 'Andini Sari',
@@ -35,8 +35,9 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+        $this->assignStages($mkt, [1, 11, 13, 15]);
 
-        // 3. Admin (Budi Susanto) - owns stages 2, 3, 5, 7, 9
+        // 3. Admin (Budi Susanto) - owns stages 2, 3, 5, 7, 9, 14, 15
         $admin1 = User::firstOrCreate(
             ['email' => 'budi@deltaindo.co.id'],
             [
@@ -46,7 +47,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $this->assignStages($admin1, [2, 3, 5, 7, 9]);
+        $this->assignStages($admin1, [2, 3, 5, 7, 9, 14, 15]);
 
         // 4. Kadiv RU (Terzha)
         $mgr = User::firstOrCreate(
@@ -70,7 +71,7 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $this->assignStages($fin, [10, 12]); // Penagihan, Lunas
+        $this->assignStages($fin, [10, 12, 14]); // Invoice, Lunas, Verifikasi Bayar
 
         // 6. Inspekturs
         $this->createInspector('rendi@deltaindo.co.id', 'Rendi Pratama', $password, 'Bekasi', ['Umum', 'Listrik'], 3);

@@ -27,8 +27,8 @@ describe('DNP Monitor v3 — API & Security Masking Integration Tests', () => {
     await new Promise((resolve) => server.close(resolve));
   });
 
-  it('GET /api/jobs masks sensitive price fields for admin role', async () => {
-    const res = await fetch(`${baseUrl}?role=admin`);
+  it('GET /api/jobs masks sensitive price fields for inspektur role', async () => {
+    const res = await fetch(`${baseUrl}?role=inspektur`);
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.ok, true);
@@ -36,8 +36,8 @@ describe('DNP Monitor v3 — API & Security Masking Integration Tests', () => {
 
     // Verify each returned job has masked price
     for (const job of body.jobs) {
-      assert.equal(job.nilai, null, `Job ${job.id} should have masked nilai for admin`);
-      assert.equal(job.total_invoice_amount, null, `Job ${job.id} should have masked total_invoice_amount for admin`);
+      assert.equal(job.nilai, null, `Job ${job.id} should have masked nilai for inspektur`);
+      assert.equal(job.total_invoice_amount, null, `Job ${job.id} should have masked total_invoice_amount for inspektur`);
     }
   });
 

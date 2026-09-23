@@ -80,6 +80,31 @@ export function useJobPermissions(arg1, arg2) {
         scheduleDays.every(d => d.date?.trim()) &&
         scheduleDays.every(d => (d.inspector_ids || []).length > 0);
 
+    const canViewDoc = (doc) => {
+        if (!doc) return false;
+        const isPo = ['PO/SPK', 'PO / SPK', 'PO / SPK / Proposal'].includes(doc.type);
+        if (isInspector && isPo) return false;
+        return true;
+    };
+
+    const isSameMonthDate = (dStr) => {
+        if (!dStr) return false;
+        const d = new Date(dStr);
+        const now = new Date();
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    };
+
+    const canRevisePO = useMemo(() => {
+        if (!['superadmin', 'marketing', 'admin', 'finance'].includes(user?.role)) return false;
+        return isSameMonthDate(job.created_at);
+    }, [user?.role, job.created_at]);
+
+    const canReviseInvoice = useMemo(() => {
+        if (!['superadmin', 'finance'].includes(user?.role)) return false;
+        const refDate = job.tgl_invoice_issued || job.created_at;
+        return isSameMonthDate(refDate);
+    }, [user?.role, job.tgl_invoice_issued, job.created_at]);
+
     return {
         user,
         authPermissions: permissions,
@@ -91,6 +116,9 @@ export function useJobPermissions(arg1, arg2) {
         canManage,
         canViewStageDocs: canViewStageDocs || (() => false),
         canManageStageDocs: canManageStageDocs || (() => false),
+        canViewDoc,
+        canRevisePO,
+        canReviseInvoice,
         stage1DocOk,
         stage2DocOk,
         stage2Bypass,

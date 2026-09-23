@@ -63,29 +63,38 @@ export const getDocDownloadUrl = (doc) => {
 };
 
 // ── Shared UI Atoms ────────────────────────────────────────────────────────────
-export const DocChip = ({ doc, canManage, onDelete }) => (
-    <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
-        <a
-            href={getDocumentUrl(doc)}
-            download={doc?.name || 'document.pdf'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline font-medium truncate max-w-[160px]"
-            title={doc?.name}
-        >
-            {doc?.name}
-        </a>
-        {canManage && (
-            <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
-                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+export const DocChip = ({ doc, canManage, onDelete }) => {
+    if (doc?.masked) {
+        return (
+            <div className="flex items-center gap-1.5 bg-gray-100 border border-gray-300 rounded px-2 py-1 text-xs text-gray-400 select-none" title="Dokumen ini bersifat privat dan terkunci untuk peran Anda">
+                <span>🔒 Dokumen Terkunci (Privat)</span>
+            </div>
+        );
+    }
+    return (
+        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
+            <a
+                href={getDocumentUrl(doc)}
+                download={doc?.name || 'document.pdf'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline font-medium truncate max-w-[160px]"
+                title={doc?.name}
             >
-                ✕
-            </button>
-        )}
-    </div>
-);
+                {doc?.name}
+            </a>
+            {canManage && (
+                <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
+                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                >
+                    ✕
+                </button>
+            )}
+        </div>
+    );
+};
 
 export const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => {
     const getNextLabel = () => {

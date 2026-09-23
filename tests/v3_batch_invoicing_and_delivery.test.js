@@ -73,7 +73,7 @@ describe('DNP Monitor v3 — Batch Invoicing, Pro-rata Payment Verification & Do
     assert.equal(targetBatch.amount_received, 50000000);
   });
 
-  it('masks sensitive documents (PO/Invoice PDFs with prices) for Admin role', () => {
+  it('masks sensitive documents (PO/SPK with prices) ONLY for INS role, leaving other roles accessible', () => {
     const job = {
       id: 'job-doc-security',
       nilai: 75000000,
@@ -85,21 +85,24 @@ describe('DNP Monitor v3 — Batch Invoicing, Pro-rata Payment Verification & Do
       ]
     };
 
-    const masked = maskSensitiveData(job, 'admin');
-    assert.equal(masked.nilai, null);
-    assert.equal(masked.total_invoice_amount, null);
+    const insMasked = maskSensitiveData(job, 'inspektur');
+    assert.equal(insMasked.nilai, null);
+    assert.equal(insMasked.total_invoice_amount, null);
 
-    // Verify document URLs with sensitive prices are masked or stripped for Admin
-    const poDoc = masked.documents.find(d => d.type === 'PO/SPK');
-    assert.equal(poDoc.url, null, 'Sensitive PO document URL must be null for admin');
-    assert.equal(poDoc.masked, true);
+    // Verify document URLs with sensitive prices are masked or stripped for INS (inspektur)
+    const insPoDoc = insMasked.documents.find(d => d.type === 'PO/SPK');
+    assert.equal(insPoDoc.url, null, 'Sensitive PO document URL must be null for inspektur');
+    assert.equal(insPoDoc.masked, true);
 
-    const invoiceDoc = masked.documents.find(d => d.type === 'Invoice');
-    assert.equal(invoiceDoc.url, null, 'Sensitive Invoice document URL must be null for admin');
-    assert.equal(invoiceDoc.masked, true);
+    const drawingDoc = insMasked.documents.find(d => d.type === 'Technical Drawings');
+    assert.equal(drawingDoc.url, '/uploads/draw-123.pdf', 'Technical drawing URL should be preserved for inspektur');
 
-    const drawingDoc = masked.documents.find(d => d.type === 'Technical Drawings');
-    assert.equal(drawingDoc.url, '/uploads/draw-123.pdf', 'Technical drawing URL should be preserved');
+    // Verify Admin can see PO documents and prices
+    const adminView = maskSensitiveData(job, 'admin');
+    assert.equal(adminView.nilai, 75000000);
+    const adminPoDoc = adminView.documents.find(d => d.type === 'PO/SPK');
+    assert.equal(adminPoDoc.url, '/uploads/po-123.pdf', 'PO document URL must be accessible to admin');
+    assert.equal(adminPoDoc.masked, undefined);
   });
 
 });

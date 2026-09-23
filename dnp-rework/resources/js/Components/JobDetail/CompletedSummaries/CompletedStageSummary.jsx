@@ -18,7 +18,7 @@ export default function CompletedStageSummary({ job, s, canSeeNilai }) {
                     <div><span className="text-gray-400">Jumlah Unit:</span> <span className="font-semibold text-gray-800">{job.units || 1} Unit</span></div>
                     <div><span className="text-gray-400">Termin:</span> <span className="font-semibold text-gray-800">{job.termin_pembayaran || 'FULL'}</span></div>
                     {canSeeNilai && (
-                        <div><span className="text-gray-400">Nilai Kontrak:</span> <span className="font-semibold text-gray-800">{fmtCurrency(job.nilai)}</span></div>
+                        <div><span className="text-gray-400">Nilai Kontrak (112%):</span> <span className="font-semibold text-gray-800">{fmtCurrency(Math.round((job.nilai || 0) * 1.12))}</span></div>
                     )}
                 </div>
                 {stageNotes && (

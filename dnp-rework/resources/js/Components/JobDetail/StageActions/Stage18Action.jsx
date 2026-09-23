@@ -54,7 +54,7 @@ export default function Stage18Action({
                     />
                     {job.nilai && (
                         <p className="text-[10px] text-gray-500 mt-1">
-                            Total Kontrak: {fmtCurrency(job.nilai)}
+                            Total Kontrak (112%): {fmtCurrency(Math.round((job.nilai || 0) * 1.12))}
                         </p>
                     )}
                 </div>

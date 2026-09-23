@@ -103,13 +103,18 @@ export default function EditInfoTab({
                         </div>
                         {canSeeNilai && (
                             <div className="col-span-2 sm:col-span-1">
-                                <label className="block text-xs font-bold text-gray-700">Nilai Kontrak</label>
+                                <label className="block text-xs font-bold text-gray-700">Nilai Kontrak (DPP Input)</label>
                                 <input
                                     type="number"
                                     value={editForm.data.nilai}
                                     onChange={e => editForm.setData('nilai', e.target.value)}
                                     className="w-full text-sm border rounded px-2 py-1.5"
                                 />
+                                {parseFloat(editForm.data.nilai) > 0 && (
+                                    <p className="text-[11px] text-emerald-700 font-medium mt-1">
+                                        Ditampilkan (× 112%): <strong>{fmtCurrency(Math.round(parseFloat(editForm.data.nilai) * 1.12))}</strong>
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>
@@ -134,14 +139,29 @@ export default function EditInfoTab({
                 <div className="bg-white p-4 rounded-lg border space-y-3">
                     <div className="flex justify-between items-start">
                         <h4 className="font-bold text-gray-800 border-b w-full pb-2 mb-2">Informasi Pekerjaan</h4>
-                        {canManage && (
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="text-xs font-medium text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 ml-2"
-                            >
-                                Edit
-                            </button>
-                        )}
+                        {canManage && (() => {
+                            const isSameMonth = () => {
+                                if (!job.created_at) return false;
+                                const d = new Date(job.created_at);
+                                const now = new Date();
+                                return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+                            };
+                            return isSameMonth() ? (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="text-xs font-medium text-blue-600 border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 ml-2 shrink-0"
+                                >
+                                    Edit
+                                </button>
+                            ) : (
+                                <span
+                                    className="text-[10px] font-semibold text-gray-400 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded cursor-not-allowed ml-2 shrink-0"
+                                    title="Revisi PO terkunci karena sudah melewati bulan pembuatan job (Tutup Buku Bulanan)"
+                                >
+                                    🔒 Edit Terkunci (Beda Bulan)
+                                </span>
+                            );
+                        })()}
                     </div>
                     <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                         <div><p className="text-xs text-gray-500">Kode Job</p><p className="font-semibold">{job.kode}</p></div>
@@ -155,11 +175,14 @@ export default function EditInfoTab({
                         <div><p className="text-xs text-gray-500">Jumlah Unit</p><p className="font-bold">{job.units} Unit</p></div>
                         <div className="col-span-2"><p className="text-xs text-gray-500">Lokasi</p><p>{job.lokasi}</p></div>
                         {canSeeNilai && (
-                            <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200">
-                                <p className="text-xs text-yellow-800 font-bold">
-                                    Nilai Kontrak <span className="font-normal opacity-80">(belum termasuk PPN)</span>
+                            <div className="col-span-2 bg-yellow-50 p-2.5 rounded-lg border border-yellow-200">
+                                <p className="text-xs text-yellow-800 font-bold flex items-center justify-between">
+                                    <span>Nilai Kontrak (Termasuk PPN 112%)</span>
+                                    <span className="font-normal text-[11px] opacity-75">DPP: {fmtCurrency(job.nilai)}</span>
                                 </p>
-                                <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
+                                <p className="font-black text-xl text-yellow-950 mt-0.5">
+                                    {fmtCurrency(Math.round((job.nilai || 0) * 1.12))}
+                                </p>
                             </div>
                         )}
                     </div>

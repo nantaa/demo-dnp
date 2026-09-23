@@ -20,7 +20,9 @@ import {
   canReleaseSuketForBatch,
   verifyBatchPayment,
   deduplicateHistoryLogs,
-  recordInvoiceRevision
+  recordInvoiceRevision,
+  getRejectTargetStage,
+  isEligibleForSameMonthRevision
 } from '../../src/domain/workflowEngine.js';
 
 const router = Router();
@@ -35,8 +37,8 @@ router.get('/', (req, res) => {
       'SELECT data FROM jobs ORDER BY created_at DESC'
     ).all();
     let jobs = rows.map(r => JSON.parse(r.data));
-    if (role === 'admin') {
-      jobs = jobs.map(j => maskSensitiveData(j, 'admin'));
+    if (['inspektur', 'ahli_k3', 'tenaga_ahli'].includes(String(role).toLowerCase().trim())) {
+      jobs = jobs.map(j => maskSensitiveData(j, 'inspektur'));
     }
     res.json({ ok: true, jobs });
   } catch (e) {
@@ -291,8 +293,8 @@ router.get('/:id', (req, res) => {
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Not found' });
     let job = JSON.parse(row.data);
-    if (role === 'admin') {
-      job = maskSensitiveData(job, 'admin');
+    if (['inspektur', 'ahli_k3', 'tenaga_ahli'].includes(String(role).toLowerCase().trim())) {
+      job = maskSensitiveData(job, 'inspektur');
     }
     res.json({ ok: true, job });
   } catch (e) {
@@ -401,6 +403,17 @@ router.put('/:id', (req, res) => {
           return res.status(403).json({ ok: false, error: transitionCheck.reason });
         }
       }
+
+      // Rule 5: revisi PO can be accessed as long as it still in the same month after MKT created the job
+      const poFieldsChanged = ['no_po', 'tgl_po', 'nilai', 'termin_pembayaran'].some(
+        f => req.body[f] !== undefined && String(req.body[f]) !== String(existingJob[f])
+      );
+      if (poFieldsChanged && existingJob.created_at && !isEligibleForSameMonthRevision(existingJob.created_at)) {
+        return res.status(403).json({
+          ok: false,
+          error: 'Revisi PO terkunci karena sudah melewati bulan pembuatan job oleh Marketing (Tutup Buku Bulanan).'
+        });
+      }
     }
     const job = req.body;
     const ts = now();
@@ -423,6 +436,52 @@ router.delete('/clear-all', (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
+
+// POST /api/jobs/:id/reject & /jobs/:id/reject — reject/return job stage
+const handleRejectRoute = (req, res) => {
+  try {
+    const role = getRole(req);
+    const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
+    const job = JSON.parse(row.data);
+    const currentStage = Number(job.stage);
+
+    const body = req.body || {};
+    const nested = body.data || {};
+    const notes = body.notes || nested.notes || '';
+    const requestedTarget = body.target_stage || nested.target_stage;
+
+    // Requirement 3: Kembalikan Job in S7 moves job directly from S7 to S5
+    const targetStage = requestedTarget ? Number(requestedTarget) : getRejectTargetStage(currentStage);
+
+    const actorName = req.headers['x-user-name'] || body.actor || 'User';
+    job.stage = targetStage;
+    job.stage_started_at = now();
+    job.history = deduplicateHistoryLogs([
+      ...(job.history || []),
+      {
+        stage: targetStage,
+        ts: now(),
+        by: actorName,
+        action: `DITOLAK / DIKEMBALIKAN: Job dikembalikan dari Stage ${currentStage} ke Stage ${targetStage}.${notes ? ` Catatan: "${notes}"` : ''}`
+      }
+    ]);
+
+    const ts = now();
+    db.prepare('UPDATE jobs SET data = ?, updated_at = ? WHERE id = ?').run(
+      JSON.stringify(job), ts, req.params.id
+    );
+
+    if (req.headers['x-inertia']) {
+      return res.redirect(303, '/kanban');
+    }
+    res.json({ ok: true, job });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+};
+
+router.post('/:id/reject', handleRejectRoute);
 
 // POST /api/jobs/:id/move — transition job stage
 router.post('/:id/move', (req, res) => {
@@ -1098,6 +1157,16 @@ router.post('/:id/invoice-revise', (req, res) => {
     const row = db.prepare('SELECT data FROM jobs WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Job not found' });
     const job = JSON.parse(row.data);
+
+    // Rule 5: revisi Invoice can be accessed as long as it still in the same month after creation/issuance
+    const invoiceReferenceDate = job.tgl_invoice_issued || job.created_at;
+    if (invoiceReferenceDate && !isEligibleForSameMonthRevision(invoiceReferenceDate)) {
+      return res.status(403).json({
+        ok: false,
+        error: 'Revisi Invoice terkunci karena sudah melewati bulan pembuatan/penerbitan (Tutup Buku Bulanan).'
+      });
+    }
+
     const actorName = req.headers['x-user-name'] || req.body.revised_by || 'Finance';
     const updatedJob = recordInvoiceRevision({
       job,

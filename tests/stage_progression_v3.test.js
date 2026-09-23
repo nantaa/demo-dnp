@@ -56,7 +56,7 @@ describe('DNP Monitor v3 — TDD Workflow Engine', () => {
 
   // ── Stage 2 Tests (Masking) ──
   describe('Stage 2 — Data Masking & RBAC', () => {
-    it('masks nilai and commercial fields when role is Admin', () => {
+    it('masks nilai and commercial fields ONLY when role is INS (inspektur), allowing Admin', () => {
       const job = {
         id: 'job-1',
         kode: 'DNP/2026/001',
@@ -65,9 +65,13 @@ describe('DNP Monitor v3 — TDD Workflow Engine', () => {
         total_invoice_amount: 55000000,
       };
 
+      const insView = maskSensitiveData(job, 'inspektur');
+      assert.equal(insView.nilai, null);
+      assert.equal(insView.total_invoice_amount, null);
+
       const adminView = maskSensitiveData(job, 'admin');
-      assert.equal(adminView.nilai, null);
-      assert.equal(adminView.total_invoice_amount, null);
+      assert.equal(adminView.nilai, 50000000);
+      assert.equal(adminView.total_invoice_amount, 55000000);
 
       const marketingView = maskSensitiveData(job, 'marketing');
       assert.equal(marketingView.nilai, 50000000);

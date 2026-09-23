@@ -135,6 +135,14 @@ export default function JobCreate({ auth }) {
                                     className="w-full px-3 py-2 border rounded"
                                     required
                                 />
+                                {parseFloat(data.nilai) > 0 && (
+                                    <div className="mt-1.5 p-2 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-900 flex justify-between items-center">
+                                        <span className="font-medium">Total Harga Ditampilkan (Input × 112%):</span>
+                                        <strong className="font-mono text-sm text-emerald-800">
+                                            {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Math.round(parseFloat(data.nilai) * 1.12))}
+                                        </strong>
+                                    </div>
+                                )}
                                 {errors.nilai && <div className="text-red-500 text-xs mt-1">{errors.nilai}</div>}
                             </div>
                         </div>

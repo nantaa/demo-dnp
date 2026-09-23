@@ -210,10 +210,47 @@ export function validateStage1(job) {
 }
 
 /**
- * Masks commercial and pricing information for unauthorized roles (e.g. Admin).
+ * Calculates gross price as user input * 112% (100% DPP + 12% PPN).
+ */
+export function calculateGrossPrice(netPrice) {
+  const num = parseFloat(netPrice) || 0;
+  return Math.round(num * 1.12);
+}
+
+/**
+ * Determines target stage when rejecting/returning a job.
+ * Requirement: Kembalikan Job in S7 moves job directly from S7 to S5.
+ */
+export function getRejectTargetStage(currentStage) {
+  const curr = Number(currentStage);
+  if (curr === 7) return 5;
+  if (curr === 8) return 6;
+  if (curr === 13 || curr === 5) return 4;
+  if (curr === 14) return 11;
+  return Math.max(1, curr - 1);
+}
+
+/**
+ * Validates whether a job or invoice revision is allowed.
+ * Rule: PO and Invoice revisions are only accessible in the same calendar month as creation/issuance.
+ */
+export function isEligibleForSameMonthRevision(dateString, referenceDate = new Date()) {
+  if (!dateString) return false;
+  const target = new Date(dateString);
+  const ref = new Date(referenceDate);
+  if (isNaN(target.getTime()) || isNaN(ref.getTime())) return false;
+  return target.getFullYear() === ref.getFullYear() && target.getMonth() === ref.getMonth();
+}
+
+/**
+ * Masks commercial and pricing information for unauthorized roles.
+ * Rule: Lock PO document ONLY for INS role (inspektur/ahli_k3/tenaga_ahli) so they can't see them. All other roles are fine.
  */
 export function maskSensitiveData(data, role) {
-  if (role === 'admin') {
+  if (!data) return data;
+  const normRole = String(role || '').toLowerCase().trim();
+
+  if (['inspektur', 'ahli_k3', 'tenaga_ahli'].includes(normRole)) {
     const masked = {
       ...data,
       nilai: null,
@@ -223,8 +260,8 @@ export function maskSensitiveData(data, role) {
 
     if (Array.isArray(data.documents)) {
       masked.documents = data.documents.map((doc) => {
-        const hasPrice = doc.has_price || ['PO/SPK', 'Invoice', 'Kwitansi'].includes(doc.type);
-        if (hasPrice) {
+        const isPo = ['PO/SPK', 'PO / SPK', 'PO / SPK / Proposal'].includes(doc.type) || doc.has_price;
+        if (isPo) {
           return {
             ...doc,
             url: null,
@@ -237,6 +274,7 @@ export function maskSensitiveData(data, role) {
 
     return masked;
   }
+
   return data;
 }
 

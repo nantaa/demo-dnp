@@ -48,8 +48,8 @@ export default function Stage15Action({
             <div className="bg-white border rounded-lg p-3 space-y-3 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <span className="text-gray-500 font-semibold block mb-1">Nilai Kontrak / Invoice</span>
-                        <span className="text-sm font-bold text-gray-900">{fmtCurrency(job.nilai)}</span>
+                        <span className="text-gray-500 font-semibold block mb-1">Nilai Kontrak (112%) / Invoice</span>
+                        <span className="text-sm font-bold text-gray-900">{fmtCurrency(job.total_invoice_amount || Math.round((job.nilai || 0) * 1.12))}</span>
                     </div>
                     <div>
                         <label className="block text-gray-700 font-semibold mb-1">Dana Masuk Rekening (Rp) *</label>

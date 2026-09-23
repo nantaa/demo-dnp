@@ -36,17 +36,17 @@ echo "📍 Current Active Slot : $PREVIOUS_SLOT"
 echo "🎯 Deploying to Idle   : $TARGET_SLOT ($TARGET_DIR)"
 
 # 2. Pull git repository terbaru di base directory
-echo "📥 1/6 Pulling latest code from Git..."
+echo "📥 1/6 Syncing code from branch: $BRANCH..."
 cd "$BASE_DIR"
 git fetch origin "$BRANCH"
 git checkout "$BRANCH"
-git pull origin "$BRANCH"
+git reset --hard origin/"$BRANCH"
 
 # 3. Siapkan direktori target slot release
 echo "📦 2/6 Preparing release slot $TARGET_SLOT..."
 mkdir -p "$TARGET_DIR"
 
-# Jika target slot belum punya vendor/node_modules/artisan, sync dari slot sebelumnya atau folder production lama
+# Jika target slot belum punya vendor/artisan, sync dari slot sebelumnya atau folder production lama
 if [ ! -f "$TARGET_DIR/artisan" ]; then
     if [ -f "$PREV_DIR/artisan" ]; then
         echo "   -> Menyalin base files dari $PREV_DIR..."
@@ -61,9 +61,12 @@ fi
 echo "   -> Mengupdate source code dari dnp-rework..."
 cp -r "$BASE_DIR/dnp-rework"/* "$TARGET_DIR/"
 
-# Salin package.json & vite.config.js dari root jika ada
-[ -f "$BASE_DIR/package.json" ] && [ ! -f "$TARGET_DIR/package.json" ] && cp "$BASE_DIR/package.json" "$TARGET_DIR/"
-[ -f "$BASE_DIR/vite.config.js" ] && [ ! -f "$TARGET_DIR/vite.config.js" ] && cp "$BASE_DIR/vite.config.js" "$TARGET_DIR/"
+# Salin aset frontend yang sudah dibuild dari dist/
+if [ -d "$BASE_DIR/dist" ]; then
+    echo "   -> Menyalin frontend build artifacts (dist)..."
+    mkdir -p "$TARGET_DIR/public"
+    cp -r "$BASE_DIR/dist"/* "$TARGET_DIR/public/"
+fi
 
 # 4. Hubungkan shared .env & storage
 echo "🔗 3/6 Linking shared storage & environment..."
@@ -81,21 +84,20 @@ if [ -d "$SHARED_STORAGE" ]; then
     ln -sfn "$SHARED_STORAGE" storage
 fi
 
-# 5. Build aset di slot idle
-echo "⚙️ 4/6 Building frontend assets in $TARGET_SLOT..."
+# 5. Dependency Check & Permission Fix
+echo "⚙️ 4/6 Setting up dependencies & storage permissions in $TARGET_SLOT..."
 cd "$TARGET_DIR"
 
-if [ -f "composer.json" ]; then
+if [ -f "composer.json" ] && [ ! -d "vendor" ]; then
     composer install --no-dev --optimize-autoloader --no-interaction || true
 fi
 
-if [ -f "package.json" ]; then
-    npm install
-    npm run build
-fi
+# Pastikan permission storage & bootstrap selalu writable untuk webserver
+sudo chmod -R 777 "$TARGET_DIR/storage" "$TARGET_DIR/bootstrap/cache" 2>/dev/null || true
+sudo chmod -R 777 "$SHARED_STORAGE" 2>/dev/null || true
 
 # 6. Database Migration & Cache Warmup di slot baru
-echo "🗄️ 5/6 Running database migrations..."
+echo "🗄️ 5/6 Running database migrations & cache clearing..."
 if [ -f "artisan" ]; then
     php artisan migrate --force || true
     php artisan storage:link 2>/dev/null || true

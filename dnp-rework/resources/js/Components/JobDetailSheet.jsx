@@ -1078,11 +1078,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <div className="space-y-3">
                         <p className="text-xs text-gray-500">Upload minimal salah satu dokumen berikut untuk melanjutkan:</p>
                         {STAGE1_REQUIRED_DOCS.map(t => (
-                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />
                         ))}
                         <p className="text-xs text-gray-400 mt-1">Dokumen opsional tambahan:</p>
                         {(DOC_TYPES_BY_STAGE[1] || []).filter(t => !STAGE1_REQUIRED_DOCS.includes(t) && t !== 'Dokumen Tambahan').map(t => (
-                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
+                            <UploadSlot key={t} type={t} stageId={1} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
                         ))}
                         <UploadSlot
                             type="Dokumen Tambahan"
@@ -1093,6 +1093,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             canManageStageDocs={canManageStageDocs}
                             deleteDoc={deleteDoc}
                             isOptional={true}
+                            isINS={isINS}
                         />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
@@ -1181,13 +1182,26 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 </span>
                                             ) : item.isManual ? (
                                                 <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-500 font-semibold text-[10px]">MANUAL</span>
+                                            ) : (isINS && item.type === 'PO/SPK') ? (
+                                                <span className="px-2 py-1 rounded bg-gray-100 border border-gray-300 text-gray-400 font-semibold text-[10px] flex items-center gap-1 cursor-not-allowed italic" title="Dokumen PO/SPK terkunci untuk Inspektur">
+                                                    🔒 Terkunci
+                                                </span>
                                             ) : hasFile ? (
-                                                docs.map(d => (
-                                                    <a key={d.id} href={getDocDownloadUrl(d)} download target="_blank" rel="noopener noreferrer"
-                                                        className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
-                                                        {d.name.split('.').pop().toUpperCase()}
-                                                    </a>
-                                                ))
+                                                docs.map(d => {
+                                                    if (isINS && (item.type === 'PO/SPK' || isPoLockedForIns(d, isINS))) {
+                                                        return (
+                                                            <span key={d.id} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-300 text-gray-400 font-semibold text-[10px] inline-flex items-center gap-1 cursor-not-allowed italic" title="Dokumen PO/SPK terkunci untuk Inspektur">
+                                                                🔒 Terkunci
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <a key={d.id} href={getDocDownloadUrl(d)} download target="_blank" rel="noopener noreferrer"
+                                                            className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
+                                                            {d.name.split('.').pop().toUpperCase()}
+                                                        </a>
+                                                    );
+                                                })
                                             ) : (
                                                 <button type="button"
                                                     onClick={() => triggerUpload(2, item.type)}
@@ -1195,7 +1209,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                     <span>x</span> KOSONG
                                                 </button>
                                             )}
-                                            {hasFile && !item.noVerify && canManageStageDocs(2) && (
+                                            {hasFile && !item.noVerify && canManageStageDocs(2) && !isINS && (
                                                 <button type="button" onClick={() => triggerUpload(2, item.type)}
                                                     className="text-[10px] text-blue-500 hover:underline">+ ganti</button>
                                             )}
@@ -1552,7 +1566,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 {existing.length > 0 && <span className="text-xs text-green-600 font-bold">Terupload</span>}
                                             </div>
                                             {existing.length > 0
-                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}</div>
+                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}</div>
                                                 : null
                                             }
                                             <input type="text" placeholder="Catatan foto (opsional)"
@@ -1837,7 +1851,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <p className="text-[11px] font-medium text-gray-600 mb-1.5">File LHPP yang sudah diunggah:</p>
                                 <div className="flex flex-wrap gap-1.5">
                                     {(job.documents || []).filter(d => d.stage === 5 && d.type === 'LHPP').map(doc => (
-                                        <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} jobId={job.id} />
+                                        <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} jobId={job.id} isINS={isINS} />
                                     ))}
                                 </div>
                             </div>
@@ -1986,7 +2000,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Tanggal Penyerahan
                         </button>
-                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />
+                        <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
                     </div>
@@ -2045,7 +2059,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Data Disnaker
                         </button>
-                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
                     </div>
@@ -2066,7 +2080,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
                             Simpan Status
                         </button>
-                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                        {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <div className="flex gap-2 mt-2">
                             <button type="button" onClick={handleRejectStage}
@@ -2158,7 +2172,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     Simpan Data Invoice & Faktur
                                 </button>
                             )}
-                            {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} />)}
+                            {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                             <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                             <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} disabled={!s10CanMove} disabledMsg={s10DisabledMsg} />
                         </div>
@@ -2196,7 +2210,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                         <p className="text-xs text-gray-500">Upload dokumen (Opsional), kemudian tandai selesai.</p>
                         {(DOC_TYPES_BY_STAGE[11] || []).map(t => (
-                            <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
+                            <UploadSlot key={t} type={t} stageId={11} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
                         ))}
                         {/* No. Resi — tracking number for Suket shipment */}
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
@@ -2270,7 +2284,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                         <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Pendukung Pembayaran (Opsional)</p>
                         {(DOC_TYPES_BY_STAGE[14] || []).map(t => (
-                            <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} />
+                            <UploadSlot key={t} type={t} stageId={14} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
                         ))}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
@@ -2339,8 +2353,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
                     <p className="font-bold text-gray-700">Ringkasan Order Masuk:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
-                        <div><span className="text-gray-400">No. PO / SPK:</span> <span className="font-semibold text-gray-800">{job.no_po || '-'}</span></div>
-                        <div><span className="text-gray-400">Tgl PO:</span> <span className="font-semibold text-gray-800">{job.tgl_po ? fmt(job.tgl_po, { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span></div>
+                        <div><span className="text-gray-400">No. PO / SPK:</span> <span className="font-semibold text-gray-800">{isINS ? '[Terkunci]' : (job.no_po || '-')}</span></div>
+                        <div><span className="text-gray-400">{isINS ? 'Tgl Registrasi:' : 'Tgl PO:'}</span> <span className="font-semibold text-gray-800">{isINS ? fmt(job.created_at) : (job.tgl_po ? fmt(job.tgl_po, { day: 'numeric', month: 'short', year: 'numeric' }) : '-')}</span></div>
                         <div><span className="text-gray-400">Klien:</span> <span className="font-semibold text-gray-800">{job.klien || '-'}</span></div>
                         <div><span className="text-gray-400">Pesawat / Alat:</span> <span className="font-semibold text-gray-800">{job.pesawat || '-'}</span></div>
                         <div><span className="text-gray-400">Lokasi:</span> <span className="font-semibold text-gray-800">{job.lokasi || '-'}</span></div>
@@ -2707,7 +2721,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                     <div className="mt-3 space-y-1">
                                                         <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
                                                         <div className="flex flex-wrap gap-1">
-                                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}
+                                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
                                                         </div>
                                                     </div>
                                                 )}
@@ -2736,21 +2750,38 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                         <div className="flex items-center gap-2 flex-shrink-0">
                                                             {item.isManual ? (
                                                                 <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Manual</span>
+                                                            ) : (isINS && item.type === 'PO/SPK') ? (
+                                                                <span className="text-[10px] text-gray-400 font-semibold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-300 inline-flex items-center gap-1 italic cursor-not-allowed" title="Dokumen PO/SPK terkunci untuk Inspektur">
+                                                                    🔒 Terkunci
+                                                                </span>
                                                             ) : hasFile ? (
                                                                 <div className="flex items-center gap-1 flex-wrap">
-                                                                    {docs.map(d => (
-                                                                        <a
-                                                                            key={d.id}
-                                                                            href={getDocDownloadUrl(d)}
-                                                                            download
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
-                                                                            title={`Unduh / Lihat ${d.name}`}
-                                                                        >
-                                                                            {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
-                                                                        </a>
-                                                                    ))}
+                                                                    {docs.map(d => {
+                                                                        if (isINS && (item.type === 'PO/SPK' || isPoLockedForIns(d, isINS))) {
+                                                                            return (
+                                                                                <span
+                                                                                    key={d.id}
+                                                                                    className="text-[10px] text-gray-400 font-semibold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-300 inline-flex items-center gap-1 italic cursor-not-allowed"
+                                                                                    title="Dokumen PO/SPK terkunci untuk Inspektur"
+                                                                                >
+                                                                                    🔒 Terkunci
+                                                                                </span>
+                                                                            );
+                                                                        }
+                                                                        return (
+                                                                            <a
+                                                                                key={d.id}
+                                                                                href={getDocDownloadUrl(d)}
+                                                                                download
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
+                                                                                title={`Unduh / Lihat ${d.name}`}
+                                                                            >
+                                                                                {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
+                                                                            </a>
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             ) : (
                                                                 <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Kosong</span>
@@ -2775,7 +2806,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     <div className="mt-3 space-y-1">
                                         <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
                                         <div className="flex flex-wrap gap-1">
-                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} />)}
+                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
                                         </div>
                                     </div>
                                 )}
@@ -2984,9 +3015,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                     <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
                         <div>
-                            <p className="text-xs text-gray-500">No. PO / SPK / Proposal</p>
-                            <p className="font-bold text-[#0A385C] text-sm break-all">{job.no_po || '—'}</p>
-                            {job.tgl_po && <p className="text-[11px] text-gray-400">Tgl: {fmt(job.tgl_po, { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+                            <p className="text-xs text-gray-500">{isINS ? 'Kode Pekerjaan' : 'No. PO / SPK / Proposal'}</p>
+                            <p className="font-bold text-[#0A385C] text-sm break-all">{isINS ? job.kode : (job.no_po || '—')}</p>
+                            {(!isINS && job.tgl_po) && <p className="text-[11px] text-gray-400">Tgl: {fmt(job.tgl_po, { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
                         </div>
                         <div>
                             <p className="text-xs text-gray-500">Marketing</p>

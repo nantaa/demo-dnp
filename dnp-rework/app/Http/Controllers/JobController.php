@@ -1179,7 +1179,8 @@ class JobController extends Controller
         $isPoDoc = (
             stripos($document->type ?? '', 'PO') !== false ||
             stripos($document->name ?? '', 'PO') !== false ||
-            stripos($document->type ?? '', 'SPK') !== false
+            stripos($document->type ?? '', 'SPK') !== false ||
+            stripos($document->name ?? '', 'SPK') !== false
         );
 
         if ($isIns && $isPoDoc) {
@@ -1418,8 +1419,21 @@ class JobController extends Controller
             ? 'superadmin'
             : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
-        $query = Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])
-                   ->orderBy('created_at', 'desc');
+        $isIns = $user && in_array($user->role, ['inspektur', 'inspector']);
+        $query = Job::with([
+            'inspectors',
+            'reportWriter',
+            'documents' => function($q) use ($isIns) {
+                if ($isIns) {
+                    $q->where('type', 'NOT LIKE', '%PO%')
+                      ->where('type', 'NOT LIKE', '%SPK%')
+                      ->where('name', 'NOT LIKE', '%PO%')
+                      ->where('name', 'NOT LIKE', '%SPK%');
+                }
+            },
+            'unitsTracking',
+            'historyLogs.user'
+        ])->orderBy('created_at', 'desc');
 
         if ($user->role === 'marketing' && !$user->isSuperadmin()) {
             $query->where('owner_marketing', $user->name);

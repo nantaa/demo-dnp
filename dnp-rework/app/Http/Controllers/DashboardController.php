@@ -15,7 +15,21 @@ class DashboardController extends Controller
             ? 'superadmin' 
             : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
-        $query = Job::with(['inspectors', 'reportWriter', 'documents', 'unitsTracking', 'historyLogs.user'])->orderBy('updated_at', 'desc');
+        $isIns = $user && in_array($user->role, ['inspektur', 'inspector']);
+        $query = Job::with([
+            'inspectors',
+            'reportWriter',
+            'documents' => function($q) use ($isIns) {
+                if ($isIns) {
+                    $q->where('type', 'NOT LIKE', '%PO%')
+                      ->where('type', 'NOT LIKE', '%SPK%')
+                      ->where('name', 'NOT LIKE', '%PO%')
+                      ->where('name', 'NOT LIKE', '%SPK%');
+                }
+            },
+            'unitsTracking',
+            'historyLogs.user'
+        ])->orderBy('updated_at', 'desc');
 
         if ($user->role === 'marketing' && !$user->isSuperadmin()) {
             $query->where('owner_marketing', $user->name);

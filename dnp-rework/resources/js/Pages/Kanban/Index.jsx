@@ -9,6 +9,7 @@ import { Trash2, Plus } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
+    const isINS = ['inspektur', 'inspector'].includes(auth?.user?.role);
     const [selectedJob, setSelectedJob] = useState(null);
 
     // Live background polling sync to keep Kanban updated across all active users
@@ -135,9 +136,9 @@ export default function KanbanIndex({ jobs, auth }) {
                                     <div className="flex justify-between items-start mb-2">
                                         <span 
                                             className="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200 truncate max-w-[170px]"
-                                            title={`No PO / SPK: ${job.no_po || '-'} | ID Sistem: ${job.kode}`}
+                                            title={(!isINS && job.no_po) ? `No PO / SPK: ${job.no_po} | ID Sistem: ${job.kode}` : `ID Sistem: ${job.kode}`}
                                         >
-                                            {job.no_po ? `PO: ${job.no_po}` : job.kode}
+                                            {(!isINS && job.no_po) ? `PO: ${job.no_po}` : job.kode}
                                         </span>
                                         {job.units > 1 && (
                                             <span className="text-[10px] font-extrabold px-2 py-0.5 bg-[#E0F2FE] text-[#0A385C] rounded-full border border-[#00A8E8]/30">

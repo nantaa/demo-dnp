@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCheck, Clock, ExternalLink, X } from 'lucide-react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { showToast } from '@/swal';
 
 export default function NotificationBell({ onSelectJob }) {
+    const { auth } = usePage().props;
+    const isINS = ['inspektur', 'inspector'].includes(auth?.user?.role);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
@@ -166,7 +168,7 @@ export default function NotificationBell({ onSelectJob }) {
                                         <p className="text-gray-600 line-clamp-2 leading-tight text-[11px]">{notif.body}</p>
                                         {notif.job && (
                                             <div className="mt-1 flex items-center gap-1 text-[10px] text-gray-400">
-                                                <ExternalLink size={10} /> <span className="font-semibold text-gray-600">{notif.job.no_po || notif.job.kode}</span> · {notif.job.klien}
+                                                <ExternalLink size={10} /> <span className="font-semibold text-gray-600">{(!isINS && notif.job.no_po) ? notif.job.no_po : notif.job.kode}</span> · {notif.job.klien}
                                             </div>
                                         )}
                                     </div>

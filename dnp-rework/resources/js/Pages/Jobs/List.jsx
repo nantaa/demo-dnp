@@ -9,6 +9,7 @@ import { Trash2 } from 'lucide-react';
 export default function JobList({ jobs, auth }) {
     const { permissions } = auth;
     const isSuperadmin = auth.user.role === 'superadmin' || permissions === 'superadmin';
+    const isINS = ['inspektur', 'inspector'].includes(auth?.user?.role);
     const queryParams = new URLSearchParams(window.location.search);
     const [searchTerm, setSearchTerm] = useState(queryParams.get('search') || '');
     const [selectedJob, setSelectedJob] = useState(null);
@@ -213,9 +214,9 @@ export default function JobList({ jobs, auth }) {
                             <div className="flex items-start justify-between mb-1.5">
                                 <span 
                                     className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded text-[#0A385C] border border-slate-200 truncate max-w-[180px]"
-                                    title={`No PO / SPK: ${job.no_po || '-'} | ID Sistem: ${job.kode}`}
+                                    title={(!isINS && job.no_po) ? `No PO / SPK: ${job.no_po} | ID Sistem: ${job.kode}` : `ID Sistem: ${job.kode}`}
                                 >
-                                    {job.no_po ? `PO: ${job.no_po}` : job.kode}
+                                    {(!isINS && job.no_po) ? `PO: ${job.no_po}` : job.kode}
                                 </span>
                                 <div className="flex items-center gap-1.5">
                                     {getSlaBadge(job)}
@@ -268,8 +269,8 @@ export default function JobList({ jobs, auth }) {
                                     className="hover:bg-gray-50 cursor-pointer"
                                 >
                                     <td className="px-4 py-3">
-                                        <div className="font-bold text-xs text-[#0A385C]">{job.no_po || '—'}</div>
-                                        <div className="font-mono text-[10px] text-gray-400" title="ID Sistem Otomatis">{job.kode}</div>
+                                        <div className="font-bold text-xs text-[#0A385C]">{(!isINS && job.no_po) ? job.no_po : job.kode}</div>
+                                        {(!isINS || !job.no_po) && <div className="font-mono text-[10px] text-gray-400" title="ID Sistem Otomatis">{job.kode}</div>}
                                     </td>
                                     <td className="px-4 py-3 font-bold">{job.klien}</td>
                                     <td className="px-4 py-3 text-gray-600">{job.pesawat} ({job.units} unit)</td>

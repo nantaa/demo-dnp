@@ -17,12 +17,17 @@ describe('INS PO/SPK Total Lock in Docs & Logs Test Suite', () => {
 
     describe('1. Documents Tab (renderDocuments) PO/SPK Lockdown for INS', () => {
         it('renderDocuments must filter or lock PO/SPK documents when isINS is true', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-
-            const renderDocsSection = detailContent.slice(
-                detailContent.indexOf('const renderDocuments = () =>'),
-                detailContent.indexOf('const renderHistory = () =>')
-            );
+            const docsTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/DocumentsTab.jsx');
+            let renderDocsSection = '';
+            if (fs.existsSync(docsTabPath)) {
+                renderDocsSection = fs.readFileSync(docsTabPath, 'utf8');
+            } else {
+                const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+                renderDocsSection = detailContent.slice(
+                    detailContent.indexOf('const renderDocuments = () =>'),
+                    detailContent.indexOf('const renderHistory = () =>')
+                );
+            }
 
             assert.ok(
                 renderDocsSection.includes('isPoLockedForIns') || renderDocsSection.includes('isINS'),
@@ -33,12 +38,17 @@ describe('INS PO/SPK Total Lock in Docs & Logs Test Suite', () => {
 
     describe('2. Riwayat / History Log Tab (renderHistory) PO/SPK Masking for INS', () => {
         it('renderHistory must sanitize or mask PO/SPK references and revision logs for INS', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-
-            const renderHistorySection = detailContent.slice(
-                detailContent.indexOf('const renderHistory = () =>'),
-                detailContent.indexOf('const renderEditInfo = () =>')
-            );
+            const historyTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/HistoryTab.jsx');
+            let renderHistorySection = '';
+            if (fs.existsSync(historyTabPath)) {
+                renderHistorySection = fs.readFileSync(historyTabPath, 'utf8');
+            } else {
+                const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+                renderHistorySection = detailContent.slice(
+                    detailContent.indexOf('const renderHistory = () =>'),
+                    detailContent.indexOf('const renderEditInfo = () =>')
+                );
+            }
 
             assert.ok(
                 renderHistorySection.includes('isINS'),
@@ -65,13 +75,17 @@ describe('INS PO/SPK Total Lock in Docs & Logs Test Suite', () => {
 
     describe('4. Stage 2 Verification Checklist (Active & Timeline) PO/SPK Lockdown for INS', () => {
         it('Active Stage 2 form must lock PO/SPK documents and row 01 for INS', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-
-            // Find Stage 2 active form block
-            const stage2ActiveBlock = detailContent.slice(
-                detailContent.indexOf('{/* ── STAGE 2 ─────────────────────────────────── */}'),
-                detailContent.indexOf('{/* ── STAGE 3 ─────────────────────────────────── */}')
-            );
+            const s2ActionPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/StageActions/Stage2Action.jsx');
+            let stage2ActiveBlock = '';
+            if (fs.existsSync(s2ActionPath)) {
+                stage2ActiveBlock = fs.readFileSync(s2ActionPath, 'utf8');
+            } else {
+                const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+                stage2ActiveBlock = detailContent.slice(
+                    detailContent.indexOf('{/* ── STAGE 2 ─────────────────────────────────── */}'),
+                    detailContent.indexOf('{/* ── STAGE 3 ─────────────────────────────────── */}')
+                );
+            }
 
             assert.ok(
                 stage2ActiveBlock.includes("isINS && item.type === 'PO/SPK'") ||
@@ -85,13 +99,18 @@ describe('INS PO/SPK Total Lock in Docs & Logs Test Suite', () => {
         });
 
         it('Timeline Stage 2 summary must lock PO/SPK documents and row 01 for INS', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-
-            const s2Index = detailContent.indexOf("Hasil Verifikasi Dokumen (Stage 2):");
-            const stage2TimelineBlock = detailContent.slice(
-                s2Index,
-                s2Index + 2500
-            );
+            const timelineTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/TimelineTab.jsx');
+            let stage2TimelineBlock = '';
+            if (fs.existsSync(timelineTabPath)) {
+                stage2TimelineBlock = fs.readFileSync(timelineTabPath, 'utf8');
+            } else {
+                const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+                const s2Index = detailContent.indexOf("Hasil Verifikasi Dokumen (Stage 2):");
+                stage2TimelineBlock = detailContent.slice(
+                    s2Index,
+                    s2Index + 2500
+                );
+            }
 
             assert.ok(
                 stage2TimelineBlock.includes("isINS && item.type === 'PO/SPK'") ||
@@ -107,12 +126,17 @@ describe('INS PO/SPK Total Lock in Docs & Logs Test Suite', () => {
 
     describe('5. Stage 1 Summary and Detail Pekerjaan PO Masking for INS', () => {
         it('Stage 1 summary must mask No. PO for INS', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-
-            const stage1Summary = detailContent.slice(
-                detailContent.indexOf('Ringkasan Order Masuk:'),
-                detailContent.indexOf('if (s === 3)')
-            );
+            const timelineTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/TimelineTab.jsx');
+            let stage1Summary = '';
+            if (fs.existsSync(timelineTabPath)) {
+                stage1Summary = fs.readFileSync(timelineTabPath, 'utf8');
+            } else {
+                const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+                stage1Summary = detailContent.slice(
+                    detailContent.indexOf('Ringkasan Order Masuk:'),
+                    detailContent.indexOf('if (s === 3)')
+                );
+            }
 
             assert.ok(
                 stage1Summary.includes("isINS ? '[Terkunci]' :"),
@@ -121,13 +145,18 @@ describe('INS PO/SPK Total Lock in Docs & Logs Test Suite', () => {
         });
 
         it('Informasi Pekerjaan box must mask No. PO for INS', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-
-            const infoIndex = detailContent.indexOf('Informasi Pekerjaan');
-            const infoBox = detailContent.slice(
-                infoIndex,
-                infoIndex + 1200
-            );
+            const editInfoTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/EditInfoTab.jsx');
+            let infoBox = '';
+            if (fs.existsSync(editInfoTabPath)) {
+                infoBox = fs.readFileSync(editInfoTabPath, 'utf8');
+            } else {
+                const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+                const infoIndex = detailContent.indexOf('Informasi Pekerjaan');
+                infoBox = detailContent.slice(
+                    infoIndex,
+                    infoIndex + 1200
+                );
+            }
 
             assert.ok(
                 infoBox.includes('isINS'),

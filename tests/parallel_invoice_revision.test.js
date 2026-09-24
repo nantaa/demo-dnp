@@ -21,7 +21,11 @@ describe('Parallel Invoice Revision Test Suite', () => {
 
     it('3. JobDetailSheet.jsx revision modal supports file uploads and FormData submission', () => {
         const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
-        const content = fs.readFileSync(sheetPath, 'utf8');
+        const reviseInvoiceModalPath = path.resolve('dnp-rework/resources/js/Components/JobDetail/Modals/ReviseInvoiceModal.jsx');
+        let content = fs.readFileSync(sheetPath, 'utf8');
+        if (fs.existsSync(reviseInvoiceModalPath)) {
+            content += '\n' + fs.readFileSync(reviseInvoiceModalPath, 'utf8');
+        }
         assert.match(content, /id="revise-invoice-file"/);
         assert.match(content, /id="revise-faktur-file"/);
     });
@@ -36,7 +40,11 @@ describe('Parallel Invoice Revision Test Suite', () => {
 
     it('5. JobDetailSheet.jsx calculates backward DPP and PPN 12% in revision modal without multiplying twice', () => {
         const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
-        const content = fs.readFileSync(sheetPath, 'utf8');
+        const revisePoModalPath = path.resolve('dnp-rework/resources/js/Components/JobDetail/Modals/RevisePoModal.jsx');
+        let content = fs.readFileSync(sheetPath, 'utf8');
+        if (fs.existsSync(revisePoModalPath)) {
+            content += '\n' + fs.readFileSync(revisePoModalPath, 'utf8');
+        }
         assert.match(content, /total\s*\/\s*1\.12/);
         assert.match(content, /DPP \(Sebelum PPN\):/);
     });

@@ -42,8 +42,28 @@ export default function JobDetailSheet({ job, auth, onClose, onUpdated, canManag
     const uploadContextRef = useRef({ stageId: null, type: null });
 
     // Primary workflow form state
+    const getNextStageId = (currentStageId) => {
+        currentStageId = Number(currentStageId);
+        if (currentStageId === 4) return 5;
+        if (currentStageId === 13) return 5;
+        if (currentStageId === 10) return 11;
+        if (currentStageId === 11) return 14;
+        if (currentStageId === 14) return 15;
+        if (currentStageId === 15) return 12;
+        if (currentStageId === 12) return 16;
+        const currIdx = STAGES.findIndex(s => s.id === currentStageId);
+        if (currIdx !== -1 && currIdx < STAGES.length - 1) {
+            let next = STAGES[currIdx + 1];
+            if (next.id === 13) {
+                next = STAGES[currIdx + 2];
+            }
+            return next ? next.id : currentStageId + 1;
+        }
+        return currentStageId + 1;
+    };
+
     const { data, setData, post, processing } = useForm({
-        next_stage: job.stage + 1,
+        next_stage: getNextStageId(job.stage),
         notes: '',
         jam_mulai: job.jam_mulai || '',
         disnaker_tujuan: job.disnaker_tujuan || '',
@@ -443,17 +463,29 @@ export default function JobDetailSheet({ job, auth, onClose, onUpdated, canManag
 
     const handleRejectStage = async () => {
         const curStage = Number(job.stage);
-        let targetStageName = 'Stage Sebelumnya';
+        let targetStage = Math.max(1, curStage - 1);
+        if (curStage === 13) targetStage = 4;
+        else if (curStage === 5) targetStage = 4;
+        else if (curStage === 7) targetStage = 5;
+        else if (curStage === 8) targetStage = 6;
+        else if (curStage === 10) targetStage = 9;
+        else if (curStage === 11) targetStage = 10;
+        else if (curStage === 14) targetStage = 11;
+        else if (curStage === 15) targetStage = 14;
+        else if (curStage === 12) targetStage = 15;
+
+        let targetStageName = `Stage ${targetStage}`;
         if (curStage === 2) targetStageName = 'Stage 1 (Order Masuk / Marketing)';
         if (curStage === 6) targetStageName = 'Stage 5 (Penyusunan LHPP / Tim Ahli)';
         if (curStage === 14) targetStageName = 'Stage 11 (Penagihan / Marketing)';
-        if (curStage === 15) targetStageName = 'Stage 14 (Verifikasi Bayar / Finance)';
-        if (curStage === 12) targetStageName = 'Stage 15 (Pengiriman SUKET / Marketing)';
+        if (curStage === 15) targetStageName = 'Stage 11b (Verifikasi Bayar / Finance)';
+        if (curStage === 12) targetStageName = 'Stage 11c (Pengiriman SUKET / Marketing)';
 
         const { value: notes, isConfirmed } = await Swal.fire({
             title: 'Kembalikan Pekerjaan?',
             text: `Pekerjaan akan dikembalikan ke ${targetStageName}. Mohon berikan catatan alasan penolakan/pengembalian:`,
             input: 'textarea',
+            inputValue: data.notes || '',
             inputPlaceholder: 'Tuliskan catatan revisi atau alasan pengembalian di sini...',
             inputAttributes: { 'aria-label': 'Catatan pengembalian' },
             showCancelButton: true,
@@ -469,7 +501,7 @@ export default function JobDetailSheet({ job, auth, onClose, onUpdated, canManag
         });
 
         if (isConfirmed && notes) {
-            router.post(`/jobs/${job.id}/reject`, { notes }, {
+            router.post(`/jobs/${job.id}/reject`, { notes, target_stage: targetStage }, {
                 onSuccess: () => {
                     showSuccess('Berhasil', 'Pekerjaan berhasil dikembalikan.');
                     onClose();
@@ -602,11 +634,12 @@ export default function JobDetailSheet({ job, auth, onClose, onUpdated, canManag
                     <div>
                         <label class="block font-bold text-gray-700 mb-1">Target Stage Pemulihan:</label>
                         <select id="swal-target-stage" class="w-full border rounded p-1.5 text-xs bg-white">
-                            <option value="10">Stage 10 - Invoice (Finance)</option>
-                            <option value="11">Stage 11 - Follow-up Penagihan (Marketing)</option>
-                            <option value="14">Stage 11b - Verifikasi Pembayaran (Finance)</option>
-                            <option value="15">Stage 11c - Kirim SUKET ke Klien (Marketing)</option>
-                            <option value="12">Stage 12 - Final Financial Closing (Finance)</option>
+                            <option value="12">Stage 12: Final Financial Closing (Finance)</option>
+                            <option value="15">Stage 11c: Kirim SUKET ke Klien (Marketing)</option>
+                            <option value="14">Stage 11b: Verifikasi Bayar & PPh (Finance)</option>
+                            <option value="11">Stage 11: Penagihan / Follow-up (Marketing)</option>
+                            <option value="10">Stage 10: Invoice & Kwitansi (Finance)</option>
+                            <option value="9">Stage 9: Pengurusan Suket (Admin)</option>
                         </select>
                     </div>
                     <div>
@@ -984,6 +1017,7 @@ export default function JobDetailSheet({ job, auth, onClose, onUpdated, canManag
                             canManage={canManage}
                             canSeeNilai={canSeeNilai}
                             showTgl15Warning={showTgl15Warning}
+                            isINS={isINS}
                         />
                     )}
                 </div>

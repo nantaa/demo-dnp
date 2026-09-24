@@ -26,7 +26,16 @@ describe('Stage 16 Superadmin Special Privilege Test Suite', () => {
     // ── 2. JobDetailSheet.jsx Authorization & PIC Badge ─────────────────────────
     describe('2. JobDetailSheet.jsx Permission & PIC Rendering', () => {
         const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
-        const sheetContent = fs.readFileSync(sheetPath, 'utf8');
+        let sheetContent = fs.readFileSync(sheetPath, 'utf8');
+        const detailDir = path.resolve('dnp-rework/resources/js/Components/JobDetail');
+        if (fs.existsSync(detailDir)) {
+            for (const file of fs.readdirSync(detailDir, { recursive: true })) {
+                const full = path.join(detailDir, file);
+                if (fs.statSync(full).isFile() && (file.endsWith('.jsx') || file.endsWith('.js'))) {
+                    sheetContent += '\n' + fs.readFileSync(full, 'utf8');
+                }
+            }
+        }
 
         test('canManage restricts finance to [10, 12, 14] excluding 16', () => {
             assert.match(sheetContent, /user\?\.role\s*===\s*'finance'\s*&&\s*\[10,\s*12,\s*14\]\.includes\(curStage\)/,

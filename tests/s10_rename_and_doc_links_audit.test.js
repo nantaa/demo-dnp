@@ -19,7 +19,11 @@ describe('S10 Rename & Document Links Audit Test Suite', () => {
 
     it('3. JobDetailSheet.jsx Stage 10 labels use "Invoice & Faktur" or "Pembuatan Invoice"', () => {
         const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
-        const content = fs.readFileSync(sheetPath, 'utf8');
+        let content = fs.readFileSync(sheetPath, 'utf8');
+        const s10Path = path.resolve('dnp-rework/resources/js/Components/JobDetail/StageActions/Stage10Action.jsx');
+        if (fs.existsSync(s10Path)) {
+            content += '\n' + fs.readFileSync(s10Path, 'utf8');
+        }
         assert.match(content, /STAGE 10 \(Pembuatan Invoice/);
         assert.match(content, /Simpan Data Invoice & Faktur/);
     });

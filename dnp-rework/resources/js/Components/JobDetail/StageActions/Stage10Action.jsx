@@ -31,6 +31,7 @@ export default function Stage10Action({
 
     return (
         <div className="space-y-3">
+            {/* ── STAGE 10 (Pembuatan Invoice — Finance) ──────────── */}
             {showTgl15Warning && (
                 <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded px-3 py-2">
                     <strong>Peringatan Tanggal 15:</strong> Sudah melewati batas tanggal 15 bulan berjalan. Perubahan data nilai invoice dan faktur pajak berisiko terhadap pelaporan pajak.

@@ -34,7 +34,11 @@ describe('8 Production Feedback & Stability Improvements Test Suite', () => {
     });
 
     it('JobDetailSheet.jsx links to /file/{filename} to give Chrome/Edge tab the actual filename', () => {
-      const content = fs.readFileSync(jobDetailSheetPath, 'utf8');
+      let content = fs.readFileSync(jobDetailSheetPath, 'utf8');
+      const helpersPath = path.join(rootDir, 'dnp-rework/resources/js/Components/JobDetail/helpers.js');
+      if (fs.existsSync(helpersPath)) {
+        content += '\n' + fs.readFileSync(helpersPath, 'utf8');
+      }
       assert.ok(
         content.includes('/file/') || content.includes('/download/'),
         'JobDetailSheet must build file URLs with document name'

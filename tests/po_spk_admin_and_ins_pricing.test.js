@@ -9,6 +9,19 @@ const __dirname = path.dirname(__filename);
 
 const constantsPath = path.resolve(__dirname, '../dnp-rework/resources/js/Constants.js');
 const detailSheetPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetailSheet.jsx');
+const timelineTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/TimelineTab.jsx');
+const editInfoTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/EditInfoTab.jsx');
+
+const getDetailContent = () => {
+    let content = fs.readFileSync(detailSheetPath, 'utf8');
+    if (fs.existsSync(timelineTabPath)) {
+        content += '\n' + fs.readFileSync(timelineTabPath, 'utf8');
+    }
+    if (fs.existsSync(editInfoTabPath)) {
+        content += '\n' + fs.readFileSync(editInfoTabPath, 'utf8');
+    }
+    return content;
+};
 
 describe('PO/SPK Admin Visibility & INS Pricing PO Gating Test Suite', () => {
     describe('1. Constants.js STAGE2_VERIFY_CHECKLIST PO/SPK definition', () => {
@@ -28,7 +41,7 @@ describe('PO/SPK Admin Visibility & INS Pricing PO Gating Test Suite', () => {
 
     describe('2. JobDetailSheet.jsx Stage 1 Summary Pricing Gating (canSeeNilai)', () => {
         it('Stage 1 completed summary (s === 1) must gate Nilai Kontrak with canSeeNilai', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+            const detailContent = getDetailContent();
             
             // Look for renderCompletedStageSummary when s === 1 until s === 3
             const stage1SummaryMatch = detailContent.match(/if\s*\(\s*s\s*===\s*1\s*\)\s*\{([\s\S]*?)if\s*\(\s*s\s*===\s*3\s*\)/);
@@ -40,7 +53,7 @@ describe('PO/SPK Admin Visibility & INS Pricing PO Gating Test Suite', () => {
         });
 
         it('Stage 10 completed summary (s === 10) must gate Total Invoice with canSeeNilai', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+            const detailContent = getDetailContent();
             
             // Look for renderCompletedStageSummary when s === 10 until s === 11
             const stage10SummaryMatch = detailContent.match(/if\s*\(\s*s\s*===\s*10\s*\)\s*\{([\s\S]*?)if\s*\(\s*s\s*===\s*11\s*\)/);
@@ -54,7 +67,7 @@ describe('PO/SPK Admin Visibility & INS Pricing PO Gating Test Suite', () => {
 
     describe('3. JobDetailSheet.jsx Stage 2 Timeline Checklist File Download Link', () => {
         it('Stage 2 timeline checklist renders clickable download links when hasFile is true', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+            const detailContent = getDetailContent();
             
             // In the timeline checklist rendering, hasFile must render an <a> link, not just a static span
             // We search in the s2Verify / timeline checklist loop area

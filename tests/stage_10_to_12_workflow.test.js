@@ -80,7 +80,16 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
     // ── 2. Frontend Stage Transitions & Buttons ──────────────────────────────
     describe('2. Frontend Transitions & Button Labels in JobDetailSheet.jsx', () => {
         const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
-        const sheetContent = fs.readFileSync(sheetPath, 'utf8');
+        let sheetContent = fs.readFileSync(sheetPath, 'utf8');
+        const detailDir = path.resolve('dnp-rework/resources/js/Components/JobDetail');
+        if (fs.existsSync(detailDir)) {
+            for (const file of fs.readdirSync(detailDir, { recursive: true })) {
+                const full = path.join(detailDir, file);
+                if (fs.statSync(full).isFile() && (file.endsWith('.jsx') || file.endsWith('.js'))) {
+                    sheetContent += '\n' + fs.readFileSync(full, 'utf8');
+                }
+            }
+        }
 
         test('getNextStageId transitions sequentially 10 -> 11 -> 14 -> 15 -> 12', () => {
             assert.match(sheetContent, /if\s*\(currentStageId\s*===\s*10\)\s*return\s*11;/);

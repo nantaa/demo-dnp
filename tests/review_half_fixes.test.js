@@ -74,7 +74,11 @@ describe('REVIEW HALF.pdf Fixes & Enhancements Test Suite', () => {
         });
 
         it('JobDetailSheet.jsx DocChip has download attribute on link', () => {
-            const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+            let detailContent = fs.readFileSync(detailSheetPath, 'utf8');
+            const docChipPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Common/DocChip.jsx');
+            if (fs.existsSync(docChipPath)) {
+                detailContent += '\n' + fs.readFileSync(docChipPath, 'utf8');
+            }
             assert.ok(
                 detailContent.includes('download={doc.name') || detailContent.includes('download='),
                 'DocChip must have download attribute to guarantee original filename on browser save'
@@ -130,12 +134,21 @@ describe('REVIEW HALF.pdf Fixes & Enhancements Test Suite', () => {
     describe('6. Tanggal 15 Closing Warning on Edit Info & Create (Item 13)', () => {
         it('JobDetailSheet.jsx displays showTgl15Warning in renderEditInfo when editing nilai', () => {
             const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
-            const editInfoMatch = detailContent.match(/renderEditInfo\s*=\s*\(\)\s*=>\s*\([\s\S]*?handleDeleteJob/);
-            assert.ok(editInfoMatch, 'renderEditInfo must exist');
-            assert.ok(
-                editInfoMatch[0].includes('showTgl15Warning') || editInfoMatch[0].includes('isPastTgl15'),
-                'renderEditInfo must include tanggal 15 warning for financial editing'
-            );
+            const editInfoTabPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/Tabs/EditInfoTab.jsx');
+            if (fs.existsSync(editInfoTabPath)) {
+                const editInfoContent = fs.readFileSync(editInfoTabPath, 'utf8');
+                assert.ok(
+                    editInfoContent.includes('showTgl15Warning') || editInfoContent.includes('isPastTgl15'),
+                    'EditInfoTab must include tanggal 15 warning for financial editing'
+                );
+            } else {
+                const editInfoMatch = detailContent.match(/renderEditInfo\s*=\s*\(\)\s*=>\s*\([\s\S]*?handleDeleteJob/);
+                assert.ok(editInfoMatch, 'renderEditInfo must exist');
+                assert.ok(
+                    editInfoMatch[0].includes('showTgl15Warning') || editInfoMatch[0].includes('isPastTgl15'),
+                    'renderEditInfo must include tanggal 15 warning for financial editing'
+                );
+            }
         });
     });
 });

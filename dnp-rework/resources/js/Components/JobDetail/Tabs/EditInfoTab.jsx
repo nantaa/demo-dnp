@@ -10,7 +10,8 @@ export default function EditInfoTab({
     handleUpdateJob,
     canManage,
     canSeeNilai,
-    showTgl15Warning
+    showTgl15Warning,
+    isINS
 }) {
     return (
         <div className="space-y-4">
@@ -106,8 +107,8 @@ export default function EditInfoTab({
                         )}
                     </div>
                     <div className="grid grid-cols-2 gap-y-2 text-sm">
-                        <div className="text-gray-500">No. PO/SPK:</div>
-                        <div className="font-medium text-gray-800">{job.no_po || '-'}</div>
+                        <div className="text-gray-500">{isINS ? 'Kode Pekerjaan:' : 'No. PO/SPK:'}</div>
+                        <div className="font-medium text-gray-800">{isINS ? (job.kode || '[Terkunci]') : (job.no_po || '-')}</div>
 
                         <div className="text-gray-500">Tanggal PO:</div>
                         <div className="font-medium text-gray-800">{formatDate(job.tgl_po)}</div>

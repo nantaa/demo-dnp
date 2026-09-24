@@ -38,7 +38,10 @@ describe('Stage 2 Admin Document Verification for Dokumen Tambahan', () => {
 
     it('4. JobDetailSheet.jsx renders STAGE2_VERIFY_CHECKLIST with document download/upload and verification actions', () => {
         const content = fs.readFileSync(detailSheetPath, 'utf8');
-        assert.ok(content.includes('STAGE2_VERIFY_CHECKLIST.map'), 'JobDetailSheet must map over STAGE2_VERIFY_CHECKLIST');
+        const s2ActionPath = path.resolve(__dirname, '../dnp-rework/resources/js/Components/JobDetail/StageActions/Stage2Action.jsx');
+        const s2Content = fs.existsSync(s2ActionPath) ? fs.readFileSync(s2ActionPath, 'utf8') : '';
+        const combined = content + '\n' + s2Content;
+        assert.ok(combined.includes('STAGE2_VERIFY_CHECKLIST.map'), 'JobDetailSheet or modular Stage2Action must map over STAGE2_VERIFY_CHECKLIST');
         assert.ok(content.includes('s2-verify'), 'JobDetailSheet must post verification data to s2-verify');
     });
 });

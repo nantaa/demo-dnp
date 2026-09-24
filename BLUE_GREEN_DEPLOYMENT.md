@@ -38,11 +38,11 @@ git pull origin main
 ./deploy.sh main
 ```
 
-### B. Beralih ke Versi Lain (contoh: `refactorized`):
+### B. Deploy Versi Modular Refactor (`main-refactor`):
 ```bash
 cd /var/www/demo-dnp/demo-dnp
-git pull origin refactorized
-./deploy.sh refactorized
+git pull origin main-refactor
+./deploy.sh main-refactor
 ```
 
 ---

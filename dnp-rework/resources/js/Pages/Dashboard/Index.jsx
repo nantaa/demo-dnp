@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { STAGES, getStageDisplayId } from '@/Constants';
 import JobDetailSheet from '@/Components/JobDetailSheet';
+import PersonnelSlaMonitoring from '@/Components/Dashboard/PersonnelSlaMonitoring';
 import { showSuccess } from '@/swal';
 import { 
     Activity, Plus, CheckCircle2, Bell, FileCheck, Calendar, AlertTriangle, 
@@ -315,6 +316,11 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                     </div>
                     <MgrDashboard stats={stats} onSelectJob={setSelectedJob} />
                 </div>
+            )}
+
+            {/* Personnel SLA & Performance Monitoring */}
+            {(isMGR || isSuper || isADM) && (
+                <PersonnelSlaMonitoring jobs={jobs} onSelectJob={setSelectedJob} />
             )}
 
             {/* Common: Recent Activity */}

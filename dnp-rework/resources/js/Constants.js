@@ -14,6 +14,8 @@ export const STAGES = [
     { id: 14, name: 'Verifikasi Bayar & PPh: Lunas', short: 'Verifikasi Bayar', role: 'finance', sla: 1, displayId: '11b' },
     { id: 15, name: 'Kirim SUKET ke Klien', short: 'Kirim SUKET', role: 'marketing', sla: null, displayId: '11c' },
     { id: 12, name: 'Final Financial Closing', short: 'Closing', role: 'finance', sla: null },
+    // Stage 16: Hidden archival stage — only visible to Superadmin in a separate panel
+    { id: 16, name: 'Selesai', short: 'Selesai', role: 'finance', sla: null, hidden: true, displayId: '✓' },
 ];
 
 export const getStageDisplayId = (stageId) => {
@@ -34,7 +36,7 @@ export const ROLES = {
 // Marketing-only stages (locked for MGR intercept)
 export const MKT_STAGES = [1, 11, 13, 15];
 // Finance-only stages (locked for MGR intercept)
-export const FIN_STAGES = [10, 14, 12];
+export const FIN_STAGES = [10, 14, 12, 16];
 
 // Jenis alat yang di RiksaUji (Task 3)
 export const PESAWAT_TYPES = [
@@ -124,6 +126,7 @@ export const DOC_TYPES_BY_STAGE = {
     15: ['Tanda Terima Suket', 'Bukti Pengiriman / Resi', 'Dokumen Penyerahan'],
     12: ['Dokumen Closing Final', 'Rekap Keuangan'],
     13: [],
+    16: [], // Selesai — no required docs
 };
 
 // Stage 1 docs that gate Stage 2 (at least one required — Task 5)

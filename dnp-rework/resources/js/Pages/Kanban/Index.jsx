@@ -5,12 +5,14 @@ import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Archive, RotateCcw } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
     const isINS = ['inspektur', 'inspector'].includes(auth?.user?.role);
+    const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
     const [selectedJob, setSelectedJob] = useState(null);
+    const [showSelesai, setShowSelesai] = useState(false);
 
     // Live background polling sync to keep Kanban updated across all active users
     useEffect(() => {
@@ -30,9 +32,9 @@ export default function KanbanIndex({ jobs, auth }) {
         if (permissions === 'superadmin') return true;
         if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sId)) return true;
         if (['inspektur', 'inspector'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
-        if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
+        if (auth.user?.role === 'finance' && [10, 12, 14, 16].includes(sId)) return true;
         if (auth.user?.role === 'marketing' && [1, 11, 13, 15].includes(sId)) return true;
-        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14, 15].includes(sId)) return true;
+        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14, 15, 16].includes(sId)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };
@@ -82,7 +84,26 @@ export default function KanbanIndex({ jobs, auth }) {
                             <Plus size={14} /> Job Baru
                         </Link>
                     )}
-                    {(auth.user.role === 'superadmin' || permissions === 'superadmin') && (
+                    {isSuperadmin && (
+                        <button
+                            onClick={() => setShowSelesai(s => !s)}
+                            className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition ${
+                                showSelesai
+                                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            }`}
+                            title="Tampilkan / Sembunyikan arsip job Selesai"
+                        >
+                            <Archive size={14} />
+                            {showSelesai ? 'Sembunyikan Arsip Selesai' : 'Arsip Selesai'}
+                            {showSelesai === false && (
+                                <span className="ml-1 bg-emerald-700 text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">
+                                    {jobs.filter(j => j.stage === 16).length}
+                                </span>
+                            )}
+                        </button>
+                    )}
+                    {isSuperadmin && (
                         <button
                             onClick={handleClearAllJobs}
                             className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs"
@@ -95,7 +116,8 @@ export default function KanbanIndex({ jobs, auth }) {
             </div>
 
             <div className="flex h-full overflow-x-auto space-x-4 pb-4">
-                {STAGES.map((stage) => {
+                {/* Normal stages — exclude the hidden Stage 16 (Selesai) */}
+                {STAGES.filter(stage => !stage.hidden).map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);
                     const columnJobs = jobs.filter(j => {
                         if (j.stage !== stage.id) return false;
@@ -300,6 +322,55 @@ export default function KanbanIndex({ jobs, auth }) {
                     );
                 })}
             </div>
+
+            {/* ===== Selesai (Stage 16) — Hidden Archival Board — Superadmin only ===== */}
+            {isSuperadmin && showSelesai && (() => {
+                const selesaiJobs = jobs.filter(j => j.stage === 16);
+                return (
+                    <div className="mt-6 border-t-2 border-dashed border-emerald-300 pt-5">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Archive size={18} className="text-emerald-700" />
+                            <h2 className="text-base font-extrabold text-emerald-800">
+                                Arsip Selesai — {selesaiJobs.length} Pekerjaan Terarsip
+                            </h2>
+                            <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                Hanya Superadmin yang dapat melihat dan memulihkan job ini
+                            </span>
+                        </div>
+                        {selesaiJobs.length === 0 ? (
+                            <div className="text-sm text-gray-400 italic px-2">Belum ada pekerjaan yang diarsipkan.</div>
+                        ) : (
+                            <div className="flex flex-wrap gap-3">
+                                {selesaiJobs.map(job => (
+                                    <div
+                                        key={job.id}
+                                        onClick={() => setSelectedJob(job)}
+                                        className="bg-white p-3.5 rounded-xl shadow-xs border border-emerald-200 cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all group relative overflow-hidden w-64"
+                                    >
+                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-[11px] font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-emerald-800 border border-emerald-200 truncate max-w-[150px]">
+                                                {job.no_po ? `PO: ${job.no_po}` : job.kode}
+                                            </span>
+                                            <span className="text-[9px] font-extrabold px-2 py-0.5 bg-emerald-700 text-white rounded-full">
+                                                SELESAI
+                                            </span>
+                                        </div>
+                                        <h3 className="font-bold text-sm text-slate-900 leading-tight mb-1">{job.klien}</h3>
+                                        <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
+                                        <div className="mt-2 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-100 pt-2">
+                                            <span className="font-medium">MKT: <strong className="text-slate-600">{job.owner_marketing}</strong></span>
+                                            <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+                                                <RotateCcw size={10} /> Pulihkan
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {selectedJob && (
                 <JobDetailSheet 

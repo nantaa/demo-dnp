@@ -183,6 +183,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
         if (stage === 11) return 'Lanjut ke Stage 11b (Verifikasi Bayar) →';
         if (stage === 14) return 'Lanjut ke Stage 11c (Kirim SUKET) →';
         if (stage === 15) return 'Lanjut ke Stage 12 (Final Closing) →';
+        if (stage === 12) return 'Selesaikan & Arsipkan ke Selesai →';
         const currIdx = STAGES.findIndex(s => s.id === stage);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
             let next = STAGES[currIdx + 1];
@@ -316,6 +317,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (currentStageId === 11) return 14;
         if (currentStageId === 14) return 15;
         if (currentStageId === 15) return 12;
+        if (currentStageId === 12) return 16; // Stage 12 → Stage 16 (Selesai)
         const currIdx = STAGES.findIndex(s => s.id === currentStageId);
         if (currIdx !== -1 && currIdx < STAGES.length - 1) {
             let next = STAGES[currIdx + 1];
@@ -620,7 +622,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (user?.role === 'superadmin' || permissions === 'superadmin') return true;
         if (user?.role === 'admin') return true;
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(curStage)) return true;
-        if (user?.role === 'finance' && [10, 12, 14].includes(curStage)) return true;
+        if (user?.role === 'finance' && [10, 12, 14, 16].includes(curStage)) return true;
         if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
         if (isMGR && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
         if (isInspector || isAssignedInspector) {
@@ -635,7 +637,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const sIdNum = Number(sid);
         if (['superadmin','admin','manager'].includes(user?.role)) return true;
         if (user?.role === 'marketing' && (job.owner_marketing === user?.name || [1, 11, 13, 15].includes(sIdNum))) return true;
-        if (user?.role === 'finance' && [10, 12, 14].includes(sIdNum)) return true;
+        if (user?.role === 'finance' && [10, 12, 14, 16].includes(sIdNum)) return true;
         if (isInspector || isAssignedInspector) return true;
         const p = permissions?.[sIdNum] || permissions?.[sid];
         return p && (p.can_view || p.is_owner);
@@ -647,7 +649,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (['superadmin','manager'].includes(user?.role)) return true;
         if (user?.role === 'admin') return true;
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(sIdNum)) return true;
-        if (user?.role === 'finance' && [10, 12, 14].includes(sIdNum)) return true;
+        if (user?.role === 'finance' && [10, 12, 14, 16].includes(sIdNum)) return true;
         if ((isInspector || isAssignedInspector) && [4, 5].includes(sIdNum) && sIdNum === curStageNum) return true;
         if (isInspector || isAssignedInspector) return false;
         const p = permissions?.[sIdNum] || permissions?.[sid];
@@ -842,25 +844,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const handleReopenJob = async () => {
+        const isFromSelesai = Number(job.stage) === 16;
         const { value: formValues } = await Swal.fire({
-            title: 'Buka Kembali Job',
+            title: isFromSelesai ? 'Pulihkan Job dari Arsip Selesai' : 'Buka Kembali Job',
             html:
                 '<div class="text-left text-xs space-y-2">' +
                 '<label class="block font-bold text-gray-700">Kembalikan ke Stage:</label>' +
                 '<select id="swal-target-stage" class="w-full border rounded p-2 text-sm">' +
+                (isFromSelesai ? '<option value="12">Stage 12: Final Financial Closing (Finance)</option>' : '') +
                 '<option value="15">Stage 11c: Kirim SUKET ke Klien (Marketing)</option>' +
                 '<option value="14">Stage 11b: Verifikasi Bayar & PPh (Finance)</option>' +
                 '<option value="11">Stage 11: Penagihan / Follow-up (Marketing)</option>' +
                 '<option value="10">Stage 10: Invoice & Kwitansi (Finance)</option>' +
+                '<option value="9">Stage 9: Pengurusan Suket (Admin)</option>' +
                 '</select>' +
                 '<label class="block font-bold text-gray-700 mt-2">Alasan Pembukaan Kembali *:</label>' +
                 '<textarea id="swal-reopen-notes" class="w-full border rounded p-2 text-sm" placeholder="Tuliskan alasan lengkap pembukaan kembali..." rows="2"></textarea>' +
                 '</div>',
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: 'Buka Kembali Job',
+            confirmButtonText: isFromSelesai ? 'Pulihkan Job' : 'Buka Kembali Job',
             cancelButtonText: 'Batal',
-            confirmButtonColor: '#d97706',
+            confirmButtonColor: isFromSelesai ? '#059669' : '#d97706',
             preConfirm: () => {
                 const targetStage = document.getElementById('swal-target-stage').value;
                 const notes = document.getElementById('swal-reopen-notes').value;
@@ -876,7 +881,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
         router.post(`/jobs/${job.id}/reopen`, formValues, {
             onSuccess: () => {
-                showSuccess('Berhasil', `Job berhasil dibuka kembali ke Stage ${formValues.target_stage}.`);
+                showSuccess('Berhasil', isFromSelesai
+                    ? `Job berhasil dipulihkan ke Stage ${formValues.target_stage}.`
+                    : `Job berhasil dibuka kembali ke Stage ${formValues.target_stage}.`);
                 onClose();
             },
             onError: (errs) => {
@@ -2419,20 +2426,40 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     </div>
                 )}
 
-                {/* ── STAGE 12 (Final Financial Closing — FIN) ────────── */}
+                {/* STAGE 12 (Final Financial Closing - FIN) */}
                 {s === 12 && (
                     <div className="space-y-4">
                         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
-                            <h4 className="text-base font-bold text-emerald-900 mt-2">Stage 12 — Final Financial Closing (Closed)</h4>
+                            <h4 className="text-base font-bold text-emerald-900 mt-2">Stage 12 - Final Financial Closing (Closed)</h4>
                             <p className="text-xs text-emerald-700 mt-1 max-w-md mx-auto">
                                 Seluruh proses sertifikasi, penagihan, verifikasi pelunasan pembayaran, dan penyerahan SUKET ke klien telah selesai dan terverifikasi.
                             </p>
                         </div>
 
-                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Rekap & Closing Final (Opsional):</p>
+                        <p className="text-xs font-semibold text-gray-700 mt-3 mb-1">Dokumen Rekap &amp; Closing Final (Opsional):</p>
                         {(DOC_TYPES_BY_STAGE[12] || []).map(t => (
                             <UploadSlot key={t} type={t} stageId={12} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isOptional={true} isINS={isINS} />
                         ))}
+
+                        {(user?.role === 'finance' || user?.role === 'superadmin' || permissions === 'superadmin') && (
+                            <div className="bg-teal-50 border border-teal-300 rounded-lg p-3.5 space-y-2 mt-4">
+                                <div className="flex items-center gap-2 text-xs font-bold text-teal-900">
+                                    Selesaikan dan Arsipkan Pekerjaan
+                                </div>
+                                <p className="text-[11px] text-teal-800">
+                                    Setelah semua dokumen closing selesai, klik tombol di bawah untuk mengarsipkan pekerjaan ini ke status Selesai. Job akan disembunyikan dari Kanban dan hanya bisa dipulihkan oleh Superadmin.
+                                </p>
+                                <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    onClick={() => setData('next_stage', 16)}
+                                    className="px-3.5 py-2 rounded text-xs font-bold bg-teal-700 hover:bg-teal-800 text-white shadow-xs transition flex items-center gap-1.5"
+                                >
+                                    {processing ? '...' : 'Selesaikan dan Arsipkan Pekerjaan'}
+                                </button>
+                            </div>
+                        )}
 
                         {(user?.role === 'superadmin' || permissions === 'superadmin') && (
                             <div className="bg-amber-50 border border-amber-300 rounded-lg p-3.5 space-y-2">
@@ -2448,6 +2475,44 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     className="px-3.5 py-2 rounded text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition flex items-center gap-1.5"
                                 >
                                     Buka Kembali Pekerjaan (Re-open Job)
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* STAGE 16 (Selesai - Archived) */}
+                {s === 16 && (
+                    <div className="space-y-4">
+                        <div className="bg-emerald-50 border-2 border-emerald-400 rounded-xl p-5 text-center">
+                            <div className="text-3xl mb-2">&#x2705;</div>
+                            <h4 className="text-lg font-extrabold text-emerald-900">Pekerjaan Selesai dan Diarsipkan</h4>
+                            <p className="text-xs text-emerald-700 mt-1 max-w-sm mx-auto">
+                                Job ini telah diselesaikan oleh Finance dan diarsipkan. Tidak muncul di Kanban board regular.
+                            </p>
+                        </div>
+
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 space-y-1">
+                            <p><span className="font-semibold text-gray-700">Klien:</span> {job.klien}</p>
+                            <p><span className="font-semibold text-gray-700">Invoice:</span> {job.invoice_no || '-'}</p>
+                            <p><span className="font-semibold text-gray-700">Nilai Invoice:</span> Rp {job.total_invoice_amount ? Number(job.total_invoice_amount).toLocaleString('id-ID') : '-'}</p>
+                            <p><span className="font-semibold text-gray-700">Status Bayar:</span> {(job.payment_status === 'paid' || job.paid) ? 'Lunas' : 'Belum Lunas'}</p>
+                        </div>
+
+                        {(user?.role === 'superadmin' || permissions === 'superadmin') && (
+                            <div className="bg-amber-50 border border-amber-300 rounded-lg p-3.5 space-y-2">
+                                <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                                    Pulihkan Pekerjaan (Superadmin)
+                                </div>
+                                <p className="text-[11px] text-amber-800">
+                                    Jika pekerjaan ini perlu ditangani kembali (revisi, klaim, atau keperluan darurat), Superadmin dapat memulihkan job ini ke stage yang relevan.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleReopenJob}
+                                    className="px-3.5 py-2 rounded text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition flex items-center gap-1.5"
+                                >
+                                    Pulihkan Job dari Arsip Selesai
                                 </button>
                             </div>
                         )}
@@ -2803,6 +2868,22 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     {stageNotes && (
                         <div className="text-gray-600 bg-amber-50/60 border border-amber-200/60 rounded p-2 text-xs">
                             <span className="font-semibold text-amber-800">Catatan Closing: </span> {stageNotes}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (s === 16) {
+            return (
+                <div className="mt-3 space-y-2 border-t border-gray-100 pt-2 text-xs">
+                    <p className="font-bold text-gray-700">✅ Selesai & Diarsipkan:</p>
+                    <div className="bg-emerald-50/70 p-2.5 rounded border border-emerald-200 text-emerald-800 text-xs font-semibold">
+                        Pekerjaan telah diselesaikan dan diarsipkan oleh Finance.
+                    </div>
+                    {stageNotes && (
+                        <div className="text-gray-600 bg-teal-50/60 border border-teal-200/60 rounded p-2 text-xs">
+                            <span className="font-semibold text-teal-800">Catatan Pengarsipan: </span> {stageNotes}
                         </div>
                     )}
                 </div>

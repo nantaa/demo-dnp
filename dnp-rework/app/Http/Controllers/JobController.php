@@ -21,7 +21,7 @@ class JobController extends Controller
     // Stages exclusively owned by MKT (MGR cannot intercept)
     private const MKT_STAGES = [1, 11, 13, 15];
     // Stages exclusively owned by FIN (MGR cannot intercept)
-    private const FIN_STAGES = [10, 12, 14];
+    private const FIN_STAGES = [10, 12, 14, 16];
 
     /**
      * Check if the current user can act on a stage.
@@ -70,9 +70,9 @@ class JobController extends Controller
             return $user->canOwnStage($stage);
         }
 
-        // Finance role can act on finance stages by default
+        // Finance role can act on finance stages by default (includes Stage 16 Selesai)
         if ($user->role === 'finance') {
-            if (in_array($stage, [10, 12, 14])) {
+            if (in_array($stage, [10, 12, 14, 16])) {
                 return true;
             }
             return $user->canOwnStage($stage);
@@ -188,7 +188,7 @@ class JobController extends Controller
         }
 
         $validationRules = [
-            'next_stage'    => 'required|integer|min:1|max:15',
+            'next_stage'    => 'required|integer|min:1|max:16',
             'notes'         => 'nullable|string',
             'inspector_ids' => 'nullable|array',
             'inspector_ids.*' => 'exists:users,id',
@@ -395,14 +395,28 @@ class JobController extends Controller
             $job->save();
         }
 
-        // Advancing from Stage 15 to Stage 12: Marketing (or Finance/Admin) completes and moves to closing
+        // Advancing from Stage 15 to Stage 12: Marketing completes and moves to closing
         if ($currentStage == 15 && (int)$request->input('next_stage') === 12) {
             if (!$job->paid && $job->payment_status !== 'paid' && $job->s14_payment_status !== 'paid') {
                 return back()->withErrors([
                     'payment_status' => 'Status pembayaran harus Lunas (paid) sebelum SUKET diserahkan dan pekerjaan ditutup.',
                 ]);
             }
-        } elseif ($currentStage == 12 || (int)$request->input('next_stage') === 12) {
+        }
+
+        // Stage 12 -> 16 (Selesai): Finance archives the closed job permanently
+        if ($currentStage == 12 && (int)$request->input('next_stage') === 16) {
+            $user = Auth::user();
+            if ($user->role !== 'finance' && !$user->isSuperadmin()) {
+                return back()->withErrors([
+                    'stage' => 'Hanya Finance yang berwenang mengarsipkan pekerjaan ke status Selesai.',
+                ]);
+            }
+            // No payment gate here — Stage 12 already required it; Finance may archive regardless of paid flag
+        }
+
+        // Someone trying to jump directly to Stage 12 (not from 15): Finance + paid required
+        if ((int)$request->input('next_stage') === 12 && $currentStage != 15 && $currentStage != 12) {
             $user = Auth::user();
             if ($user->role !== 'finance' && !$user->isSuperadmin()) {
                 return back()->withErrors([
@@ -491,7 +505,7 @@ class JobController extends Controller
         }
 
         $validated = $request->validate([
-            'target_stage' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,13,14,15',
+            'target_stage' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15',
             'notes'        => 'required|string|min:3',
         ]);
 
@@ -1171,7 +1185,7 @@ class JobController extends Controller
     {
         $request->validate([
             'type'  => 'required|string|max:100',
-            'stage' => 'required|integer|min:1|max:15',
+            'stage' => 'required|integer|min:1|max:16',
             'file'  => 'required|file|max:25600',
             'photo_notes' => 'nullable|string|max:500',
         ]);
@@ -1188,7 +1202,7 @@ class JobController extends Controller
         $canUpload = $user->isSuperadmin()
             || $user->role === 'manager'
             || ($user->role === 'marketing' && in_array((int)$request->stage, [1, 11, 13, 15]))
-            || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14]))
+            || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14, 16]))
             || ($user->role === 'admin')
             || ($isInspector && in_array((int)$request->stage, [4, 5]))
             || (in_array($user->role, ['tim_ahli', 'ahli']) && (int)$request->stage === 6)
@@ -1477,7 +1491,7 @@ class JobController extends Controller
             || $user->role === 'admin'
             || $document->uploaded_by_user_id === $user->id
             || ($user->role === 'marketing' && in_array((int)$document->stage, [1, 11, 13, 15]))
-            || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14]))
+            || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14, 16]))
             || ($isInspector && in_array((int)$document->stage, [4, 5, 6]))
             || (!in_array($user->role, ['inspektur', 'inspector']) && $user->canOwnStage((int)$document->stage));
 

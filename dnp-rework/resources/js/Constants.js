@@ -106,13 +106,14 @@ export const STAGE2_VERIFY_CHECKLIST = [
     { no: '07', type: 'Manual Book', label: 'Manual Book / Spesifikasi Teknis', badge: 'OPSIONAL', hasNa: true, hint: 'Opsional' },
     { no: '08', type: 'Pengesahan Gambar Kemnaker', label: 'Pengesahan Gambar dari Kemnaker', badge: 'OPSIONAL', hasNa: true, hint: 'Opsional' },
     { no: '09', type: 'Copy Suket Lama', label: 'Copy Suket Lama (perpanjangan)', badge: 'OPSIONAL', hasNa: true, hint: null },
-    { no: '10', type: 'Catatan Verifikasi', label: 'Verifikasi: Drawing SESUAI dengan Nameplate (cek visual foto)', badge: 'OPSIONAL', badge2: 'CEK VISUAL', hasNa: true, hint: 'Cek manual oleh Admin', isManual: true },
+    { no: '10', type: 'Dokumen Tambahan', label: 'Dokumen Tambahan', badge: 'OPSIONAL', hasNa: true, hint: 'Opsional' },
+    { no: '11', type: 'Catatan Verifikasi', label: 'Verifikasi: Drawing SESUAI dengan Nameplate (cek visual foto)', badge: 'OPSIONAL', badge2: 'CEK VISUAL', hasNa: true, hint: 'Cek manual oleh Admin', isManual: true },
 ];
 
 // Required document types per stage
 export const DOC_TYPES_BY_STAGE = {
     1: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Copy Suket Lama', 'Dokumen Tambahan'],
-    2: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Catatan Verifikasi'],
+    2: ['PO/SPK', 'Surat Permohonan', 'Surat Kuasa', 'Pernyataan Keabsahan', 'Form Checklist Klien', 'Drawing/As-Built', 'Manual Book', 'Pengesahan Gambar Kemnaker', 'Copy Suket Lama', 'Dokumen Tambahan', 'Catatan Verifikasi'],
     3: ['Surat Tugas', 'Surat Pemberitahuan H-5', 'Bukti Submit Teman K3'],
     4: ['Foto Nameplate', 'Foto Kondisi Fisik', 'BAP', 'Foto Hasil Pengukuran', 'Foto Alat Pengaman', 'Foto APD & Tim di Lokasi', 'Foto Dokumentasi Lapangan', 'Data Pengukuran'],
     5: ['LHPP'],                                         // Stage 5 = Penyusunan LHPP (Inspektur / Tim Ahli)

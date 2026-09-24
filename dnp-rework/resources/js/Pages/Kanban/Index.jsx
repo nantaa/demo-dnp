@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
-import { Trash2, Plus, Archive, RotateCcw } from 'lucide-react';
+import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
@@ -13,6 +13,71 @@ export default function KanbanIndex({ jobs, auth }) {
     const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
+
+    // Refs and state for horizontal (side) scrollbar synchronization
+    const boardRef = useRef(null);
+    const topScrollRef = useRef(null);
+    const isSyncingRef = useRef(false);
+    const [boardScrollWidth, setBoardScrollWidth] = useState(0);
+
+    // Track scroll width of board container dynamically
+    useEffect(() => {
+        const updateWidth = () => {
+            if (boardRef.current) {
+                setBoardScrollWidth(boardRef.current.scrollWidth);
+            }
+        };
+        updateWidth();
+
+        let ro = null;
+        if (typeof window !== 'undefined' && window.ResizeObserver && boardRef.current) {
+            ro = new window.ResizeObserver(() => updateWidth());
+            ro.observe(boardRef.current);
+        }
+        window.addEventListener('resize', updateWidth);
+
+        return () => {
+            if (ro) ro.disconnect();
+            window.removeEventListener('resize', updateWidth);
+        };
+    }, [jobs]);
+
+    // Bi-directional scroll handlers with recursive loop protection
+    const handleTopScroll = () => {
+        if (isSyncingRef.current) return;
+        isSyncingRef.current = true;
+        if (boardRef.current && topScrollRef.current) {
+            boardRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+        }
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+            window.requestAnimationFrame(() => {
+                isSyncingRef.current = false;
+            });
+        } else {
+            isSyncingRef.current = false;
+        }
+    };
+
+    const handleBoardScroll = () => {
+        if (isSyncingRef.current) return;
+        isSyncingRef.current = true;
+        if (boardRef.current && topScrollRef.current) {
+            topScrollRef.current.scrollLeft = boardRef.current.scrollLeft;
+        }
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+            window.requestAnimationFrame(() => {
+                isSyncingRef.current = false;
+            });
+        } else {
+            isSyncingRef.current = false;
+        }
+    };
+
+    const scrollByStage = (direction) => {
+        if (boardRef.current) {
+            boardRef.current.scrollBy({ left: 340 * direction, behavior: 'smooth' });
+        }
+    };
 
     // Live background polling sync to keep Kanban updated across all active users
     useEffect(() => {
@@ -32,7 +97,7 @@ export default function KanbanIndex({ jobs, auth }) {
         if (permissions === 'superadmin') return true;
         if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sId)) return true;
         if (['inspektur', 'inspector'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
-        if (auth.user?.role === 'finance' && [10, 12, 14, 16].includes(sId)) return true;
+        if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
         if (auth.user?.role === 'marketing' && [1, 11, 13, 15].includes(sId)) return true;
         if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14, 15, 16].includes(sId)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
@@ -71,12 +136,35 @@ export default function KanbanIndex({ jobs, auth }) {
         <AppLayout>
             <Head title="Kanban Board" />
             
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                     <h1 className="text-xl font-bold text-gray-900">Kanban Board</h1>
                     <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
                         Total {jobs.length} Job
                     </span>
+
+                    {/* Quick Horizontal Scroll Nav Buttons */}
+                    <div className="flex items-center ml-2 bg-white border border-slate-300 rounded-lg p-0.5 shadow-xs">
+                        <button
+                            type="button"
+                            onClick={() => scrollByStage(-1)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center justify-center"
+                            title="Geser Kanban ke Kiri"
+                            aria-label="Geser Kanban ke Kiri"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <div className="w-[1px] h-3.5 bg-slate-200" />
+                        <button
+                            type="button"
+                            onClick={() => scrollByStage(1)}
+                            className="p-1 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center justify-center"
+                            title="Geser Kanban ke Kanan"
+                            aria-label="Geser Kanban ke Kanan"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {['marketing', 'manager'].includes(auth.user.role) && (
@@ -115,7 +203,22 @@ export default function KanbanIndex({ jobs, auth }) {
                 </div>
             </div>
 
-            <div className="flex h-full overflow-x-auto space-x-4 pb-4">
+            {/* Top horizontal (side) scrollbar synchronized with the Kanban board */}
+            <div
+                ref={topScrollRef}
+                onScroll={handleTopScroll}
+                className="overflow-x-auto overflow-y-hidden mb-3 bg-slate-200/90 hover:bg-slate-200 border border-slate-300 rounded-lg p-0.5 sticky top-0 z-10 transition-colors shadow-xs"
+                style={{ height: '14px' }}
+                title="Geser ke samping untuk melihat seluruh stage Kanban"
+            >
+                <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
+            </div>
+
+            <div 
+                ref={boardRef} 
+                onScroll={handleBoardScroll} 
+                className="flex h-full overflow-x-auto space-x-4 pb-4"
+            >
                 {/* Normal stages — exclude the hidden Stage 16 (Selesai) */}
                 {STAGES.filter(stage => !stage.hidden).map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);

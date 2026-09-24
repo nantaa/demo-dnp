@@ -620,9 +620,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (propCanManage !== undefined) return propCanManage;
         const curStage = Number(job.stage);
         if (user?.role === 'superadmin' || permissions === 'superadmin') return true;
+        // Stage 16 (Selesai Archival Vault) is strictly a Superadmin special privilege
+        if (curStage === 16) return false;
         if (user?.role === 'admin') return true;
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(curStage)) return true;
-        if (user?.role === 'finance' && [10, 12, 14, 16].includes(curStage)) return true;
+        if (user?.role === 'finance' && [10, 12, 14].includes(curStage)) return true;
         if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
         if (isMGR && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
         if (isInspector || isAssignedInspector) {
@@ -637,7 +639,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const sIdNum = Number(sid);
         if (['superadmin','admin','manager'].includes(user?.role)) return true;
         if (user?.role === 'marketing' && (job.owner_marketing === user?.name || [1, 11, 13, 15].includes(sIdNum))) return true;
-        if (user?.role === 'finance' && [10, 12, 14, 16].includes(sIdNum)) return true;
+        if (user?.role === 'finance' && [10, 12, 14].includes(sIdNum)) return true;
         if (isInspector || isAssignedInspector) return true;
         const p = permissions?.[sIdNum] || permissions?.[sid];
         return p && (p.can_view || p.is_owner);
@@ -649,7 +651,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (['superadmin','manager'].includes(user?.role)) return true;
         if (user?.role === 'admin') return true;
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(sIdNum)) return true;
-        if (user?.role === 'finance' && [10, 12, 14, 16].includes(sIdNum)) return true;
+        if (user?.role === 'finance' && [10, 12, 14].includes(sIdNum)) return true;
         if ((isInspector || isAssignedInspector) && [4, 5].includes(sIdNum) && sIdNum === curStageNum) return true;
         if (isInspector || isAssignedInspector) return false;
         const p = permissions?.[sIdNum] || permissions?.[sid];

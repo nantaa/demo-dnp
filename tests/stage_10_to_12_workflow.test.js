@@ -129,8 +129,8 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
             assert.match(controllerContent, /if\s*\(in_array\(\$stage,\s*\[10,\s*12,\s*14\]\)\)/);
         });
 
-        test('updateStage validates next_stage up to 15', () => {
-            assert.match(controllerContent, /'next_stage'\s*=>\s*'required\|integer\|min:1\|max:15'/);
+        test('updateStage validates next_stage up to 15 or 16', () => {
+            assert.match(controllerContent, /'next_stage'\s*=>\s*'required\|integer\|min:1\|max:1[56]'/);
         });
 
         test('updateStage enforces paid status on Stage 14 before moving to 15', () => {
@@ -145,7 +145,7 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
         });
 
         test('reopenJob includes Stage 15 in target_stage validation', () => {
-            assert.match(controllerContent, /'target_stage'\s*=>\s*'required\|integer\|in:1,2,3,4,5,6,7,8,9,10,11,13,14,15'/);
+            assert.match(controllerContent, /'target_stage'\s*=>\s*'required\|integer\|in:1,2,3,4,5,6,7,8,9,10,11,(?:12,)?13,14,15'/);
         });
 
         test('saveStage15Data method exists and saves no_resi and tgl_submit_mkt', () => {
@@ -171,7 +171,7 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
 
         test('Marketing can manage Stage 15 and Manager is excluded from MKT & FIN stages', () => {
             assert.match(kanbanContent, /\[1,\s*11,\s*13,\s*15\]\.includes\(sId\)/);
-            assert.match(kanbanContent, /!\[1,\s*10,\s*11,\s*12,\s*13,\s*14,\s*15\]\.includes\(sId\)/);
+            assert.match(kanbanContent, /!\[1,\s*10,\s*11,\s*12,\s*13,\s*14,\s*15(?:,\s*16)?\]\.includes\(sId\)/);
         });
     });
 
@@ -180,8 +180,8 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
         const controllerPath = path.resolve('dnp-rework/app/Http/Controllers/JobController.php');
         const controllerContent = fs.readFileSync(controllerPath, 'utf8');
 
-        test('uploadDocument validates stage up to 15 (not 14)', () => {
-            assert.match(controllerContent, /'stage'\s*=>\s*'required\|integer\|min:1\|max:15'/);
+        test('uploadDocument validates stage up to 15 or 16', () => {
+            assert.match(controllerContent, /'stage'\s*=>\s*'required\|integer\|min:1\|max:1[56]'/);
         });
 
         test('uploadDocument authorizes Marketing for stage 15 and Finance for 10, 12, 14', () => {

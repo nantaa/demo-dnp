@@ -96,7 +96,7 @@ class User extends Authenticatable
 
         // Role default stage ownership fallbacks if specific permission row is not yet seeded
         if ($this->role === 'marketing' && in_array($stage, [1, 11, 13, 15])) return true;
-        if ($this->role === 'finance' && in_array($stage, [10, 12, 14, 16])) return true;
+        if ($this->role === 'finance' && in_array($stage, [10, 12, 14])) return true;
         if ($this->role === 'admin' && in_array($stage, [2, 3, 7, 8, 9, 14, 15])) return true;
         if (in_array($this->role, ['inspektur', 'inspector']) && in_array($stage, [4, 5])) return true;
         if (in_array($this->role, ['tim_ahli', 'ahli']) && $stage === 6) return true;

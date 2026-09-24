@@ -21,7 +21,7 @@ class JobController extends Controller
     // Stages exclusively owned by MKT (MGR cannot intercept)
     private const MKT_STAGES = [1, 11, 13, 15];
     // Stages exclusively owned by FIN (MGR cannot intercept)
-    private const FIN_STAGES = [10, 12, 14, 16];
+    private const FIN_STAGES = [10, 12, 14];
 
     /**
      * Check if the current user can act on a stage.
@@ -31,6 +31,12 @@ class JobController extends Controller
     {
         $user = Auth::user();
         if ($user->isSuperadmin()) return true;
+
+        // Stage 16 (Selesai) is strictly a Superadmin special privilege
+        if ($stage === 16) {
+            return false;
+        }
+
         if ($user->role === 'manager' && !in_array($stage, array_merge(self::MKT_STAGES, self::FIN_STAGES))) {
             return true;
         }
@@ -70,9 +76,9 @@ class JobController extends Controller
             return $user->canOwnStage($stage);
         }
 
-        // Finance role can act on finance stages by default (includes Stage 16 Selesai)
+        // Finance role can act on finance stages by default
         if ($user->role === 'finance') {
-            if (in_array($stage, [10, 12, 14, 16])) {
+            if (in_array($stage, [10, 12, 14])) {
                 return true;
             }
             return $user->canOwnStage($stage);
@@ -1202,7 +1208,7 @@ class JobController extends Controller
         $canUpload = $user->isSuperadmin()
             || $user->role === 'manager'
             || ($user->role === 'marketing' && in_array((int)$request->stage, [1, 11, 13, 15]))
-            || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14, 16]))
+            || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14]))
             || ($user->role === 'admin')
             || ($isInspector && in_array((int)$request->stage, [4, 5]))
             || (in_array($user->role, ['tim_ahli', 'ahli']) && (int)$request->stage === 6)
@@ -1491,7 +1497,7 @@ class JobController extends Controller
             || $user->role === 'admin'
             || $document->uploaded_by_user_id === $user->id
             || ($user->role === 'marketing' && in_array((int)$document->stage, [1, 11, 13, 15]))
-            || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14, 16]))
+            || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14]))
             || ($isInspector && in_array((int)$document->stage, [4, 5, 6]))
             || (!in_array($user->role, ['inspektur', 'inspector']) && $user->canOwnStage((int)$document->stage));
 

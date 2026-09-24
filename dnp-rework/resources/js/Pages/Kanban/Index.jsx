@@ -40,7 +40,7 @@ export default function KanbanIndex({ jobs, auth }) {
             if (ro) ro.disconnect();
             window.removeEventListener('resize', updateWidth);
         };
-    }, [jobs]);
+    }, [jobs, showSelesai]);
 
     // Bi-directional scroll handlers with recursive loop protection
     const handleTopScroll = () => {
@@ -94,7 +94,7 @@ export default function KanbanIndex({ jobs, auth }) {
 
     const canManageStage = (stageId) => {
         const sId = Number(stageId);
-        if (permissions === 'superadmin') return true;
+        if (isSuperadmin) return true;
         if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sId)) return true;
         if (['inspektur', 'inspector'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
         if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
@@ -106,7 +106,7 @@ export default function KanbanIndex({ jobs, auth }) {
 
     const canViewStage = (stageId) => {
         const sId = Number(stageId);
-        if (permissions === 'superadmin' || auth.user?.role === 'admin' || auth.user?.role === 'manager') return true;
+        if (isSuperadmin || auth.user?.role === 'admin' || auth.user?.role === 'manager') return true;
         if (['inspektur', 'inspector'].includes(auth.user?.role)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (
@@ -180,15 +180,15 @@ export default function KanbanIndex({ jobs, auth }) {
                                     ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
                                     : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300'
                             }`}
-                            title="Tampilkan / Sembunyikan arsip job Selesai"
+                            title="Tampilkan / Sembunyikan kolom arsip job Selesai pada Kanban board"
                         >
                             <Archive size={14} />
                             {showSelesai ? 'Sembunyikan Arsip Selesai' : 'Arsip Selesai'}
-                            {showSelesai === false && (
-                                <span className="ml-1 bg-emerald-700 text-white rounded-full px-1.5 py-0.5 text-[9px] font-black">
-                                    {jobs.filter(j => j.stage === 16).length}
-                                </span>
-                            )}
+                            <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-black ${
+                                showSelesai ? 'bg-white text-emerald-800' : 'bg-emerald-700 text-white'
+                            }`}>
+                                {jobs.filter(j => j.stage === 16).length}
+                            </span>
                         </button>
                     )}
                     {isSuperadmin && (
@@ -219,12 +219,12 @@ export default function KanbanIndex({ jobs, auth }) {
                 onScroll={handleBoardScroll} 
                 className="flex h-full overflow-x-auto space-x-4 pb-4"
             >
-                {/* Normal stages — exclude the hidden Stage 16 (Selesai) */}
-                {STAGES.filter(stage => !stage.hidden).map((stage) => {
+                {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin enables showSelesai */}
+                {STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai)).map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);
                     const columnJobs = jobs.filter(j => {
                         if (j.stage !== stage.id) return false;
-                        if (permissions === 'superadmin') return true;
+                        if (isSuperadmin) return true;
                         if (auth.user.role === 'marketing') {
                             return j.owner_marketing === auth.user.name;
                         }
@@ -256,7 +256,11 @@ export default function KanbanIndex({ jobs, auth }) {
                                     className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
                                 >
                                     {/* DNP Accent Line Indicator */}
-                                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${
+                                        job.stage === 16
+                                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-100'
+                                            : 'bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100'
+                                    }`} />
 
                                     <div className="flex justify-between items-start mb-2">
                                         <span 
@@ -391,6 +395,10 @@ export default function KanbanIndex({ jobs, auth }) {
                                                 }
                                             }
 
+                                            if (job.stage === 16) {
+                                                return <span className="px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-800 font-bold border-emerald-300">✓ SELESAI / TERARSIP</span>;
+                                            }
+
                                             const stageInfo = STAGES.find(s => s.id === job.stage);
                                             if (!stageInfo?.sla) return null;
                                             
@@ -425,55 +433,6 @@ export default function KanbanIndex({ jobs, auth }) {
                     );
                 })}
             </div>
-
-            {/* ===== Selesai (Stage 16) — Hidden Archival Board — Superadmin only ===== */}
-            {isSuperadmin && showSelesai && (() => {
-                const selesaiJobs = jobs.filter(j => j.stage === 16);
-                return (
-                    <div className="mt-6 border-t-2 border-dashed border-emerald-300 pt-5">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Archive size={18} className="text-emerald-700" />
-                            <h2 className="text-base font-extrabold text-emerald-800">
-                                Arsip Selesai — {selesaiJobs.length} Pekerjaan Terarsip
-                            </h2>
-                            <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                Hanya Superadmin yang dapat melihat dan memulihkan job ini
-                            </span>
-                        </div>
-                        {selesaiJobs.length === 0 ? (
-                            <div className="text-sm text-gray-400 italic px-2">Belum ada pekerjaan yang diarsipkan.</div>
-                        ) : (
-                            <div className="flex flex-wrap gap-3">
-                                {selesaiJobs.map(job => (
-                                    <div
-                                        key={job.id}
-                                        onClick={() => setSelectedJob(job)}
-                                        className="bg-white p-3.5 rounded-xl shadow-xs border border-emerald-200 cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all group relative overflow-hidden w-64"
-                                    >
-                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[11px] font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-emerald-800 border border-emerald-200 truncate max-w-[150px]">
-                                                {job.no_po ? `PO: ${job.no_po}` : job.kode}
-                                            </span>
-                                            <span className="text-[9px] font-extrabold px-2 py-0.5 bg-emerald-700 text-white rounded-full">
-                                                SELESAI
-                                            </span>
-                                        </div>
-                                        <h3 className="font-bold text-sm text-slate-900 leading-tight mb-1">{job.klien}</h3>
-                                        <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
-                                        <div className="mt-2 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-100 pt-2">
-                                            <span className="font-medium">MKT: <strong className="text-slate-600">{job.owner_marketing}</strong></span>
-                                            <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                                                <RotateCcw size={10} /> Pulihkan
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                );
-            })()}
 
             {selectedJob && (
                 <JobDetailSheet 

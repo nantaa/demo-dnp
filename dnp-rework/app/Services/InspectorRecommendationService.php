@@ -45,25 +45,24 @@ class InspectorRecommendationService
 
         // ── Pre-load pesawat experience per inspector (completed/archived, same pesawat type) ─
         $pesawatKeyword = $this->extractPesawatKeyword($targetJob->pesawat);
-        $pesawatExpQuery = DB::table('job_inspectors')
-            ->join('dnp_jobs', 'job_inspectors.job_id', '=', 'dnp_jobs.id')
-            ->whereIn('dnp_jobs.stage', [12, 16]);
-
         if (!empty($pesawatKeyword)) {
-            $pesawatExpQuery->where('dnp_jobs.pesawat', 'LIKE', "%{$pesawatKeyword}%");
+            $pesawatExpCounts = DB::table('job_inspectors')
+                ->join('dnp_jobs', 'job_inspectors.job_id', '=', 'dnp_jobs.id')
+                ->where('dnp_jobs.pesawat', 'LIKE', "%{$pesawatKeyword}%")
+                ->whereIn('dnp_jobs.stage', [12, 16])
+                ->select('job_inspectors.inspector_id', DB::raw('COUNT(*) as cnt'))
+                ->groupBy('job_inspectors.inspector_id')
+                ->pluck('cnt', 'inspector_id');
+        } else {
+            $pesawatExpCounts = collect();
         }
-
-        $pesawatExpCounts = $pesawatExpQuery
-            ->select('job_inspectors.inspector_id', DB::raw('COUNT(*) as cnt'))
-            ->groupBy('job_inspectors.inspector_id')
-            ->pluck('cnt', 'inspector_id');
 
         // ─────────────────────────────────────────────────────────────────────
         $results   = [];
         $eliminated = [];
 
         foreach ($inspectors as $inspector) {
-            if (stripos($inspector->name, 'Diba Aini') !== false) {
+            if (!empty($inspector->name) && stripos($inspector->name, 'Diba Aini') !== false) {
                 continue;
             }
 
@@ -86,12 +85,18 @@ class InspectorRecommendationService
 
             // ── Hard Filters ─────────────────────────────────────────────────
             if (!$profile->active) {
-                $eliminated[] = ['user' => $inspector, 'reason' => 'Status Inactive'];
+                $eliminated[] = ['user' => $inspector, 'profile' => $profile, 'reason' => 'Status Inactive'];
                 continue;
             }
-            if ($profile->skp_expired_at && $profile->skp_expired_at->isPast()) {
-                $eliminated[] = ['user' => $inspector, 'reason' => 'SKP Expired'];
-                continue;
+            if ($profile->skp_expired_at) {
+                $expiredAt = $profile->skp_expired_at instanceof Carbon
+                    ? $profile->skp_expired_at
+                    : Carbon::parse($profile->skp_expired_at);
+
+                if ($expiredAt->isPast()) {
+                    $eliminated[] = ['user' => $inspector, 'profile' => $profile, 'reason' => 'SKP Expired'];
+                    continue;
+                }
             }
 
             // ── Specialisation match ──────────────────────────────────────────
@@ -138,21 +143,28 @@ class InspectorRecommendationService
             $bonuses = [];
 
             // Long-valid SKP bonus
-            if ($profile->skp_expired_at && $profile->skp_expired_at->isFuture()
-                && $profile->skp_expired_at->diffInDays(now()) > 365) {
-                $score += 5;
-                $bonuses[] = '+5 SKP >1 thn';
+            if ($profile->skp_expired_at) {
+                $expiredAt = $profile->skp_expired_at instanceof Carbon
+                    ? $profile->skp_expired_at
+                    : Carbon::parse($profile->skp_expired_at);
+
+                if ($expiredAt->isFuture() && $expiredAt->diffInDays(now()) > 365) {
+                    $score += 5;
+                    $bonuses[] = '+5 SKP >1 thn';
+                }
             }
 
             // Domisili match bonus
-            if ($profile->domisili && stripos($targetJob->lokasi, $profile->domisili) !== false) {
+            if (!empty($profile->domisili) && !empty($targetJob->lokasi) && stripos($targetJob->lokasi, (string)$profile->domisili) !== false) {
                 $score += 5;
                 $bonuses[] = '+5 Domisili';
             }
 
             // Critical pesawat modifier
-            $isCritical = stripos($targetJob->pesawat, 'Boiler') !== false
-                       || stripos($targetJob->pesawat, 'PV')     !== false;
+            $isCritical = !empty($targetJob->pesawat) && (
+                stripos($targetJob->pesawat, 'Boiler') !== false ||
+                stripos($targetJob->pesawat, 'PV')     !== false
+            );
 
             if ($isCritical && $profile->senior_level >= 3) {
                 $score += 10;

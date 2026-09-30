@@ -1403,9 +1403,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 {allInspectors.map(item => {
                                                     const uid = item.user.id;
                                                     const isSelected = day.inspector_ids.includes(uid);
-                                                    const isOverloaded = item.statuses
-                                                        ? item.statuses.some(st => st === 'Overload')
-                                                        : false;
+                                                    const isOverloaded = item.is_overloaded || (item.statuses && item.statuses.includes('Overload')) || (item.bonuses || []).some(b => b.includes('Overload'));
                                                     return (
                                                         <button
                                                             type="button"

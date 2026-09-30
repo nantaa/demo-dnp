@@ -1,0 +1,3 @@
+Project: DNP Monitor (PT Delta Nusantara Persada - Riksa Uji K3 Monitoring).
+Stack: Laravel 11/13 + PostgreSQL (production: dnp_monitor_new) + React 19 / Inertia.js.
+Key Finding: `dnp_jobs` table stores `alat_ids` as a JSON array column; there is NO `job_alat_uji` table in the database. Master equipment is stored in `alat_ujis`. Deleting from non-existent table `job_alat_uji` in `JobController::clearAll` throws SQLSTATE[42P01]. Master data (users, alat_ujis, regulasi_k3, form_disnaker, sertifikat_pjk3) must never be touched. `clearAll` must only delete job records and their dependent job child data.

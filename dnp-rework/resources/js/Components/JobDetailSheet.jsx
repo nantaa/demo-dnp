@@ -1705,7 +1705,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         )}
                                         {editForm.data.nilai > 0 && (() => {
                                             const total = parseFloat(editForm.data.nilai || 0);
-                                            const dpp = Math.round(total / 1.12);
+                                            const dpp = Math.round(total / 1.11);
                                             const ppn = total - dpp;
                                             return (
                                                 <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1 flex justify-between">
@@ -3212,7 +3212,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <input type="number" value={editForm.data.nilai} onChange={e => editForm.setData('nilai', e.target.value)} className="w-full text-sm border rounded px-2 py-1.5" />
                                 {editForm.data.nilai && parseFloat(editForm.data.nilai) > 0 && (() => {
                                     const total = parseFloat(editForm.data.nilai);
-                                    const dpp = Math.round(total / 1.12);
+                                    const dpp = Math.round(total / 1.11);
                                     const ppn = total - dpp;
                                     return (
                                         <div className="mt-1.5 p-2 bg-amber-50/80 border border-amber-200 rounded text-[11px] space-y-0.5">
@@ -3277,7 +3277,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </div>
                                 {job.nilai > 0 && (() => {
                                     const total = parseFloat(job.nilai || 0);
-                                    const dpp = Math.round(total / 1.12);
+                                    const dpp = Math.round(total / 1.11);
                                     const ppn = total - dpp;
                                     return (
                                         <div className="pt-1 border-t border-yellow-200/80 flex items-center justify-between text-xs text-yellow-800">
@@ -3473,7 +3473,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     />
                                     {revisePoForm.nilai && parseFloat(revisePoForm.nilai) > 0 && (() => {
                                         const total = parseFloat(revisePoForm.nilai || 0);
-                                        const dpp = Math.round(total / 1.12);
+                                        const dpp = Math.round(total / 1.11);
                                         const ppn = total - dpp;
                                         return (
                                             <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2 mt-1.5 flex justify-between">

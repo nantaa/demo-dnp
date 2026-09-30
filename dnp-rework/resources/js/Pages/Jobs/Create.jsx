@@ -41,7 +41,7 @@ export default function JobCreate({ auth }) {
         e.preventDefault();
         transform((raw) => ({
             ...raw,
-            nilai: Math.round(parseFloat(raw.nilai || 0) * 1.12),
+            nilai: Math.round(parseFloat(raw.nilai || 0) * 1.11),
         }));
         post(route('jobs.store'));
     };
@@ -145,8 +145,8 @@ export default function JobCreate({ auth }) {
                                 )}
                                 {data.nilai && parseFloat(data.nilai) > 0 && (() => {
                                     const dpp = parseFloat(data.nilai);
-                                    const ppn = Math.round(dpp * 0.12);
-                                    const total = Math.round(dpp * 1.12);
+                                    const ppn = Math.round(dpp * 0.11);
+                                    const total = Math.round(dpp * 1.11);
                                     return (
                                         <div className="mt-2 p-2.5 bg-amber-50/80 border border-amber-200 rounded-md text-xs space-y-1">
                                             <div className="flex justify-between text-gray-600">

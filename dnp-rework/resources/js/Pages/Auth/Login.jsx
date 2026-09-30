@@ -1,5 +1,5 @@
-import React from 'react';
-import { useForm, Head, Link } from '@inertiajs/react';
+import React, { useEffect } from 'react';
+import { useForm, Head, Link, router, usePage } from '@inertiajs/react';
 
 // Reusable concentric arc "ulir/thread" decoration
 // origin: 'tl' | 'tr' | 'bl' | 'br' controls which corner the arcs radiate from
@@ -39,6 +39,14 @@ function ThreadDecor({ size = 220, color = '#00A8E8', opacity = 0.18, origin = '
 }
 
 export default function Login({ status, canResetPassword }) {
+    const { auth } = usePage().props;
+
+    useEffect(() => {
+        if (auth?.user) {
+            router.replace('/');
+        }
+    }, [auth]);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -48,6 +56,7 @@ export default function Login({ status, canResetPassword }) {
     const submit = (e) => {
         e.preventDefault();
         post(route('login'), {
+            replace: true,
             onFinish: () => reset('password'),
         });
     };

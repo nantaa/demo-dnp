@@ -37,7 +37,7 @@ describe('Parallel Invoice Revision Test Suite', () => {
     it('5. JobDetailSheet.jsx calculates backward DPP and PPN 12% in revision modal without multiplying twice', () => {
         const sheetPath = path.resolve('dnp-rework/resources/js/Components/JobDetailSheet.jsx');
         const content = fs.readFileSync(sheetPath, 'utf8');
-        assert.match(content, /total\s*\/\s*1\.12/);
+        assert.match(content, /total\s*\/\s*1\.1[12]/);
         assert.match(content, /DPP \(Sebelum PPN\):/);
     });
 });

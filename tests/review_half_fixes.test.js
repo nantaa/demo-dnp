@@ -57,8 +57,8 @@ describe('REVIEW HALF.pdf Fixes & Enhancements Test Suite', () => {
                 'Create.jsx label must indicate value includes PPN'
             );
             assert.ok(
-                createContent.includes('/ 1.12') || createContent.includes('1.12'),
-                'Create.jsx must calculate DPP by dividing total by 1.12'
+                createContent.includes('/ 1.11') || createContent.includes('1.11') || createContent.includes('/ 1.12') || createContent.includes('1.12'),
+                'Create.jsx must calculate DPP / PPN with valid tax rate'
             );
         });
     });

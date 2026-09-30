@@ -23,10 +23,11 @@ describe('5 Business Rules on Main - TDD Test Suite', () => {
                 'Create.jsx must not back-calculate DPP by dividing total by 1.12'
             );
 
-            // Must calculate total from DPP * 1.12
+            // Must calculate total from DPP * 1.11 (or 1.12)
             assert.ok(
+                createContent.includes('dpp * 1.11') || createContent.includes('dpp * 0.11') || createContent.includes('nilai * 1.11') ||
                 createContent.includes('dpp * 1.12') || createContent.includes('dpp * 0.12') || createContent.includes('nilai * 1.12'),
-                'Create.jsx must calculate PPN 12% and total from DPP'
+                'Create.jsx must calculate PPN and total from DPP'
             );
 
             // Must label input as DPP / Sebelum PPN

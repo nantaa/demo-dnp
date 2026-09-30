@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
-import { showError, showSuccess } from '@/swal';
+import { showError, showSuccess, showConfirm } from '@/swal';
 import { 
     LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
 } from 'lucide-react';
@@ -89,6 +89,19 @@ export default function AppLayout({ header, children }) {
     const userRole = (user?.role || '').toLowerCase();
     const visibleNav = navItems.filter(item => !item.roles || item.roles.includes(userRole));
 
+    const handleLogout = async (e) => {
+        if (e) e.preventDefault();
+        const res = await showConfirm(
+            'Konfirmasi Keluar',
+            'Apakah Anda yakin ingin keluar dari sistem MORIKU?',
+            'Ya, Keluar',
+            'Batal'
+        );
+        if (res.isConfirmed) {
+            router.post(route('logout'));
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-100 flex flex-col text-gray-900 font-sans">
 
@@ -138,9 +151,9 @@ export default function AppLayout({ header, children }) {
                         <Link href="/profile" title="Pengaturan Akun" className="text-slate-500 hover:text-[#0A385C] p-1 transition-colors">
                             <UserIcon size={18} />
                         </Link>
-                        <Link href={route('logout')} method="post" as="button" title="Keluar" className="text-slate-400 hover:text-red-600 p-1 transition-colors">
+                        <button type="button" onClick={handleLogout} title="Keluar" className="text-slate-400 hover:text-red-600 p-1 transition-colors">
                             <LogOut size={18} />
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -205,11 +218,11 @@ export default function AppLayout({ header, children }) {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-white/10">
-                        <Link href={route('logout')} method="post" as="button"
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full">
+                        <button type="button" onClick={handleLogout}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full text-left">
                             <LogOut size={18} />
                             Keluar
-                        </Link>
+                        </button>
                     </div>
                 </nav>
 

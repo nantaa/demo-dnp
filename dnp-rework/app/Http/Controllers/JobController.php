@@ -1725,9 +1725,23 @@ class JobController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::transaction(function() {
+            // 1. Delete associated physical files for job documents
+            foreach (JobDocument::all() as $doc) {
+                $filePath = $doc->path ?? $doc->file_path;
+                if ($filePath && Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+
+            // 2. Delete job child records (cascaded, but explicitly cleared for clean state)
             JobDocument::query()->delete();
             \Illuminate\Support\Facades\DB::table('job_inspectors')->delete();
-            \Illuminate\Support\Facades\DB::table('job_alat_uji')->delete();
+            \Illuminate\Support\Facades\DB::table('job_history')->delete();
+            \Illuminate\Support\Facades\DB::table('job_evaluations')->delete();
+            \Illuminate\Support\Facades\DB::table('units_tracking')->delete();
+            \Illuminate\Support\Facades\DB::table('disnaker_followups')->delete();
+
+            // 3. Delete all jobs from database
             Job::query()->delete();
         });
 

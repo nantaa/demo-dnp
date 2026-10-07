@@ -13,8 +13,8 @@ const jobControllerPath = path.resolve(__dirname, '../dnp-rework/app/Http/Contro
 
 describe('5 Business Rules on Main - TDD Test Suite', () => {
 
-    describe('1. Price Display & Calculation (DPP input x 112%)', () => {
-        it('Create.jsx must calculate DPP as user input, PPN as 12% of input, and Total as input * 1.12', () => {
+    describe('1. Price Display & Calculation (DPP input x 111% with 12% label)', () => {
+        it('Create.jsx must calculate DPP as user input, PPN as 11% of input, and Total as input * 1.11', () => {
             const createContent = fs.readFileSync(createPath, 'utf8');
 
             // Must NOT do Math.round(total / 1.12) which was the backwards calculation
@@ -23,11 +23,10 @@ describe('5 Business Rules on Main - TDD Test Suite', () => {
                 'Create.jsx must not back-calculate DPP by dividing total by 1.12'
             );
 
-            // Must calculate total from DPP * 1.11 (or 1.12)
+            // Must calculate total from DPP * 1.11
             assert.ok(
-                createContent.includes('dpp * 1.11') || createContent.includes('dpp * 0.11') || createContent.includes('nilai * 1.11') ||
-                createContent.includes('dpp * 1.12') || createContent.includes('dpp * 0.12') || createContent.includes('nilai * 1.12'),
-                'Create.jsx must calculate PPN and total from DPP'
+                createContent.includes('dpp * 1.11') || createContent.includes('dpp * 0.11'),
+                'Create.jsx must calculate PPN and total from DPP with 11% multiplier'
             );
 
             // Must label input as DPP / Sebelum PPN
@@ -35,14 +34,21 @@ describe('5 Business Rules on Main - TDD Test Suite', () => {
                 createContent.includes('DPP') || createContent.toLowerCase().includes('sebelum ppn'),
                 'Create.jsx input label or breakdown must clarify DPP / Sebelum PPN'
             );
+
+            // Must retain PPN (12%) label
+            assert.match(
+                createContent,
+                /PPN\s*\(\s*12%\s*\)/,
+                'Create.jsx must retain the label PPN (12%)'
+            );
         });
 
-        it('Mathematical helper: given DPP 3,000,000, PPN is 360,000 and Total is 3,360,000', () => {
+        it('Mathematical helper: given DPP 3,000,000, PPN is 330,000 and Total is 3,330,000', () => {
             const dpp = 3000000;
-            const ppn = Math.round(dpp * 0.12);
-            const total = Math.round(dpp * 1.12);
-            assert.equal(ppn, 360000);
-            assert.equal(total, 3360000);
+            const ppn = Math.round(dpp * 0.11);
+            const total = Math.round(dpp * 1.11);
+            assert.equal(ppn, 330000);
+            assert.equal(total, 3330000);
             assert.ok(total > dpp, 'Final result must be greater than user input DPP');
         });
     });

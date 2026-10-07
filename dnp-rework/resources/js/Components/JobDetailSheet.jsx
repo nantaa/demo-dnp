@@ -4,7 +4,7 @@ import SmartRecommendation from './SmartRecommendation';
 import IndonesiaLocationSelect from './IndonesiaLocationSelect';
 import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import Swal from 'sweetalert2';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronDown } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     STAGE9_SUKET_STATUSES, PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
@@ -362,6 +362,62 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [photoNotes,   setPhotoNotes]   = useState({});   // key: photo type
     const [returnNotes,  setReturnNotes]  = useState('');
     const fileInputRef = useRef(null);
+    const stageRefs = useRef({});
+    const contentScrollRef = useRef(null);
+
+    // ── Stage Accordion / Dropdown & Auto-Scroll State ────────────────────────
+    const [expandedStages, setExpandedStages] = useState(() => {
+        const initial = {};
+        STAGES.forEach(s => {
+            // Current stage is open by default, others collapsed
+            initial[s.id] = (s.id === job.stage);
+        });
+        return initial;
+    });
+
+    const toggleStage = (stageId) => {
+        setExpandedStages(prev => ({
+            ...prev,
+            [stageId]: !prev[stageId]
+        }));
+    };
+
+    const expandAllStages = () => {
+        const allOpen = {};
+        STAGES.forEach(s => { allOpen[s.id] = true; });
+        setExpandedStages(allOpen);
+    };
+
+    const collapseAllStages = () => {
+        const allClosed = {};
+        STAGES.forEach(s => {
+            allClosed[s.id] = (s.id === job.stage);
+        });
+        setExpandedStages(allClosed);
+    };
+
+    const scrollToStage = (stageId, smooth = true) => {
+        setExpandedStages(prev => ({ ...prev, [stageId]: true }));
+        setTimeout(() => {
+            const el = stageRefs.current[stageId];
+            if (el) {
+                el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+            }
+        }, 80);
+    };
+
+    // Auto-scroll on initial mount or when opening 'timeline' tab
+    useEffect(() => {
+        if (activeTab === 'timeline') {
+            const timer = setTimeout(() => {
+                const el = stageRefs.current[job.stage];
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, job.stage]);
 
     // Stage-specific form state
     const [s4, setS4] = useState({
@@ -2905,149 +2961,258 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Timeline Tab ─────────────────────────────────────────────────────────
     const renderTimeline = () => (
-        <div className="space-y-6 py-2">
-            <h3 className="font-bold text-gray-800 border-b pb-2">Status Pekerjaan: Stage {currentStageInfo?.displayId || job.stage} ({currentStageInfo?.name})</h3>
-            
-            {/* SLA Badge for current stage */}
-            {slaTag && (
-                <div className={`inline-block px-3 py-1.5 rounded-full text-xs font-bold ${slaTag.cls}`}>
-                    ⏱ {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} — {slaTag.label}
-                </div>
-            )}
+        <div className="space-y-5 py-1">
+            {/* Top Toolbar: Status Title, SLA, Quick-Jump Dropdown & Expand/Collapse */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 sm:p-3.5 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 className="font-extrabold text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                            Status Pekerjaan: Stage {currentStageInfo?.displayId || job.stage} ({currentStageInfo?.name})
+                        </h3>
+                        {slaTag && (
+                            <div className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold mt-1 ${slaTag.cls}`}>
+                                ⏱ {daysInStage} hari di stage ini {currentStageInfo?.sla ? `(SLA: ${currentStageInfo.sla} hari)` : ''} — {slaTag.label}
+                            </div>
+                        )}
+                    </div>
 
-            <div className="relative border-l-2 border-gray-200 ml-4 pl-6 space-y-8">
+                    {/* Quick Jump Dropdown */}
+                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-2xs">
+                        <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">Lompat ke:</span>
+                        <select
+                            className="text-xs font-bold text-[#0A385C] bg-transparent border-0 p-0 focus:ring-0 cursor-pointer"
+                            value={job.stage}
+                            onChange={(e) => {
+                                const targetId = parseInt(e.target.value);
+                                if (targetId) scrollToStage(targetId, true);
+                            }}
+                        >
+                            {STAGES.map(s => {
+                                const isCurr = s.id === job.stage;
+                                const cIdx = STAGES.findIndex(x => x.id === job.stage);
+                                const sIdx = STAGES.findIndex(x => x.id === s.id);
+                                const statusNote = isCurr ? ' (Aktif)' : (sIdx < cIdx ? ' (✓)' : '');
+                                return (
+                                    <option key={s.id} value={s.id}>
+                                        Stage {s.displayId || s.id}: {s.name}{statusNote}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+                </div>
+
+                {/* Sub Controls: Expand / Collapse All & Scroll to Active Button */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                    <button
+                        type="button"
+                        onClick={() => scrollToStage(job.stage, true)}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded transition-colors"
+                        title="Scroll langsung ke stage yang sedang aktif"
+                    >
+                        <span>🎯 Scroll ke Stage Aktif ({currentStageInfo?.displayId || job.stage})</span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={expandAllStages}
+                            className="text-[11px] font-semibold text-slate-600 hover:text-blue-600 hover:bg-white px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                        >
+                            Buka Semua
+                        </button>
+                        <button
+                            type="button"
+                            onClick={collapseAllStages}
+                            className="text-[11px] font-semibold text-slate-600 hover:text-blue-600 hover:bg-white px-2 py-0.5 rounded border border-slate-200 transition-colors"
+                        >
+                            Tutup Semua
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="relative border-l-2 border-gray-200 ml-4 pl-6 space-y-5">
                 {STAGES.map(stage => {
                     const currentStageIdx = STAGES.findIndex(s => s.id === job.stage);
                     const stageIdx = STAGES.findIndex(s => s.id === stage.id);
                     const isPast = currentStageIdx > stageIdx;
                     const isCurrent = currentStageIdx === stageIdx;
                     const isFuture = currentStageIdx < stageIdx;
+                    const isExpanded = !!expandedStages[stage.id];
                     
-                    let iconBg = 'bg-gray-100 border-gray-300';
+                    let iconBg = 'bg-gray-100 border-gray-300 text-gray-500';
                     if (isPast) iconBg = 'bg-emerald-500 border-emerald-600 text-white shadow-2xs';
                     if (isCurrent) iconBg = 'bg-gradient-to-tr from-[#0A385C] to-[#00A8E8] border-2 border-white text-white ring-4 ring-[#00A8E8]/30 shadow-md scale-110 font-extrabold';
 
                     const stageDocs = (job.documents || []).filter(d => d.stage === stage.id);
                     
                     return (
-                        <div key={stage.id} className={`relative ${isFuture ? 'opacity-40' : ''}`}>
+                        <div 
+                            key={stage.id} 
+                            ref={el => stageRefs.current[stage.id] = el}
+                            className={`relative transition-opacity duration-200 ${isFuture && !isExpanded ? 'opacity-60' : ''}`}
+                        >
                             {/* Connector Node */}
-                            <div className={`absolute -left-[35px] top-1 w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-transform ${iconBg}`}>
+                            <div className={`absolute -left-[35px] top-3.5 w-6 h-6 rounded-full border flex items-center justify-center text-[10px] font-bold transition-transform ${iconBg}`}>
                                 {isPast ? '✓' : (stage.displayId || stage.id)}
                             </div>
                             
-                            <div className={`bg-white border rounded-xl shadow-xs p-4 transition-all ${isCurrent ? 'border-[#00A8E8] ring-1 ring-[#00A8E8]/40 shadow-sm' : 'border-slate-200'}`}>
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className={`font-extrabold text-sm ${isCurrent ? 'text-[#0A385C]' : 'text-slate-800'}`}>
-                                        Stage {stage.displayId || stage.id}: {stage.name}
-                                    </h4>
-                                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${isCurrent ? 'bg-[#0A385C] text-[#00A8E8]' : 'bg-slate-100 text-slate-600'}`}>
-                                        PIC: {stage.role.toUpperCase()}
-                                    </span>
+                            {/* Stage Card */}
+                            <div className={`bg-white border rounded-xl shadow-xs transition-all overflow-hidden ${
+                                isCurrent 
+                                    ? 'border-[#00A8E8] ring-2 ring-[#00A8E8]/30 shadow-md' 
+                                    : isPast 
+                                        ? 'border-slate-200 hover:border-slate-300' 
+                                        : 'border-slate-200'
+                            }`}>
+                                {/* Dropdown / Accordion Header */}
+                                <div 
+                                    onClick={() => toggleStage(stage.id)}
+                                    className={`flex items-center justify-between p-3 sm:p-3.5 cursor-pointer select-none transition-colors ${
+                                        isCurrent 
+                                            ? 'bg-gradient-to-r from-sky-50/80 via-white to-sky-50/40 hover:bg-sky-50' 
+                                            : isPast
+                                                ? 'bg-slate-50/70 hover:bg-slate-100/80'
+                                                : 'bg-white hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                        <div className={`w-5 h-5 rounded-md flex items-center justify-center text-slate-500 transition-transform duration-200 ${
+                                            isExpanded ? 'rotate-180 text-blue-600' : ''
+                                        }`}>
+                                            <ChevronDown size={15} />
+                                        </div>
+                                        <h4 className={`font-extrabold text-xs sm:text-sm truncate ${isCurrent ? 'text-[#0A385C]' : 'text-slate-800'}`}>
+                                            Stage {stage.displayId || stage.id}: {stage.name}
+                                        </h4>
+                                        {isCurrent && (
+                                            <span className="hidden sm:inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
+                                                Aktif
+                                            </span>
+                                        )}
+                                        {isPast && (
+                                            <span className="hidden sm:inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded text-emerald-700 bg-emerald-50 border border-emerald-200">
+                                                ✓ Selesai
+                                            </span>
+                                        )}
+                                        {stageDocs.length > 0 && !isExpanded && (
+                                            <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                                                📄 {stageDocs.length} dok
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                            isCurrent ? 'bg-[#0A385C] text-[#00A8E8]' : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                            PIC: {stage.role.toUpperCase()}
+                                        </span>
+                                    </div>
                                 </div>
                                 
-                                {isCurrent && (
-                                    <div className="mt-4 pt-4 border-t border-[#00A8E8]/20 bg-[#F8FAFC] -mx-4 -mb-4 p-4 rounded-b-xl">
-                                        {canManage ? (
-                                            renderStageAction()
-                                        ) : (
-                                            <div className="space-y-3">
-                                                {renderCompletedStageSummary(stage.id)}
-                                                {stageDocs.length > 0 && (
-                                                    <div className="mt-3 space-y-1">
-                                                        <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
-                                                        </div>
+                                {/* Collapsible Dropdown Content */}
+                                {isExpanded && (
+                                    <div className="p-4 border-t border-slate-100">
+                                        {isCurrent && (
+                                            <div className="pt-1">
+                                                {canManage ? (
+                                                    renderStageAction()
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {renderCompletedStageSummary(stage.id)}
+                                                        {stageDocs.length > 0 && (
+                                                            <div className="mt-3 space-y-1">
+                                                                <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
                                         )}
-                                    </div>
-                                )}
 
-                                {!isCurrent && stage.id === 2 && (
-                                    <div className="mt-3 space-y-2 pt-2 border-t border-gray-100">
-                                        <p className="text-xs font-bold text-gray-700">Hasil Verifikasi Dokumen (Stage 2):</p>
-                                        <div className="border border-gray-200 rounded-lg overflow-hidden text-xs bg-gray-50/50 divide-y divide-gray-100">
-                                            {STAGE2_VERIFY_CHECKLIST.map((item) => {
-                                                const docs = (job.documents || []).filter(d =>
-                                                    (d.stage === 1 || d.stage === 2) && d.type === item.type
-                                                );
-                                                const hasFile = docs.length > 0;
-                                                const savedData = parseJsonObject(job.s2_verify_data);
-                                                const status = savedData[item.type] || s2Verify[item.type];
-                                                return (
-                                                    <div key={item.type} className="flex items-center justify-between px-3 py-1.5 hover:bg-white transition-colors">
-                                                        <div className="flex items-center gap-2 min-w-0 pr-2">
-                                                            <span className="font-mono text-gray-400 text-[10px] w-4">{item.no}</span>
-                                                            <span className="font-medium text-gray-800 truncate">{item.label}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                                            {item.isManual ? (
-                                                                <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Manual</span>
-                                                            ) : (isINS && item.type === 'PO/SPK') ? (
-                                                                <span className="text-[10px] text-gray-400 font-semibold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-300 inline-flex items-center gap-1 italic cursor-not-allowed" title="Dokumen PO/SPK terkunci untuk Inspektur">
-                                                                    🔒 Terkunci
-                                                                </span>
-                                                            ) : hasFile ? (
-                                                                <div className="flex items-center gap-1 flex-wrap">
-                                                                    {docs.map(d => {
-                                                                        if (isINS && (item.type === 'PO/SPK' || isPoLockedForIns(d, isINS))) {
-                                                                            return (
-                                                                                <span
-                                                                                    key={d.id}
-                                                                                    className="text-[10px] text-gray-400 font-semibold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-300 inline-flex items-center gap-1 italic cursor-not-allowed"
-                                                                                    title="Dokumen PO/SPK terkunci untuk Inspektur"
-                                                                                >
-                                                                                    🔒 Terkunci
-                                                                                </span>
-                                                                            );
-                                                                        }
-                                                                        return (
-                                                                            <a
-                                                                                key={d.id}
-                                                                                href={getDocDownloadUrl(d)}
-                                                                                download
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
-                                                                                title={`Unduh / Lihat ${d.name}`}
-                                                                            >
-                                                                                {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
-                                                                            </a>
-                                                                        );
-                                                                    })}
+                                        {!isCurrent && stage.id === 2 && (
+                                            <div className="space-y-2">
+                                                <p className="text-xs font-bold text-gray-700">Hasil Verifikasi Dokumen (Stage 2):</p>
+                                                <div className="border border-gray-200 rounded-lg overflow-hidden text-xs bg-gray-50/50 divide-y divide-gray-100">
+                                                    {STAGE2_VERIFY_CHECKLIST.map(item => {
+                                                        const docs = (job.documents || []).filter(d => (d.stage === 1 || d.stage === 2) && d.type === item.type);
+                                                        const hasFile = docs.length > 0;
+                                                        const savedData = parseJsonObject(job.s2_verify_data);
+                                                        const status = savedData[item.type] || s2Verify[item.type];
+                                                        return (
+                                                            <div key={item.type} className="flex items-center justify-between px-3 py-1.5 hover:bg-white transition-colors">
+                                                                <div className="flex items-center gap-2 min-w-0 pr-2">
+                                                                    <span className="font-mono text-gray-400 text-[10px] w-4">{item.no}</span>
+                                                                    <span className="font-medium text-gray-800 truncate">{item.label}</span>
                                                                 </div>
-                                                            ) : (
-                                                                <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Kosong</span>
-                                                            )}
-                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                                                status === 'ok' ? 'bg-green-600 text-white' :
-                                                                status === 'tidak' ? 'bg-red-600 text-white' :
-                                                                status === 'na' ? 'bg-gray-500 text-white' :
-                                                                'bg-gray-200 text-gray-600'
-                                                            }`}>
-                                                                {status === 'ok' ? 'OK' : status === 'tidak' ? 'Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                                    {item.isManual ? (
+                                                                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">Manual</span>
+                                                                    ) : (isINS && item.type === 'PO/SPK') ? (
+                                                                        <span className="text-[10px] text-gray-400 font-semibold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-300 inline-flex items-center gap-1 italic cursor-not-allowed" title="Dokumen PO/SPK terkunci untuk Inspektur">
+                                                                            🔒 Terkunci
+                                                                        </span>
+                                                                    ) : hasFile ? (
+                                                                        <div className="flex items-center gap-1 flex-wrap">
+                                                                            {docs.map(d => {
+                                                                                if (isINS && (item.type === 'PO/SPK' || isPoLockedForIns(d, isINS))) {
+                                                                                    return (
+                                                                                        <span key={d.id} className="text-[10px] text-gray-400 font-semibold bg-gray-100 px-1.5 py-0.5 rounded border border-gray-300 inline-flex items-center gap-1 italic cursor-not-allowed" title="Dokumen PO/SPK terkunci untuk Inspektur">
+                                                                                            🔒 Terkunci
+                                                                                        </span>
+                                                                                    );
+                                                                                }
+                                                                                return (
+                                                                                    <a
+                                                                                        key={d.id}
+                                                                                        href={getDocDownloadUrl(d)}
+                                                                                        download
+                                                                                        target="_blank"
+                                                                                        rel="noopener noreferrer"
+                                                                                        className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
+                                                                                        title={`Unduh / Lihat ${d.name}`}
+                                                                                    >
+                                                                                        {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
+                                                                                    </a>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Kosong</span>
+                                                                    )}
+                                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                                        status === 'ok' ? 'bg-green-600 text-white' :
+                                                                        status === 'tidak' ? 'bg-red-600 text-white' :
+                                                                        status === 'na' ? 'bg-gray-500 text-white' :
+                                                                        'bg-gray-200 text-gray-600'
+                                                                    }`}>
+                                                                        {status === 'ok' ? 'OK' : status === 'tidak' ? 'Tidak' : status === 'na' ? 'N/A' : 'Belum Set'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!isCurrent && stageDocs.length > 0 && stage.id !== 2 && (
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!isCurrent && isPast && renderCompletedStageSummary(stage.id)}
                                     </div>
                                 )}
-
-                                {!isCurrent && stageDocs.length > 0 && stage.id !== 2 && (
-                                    <div className="mt-3 space-y-1">
-                                        <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {!isCurrent && isPast && renderCompletedStageSummary(stage.id)}
                             </div>
                         </div>
                     );
@@ -3392,7 +3557,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 </div>
 
                 {/* Content Area — Scrollable body */}
-                <div className="p-4 sm:p-6 overflow-y-auto bg-white flex-1">
+                <div ref={contentScrollRef} className="p-4 sm:p-6 overflow-y-auto bg-white flex-1 scroll-smooth">
                     {activeTab === 'timeline' && renderTimeline()}
                     {activeTab === 'docs'     && renderDocuments()}
                     {activeTab === 'history'  && renderHistory()}

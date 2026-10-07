@@ -11,11 +11,16 @@ class InspectorRecommendationService
 {
     // Stages that count as "active" work for an inspector
     const ACTIVE_STAGES = [3, 4, 5, 6, 7, 8, 9, 10, 11];
-    // Max concurrent jobs before overload penalty kicks in
-    const OVERLOAD_THRESHOLD = 4;
+    // Default max concurrent jobs before overload penalty kicks in
+    const DEFAULT_OVERLOAD_THRESHOLD = 20;
+    const OVERLOAD_THRESHOLD = 20; // Backward compatibility
 
-    public function getRecommendations(Job $targetJob)
+    public function getRecommendations(Job $targetJob, ?int $customThreshold = null)
     {
+        $overloadThreshold = $customThreshold ?: (int) env('INSPECTOR_OVERLOAD_THRESHOLD', self::DEFAULT_OVERLOAD_THRESHOLD);
+        if ($overloadThreshold <= 0) {
+            $overloadThreshold = self::DEFAULT_OVERLOAD_THRESHOLD;
+        }
         $inspectors = User::where('name', 'NOT LIKE', '%Diba Aini%')
             ->where(function ($query) {
                 $query->whereIn('role', ['inspektur', 'inspector', 'manager'])
@@ -119,8 +124,9 @@ class InspectorRecommendationService
                 $details['Spesialisasi'] = '0/30';
             }
 
-            // 2. Workload (25) — fewer active jobs = higher score
-            $workloadScore = max(0, 25 - ($activeJobs * 5));
+            // 2. Workload (25) — proportional score based on active jobs vs threshold
+            $workloadRatio = max(0.0, 1.0 - ($activeJobs / $overloadThreshold));
+            $workloadScore = (int) round(25 * $workloadRatio);
             $score += $workloadScore;
             $details['Workload'] = "{$workloadScore}/25";
 
@@ -135,7 +141,7 @@ class InspectorRecommendationService
             $details['Pengalaman Pesawat'] = "{$pesawatScore}/15";
 
             // 5. Availability (15) — always 15 if not overloaded
-            $availScore = ($activeJobs >= self::OVERLOAD_THRESHOLD) ? 0 : 15;
+            $availScore = ($activeJobs >= $overloadThreshold) ? 0 : 15;
             $score += $availScore;
             $details['Availability'] = "{$availScore}/15";
 
@@ -176,7 +182,7 @@ class InspectorRecommendationService
             }
 
             // Overload penalty
-            $isOverloaded = ($activeJobs >= self::OVERLOAD_THRESHOLD);
+            $isOverloaded = ($activeJobs >= $overloadThreshold);
             if ($isOverloaded) {
                 $score -= 10;
                 $bonuses[] = "-10 Overload ({$activeJobs} job aktif)";

@@ -84,9 +84,9 @@ class JobController extends Controller
             return $user->canOwnStage($stage);
         }
 
-        // Admin role can act on any stage except Stage 1 (owned exclusively by Marketing) and Stage 16 (Superadmin)
+        // Admin role can act on Admin stages [2, 3, 7, 8, 9] (excluded from Stage 1, Inspector, Tim Ahli, Marketing, Finance, and Superadmin stages)
         if ($user->role === 'admin') {
-            if ($stage === 1) {
+            if ($stage === 1 || !in_array($stage, [2, 3, 7, 8, 9])) {
                 return false;
             }
             return true;
@@ -1207,16 +1207,19 @@ class JobController extends Controller
         if ($user->role === 'admin' && (int)$request->stage === 1) {
             abort(403, 'Admin hanya memiliki akses melihat (view-only) dan tidak dapat mengunggah dokumen pada Tahap 1.');
         }
+        if ($user->role === 'admin' && !in_array((int)$request->stage, [2, 3, 7, 8, 9])) {
+            abort(403, 'Admin tidak memiliki izin untuk mengunggah dokumen pada tahap ini.');
+        }
 
         $isInspector = in_array($user->role, ['inspektur', 'inspector'])
             || $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id;
 
         $canUpload = $user->isSuperadmin()
-            || $user->role === 'manager'
+            || ($user->role === 'manager' && !in_array((int)$request->stage, array_merge(self::MKT_STAGES, self::FIN_STAGES)))
             || ($user->role === 'marketing' && in_array((int)$request->stage, [1, 11, 13, 15]))
             || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14]))
-            || ($user->role === 'admin' && (int)$request->stage !== 1)
+            || (($user->role === 'admin' && (int)$request->stage !== 1) && in_array((int)$request->stage, [2, 3, 7, 8, 9]))
             || ($isInspector && in_array((int)$request->stage, [4, 5]))
             || (in_array($user->role, ['tim_ahli', 'ahli']) && (int)$request->stage === 6)
             || $user->canOwnStage((int)$request->stage);
@@ -1498,15 +1501,18 @@ class JobController extends Controller
         if ($user->role === 'admin' && (int)$document->stage === 1) {
             abort(403, 'Admin tidak memiliki izin untuk menghapus dokumen pada Tahap 1.');
         }
+        if ($user->role === 'admin' && !in_array((int)$document->stage, [2, 3, 7, 8, 9])) {
+            abort(403, 'Admin tidak memiliki izin untuk menghapus dokumen pada tahap ini.');
+        }
 
         $isInspector = in_array($user->role, ['inspektur', 'inspector'])
             || $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id;
 
         $canDelete = $user->isSuperadmin()
-            || $user->role === 'manager'
-            || ($user->role === 'admin' && (int)$document->stage !== 1)
-            || ($document->uploaded_by_user_id === $user->id && !($user->role === 'admin' && (int)$document->stage === 1))
+            || ($user->role === 'manager' && !in_array((int)$document->stage, array_merge(self::MKT_STAGES, self::FIN_STAGES)))
+            || (($user->role === 'admin' && (int)$document->stage !== 1) && in_array((int)$document->stage, [2, 3, 7, 8, 9]))
+            || ($document->uploaded_by_user_id === $user->id && !($user->role === 'admin' && !in_array((int)$document->stage, [2, 3, 7, 8, 9])))
             || ($user->role === 'marketing' && in_array((int)$document->stage, [1, 11, 13, 15]))
             || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14]))
             || ($isInspector && in_array((int)$document->stage, [4, 5, 6]))

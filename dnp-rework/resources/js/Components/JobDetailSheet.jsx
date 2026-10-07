@@ -684,8 +684,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (user?.role === 'superadmin' || permissions === 'superadmin') return true;
         // Stage 16 (Selesai Archival Vault) is strictly a Superadmin special privilege
         if (curStage === 16) return false;
-        // Stage 1 is strictly owned by Marketing (Admin is view-only on Stage 1)
-        if (user?.role === 'admin') return curStage !== 1;
+        // Stage 1 is strictly owned by Marketing (Admin is view-only on Stage 1). Admin manages [2, 3, 7, 8, 9].
+        if (user?.role === 'admin') return curStage !== 1 && [2, 3, 7, 8, 9].includes(curStage);
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(curStage)) return true;
         if (user?.role === 'finance' && [10, 12, 14].includes(curStage)) return true;
         if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
@@ -711,9 +711,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const canManageStageDocs = (sid) => {
         const sIdNum = Number(sid);
         const curStageNum = Number(job.stage);
-        if (['superadmin','manager'].includes(user?.role)) return true;
+        if (user?.role === 'superadmin') return true;
+        if (user?.role === 'manager' && !MKT_STAGES.includes(sIdNum) && !FIN_STAGES.includes(sIdNum)) return true;
         if (user?.role === 'admin') {
-            if (sIdNum === 1) return false;
+            if (sIdNum === 1 || ![2, 3, 7, 8, 9].includes(sIdNum)) return false;
             return true;
         }
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(sIdNum)) return true;

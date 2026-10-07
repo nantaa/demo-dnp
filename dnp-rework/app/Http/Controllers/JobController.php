@@ -84,8 +84,11 @@ class JobController extends Controller
             return $user->canOwnStage($stage);
         }
 
-        // Admin role can act on any stage by default
+        // Admin role can act on any stage except Stage 1 (owned exclusively by Marketing) and Stage 16 (Superadmin)
         if ($user->role === 'admin') {
+            if ($stage === 1) {
+                return false;
+            }
             return true;
         }
 
@@ -1201,6 +1204,10 @@ class JobController extends Controller
         }
 
         $user = Auth::user();
+        if ($user->role === 'admin' && (int)$request->stage === 1) {
+            abort(403, 'Admin hanya memiliki akses melihat (view-only) dan tidak dapat mengunggah dokumen pada Tahap 1.');
+        }
+
         $isInspector = in_array($user->role, ['inspektur', 'inspector'])
             || $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id;
@@ -1209,7 +1216,7 @@ class JobController extends Controller
             || $user->role === 'manager'
             || ($user->role === 'marketing' && in_array((int)$request->stage, [1, 11, 13, 15]))
             || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14]))
-            || ($user->role === 'admin')
+            || ($user->role === 'admin' && (int)$request->stage !== 1)
             || ($isInspector && in_array((int)$request->stage, [4, 5]))
             || (in_array($user->role, ['tim_ahli', 'ahli']) && (int)$request->stage === 6)
             || $user->canOwnStage((int)$request->stage);
@@ -1488,14 +1495,18 @@ class JobController extends Controller
         }
 
         $user = Auth::user();
+        if ($user->role === 'admin' && (int)$document->stage === 1) {
+            abort(403, 'Admin tidak memiliki izin untuk menghapus dokumen pada Tahap 1.');
+        }
+
         $isInspector = in_array($user->role, ['inspektur', 'inspector'])
             || $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id;
 
         $canDelete = $user->isSuperadmin()
             || $user->role === 'manager'
-            || $user->role === 'admin'
-            || $document->uploaded_by_user_id === $user->id
+            || ($user->role === 'admin' && (int)$document->stage !== 1)
+            || ($document->uploaded_by_user_id === $user->id && !($user->role === 'admin' && (int)$document->stage === 1))
             || ($user->role === 'marketing' && in_array((int)$document->stage, [1, 11, 13, 15]))
             || ($user->role === 'finance' && in_array((int)$document->stage, [10, 12, 14]))
             || ($isInspector && in_array((int)$document->stage, [4, 5, 6]))

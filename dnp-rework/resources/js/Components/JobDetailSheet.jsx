@@ -238,20 +238,24 @@ const NoteField = React.memo(function NoteField({ value, onChange }) {
 const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional, isINS = false }) => {
     const [isDragging, setIsDragging] = useState(false);
     const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));
+    const canManage = typeof canManageStageDocs === 'function' ? canManageStageDocs(stageId) : true;
 
     const handleDragOver = (e) => {
+        if (!canManage) return;
         e.preventDefault();
         e.stopPropagation();
         if (!isDragging) setIsDragging(true);
     };
 
     const handleDragLeave = (e) => {
+        if (!canManage) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
     };
 
     const handleDrop = (e) => {
+        if (!canManage) return;
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
@@ -283,24 +287,26 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
                         </span>
                     )}
                 </div>
-                <button type="button" onClick={() => triggerUpload(stageId, type)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded transition-colors flex-shrink-0">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    <span>+ Upload</span>
-                </button>
+                {canManage && (
+                    <button type="button" onClick={() => triggerUpload(stageId, type)}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded transition-colors flex-shrink-0">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span>+ Upload</span>
+                    </button>
+                )}
             </div>
             {existing.length > 0 ? (
                 <div className="flex flex-wrap gap-1 mt-1">
                     {existing.map(d => (
-                        <DocChip key={d.id} doc={d} canManage={canManageStageDocs ? canManageStageDocs(d.stage) : true} onDelete={deleteDoc} isINS={isINS} />
+                        <DocChip key={d.id} doc={d} canManage={canManage} onDelete={deleteDoc} isINS={isINS} />
                     ))}
                 </div>
             ) : (
                 <div className="text-center py-1.5 px-2 bg-gray-50/50 rounded border border-dashed border-gray-100">
                     <p className="text-[11px] text-gray-400 italic">
-                        {isDragging ? 'Lepaskan file di sini untuk upload' : 'Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload'}
+                        {isDragging ? 'Lepaskan file di sini untuk upload' : (canManage ? 'Belum ada dokumen • Tarik & lepas file ke sini atau klik + Upload' : 'Belum ada dokumen')}
                     </p>
                 </div>
             )}
@@ -678,7 +684,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (user?.role === 'superadmin' || permissions === 'superadmin') return true;
         // Stage 16 (Selesai Archival Vault) is strictly a Superadmin special privilege
         if (curStage === 16) return false;
-        if (user?.role === 'admin') return true;
+        // Stage 1 is strictly owned by Marketing (Admin is view-only on Stage 1)
+        if (user?.role === 'admin') return curStage !== 1;
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(curStage)) return true;
         if (user?.role === 'finance' && [10, 12, 14].includes(curStage)) return true;
         if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
@@ -705,7 +712,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const sIdNum = Number(sid);
         const curStageNum = Number(job.stage);
         if (['superadmin','manager'].includes(user?.role)) return true;
-        if (user?.role === 'admin') return true;
+        if (user?.role === 'admin') {
+            if (sIdNum === 1) return false;
+            return true;
+        }
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(sIdNum)) return true;
         if (user?.role === 'finance' && [10, 12, 14].includes(sIdNum)) return true;
         if ((isInspector || isAssignedInspector) && [4, 5].includes(sIdNum) && sIdNum === curStageNum) return true;
@@ -1101,6 +1111,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const uploadFileDirectly = (file, stageId, type, extraNotes = '') => {
         if (!file || !stageId || !type) return;
+        if (!canManageStageDocs(stageId)) {
+            showError('Akses Ditolak', 'Anda tidak memiliki izin untuk mengunggah dokumen pada tahap ini.');
+            return;
+        }
         if (file.size > MAX_FILE_SIZE) {
             showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB. Silakan kompres file Anda terlebih dahulu.');
             return;
@@ -1138,6 +1152,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const deleteDoc = async (docId) => {
+        const doc = (job.documents || []).find(d => d.id === docId);
+        if (doc && !canManageStageDocs(doc.stage)) {
+            showError('Akses Ditolak', 'Anda tidak memiliki izin untuk menghapus dokumen pada tahap ini.');
+            return;
+        }
         const res = await showConfirm('Hapus Dokumen', 'Hapus dokumen ini?');
         if (!res.isConfirmed) return;
         router.delete(`/jobs/${job.id}/documents/${docId}`, { preserveScroll: true });

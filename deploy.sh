@@ -13,14 +13,14 @@ echo "Branch: $BRANCH | $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=================================================="
 
 # 1. Pull latest code
-echo "📥 1/6 Git pull branch: $BRANCH..."
+echo "📥 1/7 Git pull branch: $BRANCH..."
 cd "$BASE_DIR"
 git fetch origin "$BRANCH"
 git checkout "$BRANCH"
 git reset --hard origin/"$BRANCH"
 
 # 2. EMERGENCY RESTORE — if artisan or bootstrap are missing, restore from backup
-echo "🛡️  2/6 Checking production integrity..."
+echo "🛡️  2/7 Checking production integrity..."
 if [ ! -f "$PROD_DIR/artisan" ] || [ ! -d "$PROD_DIR/bootstrap" ]; then
     echo "   ⚠️  CRITICAL files missing! Restoring full app from backup slot..."
     BACKUP=""
@@ -42,7 +42,7 @@ else
 fi
 
 # 3. Copy source folders and build configs from dnp-rework (safe — never overwrites artisan/bootstrap/vendor)
-echo "📦 3/6 Copying updated source files & build config from dnp-rework..."
+echo "📦 3/7 Copying updated source files & build config from dnp-rework..."
 cp -r "$BASE_DIR/dnp-rework/app"       "$PROD_DIR/"
 cp -r "$BASE_DIR/dnp-rework/database"  "$PROD_DIR/"
 cp -r "$BASE_DIR/dnp-rework/resources" "$PROD_DIR/"
@@ -59,7 +59,7 @@ rm -f "$PROD_DIR/resources/js/Components/StageRailNav.jsx"
 rm -rf "$PROD_DIR/resources/js/Pages/StageRail"
 
 # 4. npm install + build directly in production
-echo "🔨 4/6 npm install & build in $PROD_DIR..."
+echo "🔨 4/7 npm install & build in $PROD_DIR..."
 cd "$PROD_DIR"
 npm install --no-audit --no-fund
 npm run build
@@ -72,7 +72,7 @@ if [ "$ASSET_COUNT" -lt 5 ]; then
 fi
 
 # 5. Link .env and storage
-echo "🔗 5/6 Linking .env and storage..."
+echo "🔗 5/7 Linking .env and storage..."
 cd "$PROD_DIR"
 if [ -f "$SHARED_ENV" ]; then
     ln -sfn "$SHARED_ENV" .env
@@ -90,13 +90,21 @@ sudo chmod -R 777 "$PROD_DIR/bootstrap/cache" 2>/dev/null || true
 sudo chmod -R 777 "$SHARED_STORAGE" 2>/dev/null || true
 
 # 6. Artisan
-echo "🗄️  6/6 Artisan..."
+echo "🗄️  6/7 Artisan..."
 cd "$PROD_DIR"
 php artisan migrate --force || true
 php artisan storage:link 2>/dev/null || true
 php artisan optimize:clear || true
 
 sudo systemctl reload php8.2-fpm 2>/dev/null || sudo systemctl reload php8.3-fpm 2>/dev/null || true
+
+# 7. Refresh emergency backup slot
+echo "💾 7/7 Updating emergency backup release slot..."
+mkdir -p "$BASE_DIR/releases/blue"
+cp -r "$PROD_DIR/artisan" "$BASE_DIR/releases/blue/" 2>/dev/null || true
+cp -r "$PROD_DIR/bootstrap" "$BASE_DIR/releases/blue/" 2>/dev/null || true
+cp -r "$PROD_DIR/public" "$BASE_DIR/releases/blue/" 2>/dev/null || true
+echo "   -> Backup slot ($BASE_DIR/releases/blue) successfully updated."
 
 echo "=================================================="
 echo "✅ DONE!"

@@ -101,4 +101,16 @@ describe('Standalone Production Build Suite', () => {
         assert.ok(pkg.overrides, 'package.json must declare overrides block');
         assert.ok(pkg.overrides['laravel-vite-plugin'], 'overrides must include laravel-vite-plugin');
     });
+
+    it('9. backup.sh exists and deploy.sh includes production backup synchronization', () => {
+        const backupScriptPath = path.join(rootDir, 'backup.sh');
+        assert.ok(fs.existsSync(backupScriptPath), 'backup.sh must exist in root directory');
+        const backupContent = fs.readFileSync(backupScriptPath, 'utf8');
+        assert.ok(backupContent.includes('dnp-monitor-production'), 'backup.sh must target dnp-monitor-production');
+        assert.ok(backupContent.includes('releases') || backupContent.includes('backups'), 'backup.sh must store into releases or backups');
+
+        const deployContent = fs.readFileSync(path.join(rootDir, 'deploy.sh'), 'utf8');
+        assert.ok(deployContent.includes('backup') || deployContent.includes('releases/blue'), 'deploy.sh must include backup step');
+    });
 });
+

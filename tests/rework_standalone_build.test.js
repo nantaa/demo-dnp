@@ -51,4 +51,14 @@ describe('Standalone Production Build Suite', () => {
         assert.ok(content.includes('@vite'), 'Must include @vite loader');
         assert.ok(content.includes('window.route'), 'Must define window.route helper');
     });
+
+    it('5. deploy.sh synchronizes package.json and vite.config.js to PROD_DIR and validates asset health', () => {
+        const deployPath = path.join(rootDir, 'deploy.sh');
+        const content = fs.readFileSync(deployPath, 'utf8');
+
+        assert.ok(content.includes('package.json') && content.includes('$PROD_DIR'), 'Must copy package.json to PROD_DIR');
+        assert.ok(content.includes('vite.config.js') && content.includes('$PROD_DIR'), 'Must copy vite.config.js to PROD_DIR');
+        assert.ok(content.includes('ASSET_COUNT') || (content.includes('public/build/assets') && content.includes('wc -l')), 'Must count assets');
+        assert.ok(content.includes('lt 5') || content.includes('fewer than'), 'Must assert healthy asset threshold');
+    });
 });

@@ -41,25 +41,33 @@ else
     echo "   -> artisan OK, bootstrap OK — production intact."
 fi
 
-# 3. Copy ONLY source folders from dnp-rework (safe — never overwrites artisan/bootstrap/vendor)
-echo "📦 3/6 Copying updated source files from dnp-rework..."
+# 3. Copy source folders and build configs from dnp-rework (safe — never overwrites artisan/bootstrap/vendor)
+echo "📦 3/6 Copying updated source files & build config from dnp-rework..."
 cp -r "$BASE_DIR/dnp-rework/app"       "$PROD_DIR/"
 cp -r "$BASE_DIR/dnp-rework/database"  "$PROD_DIR/"
 cp -r "$BASE_DIR/dnp-rework/resources" "$PROD_DIR/"
 cp -r "$BASE_DIR/dnp-rework/routes"    "$PROD_DIR/"
 [ -d "$BASE_DIR/dnp-rework/config" ] && cp -r "$BASE_DIR/dnp-rework/config" "$PROD_DIR/"
-echo "   -> Source files updated."
+[ -f "$BASE_DIR/dnp-rework/package.json" ] && cp "$BASE_DIR/dnp-rework/package.json" "$PROD_DIR/"
+[ -f "$BASE_DIR/dnp-rework/vite.config.js" ] && cp "$BASE_DIR/dnp-rework/vite.config.js" "$PROD_DIR/"
+echo "   -> Source files and build configs updated."
 
 # Clean up stale experimental files if any were restored from backup
 rm -f "$PROD_DIR/resources/js/Components/StageRailNav.jsx"
 rm -rf "$PROD_DIR/resources/js/Pages/StageRail"
 
-# 4. npm install + build
-echo "🔨 4/6 npm install & build..."
+# 4. npm install + build directly in production
+echo "🔨 4/6 npm install & build in $PROD_DIR..."
 cd "$PROD_DIR"
 npm install --no-audit --no-fund
 npm run build
-echo "   -> Build done: $(ls public/build/assets/ 2>/dev/null | wc -l) assets"
+
+ASSET_COUNT=$(ls "$PROD_DIR/public/build/assets/" 2>/dev/null | wc -l)
+echo "   -> Build done: $ASSET_COUNT assets"
+if [ "$ASSET_COUNT" -lt 5 ]; then
+    echo "   ❌ ERROR: Build generated fewer than 5 assets! Production build may have failed."
+    exit 1
+fi
 
 # 5. Link .env and storage
 echo "🔗 5/6 Linking .env and storage..."

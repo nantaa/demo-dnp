@@ -1,7 +1,7 @@
 export const STAGES = [
     { id: 1, name: 'PO / SPK / Proposal', short: 'PO', role: 'marketing', sla: null },
     { id: 2, name: 'Verifikasi Dokumen', short: 'Verifikasi', role: 'admin', sla: 1 },
-    { id: 3, name: 'Penjadwalan & Surat Tugas', short: 'Jadwal', role: 'admin', sla: 1 },
+    { id: 3, name: 'Penjadwalan', short: 'Jadwal', role: 'admin', sla: 1 },
     { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi', role: 'inspektur', sla: null },
     { id: 13, name: 'Aktualisasi Unit', short: 'Aktualisasi', role: 'marketing', sla: 1, displayId: '4b' },
     { id: 5, name: 'Penyusunan LHPP', short: 'LHPP', role: 'inspektur', sla: 3 },

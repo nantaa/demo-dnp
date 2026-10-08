@@ -32,7 +32,7 @@ class DailyDigestService
     protected static array $stageNames = [
         1  => 'PO / SPK / Proposal',
         2  => 'Verifikasi Dokumen',
-        3  => 'Penjadwalan & Surat Tugas',
+        3  => 'Penjadwalan',
         4  => 'Pelaksanaan RU (Inspeksi Lapangan)',
         13 => 'Aktualisasi Unit (Stage 4b)',
         5  => 'Penyusunan LHPP',

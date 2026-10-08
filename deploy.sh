@@ -51,7 +51,6 @@ cp -r "$BASE_DIR/dnp-rework/routes"    "$PROD_DIR/"
 [ -f "$BASE_DIR/dnp-rework/package.json" ] && cp "$BASE_DIR/dnp-rework/package.json" "$PROD_DIR/"
 [ -f "$BASE_DIR/dnp-rework/vite.config.js" ] && cp "$BASE_DIR/dnp-rework/vite.config.js" "$PROD_DIR/"
 [ -f "$BASE_DIR/dnp-rework/tailwind.config.js" ] && cp "$BASE_DIR/dnp-rework/tailwind.config.js" "$PROD_DIR/"
-[ -f "$BASE_DIR/dnp-rework/postcss.config.js" ] && cp "$BASE_DIR/dnp-rework/postcss.config.js" "$PROD_DIR/"
 echo "   -> Source files and build configs updated."
 
 # Clean up stale experimental files if any were restored from backup

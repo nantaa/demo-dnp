@@ -21,6 +21,7 @@ describe('Standalone Production Build Suite', () => {
         assert.ok(allDeps['react'], 'Must include react');
         assert.ok(allDeps['react-dom'], 'Must include react-dom');
         assert.ok(allDeps['vite'], 'Must include vite');
+        assert.ok(allDeps['vite'].includes('8'), 'Must specify Vite 8 in package.json');
     });
 
     it('2. dnp-rework has vite.config.js with laravel plugin and react plugin', () => {
@@ -72,5 +73,10 @@ describe('Standalone Production Build Suite', () => {
             jsxContent.includes('script[data-page="app"]') || jsxContent.includes('scriptEl') || bladeContent.includes('app.dataset.page'),
             'Must ensure dataset.page is populated when Inertia renders page into script tag'
         );
+    });
+
+    it('7. dnp-rework has tailwind.config.js and postcss.config.js for full CSS compilation', () => {
+        assert.ok(fs.existsSync(path.join(rootDir, 'dnp-rework/tailwind.config.js')), 'tailwind.config.js must exist');
+        assert.ok(fs.existsSync(path.join(rootDir, 'dnp-rework/postcss.config.js')), 'postcss.config.js must exist');
     });
 });

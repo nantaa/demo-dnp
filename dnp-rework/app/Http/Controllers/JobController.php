@@ -654,8 +654,8 @@ class JobController extends Controller
             'Kadiv/MGR menyetujui bypass dokumen. Admin dapat melanjutkan ke stage berikutnya.'
         );
 
-        // Notify stage owner
-        $owners = NotificationService::getStageOwnerUserIds($job->stage);
+        // Notify related users
+        $owners = NotificationService::getRelatedUserIds($job, $job->stage);
         NotificationService::send(
             $owners,
             'approved',

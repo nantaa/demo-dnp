@@ -69,27 +69,58 @@ class NotificationService
 
         // 1. Target stage owners (who need to act on the next stage)
         if ($targetStage !== null) {
-            $userIds = array_merge($userIds, self::getStageOwnerUserIds($targetStage));
-        }
+            $stageOwnerIds = self::getStageOwnerUserIds($targetStage);
+            if (!empty($stageOwnerIds)) {
+                $stageOwners = User::whereIn('id', $stageOwnerIds)->get();
+                foreach ($stageOwners as $owner) {
+                    // Marketing stage owners: ONLY include if they are the marketing owner of THIS specific job
+                    if ($owner->role === 'marketing') {
+                        if (!empty($job->owner_marketing) && (
+                            strcasecmp(trim($job->owner_marketing), trim($owner->name)) === 0 ||
+                            stripos($job->owner_marketing, $owner->name) !== false
+                        )) {
+                            $userIds[] = $owner->id;
+                        }
+                        continue;
+                    }
 
-        // 2. Marketing owner of this specific job
-        if (!empty($job->owner_marketing)) {
-            $mktId = User::where('name', $job->owner_marketing)->value('id');
-            if ($mktId) {
-                $userIds[] = $mktId;
+                    // Inspector stage owners: ONLY include if assigned to THIS specific job
+                    if ($owner->role === 'inspektur') {
+                        $isAssigned = $job->inspectors()->where('users.id', $owner->id)->exists()
+                            || ((int)$job->report_writer_id === (int)$owner->id);
+                        if ($isAssigned) {
+                            $userIds[] = $owner->id;
+                        }
+                        continue;
+                    }
+
+                    // Functional team members handling pipeline stages (Admin, Finance, Manager/Kadiv, Superadmin)
+                    $userIds[] = $owner->id;
+                }
             }
         }
 
-        // 3. Assigned inspectors of this specific job
-        $inspectorIds = $job->inspectors()->pluck('users.id')->toArray();
-        $userIds = array_merge($userIds, $inspectorIds);
-
-        // 4. Report writer of this specific job
-        if ($job->report_writer_id) {
-            $userIds[] = $job->report_writer_id;
+        // 2. Marketing owner of this specific job (always informed of their own job's progress or rejection)
+        if (!empty($job->owner_marketing)) {
+            $mktUser = User::where('name', $job->owner_marketing)
+                ->orWhere('name', 'LIKE', '%' . trim($job->owner_marketing) . '%')
+                ->first();
+            if ($mktUser) {
+                $userIds[] = $mktUser->id;
+            }
         }
 
-        // 5. Exclude current acting user (so they don't get notified for their own action)
+        // 3. Assigned inspectors of this specific job (only for field/technical stages: 3, 4, 5, 6, or rejections)
+        if ($targetStage === null || in_array($targetStage, [3, 4, 5, 6])) {
+            $inspectorIds = $job->inspectors()->pluck('users.id')->toArray();
+            $userIds = array_merge($userIds, $inspectorIds);
+
+            if ($job->report_writer_id) {
+                $userIds[] = $job->report_writer_id;
+            }
+        }
+
+        // 4. Exclude current acting user (so they don't get notified for their own action)
         $actorId = \Illuminate\Support\Facades\Auth::id();
         if ($actorId) {
             $userIds = array_filter($userIds, fn($id) => (int)$id !== (int)$actorId);

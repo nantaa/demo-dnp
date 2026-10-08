@@ -14,9 +14,32 @@ class NotificationController extends Controller
     public function index()
     {
         $userId = Auth::id();
+        $user = Auth::user();
+
+        // Auto-purge legacy notifications where this user was not related to the job
+        if ($user && $user->role === 'marketing') {
+            Notification::where('user_id', $userId)
+                ->whereHas('job', function ($q) use ($user) {
+                    $q->whereNotNull('owner_marketing')
+                      ->where('owner_marketing', '!=', '')
+                      ->where('owner_marketing', '!=', $user->name);
+                })
+                ->delete();
+        } elseif ($user && $user->role === 'inspektur') {
+            Notification::where('user_id', $userId)
+                ->whereHas('job', function ($q) use ($userId) {
+                    $q->whereDoesntHave('inspectors', function ($iq) use ($userId) {
+                        $iq->where('users.id', $userId);
+                    })->where(function ($rq) use ($userId) {
+                        $rq->whereNull('report_writer_id')
+                           ->orWhere('report_writer_id', '!=', $userId);
+                    });
+                })
+                ->delete();
+        }
 
         $notifications = Notification::where('user_id', $userId)
-            ->with(['job:id,kode,klien,pesawat,stage'])
+            ->with(['job:id,kode,klien,pesawat,stage,owner_marketing'])
             ->orderBy('created_at', 'desc')
             ->take(15)
             ->get();

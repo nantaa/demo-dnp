@@ -112,13 +112,18 @@ class DailyDigestService
 
             // 4. MARKETING
             elseif ($role === 'marketing') {
-                $isJobOwner = !empty($job->owner_marketing) && (stripos($job->owner_marketing, $userName) !== false || $user->canOwnStage($stage));
-                if ($isJobOwner || in_array($stage, [1, 11, 13, 15])) {
+                $isJobOwner = !empty($job->owner_marketing) && (
+                    strcasecmp(trim($job->owner_marketing), trim($userName)) === 0 ||
+                    stripos($job->owner_marketing, $userName) !== false ||
+                    stripos($userName, $job->owner_marketing) !== false
+                );
+                if ($isJobOwner) {
                     $isAssigned = true;
                     if ($stage === 1) $actionRequired = 'Lengkapi data PO / SPK dan submit ke Admin.';
                     elseif ($stage === 11) $actionRequired = 'Lakukan follow-up penagihan ke klien.';
                     elseif ($stage === 13) $actionRequired = 'Input aktualisasi unit hasil inspeksi lapangan.';
                     elseif ($stage === 15) $actionRequired = 'Kirim dokumen SUKET asli ke klien & input nomor resi.';
+                    else $actionRequired = 'Pekerjaan saat ini di tahap ' . (self::$stageNames[$stage] ?? "Stage {$stage}");
                 }
             }
 

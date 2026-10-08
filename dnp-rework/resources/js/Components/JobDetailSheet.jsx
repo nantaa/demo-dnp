@@ -1843,7 +1843,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             return (
                                                 <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1 flex justify-between">
                                                     <span>DPP: <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
-                                                    <span>PPN (12%): <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                                    <span>PPN (11%): <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
                                                 </div>
                                             );
                                         })()}
@@ -3450,7 +3450,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
                         {canSeeNilai && (
                             <div className="col-span-2 sm:col-span-1">
-                                <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Kontrak (Total Sesudah PPN 12%)</label>
+                                <label className="block text-xs font-bold text-gray-700 mb-1">Nilai Kontrak (Total Sesudah PPN 11%)</label>
                                 {showTgl15Warning && (
                                     <p className="text-[11px] text-red-600 mb-1 font-medium">
                                         Perhatian: Sudah lewat tanggal 15 bulan ini (Closing Pajak). Perubahan data keuangan berisiko terhadap pelaporan pajak.
@@ -3468,7 +3468,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 <span className="font-semibold text-gray-800">Rp {Number(dpp).toLocaleString('id-ID')}</span>
                                             </div>
                                             <div className="flex justify-between text-amber-800">
-                                                <span>PPN (12%):</span>
+                                                <span>PPN (11%):</span>
                                                 <span className="font-semibold">Rp {Number(ppn).toLocaleString('id-ID')}</span>
                                             </div>
                                             <div className="flex justify-between text-amber-950 font-bold border-t border-amber-200/60 pt-0.5">
@@ -3518,7 +3518,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <div className="col-span-2 bg-yellow-50 p-2 rounded border border-yellow-200 space-y-1">
                                 <div>
                                     <p className="text-xs text-yellow-800 font-bold">
-                                        Nilai Kontrak <span className="font-normal opacity-80">(Sesudah PPN 12%)</span>
+                                        Nilai Kontrak <span className="font-normal opacity-80">(Sesudah PPN 11%)</span>
                                     </p>
                                     <p className="font-bold text-lg text-yellow-900">{fmtCurrency(job.nilai)}</p>
                                 </div>
@@ -3529,7 +3529,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     return (
                                         <div className="pt-1 border-t border-yellow-200/80 flex items-center justify-between text-xs text-yellow-800">
                                             <span>DPP: <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
-                                            <span>PPN 12%: <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                            <span>PPN 11%: <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
                                         </div>
                                     );
                                 })()}
@@ -3709,7 +3709,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block font-bold text-gray-700 mb-1">Nilai Kontrak (Sesudah PPN 12%) *</label>
+                                    <label className="block font-bold text-gray-700 mb-1">Nilai Kontrak (Sesudah PPN 11%) *</label>
                                     <input
                                         type="number"
                                         min="0"
@@ -3725,7 +3725,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         return (
                                             <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2 mt-1.5 flex justify-between">
                                                 <span>DPP (Sebelum PPN): <strong>Rp {dpp.toLocaleString('id-ID')}</strong></span>
-                                                <span>PPN (12%): <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
+                                                <span>PPN (11%): <strong>Rp {ppn.toLocaleString('id-ID')}</strong></span>
                                             </div>
                                         );
                                     })()}

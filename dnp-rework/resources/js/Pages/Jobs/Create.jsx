@@ -154,7 +154,7 @@ export default function JobCreate({ auth }) {
                                                 <span className="font-semibold text-gray-800">Rp {Number(dpp).toLocaleString('id-ID')}</span>
                                             </div>
                                             <div className="flex justify-between text-amber-800">
-                                                <span>PPN (12%):</span>
+                                                <span>PPN (11%):</span>
                                                 <span className="font-semibold">Rp {Number(ppn).toLocaleString('id-ID')}</span>
                                             </div>
                                             <div className="flex justify-between text-amber-950 font-bold border-t border-amber-200/60 pt-1">

@@ -14,6 +14,26 @@ echo "Target Branch: $BRANCH"
 echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=================================================="
 
+# 0. Emergency / Legacy 16-Stage Restoration Check
+LEGACY_DIR=$(ls -td "$BASE_DIR"/dnp-monitor-production.legacy* 2>/dev/null | head -n 1)
+if [ -n "$LEGACY_DIR" ] && [ -d "$LEGACY_DIR" ]; then
+    echo "=================================================="
+    echo "⏪ RESTORING 16-STAGE PRODUCTION FROM BACKUP"
+    echo "Target: $LEGACY_DIR"
+    echo "=================================================="
+    rm -f "$CURRENT_LINK"
+    ln -sfn "$LEGACY_DIR" "$CURRENT_LINK"
+    sudo systemctl reload php8.2-fpm 2>/dev/null || sudo systemctl reload php8.3-fpm 2>/dev/null || sudo service php8.2-fpm reload 2>/dev/null || true
+    if [ -f "$CURRENT_LINK/artisan" ]; then
+        php "$CURRENT_LINK/artisan" optimize:clear 2>/dev/null || true
+    fi
+    echo "=================================================="
+    echo "✅ 16 STAGE PIPELINE TELAH DIPULIHKAN 100%!"
+    echo "Aktif: $CURRENT_LINK -> $LEGACY_DIR"
+    echo "=================================================="
+    exit 0
+fi
+
 # 1. Tentukan target slot rilis (Blue vs Green)
 if [ -L "$CURRENT_LINK" ]; then
     CURRENT_TARGET=$(readlink "$CURRENT_LINK")

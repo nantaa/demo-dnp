@@ -81,6 +81,12 @@ fi
 echo "   -> Mengupdate source code dari dnp-rework..."
 cp -r "$BASE_DIR/dnp-rework"/* "$TARGET_DIR/"
 
+if [ -d "$BASE_DIR/dnp-rework/public/build" ]; then
+    echo "   -> Menyalin aset build terkompilasi 16 stage..."
+    mkdir -p "$TARGET_DIR/public/build"
+    cp -r "$BASE_DIR/dnp-rework/public/build"/* "$TARGET_DIR/public/build/"
+fi
+
 # Salin aset frontend yang sudah dibuild dari dist/
 if [ -d "$BASE_DIR/dist" ]; then
     echo "   -> Menyalin frontend build artifacts (dist)..."

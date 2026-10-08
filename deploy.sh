@@ -50,6 +50,10 @@ cp -r "$BASE_DIR/dnp-rework/routes"    "$PROD_DIR/"
 [ -d "$BASE_DIR/dnp-rework/config" ] && cp -r "$BASE_DIR/dnp-rework/config" "$PROD_DIR/"
 echo "   -> Source files updated."
 
+# Clean up stale experimental files if any were restored from backup
+rm -f "$PROD_DIR/resources/js/Components/StageRailNav.jsx"
+rm -rf "$PROD_DIR/resources/js/Pages/StageRail"
+
 # 4. npm install + build
 echo "🔨 4/6 npm install & build..."
 cd "$PROD_DIR"

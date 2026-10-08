@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import SmartRecommendation from './SmartRecommendation';
 import IndonesiaLocationSelect from './IndonesiaLocationSelect';
+import DocumentPreviewModal from './DocumentPreviewModal';
 import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import Swal from 'sweetalert2';
 import { Trash2, ChevronDown } from 'lucide-react';
@@ -150,7 +151,7 @@ const isPoLockedForIns = (doc, isINS) => {
 };
 
 // ── Top-level Subcomponents (to maintain stable DOM identity across re-renders) ──
-const DocChip = ({ doc, canManage, onDelete, jobId, isINS }) => {
+const DocChip = ({ doc, canManage, onDelete, jobId, isINS, onPreview }) => {
     if (!doc) return null;
     if (isPoLockedForIns(doc, isINS)) {
         return (
@@ -161,15 +162,36 @@ const DocChip = ({ doc, canManage, onDelete, jobId, isINS }) => {
         );
     }
     const fileUrl = getDocumentUrl(doc, jobId);
+    const handleClick = (e) => {
+        if (onPreview) {
+            e.preventDefault();
+            onPreview(doc);
+        }
+    };
     return (
-        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs group">
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={doc.name || 'Dokumen'}
-               className="text-blue-600 hover:underline font-medium truncate max-w-[160px]" title={doc.name || 'Dokumen'}>
+        <div className="flex items-center gap-1.5 bg-gray-50 hover:bg-blue-50/70 border border-gray-200 hover:border-blue-200 rounded px-2 py-1 text-xs group transition-colors">
+            <button
+                type="button"
+                onClick={handleClick}
+                className="text-blue-600 hover:underline font-medium truncate max-w-[160px] text-left cursor-pointer"
+                title={`Klik untuk pratinjau: ${doc.name || 'Dokumen'}`}
+            >
                 {doc.name || 'Dokumen'}
+            </button>
+            <a 
+                href={fileUrl} 
+                download={doc.name || 'Dokumen'}
+                onClick={(e) => e.stopPropagation()}
+                className="text-gray-400 hover:text-blue-600 p-0.5 opacity-60 group-hover:opacity-100 transition-opacity"
+                title={`Unduh berkas: ${doc.name || 'Dokumen'}`}
+            >
+                <svg className="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
             </a>
             {canManage && (
                 <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(doc.id); }}
-                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">x</button>
+                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5 p-0.5" title="Hapus dokumen">x</button>
             )}
         </div>
     );
@@ -235,10 +257,11 @@ const NoteField = React.memo(function NoteField({ value, onChange }) {
     );
 });
 
-const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional, isINS = false }) => {
+const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional, isINS = false, onPreview }) => {
     const [isDragging, setIsDragging] = useState(false);
     const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));
     const canManage = typeof canManageStageDocs === 'function' ? canManageStageDocs(stageId) : true;
+    const handlePreview = onPreview || (typeof window !== 'undefined' ? window.__dnpPreviewDoc : null);
 
     const handleDragOver = (e) => {
         if (!canManage) return;
@@ -300,7 +323,7 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
             {existing.length > 0 ? (
                 <div className="flex flex-wrap gap-1 mt-1">
                     {existing.map(d => (
-                        <DocChip key={d.id} doc={d} canManage={canManage} onDelete={deleteDoc} isINS={isINS} />
+                        <DocChip key={d.id} doc={d} canManage={canManage} onDelete={deleteDoc} isINS={isINS} onPreview={handlePreview} />
                     ))}
                 </div>
             ) : (
@@ -361,6 +384,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── UI State ─────────────────────────────────────────────────────────────
     const [activeTab,    setActiveTab]    = useState('timeline');
+    const [previewDoc,   setPreviewDoc]   = useState(null);
     const [isEditing,    setIsEditing]    = useState(false);
     const [isUploading,  setIsUploading]  = useState(false);
     const [uploadStage,  setUploadStage]  = useState(null);
@@ -411,6 +435,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             }
         }, 80);
     };
+
+    // Global document preview trigger for nested/unthreaded DocChips
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.__dnpPreviewDoc = setPreviewDoc;
+            return () => {
+                delete window.__dnpPreviewDoc;
+            };
+        }
+    }, []);
 
     // Auto-scroll on initial mount or when opening 'timeline' tab
     useEffect(() => {
@@ -766,7 +800,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 schedule_days:   scheduleDays,
             }, {
                 onSuccess: () => { setIsMoving(false); onClose(); },
-                onError:   () => setIsMoving(false),
+                onError: (errs) => {
+                    setIsMoving(false);
+                    const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                    showError('Gagal Memindahkan Tahap', msg || 'Terjadi kesalahan saat memindahkan tahap.');
+                },
             });
             return;
         }
@@ -1008,7 +1046,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
     };
 
-    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
+    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 4.') });
     const handleUpdateLhppLink = (index, field, value) => {
         setLhppLinks(prev => {
             const next = [...prev];
@@ -1060,15 +1098,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
     const handleSaveS5  = () => {
         if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
-        router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.') });
+        router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan keputusan review.') });
     };
-    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.') });
-    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'Data follow-up penagihan tersimpan.') });
-    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.') });
-    const handleSaveS15 = () => router.post(`/jobs/${job.id}/stage15-data`, s15, { onSuccess: () => showSuccess('Berhasil', 'Informasi pengiriman SUKET tersimpan.') });
+    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 7.') });
+    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 8.') });
+    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 9.') });
+    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 10.') });
+    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'Data follow-up penagihan tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan follow-up penagihan.') });
+    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan status pembayaran.') });
+    const handleSaveS15 = () => router.post(`/jobs/${job.id}/stage15-data`, s15, { onSuccess: () => showSuccess('Berhasil', 'Informasi pengiriman SUKET tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan info pengiriman.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -1105,7 +1143,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
             onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
-            onError:   () => setIsUploading(false),
+            onError: (errs) => {
+                setIsUploading(false);
+                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                showError('Gagal Mengunggah Berkas', msg || 'Format atau ukuran berkas tidak valid.');
+            },
         });
         e.target.value = '';
     };
@@ -1129,7 +1171,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
             onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
-            onError:   () => setIsUploading(false),
+            onError: (errs) => {
+                setIsUploading(false);
+                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                showError('Gagal Mengunggah Berkas', msg || 'Format atau ukuran berkas tidak valid.');
+            },
         });
     };
 
@@ -1147,7 +1193,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             fd.append('file', file); fd.append('type', type); fd.append('stage', 4);
             const note = photoNotes[type] || '';
             if (note) fd.append('photo_notes', note);
-            router.post(`/jobs/${job.id}/documents`, fd, { forceFormData: true });
+            router.post(`/jobs/${job.id}/documents`, fd, {
+                forceFormData: true,
+                onError: (errs) => {
+                    const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                    showError('Gagal Mengunggah Foto', msg || 'Gagal menyimpan foto ke server.');
+                },
+            });
         };
         input.click();
     };
@@ -1160,7 +1212,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
         const res = await showConfirm('Hapus Dokumen', 'Hapus dokumen ini?');
         if (!res.isConfirmed) return;
-        router.delete(`/jobs/${job.id}/documents/${docId}`, { preserveScroll: true });
+        router.delete(`/jobs/${job.id}/documents/${docId}`, {
+            preserveScroll: true,
+            onSuccess: () => showSuccess('Berhasil', 'Dokumen berhasil dihapus.'),
+            onError: (errs) => {
+                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                showError('Gagal Menghapus Dokumen', msg || 'Tidak dapat menghapus dokumen ini.');
+            },
+        });
     };
 
     // Get docs for a stage+type
@@ -1676,7 +1735,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                 {existing.length > 0 && <span className="text-xs text-green-600 font-bold">Terupload</span>}
                                             </div>
                                             {existing.length > 0
-                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}</div>
+                                                ? <div className="flex flex-wrap gap-1 mb-2">{existing.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} onPreview={setPreviewDoc} />)}</div>
                                                 : null
                                             }
                                             <input type="text" placeholder="Catatan foto (opsional)"
@@ -1961,7 +2020,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <p className="text-[11px] font-medium text-gray-600 mb-1.5">File LHPP yang sudah diunggah:</p>
                                 <div className="flex flex-wrap gap-1.5">
                                     {(job.documents || []).filter(d => d.stage === 5 && d.type === 'LHPP').map(doc => (
-                                        <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} jobId={job.id} isINS={isINS} />
+                                        <DocChip key={doc.id} doc={doc} canManage={canManageStageDocs(5)} onDelete={deleteDoc} jobId={job.id} isINS={isINS} onPreview={setPreviewDoc} />
                                     ))}
                                 </div>
                             </div>
@@ -3146,7 +3205,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                             <div className="mt-3 space-y-1">
                                                                 <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
                                                                 <div className="flex flex-wrap gap-1">
-                                                                    {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
+                                                                    {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} onPreview={setPreviewDoc} />)}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -3225,7 +3284,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             <div className="space-y-1">
                                                 <p className="text-xs text-gray-500 font-medium">Dokumen Tersimpan:</p>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} />)}
+                                                    {stageDocs.map(d => <DocChip key={d.id} doc={d} canManage={canManageStageDocs(d.stage)} onDelete={deleteDoc} isINS={isINS} onPreview={setPreviewDoc} />)}
                                                 </div>
                                             </div>
                                         )}
@@ -3260,9 +3319,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             {docs.map(doc => (
                                 <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 border rounded text-sm">
                                     <div>
-                                        <a href={getDocDownloadUrl(doc)} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewDoc(doc)}
+                                            className="font-medium text-blue-600 hover:underline flex items-center gap-2 text-left cursor-pointer"
+                                            title="Klik untuk pratinjau dokumen"
+                                        >
                                             <span>{doc.name}</span>
-                                        </a>
+                                        </button>
                                         <div className="text-xs text-gray-500 mt-1 ml-6">
                                             {doc.type} • Uploaded by {doc.uploaded_by_user_id} • {fmt(doc.created_at)}
                                         </div>
@@ -3813,6 +3877,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </div>
                     </div>
                 )}
+
+                {/* ── Modal Pratinjau Dokumen (Scrollable Preview Popup) ── */}
+                <DocumentPreviewModal
+                    doc={previewDoc}
+                    jobId={job.id}
+                    isOpen={!!previewDoc}
+                    onClose={() => setPreviewDoc(null)}
+                />
             </div>
         </div>
     );

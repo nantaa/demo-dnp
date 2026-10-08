@@ -33,10 +33,19 @@ function ThreadDecor({ size = 220, color = '#00A8E8', opacity = 0.15, origin = '
 }
 
 export default function AppLayout({ header, children }) {
-    const { auth = {} } = usePage().props || {};
+    const { auth = {}, flash = {} } = usePage().props || {};
     const user = auth?.user || {};
     const currentRoute = window.location.pathname;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Watch for Laravel session flash messages (e.g. back()->with('error', '...') or with('success', '...'))
+    useEffect(() => {
+        if (flash?.error) {
+            showError('Perhatian', flash.error);
+        } else if (flash?.success) {
+            showSuccess('Berhasil', flash.success);
+        }
+    }, [flash?.error, flash?.success]);
 
     useEffect(() => {
         // Set tab icon to moriku-logo.png

@@ -92,6 +92,16 @@ export default function KanbanIndex({ jobs, auth }) {
         return () => clearInterval(syncInterval);
     }, []);
 
+    // Live update open job modal whenever jobs data updates from server
+    useEffect(() => {
+        if (selectedJob) {
+            const freshJob = (jobs || []).find(j => j.id === selectedJob.id);
+            if (freshJob) {
+                setSelectedJob(freshJob);
+            }
+        }
+    }, [jobs]);
+
     const canManageStage = (stageId) => {
         const sId = Number(stageId);
         if (isSuperadmin) return true;

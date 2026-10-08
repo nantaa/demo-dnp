@@ -856,7 +856,13 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             });
             return;
         }
-        post(`/jobs/${job.id}/move`, { onSuccess: () => onClose() });
+        post(`/jobs/${job.id}/move`, {
+            onSuccess: () => onClose(),
+            onError: (errs) => {
+                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                showError('Gagal Memindahkan Tahap', msg || 'Terjadi kesalahan saat memindahkan tahap.');
+            },
+        });
     };
 
     const handleBypassStage5 = async () => {
@@ -1442,7 +1448,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     Minta Persetujuan MGR
                                 </button>
                             )}
-                            <button type="submit" disabled={processing || !stage2CanMove}
+                            <button type="button" onClick={handleMoveStage} disabled={processing || !stage2CanMove}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
                                 {processing ? '...' : 'Verifikasi Selesai — Lanjut Penjadwalan →'}
                             </button>
@@ -2041,7 +2047,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     Tolak / Kembalikan
                                 </button>
                                 <button
-                                    type="submit"
+                                    type="button"
+                                    onClick={handleMoveStage}
                                     disabled={processing || isMoving}
                                     className="flex-1 px-4 py-2 rounded text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 transition"
                                 >
@@ -2150,7 +2157,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="px-4 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100">
                                 Tolak / Kembalikan
                             </button>
-                            <button type="submit" disabled={processing || !s5.s5_review_decision || s5.s5_review_decision === 'rejected'}
+                            <button type="button" onClick={handleMoveStage} disabled={processing || !s5.s5_review_decision || s5.s5_review_decision === 'rejected'}
                                 className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
                                 {processing ? '...' : 'Lanjut ke Stage 7 Penyerahan →'}
                             </button>
@@ -2256,7 +2263,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         <div className="flex gap-2 mt-2">
                             <button type="button" onClick={handleRejectStage}
                                 className="px-3 py-2 rounded text-sm bg-red-50 text-red-700 border border-red-200">Tolak</button>
-                            <button type="submit" disabled={processing}
+                            <button type="button" onClick={handleMoveStage} disabled={processing}
                                 className="flex-1 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
                                 {processing ? '...' : 'Lanjut ke Stage 10 →'}
                             </button>
@@ -2589,9 +2596,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </p>
                                 <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                                 <button
-                                    type="submit"
+                                    type="button"
                                     disabled={processing}
-                                    onClick={() => setData('next_stage', 16)}
+                                    onClick={() => {
+                                        setData('next_stage', 16);
+                                        post(`/jobs/${job.id}/move`, {
+                                            data: { ...data, next_stage: 16 },
+                                            onSuccess: () => onClose(),
+                                            onError: (errs) => {
+                                                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                                                showError('Gagal Mengarsipkan', msg || 'Gagal mengarsipkan pekerjaan.');
+                                            },
+                                        });
+                                    }}
                                     className="px-3.5 py-2 rounded text-xs font-bold bg-teal-700 hover:bg-teal-800 text-white shadow-xs transition flex items-center gap-1.5"
                                 >
                                     {processing ? '...' : 'Selesaikan dan Arsipkan Pekerjaan'}

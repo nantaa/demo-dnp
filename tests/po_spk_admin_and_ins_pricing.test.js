@@ -52,19 +52,18 @@ describe('PO/SPK Admin Visibility & INS Pricing PO Gating Test Suite', () => {
         });
     });
 
-    describe('3. JobDetailSheet.jsx Stage 2 Timeline Checklist File Download Link', () => {
-        it('Stage 2 timeline checklist renders clickable download links when hasFile is true', () => {
+    describe('3. JobDetailSheet.jsx Stage 2 Timeline Checklist File Instant Preview Button', () => {
+        it('Stage 2 timeline checklist renders clickable preview buttons triggering setPreviewDoc when hasFile is true', () => {
             const detailContent = fs.readFileSync(detailSheetPath, 'utf8');
             
-            // In the timeline checklist rendering, hasFile must render an <a> link, not just a static span
-            // We search in the s2Verify / timeline checklist loop area
+            // In the timeline checklist rendering, hasFile must render an instant preview button triggering setPreviewDoc
             const timelineChecklistArea = detailContent.match(/savedData\[item\.type\]\s*\|\|\s*s2Verify\[item\.type\][\s\S]*?<\/div>\s*<\/div>/);
             assert.ok(timelineChecklistArea, 'Must find Stage 2 timeline checklist block');
             
             const blockCode = timelineChecklistArea[0];
             assert.ok(
-                blockCode.includes('<a') && blockCode.includes('download'),
-                'Timeline checklist hasFile MUST render a clickable <a> download link'
+                blockCode.includes('setPreviewDoc') && blockCode.includes('<button'),
+                'Timeline checklist hasFile MUST render a clickable preview button with setPreviewDoc'
             );
         });
     });

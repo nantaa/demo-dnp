@@ -71,7 +71,7 @@ describe('Logout Confirmation, Login History Guard & PPN 11% Test Suite', () => 
         );
     });
 
-    it('6. Create.jsx calculates PPN with 11% multiplier while displaying PPN (12%) label', () => {
+    it('6. Create.jsx calculates PPN with 11% multiplier while displaying PPN (11%) label', () => {
         // Calculation must use 0.11 and 1.11
         assert.match(
             createContent,
@@ -88,15 +88,15 @@ describe('Logout Confirmation, Login History Guard & PPN 11% Test Suite', () => 
             /\*\s*1\.11/,
             'Create.jsx submit transform must multiply by 1.11'
         );
-        // Label must still say PPN (12%)
+        // Label must say PPN (11%)
         assert.match(
             createContent,
-            /PPN\s*\(\s*12%\s*\)/,
-            'Create.jsx must retain the label PPN (12%)'
+            /PPN\s*\(\s*11%\s*\)/,
+            'Create.jsx must display the label PPN (11%)'
         );
     });
 
-    it('7. JobDetailSheet.jsx reverse-calculates DPP using 1.11 while keeping PPN 12% label', () => {
+    it('7. JobDetailSheet.jsx reverse-calculates DPP using 1.11 while displaying PPN 11% label', () => {
         assert.match(
             sheetContent,
             /total\s*\/\s*1\.11/,
@@ -104,8 +104,8 @@ describe('Logout Confirmation, Login History Guard & PPN 11% Test Suite', () => 
         );
         assert.match(
             sheetContent,
-            /PPN\s*\(?12%?\)?/,
-            'JobDetailSheet.jsx must retain the label PPN 12%'
+            /PPN\s*\(?11%?\)?/,
+            'JobDetailSheet.jsx must display the label PPN 11%'
         );
     });
 });

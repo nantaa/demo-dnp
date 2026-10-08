@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
     X, 
     Download, 
@@ -66,9 +67,11 @@ export default function DocumentPreviewModal({ doc, jobId, isOpen, onClose }) {
                     (doc.mime_type && doc.mime_type.toLowerCase().startsWith('image/'));
     const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv'].includes(ext);
 
-    return (
+    if (typeof document === 'undefined') return null;
+
+    return createPortal(
         <div 
-            className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
             onClick={onClose}
         >
             <div 
@@ -225,6 +228,7 @@ export default function DocumentPreviewModal({ doc, jobId, isOpen, onClose }) {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

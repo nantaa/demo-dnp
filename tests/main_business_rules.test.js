@@ -35,11 +35,11 @@ describe('5 Business Rules on Main - TDD Test Suite', () => {
                 'Create.jsx input label or breakdown must clarify DPP / Sebelum PPN'
             );
 
-            // Must retain PPN (12%) label
+            // Must label PPN as 11%
             assert.match(
                 createContent,
-                /PPN\s*\(\s*12%\s*\)/,
-                'Create.jsx must retain the label PPN (12%)'
+                /PPN\s*\(\s*11%\s*\)/,
+                'Create.jsx must display the label PPN (11%)'
             );
         });
 

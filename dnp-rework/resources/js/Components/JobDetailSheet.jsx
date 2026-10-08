@@ -5,7 +5,7 @@ import IndonesiaLocationSelect from './IndonesiaLocationSelect';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import { showError, showSuccess, showConfirm, showWarning } from '@/swal';
 import Swal from 'sweetalert2';
-import { Trash2, ChevronDown } from 'lucide-react';
+import { Trash2, ChevronDown, Eye } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     STAGE9_SUKET_STATUSES, PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
@@ -197,7 +197,7 @@ const DocChip = ({ doc, canManage, onDelete, jobId, isINS, onPreview }) => {
     );
 };
 
-const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject }) => {
+const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReject, onMove }) => {
     const getNextLabel = () => {
         if (stage === 4) return 'Lanjut ke Stage 5 (LHPP) →';
         if (stage === 13) return 'Lanjut ke Stage 5 (LHPP) →';
@@ -233,7 +233,7 @@ const MoveRow = ({ disabled = false, disabledMsg = '', stage, processing, onReje
                         Tolak / Kembalikan
                     </button>
                 )}
-                <button type="submit" disabled={processing || disabled}
+                <button type="button" onClick={onMove} disabled={processing || disabled}
                     className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40">
                     {processing ? '...' : getNextLabel()}
                 </button>
@@ -1243,7 +1243,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const s = Number(job.stage);
 
         return (
-            <form onSubmit={handleMoveStage}>
+            <div className="space-y-4">
                 {/* ── STAGE 1 ─────────────────────────────────── */}
                 {s === 1 && (
                     <div className="space-y-3">
@@ -1267,7 +1267,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             isINS={isINS}
                         />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} onMove={handleMoveStage} disabled={!stage1DocOk} disabledMsg={!stage1DocOk ? 'Upload minimal 1 dokumen utama (PO/SPK, Surat Permohonan, atau Surat Kuasa)' : ''} />
                     </div>
                 )}
 
@@ -1367,10 +1367,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                         );
                                                     }
                                                     return (
-                                                        <a key={d.id} href={getDocDownloadUrl(d)} download target="_blank" rel="noopener noreferrer"
-                                                            className="px-2 py-1 rounded bg-green-50 border border-green-300 text-green-700 font-semibold text-[10px] hover:underline truncate max-w-[80px]" title={d.name}>
-                                                            {d.name.split('.').pop().toUpperCase()}
-                                                        </a>
+                                                        <button key={d.id} type="button" onClick={() => setPreviewDoc(d)}
+                                                            className="px-2 py-1 rounded bg-green-50 hover:bg-green-100 border border-green-300 text-green-700 font-bold text-[10px] transition-colors inline-flex items-center gap-1 shadow-xs cursor-pointer truncate max-w-[85px]"
+                                                            title={`Klik untuk pratinjau: ${d.name}`}>
+                                                            <Eye size={10} className="text-green-700 flex-shrink-0" />
+                                                            <span className="truncate">{d.name.split('.').pop().toUpperCase() || 'PDF'}</span>
+                                                        </button>
                                                     );
                                                 })
                                             ) : (
@@ -1664,7 +1666,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         */}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage}
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} onMove={handleMoveStage}
                             disabled={!s3ScheduleValid || !data.disnaker_tujuan}
                             disabledMsg={!data.disnaker_tujuan ? 'Pilih Disnaker Tujuan' : !s3ScheduleValid ? 'Lengkapi jadwal dan inspektur tiap hari' : ''} />
                     </div>
@@ -1784,7 +1786,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </div>
                             </div>
                         ) : (
-                            <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                            <MoveRow stage={s} processing={processing} onReject={handleRejectStage} onMove={handleMoveStage} />
                         )}
                     </div>
                 )}
@@ -2171,7 +2173,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </button>
                         <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} onMove={handleMoveStage} disabled={!s7.tgl_submit_disnaker} disabledMsg={!s7.tgl_submit_disnaker ? 'Isi tanggal penyerahan terlebih dahulu' : ''} />
                     </div>
                 )}
 
@@ -2230,7 +2232,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         </button>
                         {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} />
+                        <MoveRow stage={s} processing={processing} onReject={handleRejectStage} onMove={handleMoveStage} />
                     </div>
                 )}
 
@@ -2343,7 +2345,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             )}
                             {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                             <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                            <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} disabled={!s10CanMove} disabledMsg={s10DisabledMsg} />
+                            <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} onMove={handleMoveStage} disabled={!s10CanMove} disabledMsg={s10DisabledMsg} />
                         </div>
                     );
                 })()}
@@ -2422,7 +2424,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         ))}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} />
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} onMove={handleMoveStage} />
                     </div>
                 )}
 
@@ -2495,6 +2497,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 stage={s}
                                 processing={processing || isMoving}
                                 onReject={handleRejectStage}
+                                onMove={handleMoveStage}
                                 disabled={s14.s14_payment_status !== 'paid'}
                                 disabledMsg={s14.s14_payment_status !== 'paid' ? 'Pekerjaan hanya dapat dilanjutkan ke Pengiriman SUKET (11c) setelah status pembayaran Lunas (Paid).' : ''}
                             />
@@ -2557,7 +2560,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         ))}
 
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
-                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} />
+                        <MoveRow stage={s} processing={processing || isMoving} onReject={handleRejectStage} onMove={handleMoveStage} />
                     </div>
                 )}
 
@@ -2653,7 +2656,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         )}
                     </div>
                 )}
-            </form>
+            </div>
         );
     };
 
@@ -3247,17 +3250,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                                                                     );
                                                                                 }
                                                                                 return (
-                                                                                    <a
+                                                                                    <button
                                                                                         key={d.id}
-                                                                                        href={getDocDownloadUrl(d)}
-                                                                                        download
-                                                                                        target="_blank"
-                                                                                        rel="noopener noreferrer"
-                                                                                        className="text-[10px] text-green-700 font-semibold bg-green-50 hover:bg-green-100 hover:underline px-1.5 py-0.5 rounded border border-green-200 inline-flex items-center gap-1"
-                                                                                        title={`Unduh / Lihat ${d.name}`}
+                                                                                        type="button"
+                                                                                        onClick={() => setPreviewDoc(d)}
+                                                                                        className="text-[10px] text-emerald-800 font-semibold bg-emerald-50 hover:bg-emerald-100 hover:underline px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1 shadow-xs cursor-pointer"
+                                                                                        title={`Klik untuk pratinjau: ${d.name}`}
                                                                                     >
-                                                                                        {d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}
-                                                                                    </a>
+                                                                                        <Eye size={10} className="text-emerald-600 flex-shrink-0" />
+                                                                                        <span>{d.name ? (d.name.length > 15 ? d.name.slice(0, 12) + '...' : d.name) : 'Ada File'}</span>
+                                                                                    </button>
                                                                                 );
                                                                             })}
                                                                         </div>

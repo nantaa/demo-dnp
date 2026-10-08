@@ -33,7 +33,26 @@ if (typeof window !== 'undefined') {
     };
 }
 
+// Safely extract initial page data whether Inertia rendered it in a script tag or on dataset.page
+let initialPageData = undefined;
+if (typeof window !== 'undefined') {
+    const appEl = document.getElementById('app');
+    const scriptEl = document.querySelector('script[data-page="app"]');
+    const raw = (appEl && appEl.dataset && appEl.dataset.page) || (scriptEl && scriptEl.textContent);
+    if (raw) {
+        try {
+            initialPageData = JSON.parse(raw);
+            if (appEl && appEl.dataset && !appEl.dataset.page) {
+                appEl.dataset.page = raw;
+            }
+        } catch (e) {
+            console.error('Failed to parse initial Inertia page data:', e);
+        }
+    }
+}
+
 createInertiaApp({
+    page: initialPageData,
     title: (title) => title ? `${title} - ${appName}` : appName,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
     setup({ el, App, props }) {

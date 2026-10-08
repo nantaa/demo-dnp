@@ -61,4 +61,16 @@ describe('Standalone Production Build Suite', () => {
         assert.ok(content.includes('ASSET_COUNT') || (content.includes('public/build/assets') && content.includes('wc -l')), 'Must count assets');
         assert.ok(content.includes('lt 5') || content.includes('fewer than'), 'Must assert healthy asset threshold');
     });
+
+    it('6. app.jsx and app.blade.php guard against script vs dataset page resolution mismatch', () => {
+        const appJsxPath = path.join(rootDir, 'dnp-rework/resources/js/app.jsx');
+        const bladePath = path.join(rootDir, 'dnp-rework/resources/views/app.blade.php');
+        const jsxContent = fs.readFileSync(appJsxPath, 'utf8');
+        const bladeContent = fs.readFileSync(bladePath, 'utf8');
+
+        assert.ok(
+            jsxContent.includes('script[data-page="app"]') || jsxContent.includes('scriptEl') || bladeContent.includes('app.dataset.page'),
+            'Must ensure dataset.page is populated when Inertia renders page into script tag'
+        );
+    });
 });

@@ -44,5 +44,14 @@
 </head>
 <body class="font-sans antialiased bg-slate-50 text-slate-800">
     @inertia
+    <script>
+      (function() {
+        var app = document.getElementById('app');
+        var script = document.querySelector('script[data-page="app"]');
+        if (app && script && !app.dataset.page) {
+          app.dataset.page = script.textContent;
+        }
+      })();
+    </script>
 </body>
 </html>

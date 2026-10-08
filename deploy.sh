@@ -26,15 +26,24 @@ git reset --hard origin/"$BRANCH"
 echo "📦 2/5 Preparing production directory..."
 mkdir -p "$PROD_DIR"
 
-# 3. Timpa LANGSUNG dengan file terbaru dari dnp-rework
+# 3. WIPE old build assets to prevent stale JS bundles
+echo "   -> Wiping OLD public/build to remove stale bundles..."
+rm -rf "$PROD_DIR/public/build"
+
+# Sync source code from dnp-rework into production
 echo "   -> Syncing source code from dnp-rework into production..."
-cp -r "$BASE_DIR/dnp-rework"/* "$PROD_DIR/"
+rsync -a --delete \
+    --exclude='vendor/' \
+    --exclude='storage/' \
+    --exclude='.env' \
+    "$BASE_DIR/dnp-rework/" "$PROD_DIR/"
 
 # Force-sync compiled build assets (16 stage bundles)
 echo "   -> Force-syncing compiled 16-stage build assets..."
 mkdir -p "$PROD_DIR/public/build/assets"
 cp -f "$BASE_DIR/dnp-rework/public/build/manifest.json" "$PROD_DIR/public/build/manifest.json"
-cp -f "$BASE_DIR/dnp-rework/public/build/assets"/* "$PROD_DIR/public/build/assets/"
+cp -f "$BASE_DIR/dnp-rework/public/build/assets/"* "$PROD_DIR/public/build/assets/"
+echo "   -> Build assets on server: $(ls $PROD_DIR/public/build/assets/ | wc -l) files"
 
 # 4. Hubungkan shared .env & storage
 echo "🔗 3/5 Linking shared storage & environment..."

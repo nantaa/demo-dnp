@@ -71,20 +71,14 @@ cp -r "$BASE_DIR/dnp-rework/resources" "$PROD_DIR/"
 cp -r "$BASE_DIR/dnp-rework/routes"    "$PROD_DIR/"
 [ -d "$BASE_DIR/dnp-rework/config" ]   && cp -r "$BASE_DIR/dnp-rework/config" "$PROD_DIR/"
 
-# 4. Build frontend (npm) in production dir
-echo "🔨 4/7 Building frontend assets..."
+# 4. npm install + build in production dir (ALWAYS)
+echo "🔨 4/7 npm install & build..."
 cd "$PROD_DIR"
-if [ -f "package.json" ]; then
-    npm ci --prefer-offline 2>/dev/null || npm install --no-audit --no-fund
-    npm run build
-    echo "   -> Build OK: $(ls public/build/assets/ 2>/dev/null | wc -l) assets"
-else
-    echo "   -> No package.json — copying pre-built v16 bundles from repo..."
-    rm -rf "$PROD_DIR/public/build"
-    mkdir -p "$PROD_DIR/public/build/assets"
-    cp -r "$BASE_DIR/dnp-rework/public/build/"* "$PROD_DIR/public/build/"
-    echo "   -> Assets: $(ls $PROD_DIR/public/build/assets/ | wc -l) files"
-fi
+echo "   -> Running npm install..."
+npm install --no-audit --no-fund
+echo "   -> Running npm run build..."
+npm run build
+echo "   -> Build OK: $(ls public/build/assets/ 2>/dev/null | wc -l) assets"
 
 # 5. Link .env and storage
 echo "🔗 5/7 Linking .env and storage..."

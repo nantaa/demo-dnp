@@ -75,25 +75,30 @@ describe('Standalone Production Build Suite', () => {
         );
     });
 
-    it('7. dnp-rework keeps autoprefixer in package.json but avoids standalone postcss.config.js', () => {
+    it('7. dnp-rework has postcss.config.js and tailwind.config.js to resolve @tailwind in Vite 8', () => {
         assert.ok(fs.existsSync(path.join(rootDir, 'dnp-rework/tailwind.config.js')), 'tailwind.config.js must exist');
-        assert.ok(!fs.existsSync(path.join(rootDir, 'dnp-rework/postcss.config.js')), 'postcss.config.js must NOT exist');
+        assert.ok(fs.existsSync(path.join(rootDir, 'dnp-rework/postcss.config.js')), 'postcss.config.js must exist');
 
         const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'dnp-rework/package.json'), 'utf8'));
         const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
-        assert.ok(allDeps['autoprefixer'], 'Must keep autoprefixer in package.json');
+        assert.ok(allDeps['postcss'], 'Must have postcss in package.json');
+        assert.ok(allDeps['autoprefixer'], 'Must have autoprefixer in package.json');
+        assert.ok(allDeps['tailwindcss'], 'Must have tailwindcss in package.json');
 
         const deployContent = fs.readFileSync(path.join(rootDir, 'deploy.sh'), 'utf8');
-        assert.ok(!deployContent.includes('postcss.config.js'), 'deploy.sh must not copy postcss.config.js');
+        assert.ok(deployContent.includes('postcss.config.js'), 'deploy.sh must copy postcss.config.js');
     });
 
-    it('8. Package dependencies are standardized to stable Vite 8, React 18, and updated libraries', () => {
+    it('8. Package dependencies use Vite 8.1 with NPM overrides to silence ERESOLVE warnings', () => {
         const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'dnp-rework/package.json'), 'utf8'));
         const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
 
         assert.equal(allDeps['vite'], '^8.1.0', 'Vite must be ^8.1.0');
         assert.equal(allDeps['react'], '^18.3.1', 'React must be ^18.3.1');
         assert.equal(allDeps['react-dom'], '^18.3.1', 'React-dom must be ^18.3.1');
-        assert.equal(allDeps['axios'], '^1.7.9', 'Axios must be updated to ^1.7.9');
+        assert.equal(allDeps['axios'], '^1.7.9', 'Axios must be ^1.7.9');
+
+        assert.ok(pkg.overrides, 'package.json must declare overrides block');
+        assert.ok(pkg.overrides['laravel-vite-plugin'], 'overrides must include laravel-vite-plugin');
     });
 });

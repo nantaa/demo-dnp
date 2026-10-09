@@ -497,6 +497,30 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     });
     const [isMoving, setIsMoving] = useState(false);
 
+    // Watchdog safety: never let loading overlay stay stuck forever
+    const [showStuckDismiss, setShowStuckDismiss] = useState(false);
+    useEffect(() => {
+        let dismissTimer;
+        let hardResetTimer;
+        if (isUploading || isMoving) {
+            setShowStuckDismiss(false);
+            dismissTimer = setTimeout(() => {
+                setShowStuckDismiss(true);
+            }, 5000);
+            hardResetTimer = setTimeout(() => {
+                setIsUploading(false);
+                setIsMoving(false);
+                setShowStuckDismiss(false);
+            }, 15000);
+        } else {
+            setShowStuckDismiss(false);
+        }
+        return () => {
+            clearTimeout(dismissTimer);
+            clearTimeout(hardResetTimer);
+        };
+    }, [isUploading, isMoving]);
+
     // ── Schedule builder state (Stage 3) ─────────────────────────────────────
     const initScheduleDays = (j) => {
         const saved = j.schedule_days;
@@ -589,6 +613,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // Keep local form states synchronized when job prop updates
     useEffect(() => {
+        setIsUploading(false);
+        setIsMoving(false);
+        setIsSavingLink(false);
+        setUploadStage(null);
+        setUploadType('');
         setData({
             next_stage:      getNextStageId(job.stage),
             notes:           '',
@@ -669,7 +698,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             init[item.type] = saved[item.type] || '';
         });
         setS2Verify(init);
-    }, [job.id]);
+    }, [job]);
 
     // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};
@@ -799,12 +828,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 cert_ids:        data.cert_ids,
                 schedule_days:   scheduleDays,
             }, {
+                preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => { setIsMoving(false); onClose(); },
                 onError: (errs) => {
                     setIsMoving(false);
                     const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
                     showError('Gagal Memindahkan Tahap', msg || 'Terjadi kesalahan saat memindahkan tahap.');
                 },
+                onFinish: () => setIsMoving(false),
             });
             return;
         }
@@ -820,12 +852,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 notes: data.notes,
                 link_lhpp: lhppLinks,
             }, {
+                preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => { setIsMoving(false); onClose(); },
                 onError: (errs) => {
                     setIsMoving(false);
                     const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
                     showError('Gagal Pindah Stage', msg);
                 },
+                onFinish: () => setIsMoving(false),
             });
             return;
         }
@@ -847,21 +882,28 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 notes: data.notes,
                 ...s10,
             }, {
+                preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => { setIsMoving(false); onClose(); },
                 onError: (errs) => {
                     setIsMoving(false);
                     const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
                     showError('Gagal Pindah Stage', msg);
                 },
+                onFinish: () => setIsMoving(false),
             });
             return;
         }
-        post(`/jobs/${job.id}/move`, {
+        setIsMoving(true);
+        router.post(`/jobs/${job.id}/move`, data, {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => onClose(),
             onError: (errs) => {
                 const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
                 showError('Gagal Memindahkan Tahap', msg || 'Terjadi kesalahan saat memindahkan tahap.');
             },
+            onFinish: () => setIsMoving(false),
         });
     };
 
@@ -888,6 +930,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             link_lhpp: lhppLinks,
             is_bypass: true,
         }, {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setIsMoving(false);
                 showSuccess('Bypass Berhasil', 'LHPP disetujui otomatis dan pekerjaan berhasil diteruskan ke Stage 7 (Verifikasi ke Dinas).');
@@ -898,6 +942,34 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 const msg = Object.values(errs).flat().join('\n') || 'Gagal memindahkan stage.';
                 showError('Gagal Pindah Stage', msg);
             },
+            onFinish: () => setIsMoving(false),
+        });
+    };
+
+    const handleMoveToStage5 = (e) => {
+        e?.preventDefault();
+        setIsMoving(true);
+        router.post(`/jobs/${job.id}/move`, { ...data, next_stage: 5 }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => onClose(),
+            onError: (errs) => showError('Gagal', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal memindahkan tahap.'),
+            onFinish: () => setIsMoving(false),
+        });
+    };
+
+    const handleArchiveStage16 = (e) => {
+        e?.preventDefault();
+        setIsMoving(true);
+        router.post(`/jobs/${job.id}/move`, { ...data, next_stage: 16 }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => onClose(),
+            onError: (errs) => {
+                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
+                showError('Gagal Mengarsipkan', msg || 'Gagal mengarsipkan pekerjaan.');
+            },
+            onFinish: () => setIsMoving(false),
         });
     };
 
@@ -1052,7 +1124,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
     };
 
-    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 4.') });
+    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 4.') });
     const handleUpdateLhppLink = (index, field, value) => {
         setLhppLinks(prev => {
             const next = [...prev];
@@ -1091,6 +1163,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const handleSaveLhppLinks = () => {
         setIsSavingLink(true);
         router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setIsSavingLink(false);
                 showSuccess('Berhasil', 'Daftar link LHPP unit berhasil disimpan.');
@@ -1099,20 +1173,23 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 setIsSavingLink(false);
                 const msg = Object.values(errs).flat().join('\n') || 'Gagal menyimpan link LHPP.';
                 showError('Gagal Simpan', msg);
+            },
+            onFinish: () => {
+                setIsSavingLink(false);
             }
         });
     };
     const handleSaveS5  = () => {
         if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
-        router.post(`/jobs/${job.id}/stage5-review`, s5, { onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan keputusan review.') });
+        router.post(`/jobs/${job.id}/stage5-review`, s5, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan keputusan review.') });
     };
-    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 7.') });
-    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 8.') });
-    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 9.') });
-    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 10.') });
-    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { onSuccess: () => showSuccess('Berhasil', 'Data follow-up penagihan tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan follow-up penagihan.') });
-    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan status pembayaran.') });
-    const handleSaveS15 = () => router.post(`/jobs/${job.id}/stage15-data`, s15, { onSuccess: () => showSuccess('Berhasil', 'Informasi pengiriman SUKET tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan info pengiriman.') });
+    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 7.') });
+    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 8.') });
+    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 9.') });
+    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 10.') });
+    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Data follow-up penagihan tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan follow-up penagihan.') });
+    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan status pembayaran.') });
+    const handleSaveS15 = () => router.post(`/jobs/${job.id}/stage15-data`, s15, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Informasi pengiriman SUKET tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan info pengiriman.') });
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -1148,11 +1225,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         fd.append('file', file); fd.append('type', uploadType); fd.append('stage', uploadStage);
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
-            onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                showSuccess('Berhasil', 'Dokumen berhasil diunggah.');
+            },
             onError: (errs) => {
-                setIsUploading(false);
                 const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
                 showError('Gagal Mengunggah Berkas', msg || 'Format atau ukuran berkas tidak valid.');
+            },
+            onFinish: () => {
+                setIsUploading(false);
+                setUploadStage(null);
+                setUploadType('');
             },
         });
         e.target.value = '';
@@ -1176,11 +1261,19 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (extraNotes) fd.append('photo_notes', extraNotes);
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
-            onSuccess: () => { setUploadStage(null); setUploadType(''); setIsUploading(false); },
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                showSuccess('Berhasil', 'Dokumen berhasil diunggah.');
+            },
             onError: (errs) => {
-                setIsUploading(false);
                 const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
                 showError('Gagal Mengunggah Berkas', msg || 'Format atau ukuran berkas tidak valid.');
+            },
+            onFinish: () => {
+                setIsUploading(false);
+                setUploadStage(null);
+                setUploadType('');
             },
         });
     };
@@ -1195,15 +1288,24 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB.');
                 return;
             }
+            setIsUploading(true);
             const fd = new FormData();
             fd.append('file', file); fd.append('type', type); fd.append('stage', 4);
             const note = photoNotes[type] || '';
             if (note) fd.append('photo_notes', note);
             router.post(`/jobs/${job.id}/documents`, fd, {
                 forceFormData: true,
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    showSuccess('Berhasil', 'Foto berhasil diunggah.');
+                },
                 onError: (errs) => {
                     const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
                     showError('Gagal Mengunggah Foto', msg || 'Gagal menyimpan foto ke server.');
+                },
+                onFinish: () => {
+                    setIsUploading(false);
                 },
             });
         };
@@ -1220,6 +1322,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (!res.isConfirmed) return;
         router.delete(`/jobs/${job.id}/documents/${docId}`, {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => showSuccess('Berhasil', 'Dokumen berhasil dihapus.'),
             onError: (errs) => {
                 const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
@@ -1769,14 +1872,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <div className="flex flex-col gap-2">
                                     <button
                                         type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            post(`/jobs/${job.id}/move`, {
-                                                data: { ...data, next_stage: 5 },
-                                                onSuccess: () => onClose()
-                                            });
-                                        }}
-                                        disabled={processing}
+                                        onClick={handleMoveToStage5}
+                                        disabled={processing || isMoving}
                                         className="w-full px-4 py-2.5 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1"
                                     >
                                         Lanjut ke Stage 5 (Penyusunan LHPP) →
@@ -1881,17 +1978,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </button>
                             <button
                                 type="button"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    post(`/jobs/${job.id}/move`, {
-                                        data: { ...data, next_stage: 5 },
-                                        onSuccess: () => onClose()
-                                    });
-                                }}
-                                disabled={processing}
+                                onClick={handleMoveToStage5}
+                                disabled={processing || isMoving}
                                 className="flex-1 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm"
                             >
-                                {processing ? '...' : 'Lanjut ke Stage 5 (LHPP) →'}
+                                {processing || isMoving ? '...' : 'Lanjut ke Stage 5 (LHPP) →'}
                             </button>
                         </div>
                     </div>
@@ -2597,21 +2688,11 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                                 <button
                                     type="button"
-                                    disabled={processing}
-                                    onClick={() => {
-                                        setData('next_stage', 16);
-                                        post(`/jobs/${job.id}/move`, {
-                                            data: { ...data, next_stage: 16 },
-                                            onSuccess: () => onClose(),
-                                            onError: (errs) => {
-                                                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
-                                                showError('Gagal Mengarsipkan', msg || 'Gagal mengarsipkan pekerjaan.');
-                                            },
-                                        });
-                                    }}
+                                    disabled={processing || isMoving}
+                                    onClick={handleArchiveStage16}
                                     className="px-3.5 py-2 rounded text-xs font-bold bg-teal-700 hover:bg-teal-800 text-white shadow-xs transition flex items-center gap-1.5"
                                 >
-                                    {processing ? '...' : 'Selesaikan dan Arsipkan Pekerjaan'}
+                                    {processing || isMoving ? '...' : 'Selesaikan dan Arsipkan Pekerjaan'}
                                 </button>
                             </div>
                         )}
@@ -3364,9 +3445,6 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             {(!job.documents || job.documents.length === 0) && (
                 <div className="text-center py-10 text-gray-400">Belum ada dokumen yang diunggah.</div>
             )}
-            
-            {/* Hidden generic file input for non-photo uploads */}
-            <input type="file" ref={fileInputRef} className="hidden" onChange={onFileChange} />
         </div>
     );
 
@@ -3671,11 +3749,29 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
 
                 {/* Global Loader Overlay */}
-                {(processing || isUploading) && (
-                    <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl">
-                        <div className="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                            <span className="font-semibold text-gray-700">Memproses...</span>
+                {(processing || isUploading || isMoving) && (
+                    <div 
+                        data-dnp-busy="true"
+                        className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl"
+                    >
+                        <div className="bg-white p-5 rounded-xl shadow-xl flex flex-col items-center gap-3 border border-slate-100 max-w-xs text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-3 border-blue-600 border-t-transparent"></div>
+                            <div>
+                                <span className="font-semibold text-gray-800 text-sm block">Memproses...</span>
+                                <span className="text-[11px] text-gray-500 block mt-0.5">Mohon tunggu sementara data disinkronkan</span>
+                            </div>
+                            {showStuckDismiss && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsUploading(false);
+                                        setIsMoving(false);
+                                    }}
+                                    className="mt-2 text-xs text-red-600 hover:text-red-700 font-semibold underline cursor-pointer"
+                                >
+                                    Proses terlalu lama? Tutup loading
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}

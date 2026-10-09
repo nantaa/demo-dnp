@@ -82,6 +82,10 @@ export default function KanbanIndex({ jobs, auth }) {
     // Live background polling sync to keep Kanban updated across all active users
     useEffect(() => {
         const syncInterval = setInterval(() => {
+            // Do not interrupt in-flight uploads, stage moves, or active modal mutations
+            if (typeof document !== 'undefined' && document.querySelector('[data-dnp-busy="true"]')) {
+                return;
+            }
             router.reload({
                 only: ['jobs'],
                 preserveScroll: true,

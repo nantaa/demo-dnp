@@ -118,7 +118,7 @@
           <input 
             id="searchInput" 
             type="text" 
-            placeholder="Cari poin sistem (contoh: 16 tahap, absensi, sla, multi-unit, v3)..." 
+            placeholder="Cari poin sistem (contoh: 16 tahap, absensi, dp, split unit, tempo, anomali)..." 
             class="w-full bg-slate-950 border border-slate-700/80 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
             oninput="handleSearch()"
           />
@@ -284,20 +284,100 @@
         <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
           <div class="flex justify-between items-start">
             <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            ✕ STATUS PENGEMBANGAN
-          </span>
-          <span class="text-xs text-rose-400 font-mono">STABILITAS ALUR KERJA</span>
+              ✕ STATUS PENGEMBANGAN
+            </span>
+            <span class="text-xs text-rose-400 font-mono">STABILITAS ALUR KERJA</span>
+          </div>
+          <h3 class="text-lg font-bold text-white">Pembaruan Versi 3 (v3 - 20 Tahap) Ditunda (Delayed)</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-rose-400">Penjelasan Status Versi:</span> Rencana pembaruan versi 3 yang memecah alur menjadi 20 tahap secara resmi <strong>ditunda (<em>delayed</em>)</strong> karena tingginya kompleksitas dan dinamika alur proyek riksa uji di lapangan. Manajemen memutuskan untuk memprioritaskan pemantapan dan kestabilan alur <strong>16 tahap resmi</strong> yang saat ini telah berjalan lancar sebelum mempertimbangkan pembagian tahap yang lebih rinci.
+          </p>
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Versi v3 Ditunda (Delayed)</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Kompleksitas Alur Lapangan</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Resmi 16 Tahap Stabil</span>
+          </div>
         </div>
-        <h3 class="text-lg font-bold text-white">Pembaruan Versi 3 (v3 - 20 Tahap) Ditunda (Delayed)</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          <span class="font-bold text-rose-400">Penjelasan Status Versi:</span> Rencana pembaruan versi 3 yang memecah alur menjadi 20 tahap secara resmi **ditunda (*delayed*)** karena tingginya kompleksitas dan dinamika alur proyek riksa uji di lapangan. Manajemen memutuskan untuk memprioritaskan pemantapan dan kestabilan alur **16 tahap resmi** yang saat ini telah berjalan lancar sebelum mempertimbangkan pembagian tahap yang lebih rinci.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Versi v3 Ditunda (Delayed)</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Kompleksitas Alur Lapangan</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Resmi 16 Tahap Stabil</span>
+
+        <!-- Poin: Pembayaran Bertahap / Uang Muka (DP & Termin) -->
+        <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+          <div class="flex justify-between items-start">
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              ✕ BELUM DIDUKUNG
+            </span>
+            <span class="text-xs text-rose-400 font-mono">SKEMA PEMBAYARAN</span>
+          </div>
+          <h3 class="text-lg font-bold text-white">Belum Mendukung Pembayaran Uang Muka (DP) & Termin Bertahap</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> Sistem penagihan di Tahap 14 bersifat biner: status hanya mengenal <em>Belum Bayar</em> atau <em>Lunas Penuh (100%)</em>. DNP Monitor belum memiliki modul buku besar piutang (*accounts receivable ledger*) untuk mencatat cicilan bertahap, setoran DP (misal: uang muka 30% atau 50%), maupun pelacakan sisa saldo tagihan yang belum dibayarkan oleh klien.
+          </p>
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada Skema DP</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Uang Muka Belum Tersedia</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Hanya Status Lunas Penuh</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada Termin Bertahap</span>
+          </div>
         </div>
-      </div>
+
+        <!-- Poin: Pemecahan Pekerjaan Multi-Unit (Split / Parent-Child Job) -->
+        <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+          <div class="flex justify-between items-start">
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              ✕ BELUM DIDUKUNG
+            </span>
+            <span class="text-xs text-rose-400 font-mono">MANAJEMEN KARTU KANBAN</span>
+          </div>
+          <h3 class="text-lg font-bold text-white">Belum Mendukung Pemecahan Kartu Unit (Split / Parent-Child Job)</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> Meskipun sistem mendukung banyak unit alat dalam 1 SPK, seluruh unit tersebut terikat pada <strong>satu kartu alur pekerjaan yang sama</strong>. Jika di lapangan terjadi kasus sebagian unit selesai diperiksa namun unit lainnya tertunda (*pending perbaikan atau uji ulang*), sistem belum bisa memecah kartu (*split job*) menjadi anak pekerjaan (*parent-child job*) yang melaju secara terpisah antar-tahap.
+          </p>
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada Split Job</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Pecah Unit Belum Bisa</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada Parent-Child</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Semua Unit 1 Kartu SPK</span>
+          </div>
+        </div>
+
+        <!-- Poin: Pengiriman SUKET Duluan Sebelum Bayar (Term of Payment / Tempo) -->
+        <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+          <div class="flex justify-between items-start">
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              ✕ BATASAN OPERASIONAL
+            </span>
+            <span class="text-xs text-rose-400 font-mono">PENGUNCIAN FINANSIAL</span>
+          </div>
+          <h3 class="text-lg font-bold text-white">Belum Ada Dispensasi Suket Duluan Baru Bayar (Sistem Tempo / TOP)</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> Sistem menerapkan aturan pengamanan ketat: Tahap 15 (Pengiriman Suket) dikunci otomatis hingga Tahap 14 diverifikasi <em>Lunas</em>. Untuk klien besar atau BUMN yang memiliki perjanjian tempo (*Term of Payment / TOP*) di mana berkas Suket asli wajib diserahkan terlebih dahulu sebelum pembayaran diproses kemudian hari, sistem belum memiliki alur *approval waiver* (dispensasi penyerahan resmi Suket duluan tanpa status Lunas palsu).
+          </p>
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Wajib Lunas Sebelum Kirim</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada Otorisasi Tempo</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada Suket Duluan</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Term of Payment Terbatas</span>
+          </div>
+        </div>
+
+        <!-- Poin: Penanganan Kasus Anomali & Deviasi di Luar Alur Baku 16 Tahap -->
+        <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+          <div class="flex justify-between items-start">
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              ✕ DI LUAR RUANG LINGKUP
+            </span>
+            <span class="text-xs text-rose-400 font-mono">BATASAN KASUS KHUSUS</span>
+          </div>
+          <h3 class="text-lg font-bold text-white">Tidak Menangani Kasus Deviasi / Anomali di Luar Alur Baku 16 Tahap</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> DNP Monitor dibangun secara deterministik mengikuti rel alur 16 tahap standar riksa uji. Segala bentuk kasus anomali di luar SOP alur baku (misal: pembatalan proyek di tengah jalan dengan klaim biaya operasional, perubahan nama badan usaha klien saat berkas sudah diproses dinas, atau tukar guling tipe alat) tidak dapat diselesaikan otomatis oleh sistem dan wajib dimitigasi secara manual antar-divisi.
+          </p>
+          <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Hanya Menangani Alur Baku</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Deviasi Diminta Manual</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Kasus Anomali di Luar SOP</span>
+            <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Kasus Khusus Non-Standar</span>
+          </div>
+        </div>
 
     </div>
 
@@ -305,7 +385,7 @@
     <div id="noResults" class="hidden p-12 text-center bg-slate-900/40 rounded-xl border border-slate-800">
       <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <p class="text-sm font-semibold text-slate-300">Tidak ada poin informasi yang cocok dengan kata kunci pencarian Anda.</p>
-      <p class="text-xs text-slate-500 mt-1">Coba kata kunci lain seperti: "16 tahap", "absensi", "sla", "multi-unit", atau "v3".</p>
+      <p class="text-xs text-slate-500 mt-1">Coba kata kunci lain seperti: "16 tahap", "absensi", "dp", "split unit", "tempo", atau "anomali".</p>
     </div>
 
   </div>

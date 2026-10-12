@@ -33,11 +33,15 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager V
     assert.ok(!content.toLowerCase().includes('e-sign bersertifikasi'), 'Must omit E-sign boundary per user instruction');
   });
 
-  test('HTML explicitly documents operational limitations: Attendance, SLA Performance, and Delayed v3', () => {
+  test('HTML explicitly documents operational limitations: Attendance, SLA, Delayed v3, DP, Split Unit, Suket Tempo, and SOP Edge Cases', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
     assert.ok(content.toLowerCase().includes('absensi') || content.toLowerCase().includes('kehadiran'), 'Must document absence of attendance tracking');
     assert.ok(content.toLowerCase().includes('on-time') || content.toLowerCase().includes('tepat waktu') || content.toLowerCase().includes('sla'), 'Must document absence of on-time job done performance tracking');
     assert.ok(content.toLowerCase().includes('ditunda') || content.toLowerCase().includes('delay'), 'Must document v3 as delayed due to flow complexity');
+    assert.ok(content.includes('Uang Muka') || content.includes('DP') || content.includes('Termin'), 'Must document lack of DP/partial payment handling');
+    assert.ok(content.includes('Split') || content.includes('Pecah') || content.includes('Parent-Child'), 'Must document lack of split unit / parent-child job handling');
+    assert.ok(content.includes('Tempo') || content.includes('Suket Duluan') || content.includes('Term of Payment'), 'Must document lack of suket-first-pay-later exception handling');
+    assert.ok(content.includes('Deviasi') || content.includes('Anomali') || content.includes('di Luar Alur') || content.includes('di Luar SOP'), 'Must document inability to handle non-standard edge cases outside 16-stage flow');
   });
 
   test('HTML contains focused visual presentation and excludes side-by-side comparison matrix', () => {
@@ -52,5 +56,13 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager V
     const content = fs.readFileSync(htmlPath, 'utf8');
     assert.ok(content.includes('switchView') || content.includes('toggleView'), 'Must contain view toggle function');
     assert.ok(content.includes('searchInput'), 'Must contain search input element');
+  });
+
+  test('HTML provides balanced 6 capabilities and 6 operational limitations cards', () => {
+    const content = fs.readFileSync(htmlPath, 'utf8');
+    const canDoMatches = (content.match(/class="card-item[^"]*"[^>]*data-category="can_do"/g) || []).length;
+    const cannotDoMatches = (content.match(/class="card-item[^"]*"[^>]*data-category="cannot_do"/g) || []).length;
+    assert.equal(canDoMatches, 6, 'Must have exactly 6 can_do cards');
+    assert.equal(cannotDoMatches, 6, 'Must have exactly 6 cannot_do cards');
   });
 });

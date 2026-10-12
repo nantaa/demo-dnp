@@ -84,14 +84,14 @@
           <div class="text-[11px] text-sky-400 mt-0.5">Tim RU Bebas Angka Harga</div>
         </div>
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Versi Resmi</div>
-          <div class="text-2xl font-black text-white mt-1">16 Tahap</div>
-          <div class="text-[11px] text-amber-400 mt-0.5">Versi Eksperimental v3 Ditiadakan</div>
+          <div class="text-xs font-medium text-slate-400">Status Versi 3</div>
+          <div class="text-2xl font-black text-white mt-1">Ditunda</div>
+          <div class="text-[11px] text-amber-400 mt-0.5">Fokus Stabilitas 16 Tahap</div>
         </div>
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Fokus Utama</div>
-          <div class="text-2xl font-black text-white mt-1">Alur Riksa Uji</div>
-          <div class="text-[11px] text-purple-400 mt-0.5">Bukan Sistem HRIS / Absensi</div>
+          <div class="text-xs font-medium text-slate-400">Evaluasi Kinerja</div>
+          <div class="text-2xl font-black text-white mt-1">Belum Ada</div>
+          <div class="text-[11px] text-purple-400 mt-0.5">Bukan Rapor SLA / HRIS</div>
         </div>
       </div>
     </section>
@@ -104,7 +104,7 @@
         <input 
           id="searchInput" 
           type="text" 
-          placeholder="Cari poin sistem (contoh: 16 tahap, absensi, tagihan, v3)..." 
+          placeholder="Cari poin sistem (contoh: 16 tahap, absensi, sla, whatsapp, v3)..." 
           class="w-full bg-slate-950 border border-slate-700/80 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
           oninput="handleSearch()"
         />
@@ -224,62 +224,83 @@
         </div>
       </div>
 
+      <!-- Poin: Pelacakan Multi-Unit Peralatan (Unit Tracking) -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ FITUR BEROPERASI
+          </span>
+          <span class="text-xs text-slate-500 font-mono">FLEKSIBILITAS ALAT</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Pelacakan Multi-Unit Peralatan (Banyak Unit per Pekerjaan)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Satu nomor SPK atau pekerjaan dapat memuat banyak unit alat riksa uji sekaligus (misal: 5 unit Crane, 2 unit Boiler, 3 unit Lift). Sistem menyediakan kartu aktualisasi unit (Tahap 4b/13) sehingga progres pemeriksaan teknis dan link LHPP tiap-tiap unit alat dapat dipantau secara rinci.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Multi-Unit Alat</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Banyak Unit dalam 1 SPK</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Pelacakan LHPP per Unit</span>
+        </div>
+      </div>
+
+      <!-- Poin: Eskalasi Pengingat WhatsApp (Wablas) -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ FITUR BEROPERASI
+          </span>
+          <span class="text-xs text-slate-500 font-mono">PENGINGAT RESPON CEPAT</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Eskalasi Pengingat Otomatis via WhatsApp (Wablas)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Mendukung integrasi pengiriman pengingat darurat ke nomor WhatsApp staf atau inspektur. Jika ada notifikasi penting yang belum dibaca dalam sistem selama lebih dari 30 menit, sistem dapat mengeskalasikan pesan langsung via WhatsApp agar pekerjaan segera ditindaklanjuti.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Integrasi WhatsApp Wablas</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Eskalasi > 30 Menit</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Pemberitahuan Langsung</span>
+        </div>
+      </div>
+
       <!-- ================= BAGIAN 2: YANG BELUM BISA DILAKUKAN ================= -->
 
-      <!-- Poin: Belum Ada Absensi Kehadiran (Bukan HRIS) -->
+      <!-- Poin: Belum Ada Absensi Pegawai & Evaluasi Kinerja Berbasis SLA / On-Time Job Done -->
       <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
         <div class="flex justify-between items-start">
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
             ✕ BELUM TERSEDIA
           </span>
-          <span class="text-xs text-rose-400 font-mono">BATASAN SDM / HR</span>
+          <span class="text-xs text-rose-400 font-mono">BATASAN SDM & EVALUASI</span>
         </div>
-        <h3 class="text-lg font-bold text-white">Belum Ada Pencatatan Absensi & Kehadiran Personel</h3>
+        <h3 class="text-lg font-bold text-white">Belum Ada Absensi & Penilaian Kinerja SLA / On-Time Job Done</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> DNP Monitor adalah sistem pelacakan dokumen alur kerja riksa uji alat, <span class="underline">bukan</span> sistem absensi pegawai. Sistem ini belum memiliki fitur pencatatan jam hadir harian, absensi sidik jari / foto wajah (*clock-in / clock-out*), rekap lembur, maupun jatah cuti karyawan.
+          <span class="font-bold text-rose-400">Penjelasan Penting untuk Manajer:</span>
+          <br>1. <strong>Bukan Sistem Absensi:</strong> Sistem ini tidak memiliki fitur presensi jam hadir kerja, absen sidik jari / foto *clock-in/out*, lembur, maupun jatah cuti karyawan.
+          <br>2. <strong>Belum Ada Pelacakan Kinerja Berbasis SLA / Ketepatan Waktu ("On-Time Job Done"):</strong> Indikator SLA hari pada kartu Kanban saat ini hanya berfungsi sebagai <em>sinyal alarm operasional</em> agar berkas tidak mangkrak. Sistem belum menyediakan papan peringkat skor individu staf, persentase ketepatan waktu (*on-time completion rate*), maupun rapor evaluasi KPI tahunan pegawai.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Sistem Presensi Harian</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada Absen Datang/Pulang</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Dikelola Terpisah oleh Divisi HR</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Sistem Presensi HR</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada Rapor On-Time SLA</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">SLA Hanya Alarm Berkas</span>
         </div>
       </div>
 
-      <!-- Poin: Belum Ada Penilaian Kinerja Karyawan (Performance Review) -->
+      <!-- Poin: Pembaruan Versi 3 (v3 - 20 Tahap) Ditunda (Delayed) -->
       <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
         <div class="flex justify-between items-start">
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            ✕ BELUM TERSEDIA
+            ✕ STATUS PENGEMBANGAN
           </span>
-          <span class="text-xs text-rose-400 font-mono">BATASAN EVALUASI HR</span>
+          <span class="text-xs text-rose-400 font-mono">STABILITAS ALUR KERJA</span>
         </div>
-        <h3 class="text-lg font-bold text-white">Belum Ada Penilaian Kinerja Karyawan (Performance Review / KPI)</h3>
+        <h3 class="text-lg font-bold text-white">Pembaruan Versi 3 (v3 - 20 Tahap) Ditunda (Delayed)</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Sistem belum menyediakan modul evaluasi kinerja berkala pegawai (*performance appraisal*), formulir penilaian kompetensi tahunan, maupun perhitungan rapor skor KPI individu staf. Sistem saat ini hanya mencatat status riwayat pekerjaan teknis (apakah pekerjaan selesai, tertunda, atau perlu revisi dokumen).
+          <span class="font-bold text-rose-400">Penjelasan Status Versi:</span> Rencana pembaruan versi 3 yang memecah alur menjadi 20 tahap secara resmi **ditunda (*delayed*)** karena tingginya kompleksitas dan dinamika alur proyek riksa uji di lapangan. Manajemen memutuskan untuk memprioritaskan pemantapan dan kestabilan alur **16 tahap resmi** yang saat ini telah berjalan lancar sebelum mempertimbangkan pembagian tahap yang lebih rinci.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada Rapor KPI Individu</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Penilaian Kinerja SDM</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Fokus pada Berkas Pekerjaan</span>
-        </div>
-      </div>
-
-      <!-- Poin: Versi Eksperimental v3 Tidak Digunakan -->
-      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            ✕ BATASAN OPERASIONAL
-          </span>
-          <span class="text-xs text-rose-400 font-mono">STABILITAS KERJA</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Pembaruan Eksperimental "v3" (20 Tahap) Tidak Digunakan</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          <span class="font-bold text-rose-400">Penjelasan Keputusan Versi:</span> Uji coba versi 3 yang memecah alur menjadi 20 tahap telah dibatalkan karena menambah kerumitan klik bagi teknisi lapangan dan memperlambat operasional. Sistem yang berlaku dan didukung penuh oleh manajemen adalah **alur 16 tahap stabil** yang saat ini berjalan.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Versi v3 Ditinggalkan</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Menggunakan 20 Tahap</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Resmi Berjalan di 16 Tahap Stabil</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Versi v3 Ditunda (Delayed)</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Kompleksitas Alur Lapangan</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Resmi 16 Tahap Stabil</span>
         </div>
       </div>
 
@@ -289,7 +310,7 @@
     <div id="noResults" class="hidden p-12 text-center bg-slate-900/40 rounded-xl border border-slate-800">
       <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <p class="text-sm font-semibold text-slate-300">Tidak ada poin informasi yang cocok dengan kata kunci pencarian Anda.</p>
-      <p class="text-xs text-slate-500 mt-1">Coba kata kunci lain seperti: "16 tahap", "absensi", "kinerja", "tagihan", atau "tim ru".</p>
+      <p class="text-xs text-slate-500 mt-1">Coba kata kunci lain seperti: "16 tahap", "absensi", "sla", "whatsapp", atau "v3".</p>
     </div>
 
     <!-- Catatan Penutup Dokumen -->

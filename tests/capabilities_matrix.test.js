@@ -17,16 +17,18 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager F
     assert.ok(content.includes('PPN 11%'), 'Must document PPN 11% calculation and Stage 14 lock');
     assert.ok(content.includes('Preview Dokumen') || content.includes('Modal Preview') || content.includes('Tinjau Langsung'), 'Must document preview popup modal');
     assert.ok(content.includes('Invoice, Kwitansi & Faktur Pajak'), 'Must document Stage 10 unified invoice upload');
+    assert.ok(content.includes('Multi-Unit') || content.includes('Banyak Unit'), 'Must document multi-unit capability');
+    assert.ok(content.includes('WhatsApp') || content.includes('Wablas'), 'Must document WhatsApp escalation capability');
   });
 
-  test('HTML explicitly documents operational limitations: Attendance, Performance Review, and v3', () => {
+  test('HTML explicitly documents operational limitations: Attendance, SLA Performance, and Delayed v3', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
-    assert.ok(content.includes('v3') || content.includes('Versi 3'), 'Must explain v3 exclusion');
     assert.ok(content.toLowerCase().includes('absensi') || content.toLowerCase().includes('kehadiran'), 'Must document absence of attendance tracking');
-    assert.ok(content.toLowerCase().includes('kinerja') || content.toLowerCase().includes('kpi'), 'Must document absence of performance appraisal/review');
+    assert.ok(content.toLowerCase().includes('on-time') || content.toLowerCase().includes('tepat waktu') || content.toLowerCase().includes('sla'), 'Must document absence of on-time job done performance tracking');
+    assert.ok(content.toLowerCase().includes('ditunda') || content.toLowerCase().includes('delay'), 'Must document v3 as delayed due to flow complexity');
   });
 
-  test('HTML hides developer-only infrastructure cards per user request', () => {
+  test('HTML hides developer-only infrastructure cards per user request and omits e-sign', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
     assert.ok(!content.includes('Daily Digest'), 'Must hide Daily Digest');
     assert.ok(!content.includes('Mesin Rekomendasi Penugasan Inspektur'), 'Must hide Rekomendasi Inspektur');
@@ -35,6 +37,7 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager F
     assert.ok(!content.includes('Instalasi Khusus Perusahaan Tunggal'), 'Must hide Multi-Tenant SaaS details');
     assert.ok(!content.includes('Menggunakan Polling Berkala, Bukan Server WebSocket'), 'Must hide WebSocket/Polling details');
     assert.ok(!content.toLowerCase().includes('academic thesis'), 'Must keep academic references hidden');
+    assert.ok(!content.toLowerCase().includes('e-sign bersertifikasi') && !content.toLowerCase().includes('bsre'), 'Must omit E-sign boundary per user instruction');
   });
 
   test('HTML contains interactive search and category filtering in Bahasa', () => {

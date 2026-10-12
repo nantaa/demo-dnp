@@ -411,75 +411,7 @@
       </div>
     </section>
 
-    <!-- 2. Matriks Perbandingan Visual (Tabel Komparasi 3 Kolom) -->
-    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800 pb-4">
-        <div>
-          <span class="text-xs font-mono font-bold text-sky-400 uppercase tracking-widest">Matriks Perbandingan Sistem</span>
-          <h3 class="text-xl font-extrabold text-white">Tabel Perbandingan Visual Ruang Lingkup</h3>
-        </div>
-        <span class="text-xs text-slate-400">Perbandingan Tegas: Fungsi Kami vs Modul Luar</span>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr class="border-b border-slate-800 bg-slate-950/80 text-slate-300 font-mono">
-              <th class="py-3 px-4 font-bold">Aspek Operasional</th>
-              <th class="py-3 px-4 font-bold text-emerald-400 bg-emerald-950/20 border-x border-slate-800">DNP Monitor (Produksi Aktif)</th>
-              <th class="py-3 px-4 font-bold text-rose-400">Sistem Presensi / HRIS</th>
-              <th class="py-3 px-4 font-bold text-amber-400">Rencana Versi 3 (v3)</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-800 text-slate-300 font-sans">
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Jumlah Tahap Alur</td>
-              <td class="py-3 px-4 text-emerald-300 font-bold bg-emerald-950/10 border-x border-slate-800">✓ 16 Tahap Berurutan (Stabil)</td>
-              <td class="py-3 px-4 text-slate-500">— Tidak Memiliki Tahap Berkas</td>
-              <td class="py-3 px-4 text-amber-400 font-semibold">✕ 20 Tahap (Ditunda/Delayed)</td>
-            </tr>
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Pelacakan Berkas Riksa Uji K3</td>
-              <td class="py-3 px-4 text-emerald-300 font-bold bg-emerald-950/10 border-x border-slate-800">✓ Lengkap (PO, LHPP, Disnaker, Suket)</td>
-              <td class="py-3 px-4 text-slate-500">— Bukan Fungsi HR</td>
-              <td class="py-3 px-4 text-slate-400">Terlalu banyak pecahan mikro</td>
-            </tr>
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Proteksi Kerahasiaan Nilai Finansial</td>
-              <td class="py-3 px-4 text-emerald-300 font-bold bg-emerald-950/10 border-x border-slate-800">✓ Ya (Tim RU Terisolasi dari Harga)</td>
-              <td class="py-3 px-4 text-slate-500">— Tidak Berlaku</td>
-              <td class="py-3 px-4 text-slate-400">Sama</td>
-            </tr>
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Multi-Unit Alat dalam 1 SPK</td>
-              <td class="py-3 px-4 text-emerald-300 font-bold bg-emerald-950/10 border-x border-slate-800">✓ Ya (Kartu Tahap 4b/13 & Link LHPP)</td>
-              <td class="py-3 px-4 text-slate-500">— Tidak Berlaku</td>
-              <td class="py-3 px-4 text-slate-400">Sama</td>
-            </tr>
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Absensi Kehadiran (Clock-in / Out)</td>
-              <td class="py-3 px-4 text-rose-400 font-semibold bg-emerald-950/10 border-x border-slate-800">✕ Belum Ada (Bukan Sistem HR)</td>
-              <td class="py-3 px-4 text-emerald-400 font-bold">✓ Modul Utama Presensi</td>
-              <td class="py-3 px-4 text-rose-400">✕ Belum Ada</td>
-            </tr>
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Penilaian Kinerja KPI Pegawai</td>
-              <td class="py-3 px-4 text-rose-400 font-semibold bg-emerald-950/10 border-x border-slate-800">✕ Belum Ada (Fokus pada Berkas)</td>
-              <td class="py-3 px-4 text-emerald-400 font-bold">✓ Rapor KPI Karyawan</td>
-              <td class="py-3 px-4 text-rose-400">✕ Belum Ada</td>
-            </tr>
-            <tr class="hover:bg-slate-950/40">
-              <td class="py-3 px-4 font-semibold text-white">Evaluasi Ketepatan Waktu (On-Time Job Done)</td>
-              <td class="py-3 px-4 text-rose-400 font-semibold bg-emerald-950/10 border-x border-slate-800">✕ Belum Ada (SLA Hanya Alarm Berkas)</td>
-              <td class="py-3 px-4 text-slate-500">— Menggunakan Jam Kerja</td>
-              <td class="py-3 px-4 text-rose-400">✕ Belum Ada</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 3. Infografis Peran SLA: Alarm Berkas vs Rapor Staf -->
+    <!-- 2. Infografis Peran SLA: Alarm Berkas vs Rapor Kinerja Staf -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
       <div class="border-b border-slate-800 pb-4">
         <span class="text-xs font-mono font-bold text-sky-400 uppercase tracking-widest">Penjelasan Logika Indikator</span>

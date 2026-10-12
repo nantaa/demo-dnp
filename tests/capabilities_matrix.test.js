@@ -40,12 +40,12 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager V
     assert.ok(content.toLowerCase().includes('ditunda') || content.toLowerCase().includes('delay'), 'Must document v3 as delayed due to flow complexity');
   });
 
-  test('HTML contains rich visual presentations and comparison charts', () => {
+  test('HTML contains focused visual presentation and excludes side-by-side comparison matrix', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
-    assert.ok(content.includes('visual-section') || content.includes('visualPresentation'), 'Must contain visual section container');
+    assert.ok(content.includes('visual-section') || content.includes('visualSection'), 'Must contain visual section container');
     assert.ok(content.includes('Bagan Alur 16 Tahap') || content.includes('Visualisasi Alur'), 'Must include 16-stage visual pipeline');
-    assert.ok(content.includes('Matriks Perbandingan') || content.includes('Tabel Perbandingan Visual'), 'Must include visual comparison matrix');
     assert.ok(content.includes('Infografis Peran SLA') || content.includes('Peran SLA'), 'Must include SLA infographic');
+    assert.ok(!content.includes('Matriks Perbandingan Sistem') && !content.includes('Tabel Perbandingan Visual'), 'Must exclude side-by-side comparison matrix per user instruction');
   });
 
   test('HTML contains interactive view toggle between Cards and Visual Presentation', () => {

@@ -27,6 +27,8 @@ export const ROLES = {
     marketing: { name: 'Marketing', label: 'MKT' },
     admin: { name: 'Admin Dokumen & RU', label: 'ADM' },
     inspektur: { name: 'Tim Riksa Uji', label: 'TRU' },
+    tim_ru: { name: 'Tim Riksa Uji', label: 'TRU' },
+    inspector: { name: 'Tim Riksa Uji', label: 'TRU' },
     tim_ahli: { name: 'Tim Ahli', label: 'AHLI' },
     manager: { name: 'Kadiv RU / Manager', label: 'MGR' },
     finance: { name: 'Admin Keuangan', label: 'FIN' },

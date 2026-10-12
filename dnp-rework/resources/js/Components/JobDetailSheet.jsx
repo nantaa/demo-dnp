@@ -2824,7 +2824,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         /* Backward compat: old flat format */
                         <div className="bg-gray-50/70 p-2.5 rounded border border-gray-100 text-gray-600 space-y-1">
                             <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
-                            <div><span className="text-gray-400">Inspektur Bertugas:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
+                            <div><span className="text-gray-400">Personel Tim RU Bertugas:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
                         </div>
                     )}
                     {stageNotes && (
@@ -2844,7 +2844,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     <p className="font-bold text-gray-700">Detail Pelaksanaan RU:</p>
                     <div className="grid grid-cols-2 gap-2 text-gray-600 bg-gray-50/70 p-2.5 rounded border border-gray-100">
                         <div><span className="text-gray-400">Tgl Pelaksanaan:</span> <span className="font-semibold text-gray-800">{fmt(job.tgl_pelaksanaan) || '-'}</span></div>
-                        <div><span className="text-gray-400">Tim Inspektur:</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
+                        <div><span className="text-gray-400">Tim Riksa Uji (Tim RU):</span> <span className="font-semibold text-gray-800">{job.inspectors?.length > 0 ? job.inspectors.map(i => i.name).join(', ') : '-'}</span></div>
                         <div><span className="text-gray-400">Report Writer:</span> <span className="font-semibold text-gray-800">{job.report_writer ? job.report_writer.name : '-'}</span></div>
                         <div><span className="text-gray-400">Checklist Lapangan:</span> <span className="font-semibold text-emerald-700">{checkedCount > 0 ? `${checkedCount} Item Terverifikasi` : '-'}</span></div>
                     </div>

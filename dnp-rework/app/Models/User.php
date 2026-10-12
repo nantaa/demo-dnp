@@ -99,6 +99,7 @@ class User extends Authenticatable
         if ($this->role === 'finance' && in_array($stage, [10, 12, 14])) return true;
         if ($this->role === 'admin' && in_array($stage, [2, 3, 7, 8, 9])) return true;
         if (in_array($this->role, ['inspektur', 'inspector']) && in_array($stage, [4, 5])) return true;
+        if ($this->role === 'tim_ru' && in_array($stage, [4, 5])) return true;
         if (in_array($this->role, ['tim_ahli', 'ahli']) && $stage === 6) return true;
 
         return false;

@@ -50,11 +50,11 @@ const daysBetween = (d1, d2) => {
 };
 
 function jobStatus(job) {
-    if (job.stage === 12) return 'completed';
+    if (job.stage === 12 || job.stage === 16) return 'completed';
     const stageInfo = STAGES.find(s => s.id === job.stage);
     if (!stageInfo?.sla) return 'on_track';
     let sla = stageInfo.sla;
-    if (job.stage === 6) sla = sla * (job.units || 1); // Stage 6 is Penyusunan LHPP in Rework
+    if (job.stage === 5 || job.stage === 6) sla = sla * (job.units || 1); // Stage 5 is Penyusunan LHPP in Rework
     const days = daysBetween(job.stage_started_at || job.updated_at, today());
     if (days > sla) return 'overdue';
     if (days >= sla - 1) return 'warning';
@@ -68,10 +68,11 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
     const isMKT = user.role === 'marketing';
     const isADM = user.role === 'admin';
-    const isINS = user.role === 'inspektur' || user.role === 'inspector';
+    const isINS = user.role === 'inspektur' || user.role === 'inspector' || user.role === 'tim_ru';
     const isFIN = user.role === 'finance';
     const isMGR = user.role === 'manager';
     const isSuper = user.role === 'superadmin';
+    const isAHLI = user.role === 'tim_ahli' || user.role === 'ahli';
 
     // Filtered jobs list based on personal scope / toggle (Only MGR has filter toggle)
     const personalFiltered = useMemo(() => {
@@ -90,8 +91,8 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
     }, [jobs, filterMine, isMGR, user.name, user.id]);
 
     const stats = useMemo(() => {
-        const active = personalFiltered.filter(j => j.stage !== 12);
-        const completed = personalFiltered.filter(j => j.stage === 12);
+        const active = personalFiltered.filter(j => j.stage !== 12 && j.stage !== 16);
+        const completed = personalFiltered.filter(j => j.stage === 12 || j.stage === 16);
         const thisMonth = completed.filter(j => {
             const d = new Date(j.updated_at);
             const now = new Date();
@@ -114,11 +115,9 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             ) || String(j.report_writer_id) === uId;
         };
 
-        // INS-specific: include Stage 5 (LHPP) and Stage 6 (Manager Review)
+        // Tim RU specific: include Stage 5 (Penyusunan LHPP) & Stage 6
         const lhppJobs = isINS ? personalFiltered.filter(j => 
-            isAssignedToMe(j) && 
-            (j.stage === 5 || j.stage === 6) && 
-            (j.peer_review_status === 'draft' || !j.peer_review_status || j.peer_review_status === 'revision')
+            isAssignedToMe(j) && (j.stage === 5 || j.stage === 6)
         )
             .map(j => {
                 const deadlineDays = (j.units || 1) * 3;
@@ -129,8 +128,8 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
         const stage4Mine = isINS ? personalFiltered.filter(j => isAssignedToMe(j) && (j.stage === 4 || j.stage === 13)) : [];
 
-        // MGR-specific
-        const lhppNeedReview = jobs.filter(j => j.stage === 5 && j.peer_review_status === 'submitted');
+        // MGR & Tim Ahli specific
+        const lhppNeedReview = jobs.filter(j => j.stage === 6 && (!j.s5_review_decision || j.s5_review_decision !== 'approved'));
         const suketDisnaker = jobs.filter(j => j.stage === 8);
         const tidakLaikUnits = [];
         jobs.forEach(j => {
@@ -157,18 +156,18 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             });
         });
 
-        const workloadByInspektur = isMGR || isSuper ? (inspectors || []).map(insp => {
+        const workloadByInspektur = isMGR || isSuper || isAHLI ? (inspectors || []).map(insp => {
             const activeInspJobs = jobs.filter(j =>
                 [4, 13, 5, 6].includes(j.stage) &&
                 (j.inspectors || []).some(x => x.id === insp.user_id)
             );
             const lapanganCount = activeInspJobs.filter(j => j.stage === 4 || j.stage === 13).length;
-            const lhppCount = activeInspJobs.filter(j => j.stage === 6).length;
+            const lhppCount = activeInspJobs.filter(j => j.stage === 5).length;
             const overdueCount = activeInspJobs.filter(j => jobStatus(j) === 'overdue').length;
 
             return {
                 id: insp.id,
-                nama: insp.user?.name || 'Inspektur',
+                nama: insp.user?.name || 'Personel Tim RU',
                 spesialisasi: insp.spesialisasi || [],
                 domisili: insp.domisili || '',
                 totalActive: activeInspJobs.length,
@@ -194,58 +193,99 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             });
         });
 
-        // Funnel calculation
+        // Funnel calculation (includes Stage 15 Kirim SUKET)
         const funnel = [
             { label: 'Penawaran / Stage 1', stage: 1, count: personalFiltered.filter(j => j.stage === 1).length, total: personalFiltered.filter(j => j.stage === 1).reduce((s, j) => s + Number(j.nilai || 0), 0) },
             { label: 'Verifikasi Dokumen', stage: 2, count: personalFiltered.filter(j => j.stage === 2).length, total: personalFiltered.filter(j => j.stage === 2).reduce((s, j) => s + Number(j.nilai || 0), 0) },
             { label: 'Penjadwalan', stage: 3, count: personalFiltered.filter(j => j.stage === 3).length, total: personalFiltered.filter(j => j.stage === 3).reduce((s, j) => s + Number(j.nilai || 0), 0) },
             { label: 'Pelaksanaan + LHPP', stage: [4, 13, 5, 6], count: personalFiltered.filter(j => [4, 13, 5, 6].includes(j.stage)).length, total: personalFiltered.filter(j => [4, 13, 5, 6].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) },
-            { label: 'Disnaker + Penagihan', stage: [7, 8, 9, 10, 11, 14], count: personalFiltered.filter(j => [7, 8, 9, 10, 11, 14].includes(j.stage)).length, total: personalFiltered.filter(j => [7, 8, 9, 10, 11, 14].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) }
+            { label: 'Disnaker + Penagihan', stage: [7, 8, 9, 10, 11, 14, 15], count: personalFiltered.filter(j => [7, 8, 9, 10, 11, 14, 15].includes(j.stage)).length, total: personalFiltered.filter(j => [7, 8, 9, 10, 11, 14, 15].includes(j.stage)).reduce((s, j) => s + Number(j.nilai || 0), 0) }
         ];
 
         // ADM-specific
         const antrianVerifikasi = jobs.filter(j => j.stage === 2);
         const butuhJadwal = jobs.filter(j => j.stage === 3 && !j.no_surat_tugas);
         const h5Pending = jobs.filter(j => j.stage === 3 && j.no_surat_tugas && !j.h5_confirmed);
-        const logistikPending = jobs.filter(j => j.stage === 3 && !j.no_surat_tugas);
+        const logistikPending = jobs.filter(j => {
+            if (j.stage !== 3) return false;
+            let alatArr = j.alat_ids;
+            if (typeof alatArr === 'string') {
+                try { alatArr = JSON.parse(alatArr); } catch (e) { alatArr = []; }
+            }
+            const hasAlat = Array.isArray(alatArr) && alatArr.length > 0;
+            return !j.no_surat_tugas || !hasAlat;
+        });
 
         // FIN-specific
-        const siapTagih = jobs.filter(j => j.stage === 10 && !j.invoice_no);
-        const piutangBerjalan = jobs.filter(j => j.stage === 10 && j.invoice_no && j.payment_status !== 'paid');
+        // 1. Stage 10: Invoicing queue (Suket Siap Tagih)
+        const siapTagih = jobs.filter(j => j.stage === 10);
+
+        // 2. Stage 14 (11b): Verifikasi Pembayaran & PPh
+        const verifikasiBayar = jobs.filter(j => j.stage === 14);
+
+        // 3. Stage 12: Final Financial Closing
+        const closingFinancial = jobs.filter(j => j.stage === 12);
+
+        // Helpers for dates and amounts
+        const getInvoiceAmount = (j) => Number(j.total_invoice_amount || j.nilai || 0);
+        const getInvoiceDate = (j) => j.tgl_invoice_issued || j.invoice_date || null;
+        const getDueDate = (j) => {
+            if (j.payment_due_date) return String(j.payment_due_date).slice(0, 10);
+            const invD = getInvoiceDate(j);
+            if (!invD) return null;
+            const d = new Date(invD);
+            d.setDate(d.getDate() + (Number(j.top_days) || 30));
+            return d.toISOString().slice(0, 10);
+        };
+
+        // Active unpaid invoices (Piutang Berjalan):
+        // Jobs with invoice generated or in stages 10, 11, 14, 15 that are not yet marked paid
+        const isUnpaid = (j) => !j.paid && j.payment_status !== 'paid' && j.s14_payment_status !== 'paid';
+        const hasInvoice = (j) => Boolean(j.invoice_no || [11, 14, 15].includes(j.stage) || (j.stage === 10 && j.invoice_no));
+        const piutangBerjalan = jobs.filter(j => hasInvoice(j) && isUnpaid(j) && j.stage < 16);
+
         const piutangOverdue = piutangBerjalan.filter(j => {
-            if (!j.payment_due_date) return false;
-            return daysBetween(j.payment_due_date, today()) > 0;
+            const dueDate = getDueDate(j);
+            if (!dueDate) return false;
+            return daysBetween(dueDate, today()) > 0;
         });
-        const totalPiutang = piutangBerjalan.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
-        const totalOverdue = piutangOverdue.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
+
+        const totalPiutang = piutangBerjalan.reduce((sum, j) => sum + getInvoiceAmount(j), 0);
+        const totalOverdue = piutangOverdue.reduce((sum, j) => sum + getInvoiceAmount(j), 0);
+
         const arBuckets = {
             '0-30': [], '31-60': [], '61-90': [], '>90': []
         };
         piutangBerjalan.forEach(j => {
-            if (!j.invoice_date) return;
-            const age = daysBetween(j.invoice_date, today());
+            const invDate = getInvoiceDate(j) || (j.created_at ? String(j.created_at).slice(0, 10) : null);
+            if (!invDate) return;
+            const age = daysBetween(invDate, today());
             if (age <= 30) arBuckets['0-30'].push(j);
             else if (age <= 60) arBuckets['31-60'].push(j);
             else if (age <= 90) arBuckets['61-90'].push(j);
             else arBuckets['>90'].push(j);
         });
-        const tandaTerimaPending = jobs.filter(j => j.stage === 11 && !j.tanda_terima_kembali);
+
+        const tandaTerimaPending = jobs.filter(j => (j.stage === 11 || j.stage === 15) && !j.tanda_terima_kembali);
 
         return {
             active, completed, thisMonth, overdue, pipeline, monthRevenue, byStage,
             lhppJobs, stage4Mine, lhppNeedReview, suketDisnaker, tidakLaikUnits, workloadByInspektur,
             mktTarget, mktRealisasi, achievement, expiringSukets, funnel,
             antrianVerifikasi, butuhJadwal, h5Pending, logistikPending,
-            siapTagih, piutangBerjalan, piutangOverdue, totalPiutang, totalOverdue, arBuckets, tandaTerimaPending
+            siapTagih, verifikasiBayar, closingFinancial,
+            piutangBerjalan, piutangOverdue, totalPiutang, totalOverdue, arBuckets, tandaTerimaPending,
+            getInvoiceAmount, getInvoiceDate, getDueDate
         };
-    }, [personalFiltered, jobs, inspectors, isINS, isMGR, isSuper, isMKT, user.name, user.id]);
+    }, [personalFiltered, jobs, inspectors, isINS, isMGR, isSuper, isMKT, isAHLI, user.name, user.id]);
 
     const titlePrefix = isMGR && filterMine ? `Personal - ${user.name}` : `Overview`;
     const titleRole = isMKT ? 'Dashboard Marketing' :
-                      isINS ? 'Tugas Lapangan Saya' :
+                      isINS ? 'Dashboard Tim Riksa Uji (Tim RU)' :
                       isADM ? 'Dashboard Admin' :
                       isFIN ? 'Dashboard Keuangan' :
                       isMGR ? 'Dashboard Manajerial' :
+                      isAHLI ? 'Dashboard Tim Ahli' :
                       isSuper ? 'Dashboard Superadmin' : 'Dashboard';
 
     return (
@@ -288,7 +328,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             {isMKT && <MktDashboard stats={stats} onSelectJob={setSelectedJob} />}
             {isADM && <AdmDashboard stats={stats} onSelectJob={setSelectedJob} jobs={jobs} inspectors={inspectors} />}
             {isINS && <InsDashboard stats={stats} user={user} onSelectJob={setSelectedJob} />}
-            {isMGR && <MgrDashboard stats={stats} onSelectJob={setSelectedJob} />}
+            {(isMGR || isAHLI) && <MgrDashboard stats={stats} onSelectJob={setSelectedJob} isAhli={isAHLI} />}
             {isFIN && <FinDashboard stats={stats} onSelectJob={setSelectedJob} />}
             {isSuper && (
                 <div className="space-y-6">
@@ -544,6 +584,94 @@ function AdmDashboard({ stats, onSelectJob, jobs, inspectors }) {
                 <KPICard label="Logistik Pending" value={logistikPending.length} sub="ST/alat belum dialokasi" icon={Wrench} accentClass="text-red-500" />
             </div>
 
+            {/* Antrean Verifikasi Dokumen & Surat Permohonan (Tahap 2) */}
+            <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+                <div className="p-6 border-b flex justify-between items-center bg-amber-50/40">
+                    <div>
+                        <div className="text-xs text-amber-600 font-bold uppercase tracking-wider">Verifikasi Berkas Masuk · Tahap 02</div>
+                        <h3 className="text-lg font-bold text-gray-800 mt-0.5">Antrean Verifikasi Dokumen & Surat Permohonan</h3>
+                    </div>
+                    <span className="bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
+                        {antrianVerifikasi.length} PEKERJAAN
+                    </span>
+                </div>
+                {antrianVerifikasi.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 text-sm">
+                        ✓ Seluruh berkas Tahap 2 sudah diverifikasi.
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">Kode</th>
+                                    <th className="p-4">Klien</th>
+                                    <th className="p-4">Pesawat</th>
+                                    <th className="p-4">Unit</th>
+                                    <th className="p-4">Marketing</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {antrianVerifikasi.map(j => (
+                                    <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                                        <td className="p-4 font-mono font-bold text-gray-800">{j.kode}</td>
+                                        <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
+                                        <td className="p-4 text-gray-600">{PESAWAT_TYPES.find(p => p.code === j.pesawat)?.name || j.pesawat}</td>
+                                        <td className="p-4 text-gray-500 font-mono">{j.units || 1} unit</td>
+                                        <td className="p-4 text-gray-700 font-medium">{j.marketing?.name || '—'}</td>
+                                        <td className="p-4 text-right text-xs font-bold text-amber-600 hover:underline">
+                                            Verifikasi Dokumen &rarr;
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Peringatan H-5 Disnaker Table (if any active) */}
+            {h5Pending.length > 0 && (
+                <div className="bg-white border border-red-200 rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-6 border-b flex justify-between items-center bg-red-50/60">
+                        <div>
+                            <div className="text-xs text-red-600 font-bold uppercase tracking-wider">Atensi Khusus Disnaker</div>
+                            <h3 className="text-lg font-bold text-red-800 mt-0.5">Daftar Job Peringatan H-5 Disnaker · Belum Lapor Teman K3</h3>
+                        </div>
+                        <span className="bg-red-200 text-red-900 text-xs font-extrabold px-2.5 py-1 rounded-full animate-pulse">
+                            {h5Pending.length} BUTUH LAPOR
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-red-50/30 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">Kode</th>
+                                    <th className="p-4">Klien</th>
+                                    <th className="p-4">Tanggal Pelaksanaan</th>
+                                    <th className="p-4">Surat Tugas</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {h5Pending.map(j => (
+                                    <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-red-50/20 cursor-pointer transition-colors">
+                                        <td className="p-4 font-mono font-bold text-gray-800">{j.kode}</td>
+                                        <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
+                                        <td className="p-4 font-mono text-red-700 font-bold">{formatDate(j.tgl_pelaksanaan)}</td>
+                                        <td className="p-4 font-mono text-gray-600">{j.no_surat_tugas || '—'}</td>
+                                        <td className="p-4 text-right text-xs font-bold text-red-600 hover:underline">
+                                            Buka Job & Lapor &rarr;
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             {/* Calendar */}
             <AdmCalendar jobs={jobs} inspectors={inspectors} onSelectJob={onSelectJob} />
 
@@ -715,7 +843,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
 
                         return (
                             <div key={j.id} onClick={() => onSelectJob(j)}
-                                title={`${j.kode} - ${j.klien}\nInspektur: ${insList.map((u, idx) => `#${idx+1} ${u.name}`).join(', ') || 'Belum diassign'}`}
+                                title={`${j.kode} - ${j.klien}\nTim RU: ${insList.map((u, idx) => `#${idx+1} ${u.name}`).join(', ') || 'Belum diassign'}`}
                                 className="text-[10px] font-bold rounded bg-blue-50 text-blue-900 p-1.5 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors flex flex-col gap-0.5 shadow-xs">
                                 <div className="truncate flex justify-between items-center">
                                     <span className="truncate font-semibold text-blue-950">{j.kode}</span>
@@ -753,7 +881,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                             onChange={e => setSelectedInspectorId(e.target.value)}
                             className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer border-none focus:ring-0 text-xs py-0 pl-0 pr-6"
                         >
-                            <option value="all">Semua Inspektur</option>
+                            <option value="all">Semua Personel Tim RU</option>
                             {inspectorOptions.map(ins => (
                                 <option key={ins.id} value={ins.id}>{ins.name}</option>
                             ))}
@@ -803,7 +931,7 @@ function InsDashboard({ stats, user, onSelectJob }) {
             {/* KPI Strip */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <KPICard label="Jadwal Lapangan" value={stage4Mine.length} sub="Tahap 4 aktif" icon={HardHat} />
-                <KPICard label="Draf LHPP Pending" value={lhppJobs.length} sub="Tahap 6 menunggu submit" icon={ClipboardList} />
+                <KPICard label="Draf LHPP Pending" value={lhppJobs.length} sub="Tahap 5 menunggu submit" icon={ClipboardList} />
                 <KPICard label="SLA Timer Kritis"
                     value={lhppJobs.filter(j => j.remainingDays <= 1).length}
                     sub={lhppJobs.some(j => j.remainingDays < 0) ? 'Ada yang TERLAMBAT!' : '≤1 hari tersisa'}
@@ -974,7 +1102,7 @@ function InsDashboard({ stats, user, onSelectJob }) {
 // ============================================================
 // MANAGER DASHBOARD
 // ============================================================
-function MgrDashboard({ stats, onSelectJob }) {
+function MgrDashboard({ stats, onSelectJob, isAhli = false }) {
     const { lhppNeedReview, suketDisnaker, tidakLaikUnits, workloadByInspektur } = stats;
 
     return (
@@ -983,9 +1111,52 @@ function MgrDashboard({ stats, onSelectJob }) {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <KPICard label="Total Pipeline" value={formatRp(stats.pipeline)} sub={`${stats.active.length} job aktif`} icon={Banknote} />
                 <KPICard label="Total Overdue" value={stats.overdue.length} sub="job lewat SLA" icon={AlertTriangle} accentClass={stats.overdue.length > 0 ? 'text-red-600' : 'text-gray-400'} bgClass={stats.overdue.length > 0 ? 'bg-red-50/50 border-red-200' : 'bg-white'} />
-                <KPICard label="LHPP Butuh Review" value={lhppNeedReview.length} sub="menunggu peer review" icon={Eye} accentClass={lhppNeedReview.length > 0 ? 'text-orange-500' : 'text-gray-400'} bgClass={lhppNeedReview.length > 0 ? 'bg-orange-50/50 border-orange-200' : 'bg-white'} />
+                <KPICard label="LHPP Butuh Review" value={lhppNeedReview.length} sub="menunggu review teknis (Stage 6)" icon={Eye} accentClass={lhppNeedReview.length > 0 ? 'text-orange-500' : 'text-gray-400'} bgClass={lhppNeedReview.length > 0 ? 'bg-orange-50/50 border-orange-200' : 'bg-white'} />
                 <KPICard label="Suket Berproses" value={suketDisnaker.length} sub="di Disnaker (Stage 8)" icon={Building2} />
             </div>
+
+            {/* Tabel LHPP Butuh Review Teknis */}
+            {lhppNeedReview.length > 0 && (
+                <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-6 border-b flex justify-between items-center bg-orange-50/40">
+                        <div>
+                            <div className="text-xs text-orange-600 font-bold uppercase tracking-wider">Review Laporan Teknis · Stage 6</div>
+                            <h3 className="text-lg font-bold text-gray-800 mt-0.5">Draf LHPP Menunggu Persetujuan {isAhli ? 'Tim Ahli' : 'Kadiv / MGR'}</h3>
+                        </div>
+                        <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
+                            {lhppNeedReview.length} LAPORAN
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">Kode</th>
+                                    <th className="p-4">Klien</th>
+                                    <th className="p-4">Pesawat</th>
+                                    <th className="p-4">Unit</th>
+                                    <th className="p-4">Pembuat Laporan</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {lhppNeedReview.map(j => (
+                                    <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                                        <td className="p-4 font-mono font-bold text-gray-800">{j.kode}</td>
+                                        <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
+                                        <td className="p-4 text-gray-600">{PESAWAT_TYPES.find(p => p.code === j.pesawat)?.name || j.pesawat}</td>
+                                        <td className="p-4 text-gray-500 font-mono">{j.units || 1} unit</td>
+                                        <td className="p-4 text-gray-700 font-medium">{j.report_writer?.name || j.reportWriter?.name || '—'}</td>
+                                        <td className="p-4 text-right text-xs font-bold text-orange-600 hover:underline">
+                                            Review Laporan &rarr;
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Workload Per Stage */}
             <div className="bg-white border rounded-xl shadow-sm p-6">
@@ -1025,13 +1196,13 @@ function MgrDashboard({ stats, onSelectJob }) {
                 })()}
             </div>
 
-            {/* Workload Tim Inspektur */}
+            {/* Workload Tim Riksa Uji (Tim RU) */}
             {workloadByInspektur.length > 0 && (
                 <div className="bg-white border rounded-xl shadow-sm p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <HardHat className="h-5 w-5 text-gray-500" />
                         <div>
-                            <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Beban Kerja Tim Inspektur</div>
+                            <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Beban Kerja Tim Riksa Uji (Tim RU)</div>
                             <h3 className="text-lg font-bold text-gray-800 mt-0.5">Stage 4 - 6 Aktif</h3>
                         </div>
                     </div>
@@ -1135,17 +1306,218 @@ function MgrDashboard({ stats, onSelectJob }) {
 // FINANCE DASHBOARD
 // ============================================================
 function FinDashboard({ stats, onSelectJob }) {
-    const { siapTagih, piutangBerjalan, piutangOverdue, totalPiutang, totalOverdue, arBuckets, tandaTerimaPending } = stats;
+    const { 
+        siapTagih = [], 
+        verifikasiBayar = [], 
+        closingFinancial = [], 
+        piutangBerjalan = [], 
+        piutangOverdue = [], 
+        totalPiutang = 0, 
+        totalOverdue = 0, 
+        arBuckets = { '0-30': [], '31-60': [], '61-90': [], '>90': [] }, 
+        tandaTerimaPending = [],
+        getInvoiceAmount = (j) => Number(j.total_invoice_amount || j.nilai || 0),
+        getInvoiceDate = (j) => j.tgl_invoice_issued || j.invoice_date || null,
+        getDueDate = (j) => j.payment_due_date || null
+    } = stats;
 
     return (
         <div className="space-y-6">
             {/* KPI Strip */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <KPICard label="Suket Siap Tagih" value={siapTagih.length} sub="Tahap 10 belum invoice" icon={FileCheck} accentClass="text-orange-500" />
-                <KPICard label="Piutang Berjalan" value={formatRp(totalPiutang)} sub={`${piutangBerjalan.length} invoice unpaid`} icon={Banknote} />
-                <KPICard label="Overdue AR" value={formatRp(totalOverdue)} sub={`${piutangOverdue.length} invoice lewat TOP`} icon={AlertTriangle} accentClass={piutangOverdue.length > 0 ? 'text-red-600' : 'text-gray-400'} bgClass={piutangOverdue.length > 0 ? 'bg-red-50/50 border-red-200 animate-pulse' : 'bg-white'} />
-                <KPICard label="Tanda Terima Pending" value={tandaTerimaPending.length} sub="dokumen kurir belum kembali" icon={Package} accentClass={tandaTerimaPending.length > 0 ? 'text-amber-500' : 'text-gray-400'} />
+                <KPICard 
+                    label="Suket Siap Tagih" 
+                    value={siapTagih.length} 
+                    sub="Tahap 10 antrean invoice" 
+                    icon={FileCheck} 
+                    accentClass="text-orange-500" 
+                />
+                <KPICard 
+                    label="Verifikasi Bayar" 
+                    value={verifikasiBayar.length} 
+                    sub="Tahap 11b konfirmasi lunas & PPh" 
+                    icon={Banknote} 
+                    accentClass={verifikasiBayar.length > 0 ? 'text-teal-600' : 'text-gray-400'} 
+                    bgClass={verifikasiBayar.length > 0 ? 'bg-teal-50/50 border-teal-200' : 'bg-white'} 
+                />
+                <KPICard 
+                    label="Piutang Berjalan" 
+                    value={formatRp(totalPiutang)} 
+                    sub={`${piutangBerjalan.length} invoice unpaid`} 
+                    icon={Banknote} 
+                />
+                <KPICard 
+                    label="Overdue AR" 
+                    value={formatRp(totalOverdue)} 
+                    sub={`${piutangOverdue.length} invoice lewat TOP`} 
+                    icon={AlertTriangle} 
+                    accentClass={piutangOverdue.length > 0 ? 'text-red-600' : 'text-gray-400'} 
+                    bgClass={piutangOverdue.length > 0 ? 'bg-red-50/50 border-red-200 animate-pulse' : 'bg-white'} 
+                />
             </div>
+
+            {/* Antrean Penerbitan Invoice & Kwitansi (Tahap 10 / Suket Siap Tagih) */}
+            <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+                <div className="p-6 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-gray-50/50 gap-2">
+                    <div>
+                        <div className="text-xs text-orange-600 font-bold uppercase tracking-wider">Antrean Penerbitan Invoice & Kwitansi · Tahap 10</div>
+                        <h3 className="text-lg font-bold text-gray-800 mt-0.5">Suket Siap Tagih — Siap Diterbitkan Invoice</h3>
+                    </div>
+                    <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-1 rounded-full self-start md:self-auto">
+                        {siapTagih.length} PEKERJAAN
+                    </span>
+                </div>
+                {siapTagih.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500 text-sm">
+                        ✓ Semua pekerjaan Tahap 10 sudah selesai diproses / tidak ada antrean saat ini.
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">No. PO / SPK</th>
+                                    <th className="p-4">Klien & Pesawat</th>
+                                    <th className="p-4">Unit</th>
+                                    <th className="p-4">Nilai Kontrak</th>
+                                    <th className="p-4">Marketing</th>
+                                    <th className="p-4">Status Invoice</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {siapTagih.map(j => {
+                                    const hasDraftInvoice = Boolean(j.invoice_no);
+                                    return (
+                                        <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                                            <td className="p-4">
+                                                <div className="font-bold text-xs text-gray-800">{j.no_po || j.kode}</div>
+                                                <div className="font-mono text-[10px] text-gray-400">{j.kode}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="font-semibold text-gray-800">{j.klien}</div>
+                                                <div className="text-xs text-gray-500">{PESAWAT_TYPES.find(p => p.code === j.pesawat)?.name || j.pesawat}</div>
+                                            </td>
+                                            <td className="p-4 font-mono text-gray-600">{j.units || 1} unit</td>
+                                            <td className="p-4 font-mono font-bold text-gray-800">
+                                                {formatRp(getInvoiceAmount(j))}
+                                            </td>
+                                            <td className="p-4 text-xs font-semibold text-gray-600">{j.owner_marketing || '—'}</td>
+                                            <td className="p-4">
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
+                                                    hasDraftInvoice ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {hasDraftInvoice ? `Draft: ${j.invoice_no}` : 'Belum Invoice'}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <span className="text-xs font-bold text-blue-600 hover:underline">
+                                                    Proses Invoice &rarr;
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Antrean Verifikasi Pembayaran & PPh (Tahap 11b / Stage 14) */}
+            {verifikasiBayar.length > 0 && (
+                <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-6 border-b flex flex-col md:flex-row md:justify-between md:items-center bg-teal-50/40 gap-2">
+                        <div>
+                            <div className="text-xs text-teal-700 font-bold uppercase tracking-wider">Verifikasi Pembayaran & PPh · Tahap 11b</div>
+                            <h3 className="text-lg font-bold text-gray-800 mt-0.5">Antrean Konfirmasi Lunas & Bukti Potong Pajak</h3>
+                        </div>
+                        <span className="bg-teal-100 text-teal-800 text-xs font-extrabold px-2.5 py-1 rounded-full self-start md:self-auto">
+                            {verifikasiBayar.length} PERLU VERIFIKASI
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">No. Invoice</th>
+                                    <th className="p-4">No. PO / Kode</th>
+                                    <th className="p-4">Klien</th>
+                                    <th className="p-4">Total Tagihan</th>
+                                    <th className="p-4">Status Bayar</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {verifikasiBayar.map(j => (
+                                    <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                                        <td className="p-4 font-mono font-bold text-gray-800">{j.invoice_no || '—'}</td>
+                                        <td className="p-4">
+                                            <div className="font-bold text-xs text-gray-700">{j.no_po || j.kode}</div>
+                                            <div className="font-mono text-[10px] text-gray-400">{j.kode}</div>
+                                        </td>
+                                        <td className="p-4 font-semibold text-gray-800">{j.klien}</td>
+                                        <td className="p-4 font-mono font-bold text-gray-900">{formatRp(getInvoiceAmount(j))}</td>
+                                        <td className="p-4">
+                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
+                                                j.s14_payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                                                j.s14_payment_status === 'partial' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                                            }`}>
+                                                {j.s14_payment_status === 'paid' ? 'Paid (Lunas)' : j.s14_payment_status === 'partial' ? 'Partial' : 'Menunggu Verifikasi'}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right text-xs font-bold text-teal-700 hover:underline">
+                                            Verifikasi Bayar &rarr;
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Pekerjaan Siap Ditutup Finansial (Tahap 12 Closing) */}
+            {closingFinancial.length > 0 && (
+                <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+                        <div>
+                            <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Final Financial Closing · Tahap 12</div>
+                            <h3 className="text-lg font-bold text-gray-800 mt-0.5">Pekerjaan Siap Ditutup Finansial</h3>
+                        </div>
+                        <span className="bg-gray-100 text-gray-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
+                            {closingFinancial.length} CLOSING
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">No. Invoice / PO</th>
+                                    <th className="p-4">Klien</th>
+                                    <th className="p-4">Total Nilai Tagihan</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {closingFinancial.map(j => (
+                                    <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                                        <td className="p-4">
+                                            <div className="font-bold text-xs text-gray-800">{j.invoice_no || j.no_po || j.kode}</div>
+                                            <div className="font-mono text-[10px] text-gray-400">{j.kode}</div>
+                                        </td>
+                                        <td className="p-4 font-semibold text-gray-800">{j.klien}</td>
+                                        <td className="p-4 font-mono font-bold text-gray-900">{formatRp(getInvoiceAmount(j))}</td>
+                                        <td className="p-4 text-right text-xs font-bold text-blue-600 hover:underline">
+                                            Closing Final &rarr;
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* AR Aging Chart */}
             <div className="bg-white border rounded-xl shadow-sm p-6">
@@ -1160,11 +1532,11 @@ function FinDashboard({ stats, onSelectJob }) {
                         { label: '61-90 hari', items: arBuckets['61-90'], color: 'bg-orange-500', desc: 'Penagihan aktif' },
                         { label: '>90 hari', items: arBuckets['>90'], color: 'bg-red-600', desc: 'Macet — eskalasi' },
                     ];
-                    const maxTotal = Math.max(...buckets.map(b => b.items.reduce((s, j) => s + Number(j.nilai || 0), 0)), 1);
+                    const maxTotal = Math.max(...buckets.map(b => b.items.reduce((s, j) => s + getInvoiceAmount(j), 0)), 1);
                     return (
                         <div className="space-y-4">
                             {buckets.map((b, i) => {
-                                const total = b.items.reduce((s, j) => s + Number(j.nilai || 0), 0);
+                                const total = b.items.reduce((s, j) => s + getInvoiceAmount(j), 0);
                                 const widthPct = (total / maxTotal) * 100;
                                 return (
                                     <div key={i} className="space-y-1">
@@ -1186,6 +1558,70 @@ function FinDashboard({ stats, onSelectJob }) {
                     );
                 })()}
             </div>
+
+            {/* Daftar Piutang Berjalan (Unpaid Accounts Receivable) */}
+            {piutangBerjalan.length > 0 && (
+                <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+                        <div>
+                            <div className="text-xs text-blue-600 font-bold uppercase tracking-wider">Daftar Piutang Berjalan · Accounts Receivable</div>
+                            <h3 className="text-lg font-bold text-gray-800 mt-0.5">Invoice Belum Lunas (Tahap 10 – 15)</h3>
+                        </div>
+                        <span className="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
+                            {piutangBerjalan.length} INVOICE AKTIF
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="border-b bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                                    <th className="p-4">No. Invoice</th>
+                                    <th className="p-4">No. PO / Kode</th>
+                                    <th className="p-4">Klien</th>
+                                    <th className="p-4">Nilai Invoice</th>
+                                    <th className="p-4">Tgl Invoice</th>
+                                    <th className="p-4">Tahap Saat Ini</th>
+                                    <th className="p-4 text-right">Hari Lalu</th>
+                                    <th className="p-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {piutangBerjalan.map(j => {
+                                    const invDate = getInvoiceDate(j);
+                                    const daysSince = invDate ? daysBetween(invDate, today()) : 0;
+                                    return (
+                                        <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
+                                            <td className="p-4 font-mono font-bold text-gray-800">{j.invoice_no || 'Draft'}</td>
+                                            <td className="p-4">
+                                                <div className="font-bold text-xs text-gray-800">{j.no_po || j.kode}</div>
+                                                <div className="font-mono text-[10px] text-gray-400">{j.kode}</div>
+                                            </td>
+                                            <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
+                                            <td className="p-4 font-mono font-bold text-gray-800">{formatRp(getInvoiceAmount(j))}</td>
+                                            <td className="p-4 font-mono text-gray-500">{formatDate(invDate)}</td>
+                                            <td className="p-4">
+                                                <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-800 border">
+                                                    S{getStageDisplayId(j.stage)} · {STAGES.find(s => s.id === j.stage)?.name}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <span className={`font-mono font-bold text-xs ${
+                                                    daysSince > 60 ? 'text-red-600' : daysSince > 30 ? 'text-amber-500' : 'text-gray-900'
+                                                }`}>
+                                                    {daysSince} hari
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right text-xs font-bold text-blue-600 hover:underline">
+                                                Detail &rarr;
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
 
             {/* Courier Delivery Tracking */}
             <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
@@ -1212,14 +1648,15 @@ function FinDashboard({ stats, onSelectJob }) {
                             </thead>
                             <tbody className="divide-y">
                                 {tandaTerimaPending.map(j => {
-                                    const daysSince = j.invoice_date ? daysBetween(j.invoice_date, today()) : 0;
+                                    const invDate = getInvoiceDate(j);
+                                    const daysSince = invDate ? daysBetween(invDate, today()) : 0;
                                     return (
                                         <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-gray-50 cursor-pointer transition-colors">
                                             <td className="p-4 font-mono font-bold text-gray-800">{j.kode}</td>
                                             <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
                                             <td className="p-4 font-mono text-gray-500">{j.invoice_no || '—'}</td>
-                                            <td className="p-4 font-mono font-bold text-gray-700">{formatRp(j.nilai)}</td>
-                                            <td className="p-4 font-mono text-gray-400">{formatDate(j.invoice_date)}</td>
+                                            <td className="p-4 font-mono font-bold text-gray-700">{formatRp(getInvoiceAmount(j))}</td>
+                                            <td className="p-4 font-mono text-gray-400">{formatDate(invDate)}</td>
                                             <td className="p-4 text-right">
                                                 <span className={`font-mono font-bold text-xs ${
                                                     daysSince > 14 ? 'text-red-600' : daysSince > 7 ? 'text-amber-500' : 'text-gray-900'
@@ -1240,7 +1677,7 @@ function FinDashboard({ stats, onSelectJob }) {
             {piutangOverdue.length > 0 && (
                 <div className="bg-red-50/50 border-2 border-red-500 rounded-xl overflow-hidden shadow-sm">
                     <div className="p-6 border-b border-red-100 bg-red-100/30">
-                        <div className="text-xs text-red-600 font-extrabold uppercase tracking-wider"> PIUTANG JATUH TEMPO</div>
+                        <div className="text-xs text-red-600 font-extrabold uppercase tracking-wider">⚠ PIUTANG JATUH TEMPO</div>
                         <h3 className="text-lg font-bold text-red-900 mt-0.5">Overdue Accounts Receivable</h3>
                     </div>
                     <div className="overflow-x-auto bg-white">
@@ -1257,14 +1694,15 @@ function FinDashboard({ stats, onSelectJob }) {
                             </thead>
                             <tbody className="divide-y">
                                 {piutangOverdue.map(j => {
-                                    const lewat = j.payment_due_date ? daysBetween(j.payment_due_date, today()) : 0;
+                                    const dueDate = getDueDate(j);
+                                    const lewat = dueDate ? daysBetween(dueDate, today()) : 0;
                                     return (
                                         <tr key={j.id} onClick={() => onSelectJob(j)} className="hover:bg-red-50/20 cursor-pointer transition-colors bg-red-50/5">
                                             <td className="p-4 font-mono font-bold text-gray-800">{j.kode}</td>
                                             <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
-                                            <td className="p-4 font-mono text-gray-500">{j.invoice_no}</td>
-                                            <td className="p-4 font-mono font-bold text-gray-700">{formatRp(j.nilai)}</td>
-                                            <td className="p-4 font-mono text-gray-400">{formatDate(j.payment_due_date)}</td>
+                                            <td className="p-4 font-mono text-gray-500">{j.invoice_no || '—'}</td>
+                                            <td className="p-4 font-mono font-bold text-gray-700">{formatRp(getInvoiceAmount(j))}</td>
+                                            <td className="p-4 font-mono text-gray-400">{formatDate(dueDate)}</td>
                                             <td className="p-4 text-right">
                                                 <span className="font-mono font-bold text-sm text-red-600">
                                                     +{lewat} hari

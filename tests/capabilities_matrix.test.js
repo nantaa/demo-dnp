@@ -65,4 +65,24 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager V
     assert.equal(canDoMatches, 6, 'Must have exactly 6 can_do cards');
     assert.equal(cannotDoMatches, 6, 'Must have exactly 6 cannot_do cards');
   });
+
+  test('HTML contains high-contrast print stylesheet for Cetak PDF', () => {
+    const content = fs.readFileSync(htmlPath, 'utf8');
+    assert.ok(content.includes('@media print'), 'Must include @media print stylesheet');
+    assert.ok(content.includes('print-color-adjust'), 'Must enable print color adjustment');
+    assert.ok(content.includes('#0f172a !important'), 'Must override dark text for high contrast on white paper');
+    assert.ok(content.includes('page-break-inside: avoid') || content.includes('break-inside: avoid'), 'Must prevent card break across pages');
+  });
+
+  test('HTML text content contains no raw markdown asterisks', () => {
+    const content = fs.readFileSync(htmlPath, 'utf8');
+    assert.ok(!content.includes('(*Rejection Cascade*)'), 'Must not have asterisks on Rejection Cascade');
+    assert.ok(!content.includes('(*Tim Riksa Uji / Inspektur*)'), 'Must not have asterisks on Tim RU');
+    assert.ok(!content.includes('(*Verifikasi Bayar*)'), 'Must not have asterisks on Verifikasi Bayar');
+    assert.ok(!content.includes('*clock-in/out*'), 'Must not have asterisks on clock-in/out');
+    assert.ok(!content.includes('(*on-time completion rate*)'), 'Must not have asterisks on on-time completion rate');
+    assert.ok(!content.includes('(*accounts receivable ledger*)'), 'Must not have asterisks on accounts receivable');
+    assert.ok(!content.includes('(*split job*)'), 'Must not have asterisks on split job');
+    assert.ok(!content.includes('(*Term of Payment / TOP*)'), 'Must not have asterisks on TOP');
+  });
 });

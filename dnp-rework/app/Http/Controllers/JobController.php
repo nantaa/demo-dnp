@@ -1211,7 +1211,7 @@ class JobController extends Controller
             abort(403, 'Admin tidak memiliki izin untuk mengunggah dokumen pada tahap ini.');
         }
 
-        $isInspector = in_array($user->role, ['inspektur', 'inspector'])
+        $isInspector = in_array($user->role, ['inspektur', 'inspector', 'tim_ru'])
             || $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id;
 
@@ -1284,7 +1284,7 @@ class JobController extends Controller
     public function downloadDocument(Job $job, JobDocument $document, ?string $filename = null)
     {
         $user = Auth::user();
-        $isIns = $user && in_array($user->role, ['inspektur', 'inspector']);
+        $isIns = $user && in_array($user->role, ['inspektur', 'inspector', 'tim_ru']);
         $isPoDoc = (
             stripos($document->type ?? '', 'PO') !== false ||
             stripos($document->name ?? '', 'PO') !== false ||

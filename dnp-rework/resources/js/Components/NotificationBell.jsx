@@ -5,7 +5,7 @@ import { showToast } from '@/swal';
 
 export default function NotificationBell({ onSelectJob }) {
     const { auth } = usePage().props;
-    const isINS = ['inspektur', 'inspector'].includes(auth?.user?.role);
+    const isINS = ['inspektur', 'inspector', 'tim_ru'].includes(auth?.user?.role);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);

@@ -79,8 +79,8 @@ class DailyDigestService
             $isAssigned = false;
             $actionRequired = '';
 
-            // 1. INSPEKTUR / INSPECTOR
-            if (in_array($role, ['inspektur', 'inspector'])) {
+            // 1. INSPEKTUR / INSPECTOR / TIM RU
+            if (in_array($role, ['inspektur', 'inspector', 'tim_ru'])) {
                 $isAssignedInspector = $job->inspectors->contains('id', $userId);
                 $isReportWriter = (int) $job->report_writer_id === (int) $userId;
 

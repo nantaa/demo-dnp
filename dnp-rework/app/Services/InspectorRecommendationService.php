@@ -23,7 +23,7 @@ class InspectorRecommendationService
         }
         $inspectors = User::where('name', 'NOT LIKE', '%Diba Aini%')
             ->where(function ($query) {
-                $query->whereIn('role', ['inspektur', 'inspector', 'manager'])
+                $query->whereIn('role', ['inspektur', 'inspector', 'tim_ru', 'manager'])
                       ->orWhereHas('inspectorProfile');
             })
             ->with(['inspectorProfile'])

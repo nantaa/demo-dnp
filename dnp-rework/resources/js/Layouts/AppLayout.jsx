@@ -92,7 +92,7 @@ export default function AppLayout({ header, children }) {
         { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin', 'manager'] },
         { href: '/users', label: 'Users', icon: ShieldCheck, roles: ['superadmin'] },
         { href: '/reminder-suket', label: 'Reminder Suket', icon: Bell, roles: ['marketing', 'manager', 'admin', 'superadmin'] },
-        { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'superadmin'] },
+        { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'inspector', 'tim_ru', 'superadmin'] },
     ];
 
     const userRole = (user?.role || '').toLowerCase();

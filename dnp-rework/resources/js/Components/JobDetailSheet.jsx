@@ -717,7 +717,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};
-    const isInspector = user?.role === 'inspektur' || user?.role === 'inspector';
+    const isInspector = user?.role === 'inspektur' || user?.role === 'inspector' || user?.role === 'tim_ru';
     const isMGR = user?.role === 'manager';
     const isAssignedInspector = (job.inspectors || []).some(ins => 
         String(ins.id) === String(user?.id) || 
@@ -726,9 +726,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         String(ins.pivot?.user_id) === String(user?.id)
     ) || String(job.report_writer_id) === String(user?.id);
 
-    // INS (inspektur/inspector) is the ONLY role that cannot see pricing/nilai data.
+    // INS (inspektur/inspector/tim_ru) is the ONLY role that cannot see pricing/nilai data.
     // All other roles (admin, marketing, finance, manager, superadmin) can see it.
-    const isINS = ['inspektur', 'inspector'].includes(user?.role);
+    const isINS = ['inspektur', 'inspector', 'tim_ru'].includes(user?.role);
     const canSeeNilai = !isINS;
 
     // Revision month cutoffs:

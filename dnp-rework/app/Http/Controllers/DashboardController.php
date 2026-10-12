@@ -15,7 +15,7 @@ class DashboardController extends Controller
             ? 'superadmin' 
             : (object) $user->stagePermissions()->get()->keyBy('stage')->toArray();
 
-        $isIns = $user && in_array($user->role, ['inspektur', 'inspector']);
+        $isIns = $user && in_array($user->role, ['inspektur', 'inspector', 'tim_ru']);
         $query = Job::with([
             'inspectors',
             'reportWriter',

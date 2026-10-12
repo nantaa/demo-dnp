@@ -35,6 +35,9 @@ export const ROLES = {
     superadmin: { name: 'Super Administrator', label: 'SUP' },
 };
 
+export const RU_ROLES = ['inspektur', 'inspector', 'tim_ru'];
+export const isRURole = (role) => RU_ROLES.includes(String(role || '').toLowerCase());
+
 // Marketing-only stages (locked for MGR intercept)
 export const MKT_STAGES = [1, 11, 13, 15];
 // Finance-only stages (locked for MGR intercept)

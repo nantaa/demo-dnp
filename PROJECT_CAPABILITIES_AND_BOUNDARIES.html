@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNP Monitor — System Capabilities & Scope Boundaries Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .card-item { break-inside: avoid; border: 1px solid #e2e8f0 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- Header Banner -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-sky-500/20">
+          DNP
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+            DNP Monitor Platform Matrix
+            <span class="px-2 py-0.5 text-[11px] font-mono font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Production: 16 Stages (main)
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">Industrial Safety Inspection & Regulatory Docket Workflow Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 no-print w-full sm:w-auto">
+        <button onclick="window.print()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Overview Hero -->
+    <section class="bg-gradient-to-b from-slate-900 to-slate-900/50 rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
+      <div class="absolute -right-20 -top-20 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="max-w-3xl space-y-3">
+        <span class="text-xs uppercase font-mono font-bold tracking-widest text-sky-400">Architectural Baseline & Scope Audit</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">What DNP Monitor Can & Cannot Do</h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          This specification document establishes explicit technical boundaries for the DNP Monitor production application. It defines active supported capabilities versus out-of-scope items, including why the experimental <span class="font-semibold text-rose-400">v3 (20-stage)</span> branch was discarded in favor of the battle-tested <span class="font-semibold text-emerald-400">16-stage pipeline</span>.
+        </p>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+        <div class="p-4 rounded-xl bg-slate-950/50 border border-slate-800">
+          <div class="text-xs font-medium text-slate-400">Pipeline Breadth</div>
+          <div class="text-2xl font-black text-white mt-1">16 Stages</div>
+          <div class="text-[11px] text-emerald-400 mt-0.5">Strict Sequential Flow</div>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-950/50 border border-slate-800">
+          <div class="text-xs font-medium text-slate-400">Operational Roles</div>
+          <div class="text-2xl font-black text-white mt-1">7 Roles</div>
+          <div class="text-[11px] text-sky-400 mt-0.5">With Tim RU Parity</div>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-950/50 border border-slate-800">
+          <div class="text-xs font-medium text-slate-400">Automated Tests</div>
+          <div class="text-2xl font-black text-white mt-1">335+ Tests</div>
+          <div class="text-[11px] text-emerald-400 mt-0.5">100% Suite Passing</div>
+        </div>
+        <div class="p-4 rounded-xl bg-slate-950/50 border border-slate-800">
+          <div class="text-xs font-medium text-slate-400">Build Target</div>
+          <div class="text-2xl font-black text-white mt-1">v16 DNP</div>
+          <div class="text-[11px] text-purple-400 mt-0.5">Production Asset Lock</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Filtering Bar (no-print) -->
+    <section class="no-print bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+      <!-- Search Input -->
+      <div class="relative w-full md:w-96">
+        <svg class="absolute left-3.5 top-3 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input 
+          id="searchInput" 
+          type="text" 
+          placeholder="Filter capabilities or limits (e.g. v3, Disnaker, Tim RU)..." 
+          class="w-full bg-slate-950 border border-slate-700/80 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+          oninput="handleSearch()"
+        />
+      </div>
+
+      <!-- Filter Category Buttons -->
+      <div class="flex flex-wrap gap-2 w-full md:w-auto">
+        <button onclick="filterCapability('all')" class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 text-white transition shadow-sm" data-category="all">
+          All Entries (<span id="count-all">0</span>)
+        </button>
+        <button onclick="filterCapability('can_do')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" data-category="can_do">
+          ✓ What It CAN Do (<span id="count-can">0</span>)
+        </button>
+        <button onclick="filterCapability('cannot_do')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" data-category="cannot_do">
+          ✕ What It CANNOT Do (<span id="count-cannot">0</span>)
+        </button>
+        <button onclick="filterCapability('architecture')" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" data-category="architecture">
+          ⚙ Architecture Rules (<span id="count-arch">0</span>)
+        </button>
+      </div>
+    </section>
+
+    <!-- Capabilities Cards Grid -->
+    <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- ================= PART 1: WHAT IT CAN DO ================= -->
+
+      <!-- Card: 16-Stage Kanban Pipeline -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">CORE WORKFLOW</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">16-Stage Sequential Kanban Workflow Engine</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Provides end-to-end execution across exactly 16 stages (Stage 1 PO/SPK through Stage 16 Selesai). Stages include sub-stages (13/4b Aktualisasi Unit, 14/11b Verifikasi Bayar, 15/11c Kirim SUKET). Enforces strict backward rejection cascade when revisions are demanded.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">16 Stages</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Stage 1..16</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Rejection Cascade</span>
+        </div>
+      </div>
+
+      <!-- Card: Tim RU Parity & Confidential Role Masking -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">SECURITY & ROLES</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Tim RU Role Parity with Confidential Price Masking</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Full permission parity for <code class="text-sky-300">tim_ru</code>, <code class="text-sky-300">inspektur</code>, and <code class="text-sky-300">inspector</code> aliases. Strict ethical data masking: field inspectors are strictly prohibited from viewing client PO pricing, invoice amounts, or tax documents.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Tim RU Parity</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Price Masking</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">canSeeNilai = false</span>
+        </div>
+      </div>
+
+      <!-- Card: Document Preview Modal -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">DOCUMENT UI</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Topmost Scrollable Document Preview Modal</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Mounted directly into <code class="text-sky-300">document.body</code> via React <code class="text-sky-300">createPortal</code> with <code class="text-sky-300">z-[9999]</code>. Prevents clipping inside SlideOver drawers. Features zoom in/out, fit-width, download button, and instant preview for Stage 2 verification checklists.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">createPortal</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">z-[9999]</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">PDF & Image Preview</span>
+        </div>
+      </div>
+
+      <!-- Card: Stage 10 Unified Invoice Upload -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">FINANCE WORKFLOW</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Stage 10 Single Unified Invoice Upload</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Consolidates billing files into a single master slot: <span class="text-amber-300 font-semibold">"Invoice, Kwitansi & Faktur Pajak"</span>. Automatically satisfies the Stage 10 gating requirement with 1 single file upload instead of requiring 3 separate tedious uploads, while maintaining full backward compatibility.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Stage 10</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Invoice, Kwitansi & Faktur Pajak</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Single Slot</span>
+        </div>
+      </div>
+
+      <!-- Card: PPN 11% & Financial Audit Integrity -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">FINANCIAL AUDIT</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">PPN 11% Computation & Stage 14 Payment Gating</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Standardized statutory PPN 11% auto-computation with optional manual override. Stage 14 (Verifikasi Bayar) strictly prevents advancing to Stage 15 (Kirim SUKET) unless the payment status is authenticated as <span class="text-emerald-400 font-semibold">Lunas</span>. Finance Dashboard strictly separates active vs closed receivables.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">PPN 11%</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Stage 14 Gate</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Finance Dashboard</span>
+        </div>
+      </div>
+
+      <!-- Card: Automated Daily Digest Emails -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">AUTOMATION</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Automated Daily Digest Email Reports</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Artisan command <code class="text-sky-300">php artisan email:daily-digest</code> generates and dispatches comprehensive HTML & plain-text executive morning briefs: active pipeline summary, SLA alerts (H-5 Disnaker warnings), outstanding invoices, and unverified payments.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Daily Digest</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">DailyDigestService.php</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Executive Email</span>
+        </div>
+      </div>
+
+      <!-- Card: Smart Recommendation Engine -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">INTELLIGENCE</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Smart Inspector Recommendation Engine</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Matches equipment type (Boiler, Crane, Elevator) with valid inspector SKP certifications, expiration dates, and real-time workload counts. Features configurable overload threshold (default: 5 concurrent jobs) to prevent scheduling fatigue.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">SKP Certificate Match</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Overload Threshold</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">InspectorRecommendationService</span>
+        </div>
+      </div>
+
+      <!-- Card: Anti-Collision Watchdog -->
+      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ SUPPORTED CAPABILITY
+          </span>
+          <span class="text-xs text-slate-500 font-mono">CONCURRENCY & STABILITY</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Safe Polling with Anti-Collision Watchdog</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Defensive background polling automatically suspends if an active mutation is in progress (<code class="text-sky-300">data-dnp-busy</code>). Includes a 30-second watchdog timer on upload overlays to prevent modal lockups during slow network uploads.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded">data-dnp-busy</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">30s Watchdog</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">No UI Freeze</span>
+        </div>
+      </div>
+
+      <!-- ================= PART 2: WHAT IT CANNOT DO ================= -->
+
+      <!-- Card: v3 20-Stage Branch Exclusion -->
+      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            ✕ EXPLICIT LIMITATION
+          </span>
+          <span class="text-xs text-rose-500 font-mono">OUT OF SCOPE</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Experimental "v3" 20-Stage Branch is Excluded</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          <span class="font-bold text-rose-400">Why v3 is NOT in this project:</span> The experimental <code class="text-rose-300">v3</code> branch was an over-engineered proof-of-concept that fragmented the pipeline into 20 stages, introduced broken circular dependencies with <code class="text-rose-300">@domain/workflowEngine</code>, and caused widespread confusion among field teams. Production is strictly locked to the stable 16-stage pipeline on branch <code class="text-emerald-300">main</code>.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">v3 Excluded</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No 20 Stages</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No @domain/workflowEngine</span>
+        </div>
+      </div>
+
+      <!-- Card: No Government Disnaker/Kemnaker API -->
+      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            ✕ EXPLICIT LIMITATION
+          </span>
+          <span class="text-xs text-rose-500 font-mono">OUT OF SCOPE</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Government Ministry (Disnaker/Kemnaker) API Integration</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Government offices (Disnaker & Kemnaker) do not provide public authenticated REST APIs for inspection dockets. All Stage 8 (Proses Disnaker) tracking relies on internal SLA timers and manual input of official government receipt numbers (<code class="text-sky-300">Tanda Terima Disnaker</code>).
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Disnaker API</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Kemnaker API</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Manual Receipt Logging</span>
+        </div>
+      </div>
+
+      <!-- Card: No Automated Bank Feeds / Payment Gateway -->
+      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            ✕ EXPLICIT LIMITATION
+          </span>
+          <span class="text-xs text-rose-500 font-mono">OUT OF SCOPE</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Automated Bank Reconciliation / Payment Gateway</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          There is no direct integration with BCA/Mandiri Open Banking APIs or payment gateways (Midtrans/Xendit). Payment clearance in Stage 14 requires human verification of uploaded <code class="text-amber-300">Bukti Transfer</code> receipts. The system does not auto-scrape bank account mutations.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Bank Mutation Scraping</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Payment Gateway</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Manual Bukti Transfer Check</span>
+        </div>
+      </div>
+
+      <!-- Card: No WebSockets (Uses Defensive Polling) -->
+      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            ✕ EXPLICIT LIMITATION
+          </span>
+          <span class="text-xs text-rose-500 font-mono">ARCHITECTURE BOUNDARY</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Real-Time WebSockets (Pusher / Soketi)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          The system intentionally does not operate a WebSocket server (such as Laravel WebSockets, Soketi, or Pusher) to maintain zero external background daemon overhead. Instead, it uses defensive 8-second HTTP polling on the Kanban board and notification hub.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No WebSockets</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Pusher Dependency</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Lightweight 8s Polling</span>
+        </div>
+      </div>
+
+      <!-- Card: No Multi-Tenant SaaS Isolation -->
+      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            ✕ EXPLICIT LIMITATION
+          </span>
+          <span class="text-xs text-rose-500 font-mono">INFRASTRUCTURE BOUNDARY</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Multi-Tenant SaaS Architecture</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          The platform is architected as a dedicated, single-organization enterprise application. It does not provide tenant-isolated database partitioning, custom subdomains per company, or billing subscription meters. All users belong to the internal inspection organization.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Single Enterprise Only</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Multi-Tenant</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Dedicated DB</span>
+        </div>
+      </div>
+
+      <!-- Card: No Native Mobile App -->
+      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            ✕ EXPLICIT LIMITATION
+          </span>
+          <span class="text-xs text-rose-500 font-mono">CLIENT PLATFORM</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">No Native Mobile App (PWA / Mobile Web Only)</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          There are no native iOS (Swift) or Android (Kotlin) app packages or offline SQLite synchronization engines. The application operates as a fully responsive Inertia + React web application accessible through Chrome/Safari mobile browsers with camera photo upload capabilities.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Native App</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">No Offline Cache Sync</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Responsive Web App</span>
+        </div>
+      </div>
+
+      <!-- Card: Isolated Academic Thesis Docket -->
+      <div class="card-item bg-slate-900 border border-purple-900/40 rounded-xl p-6 space-y-3 relative hover:border-purple-700/60 transition" data-type="architecture" data-category="architecture">
+        <div class="flex justify-between items-start">
+          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            ⚙ REPOSITORY ISOLATION
+          </span>
+          <span class="text-xs text-purple-400 font-mono">REPOSITORIES</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Academic Thesis Docket Resides in a Separate Repository</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          The 7-stage educational dissertation workflow is completely decoupled from this codebase. It maintains its own independent repository at <code class="text-purple-300">github.com/nantaa/thesis-docket</code> to prevent domain pollution between industrial machinery inspection and student academic defense.
+        </p>
+        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-purple-300">Separate Repo</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-purple-300">nantaa/thesis-docket</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Zero Domain Cross-Pollution</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Empty State for Search -->
+    <div id="noResults" class="hidden p-12 text-center bg-slate-900/40 rounded-xl border border-slate-800">
+      <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <p class="text-sm font-semibold text-slate-300">No capabilities or limitations matched your search.</p>
+      <p class="text-xs text-slate-500 mt-1">Try searching for keywords like "v3", "invoice", "disnaker", or "tim ru".</p>
+    </div>
+
+    <!-- Footer Summary Notice -->
+    <footer class="pt-8 border-t border-slate-800/80 text-center space-y-2 text-xs text-slate-500">
+      <p>DNP Monitor Architecture & Scope Governance Matrix • Engine: Laravel 10 + Inertia.js + React 18</p>
+      <p>Generated & Validated under Strict TDD Verification Specifications</p>
+    </footer>
+
+  </main>
+
+  <!-- Interactive Search & Filtering Logic -->
+  <script>
+    let currentCategory = 'all';
+
+    function updateCounts() {
+      const allCards = document.querySelectorAll('.card-item');
+      let countAll = 0;
+      let countCan = 0;
+      let countCannot = 0;
+      let countArch = 0;
+
+      allCards.forEach(card => {
+        countAll++;
+        const cat = card.getAttribute('data-category');
+        if (cat === 'can_do') countCan++;
+        if (cat === 'cannot_do') countCannot++;
+        if (cat === 'architecture') countArch++;
+      });
+
+      document.getElementById('count-all').textContent = countAll;
+      document.getElementById('count-can').textContent = countCan;
+      document.getElementById('count-cannot').textContent = countCannot;
+      document.getElementById('count-arch').textContent = countArch;
+    }
+
+    function filterCapability(category) {
+      currentCategory = category;
+      
+      // Update button active states
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-category') === category) {
+          btn.className = 'filter-btn active px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 text-white transition shadow-sm';
+        } else {
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition';
+        }
+      });
+
+      applyFilters();
+    }
+
+    function handleSearch() {
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+      const allCards = document.querySelectorAll('.card-item');
+      let visibleCount = 0;
+
+      allCards.forEach(card => {
+        const cat = card.getAttribute('data-category');
+        const text = card.textContent.toLowerCase();
+
+        const matchesCat = (currentCategory === 'all' || cat === currentCategory);
+        const matchesSearch = !searchVal || text.includes(searchVal);
+
+        if (matchesCat && matchesSearch) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      const noResults = document.getElementById('noResults');
+      if (visibleCount === 0) {
+        noResults.classList.remove('hidden');
+      } else {
+        noResults.classList.add('hidden');
+      }
+    }
+
+    // Initialize counts on page load
+    document.addEventListener('DOMContentLoaded', updateCounts);
+    updateCounts();
+  </script>
+</body>
+</html>

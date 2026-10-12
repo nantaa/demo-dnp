@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DNP Monitor — Panduan Kapabilitas & Batasan Sistem</title>
+  <title>DNP Monitor — Panduan Operasional Pengguna & Manajer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -33,19 +33,19 @@
 
   <!-- Header Atas -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-sky-500/20">
           DNP
         </div>
         <div>
           <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
-            Panduan Kapabilitas Sistem DNP Monitor
+            Panduan Operasional Sistem DNP Monitor
             <span class="px-2.5 py-0.5 text-[11px] font-mono font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Produksi: 16 Tahap Aktif
+              16 Tahap Aktif
             </span>
           </h1>
-          <p class="text-xs text-slate-400">Sistem Informasi Manajemen Alur Kerja Riksa Uji & Administrasi Suket Disnaker</p>
+          <p class="text-xs text-slate-400">Ringkasan Fungsi & Batasan Kerja untuk Pengguna & Manajer</p>
         </div>
       </div>
       <div class="flex items-center gap-2 no-print w-full sm:w-auto">
@@ -58,40 +58,40 @@
   </header>
 
   <!-- Konten Utama -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
     <!-- Ringkasan Eksekutif -->
     <section class="bg-gradient-to-b from-slate-900 to-slate-900/60 rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
       <div class="absolute -right-20 -top-20 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="max-w-3xl space-y-3">
-        <span class="text-xs uppercase font-mono font-bold tracking-widest text-sky-400">Transparansi Ruang Lingkup Sistem</span>
+        <span class="text-xs uppercase font-mono font-bold tracking-widest text-sky-400">Panduan Resmi Operasional</span>
         <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Apa yang BISA dan BELUM BISA Dilakukan Sistem</h2>
         <p class="text-sm text-slate-300 leading-relaxed">
-          Dokumen resmi ini merinci secara terbuka seluruh fungsi kerja yang telah beroperasi di sistem DNP Monitor, sekaligus menegaskan batasan ruang lingkup kerja (apa yang bukan fungsi sistem ini). Tujuannya agar seluruh pihak (manajemen, operasional, klien, dan pengembang) memiliki pemahaman yang selaras tanpa asumsi yang keliru.
+          Dokumen ringkas ini disusun khusus bagi <strong>Pengguna (Staff Operasional)</strong> dan <strong>Manajer</strong> agar memiliki gambaran utuh mengenai alur kerja sistem DNP Monitor saat ini, serta memahami batasan operasional yang sengaja tidak dimasukkan ke dalam sistem.
         </p>
       </div>
 
       <!-- Kartu Ringkasan Indikator -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Alur Utama</div>
+          <div class="text-xs font-medium text-slate-400">Alur Berkas</div>
           <div class="text-2xl font-black text-white mt-1">16 Tahap</div>
-          <div class="text-[11px] text-emerald-400 mt-0.5">Berurutan & Terkunci Syarat</div>
+          <div class="text-[11px] text-emerald-400 mt-0.5">PO s/d Penyerahan Suket</div>
         </div>
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Hak Akses Peran</div>
-          <div class="text-2xl font-black text-white mt-1">7 Hak Akses</div>
-          <div class="text-[11px] text-sky-400 mt-0.5">Termasuk Tim RU Terproteksi</div>
+          <div class="text-xs font-medium text-slate-400">Privasi Nilai</div>
+          <div class="text-2xl font-black text-white mt-1">Terproteksi</div>
+          <div class="text-[11px] text-sky-400 mt-0.5">Tim RU Bebas Angka Harga</div>
         </div>
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Status Versi</div>
-          <div class="text-2xl font-black text-white mt-1">Stabil (Main)</div>
-          <div class="text-[11px] text-amber-400 mt-0.5">Versi Eksperimental v3 Dikunci</div>
+          <div class="text-xs font-medium text-slate-400">Versi Resmi</div>
+          <div class="text-2xl font-black text-white mt-1">16 Tahap</div>
+          <div class="text-[11px] text-amber-400 mt-0.5">Versi Eksperimental v3 Ditiadakan</div>
         </div>
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Fokus Platform</div>
+          <div class="text-xs font-medium text-slate-400">Fokus Utama</div>
           <div class="text-2xl font-black text-white mt-1">Alur Riksa Uji</div>
-          <div class="text-[11px] text-purple-400 mt-0.5">Bukan Sistem HR / Absensi</div>
+          <div class="text-[11px] text-purple-400 mt-0.5">Bukan Sistem HRIS / Absensi</div>
         </div>
       </div>
     </section>
@@ -104,7 +104,7 @@
         <input 
           id="searchInput" 
           type="text" 
-          placeholder="Cari poin sistem (contoh: v3, absensi, tagihan, disnaker)..." 
+          placeholder="Cari poin sistem (contoh: 16 tahap, absensi, tagihan, v3)..." 
           class="w-full bg-slate-950 border border-slate-700/80 rounded-lg pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
           oninput="handleSearch()"
         />
@@ -119,10 +119,7 @@
           ✓ Yang BISA Dilakukan (<span id="count-can">0</span>)
         </button>
         <button onclick="filterCapability('cannot_do')" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" data-category="cannot_do">
-          ✕ Yang BELUM / TIDAK BISA (<span id="count-cannot">0</span>)
-        </button>
-        <button onclick="filterCapability('governance')" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" data-category="governance">
-          ⚙ Batasan Teknis & Tata Kelola (<span id="count-gov">0</span>)
+          ✕ Yang BELUM BISA (<span id="count-cannot">0</span>)
         </button>
       </div>
     </section>
@@ -142,12 +139,12 @@
         </div>
         <h3 class="text-lg font-bold text-white">Manajemen Kanban 16 Tahap Berurutan</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Mengontrol siklus berkas riksa uji secara ketat dari Tahap 1 (PO/SPK/Proposal) sampai Tahap 16 (Selesai). Berpindahnya kartu antar-tahap wajib memenuhi dokumen prasyarat yang terverifikasi. Dilengkapi alur penolakan berjenjang (*Rejection Cascade*) jika berkas dinyatakan perlu perbaikan.
+          Mengontrol siklus berkas riksa uji secara tertib dari Tahap 1 (PO/SPK/Proposal) sampai Tahap 16 (Selesai). Kartu hanya bisa dimajukan jika berkas prasyarat wajib telah diunggah dan diverifikasi. Jika ada berkas yang keliru, penanggung jawab dapat mengembalikan kartu ke tahap sebelumnya (*Rejection Cascade*).
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded">16 Tahap</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Verifikasi Prasyarat</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Riwayat Audit Lengkap</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">16 Tahap Berurutan</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Wajib Dokumen Prasyarat</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Riwayat Catatan Perubahan</span>
         </div>
       </div>
 
@@ -159,14 +156,14 @@
           </span>
           <span class="text-xs text-slate-500 font-mono">KEAMANAN & PRIVASI</span>
         </div>
-        <h3 class="text-lg font-bold text-white">Akses Khusus Tim RU dengan Proteksi Nilai Finansial</h3>
+        <h3 class="text-lg font-bold text-white">Akses Tim RU Terproteksi dari Angka Finansial</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Menyediakan hak akses penuh untuk personel teknis (*Tim Riksa Uji / Inspektur*). Secara otomatis menyembunyikan (*masking*) seluruh data nilai komersial (harga penawaran, nilai PO, nominal invoice, faktur pajak). Personel lapangan fokus pada aspek teknis keselamatan dan penyusunan LHPP tanpa melihat angka keuangan.
+          Personel teknis (*Tim Riksa Uji / Inspektur*) memiliki akses khusus untuk memeriksa jadwal, mengunggah foto lapangan, dan menyusun laporan LHPP. Namun, demi kerahasiaan operasional, seluruh angka komersial (harga penawaran, nilai PO, tagihan invoice, dan faktur pajak) otomatis disembunyikan dari pandangan Tim RU.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Tim RU / Tim Riksa Uji</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Privasi Harga Terjaga</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Kerahasiaan Bisnis</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Akses Tim RU Lengkap</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Nilai Uang Disembunyikan</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Fokus Aspek Teknis K3</span>
         </div>
       </div>
 
@@ -176,15 +173,15 @@
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             ✓ FITUR BEROPERASI
           </span>
-          <span class="text-xs text-slate-500 font-mono">ANTARMUKA DOKUMEN</span>
+          <span class="text-xs text-slate-500 font-mono">KEMUDAHAN PENINJAUAN</span>
         </div>
         <h3 class="text-lg font-bold text-white">Modal Preview Dokumen Pop-up Teratas</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Memungkinkan peninjauan langsung file PDF dan gambar tanpa perlu mengunduh ke komputer lokal. Jendela tinjau (*Preview Modal*) menggunakan lapisan paling atas (<code class="text-sky-300 font-mono">z-[9999]</code>) sehingga tidak terpotong oleh panel samping, lengkap dengan tombol perbesar/perkecil (*zoom*) dan unduh cepat.
+          Staf dan manajer dapat meninjau langsung file dokumen (PDF, gambar, sertifikat) tanpa harus mengunduh file satu per satu ke komputer. Jendela pratinjau muncul di lapisan paling atas layar sehingga tidak terpotong oleh panel samping, lengkap dengan fitur zoom dan tombol unduh jika sewaktu-waktu dibutuhkan.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
           <span class="bg-slate-950 px-2 py-0.5 rounded">Tinjau Langsung (PDF & Gambar)</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Lapisan Teratas Tanpa Terpotong</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Tanpa Unduh Manual</span>
           <span class="bg-slate-950 px-2 py-0.5 rounded">Fitur Zoom In/Out</span>
         </div>
       </div>
@@ -199,7 +196,7 @@
         </div>
         <h3 class="text-lg font-bold text-white">Unggah Tagihan Satu Pintu di Tahap 10</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Menyederhanakan pengunggahan dokumen penagihan menjadi 1 slot terpadu: <span class="text-amber-300 font-semibold">"Invoice, Kwitansi & Faktur Pajak"</span>. Tim Keuangan cukup mengunggah 1 file bundel tagihan untuk memenuhi syarat lolos Tahap 10 tanpa harus mengunggah file tiga kali secara terpisah.
+          Proses penagihan dipermudah melalui 1 slot terpadu: <span class="text-amber-300 font-semibold">"Invoice, Kwitansi & Faktur Pajak"</span>. Staf keuangan cukup mengunggah 1 file paket penagihan untuk meloloskan pekerjaan ke tahap berikutnya, tanpa perlu repot mengunggah berkas terpisah tiga kali.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
           <span class="bg-slate-950 px-2 py-0.5 rounded">Tahap 10</span>
@@ -214,58 +211,20 @@
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             ✓ FITUR BEROPERASI
           </span>
-          <span class="text-xs text-slate-500 font-mono">AUDIT PEMBAYARAN</span>
+          <span class="text-xs text-slate-500 font-mono">PENGAMANAN PIUTANG</span>
         </div>
         <h3 class="text-lg font-bold text-white">Kalkulasi Otomatis PPN 11% & Kunci Pengiriman SUKET</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Menghitung nilai PPN 11% secara otomatis sesuai regulasi pajak yang berlaku. Pada Tahap 14 (*Verifikasi Bayar*), berkas dikunci secara ketat dan tidak dapat dipindahkan ke Tahap 15 (*Kirim SUKET ke Klien*) sebelum status pembayaran terverifikasi <span class="text-emerald-400 font-semibold">Lunas</span> oleh tim Keuangan.
+          Sistem otomatis mengalkulasi besaran PPN 11% sesuai aturan pajak. Untuk melindungi arus kas perusahaan, pada Tahap 14 (*Verifikasi Bayar*), berkas SUKET otomatis terkunci dan tidak dapat dikirim ke klien (Tahap 15) sebelum tim Keuangan mengonfirmasi pembayaran berstatus <span class="text-emerald-400 font-semibold">Lunas</span>.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
           <span class="bg-slate-950 px-2 py-0.5 rounded">PPN 11% Otomatis</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Kunci Keamanan Tahap 14</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Cegah SUKET Keluar Sebelum Lunas</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Kunci Pengiriman SUKET</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded">Cegah Piutang Macet</span>
         </div>
       </div>
 
-      <!-- Poin: Laporan Harian Email Otomatis -->
-      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            ✓ FITUR BEROPERASI
-          </span>
-          <span class="text-xs text-slate-500 font-mono">NOTIFIKASI OTOMATIS</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Pengiriman Laporan Harian via Email (Daily Digest)</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Menjalankan perintah terjadwal untuk mengirimkan ringkasan operasional pagi ke email pimpinan dan koordinator: memuat rekap antrean pekerjaan aktif, peringatan batas waktu Disnaker (H-5), tagihan jatuh tempo, dan pembayaran yang menunggu verifikasi.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Laporan Harian Email</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Peringatan Batas Waktu SLA</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Rekap Eksekutif Otomatis</span>
-        </div>
-      </div>
-
-      <!-- Poin: Rekomendasi Pintar Penugasan Inspektur -->
-      <div class="card-item bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3 relative hover:border-slate-700 transition" data-type="can_do" data-category="can_do">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            ✓ FITUR BEROPERASI
-          </span>
-          <span class="text-xs text-slate-500 font-mono">KECERDASAN PENJADWALAN</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Mesin Rekomendasi Penugasan Inspektur</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Mencocokkan jenis alat uji (Boiler, Crane, Lift, Instalasi Petir) dengan sertifikat kompetensi SKP personel yang masih berlaku. Menghitung beban kerja aktif setiap personel dan memberikan peringatan jika inspektur telah melebihi batas kuota tugas serentak (standar: 5 pekerjaan berjalan).
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Pencocokan Sertifikat SKP</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Batas Beban Kerja Tugas</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Cegah Kelelahan Personel</span>
-        </div>
-      </div>
-
-      <!-- ================= BAGIAN 2: YANG BELUM / TIDAK BISA DILAKUKAN ================= -->
+      <!-- ================= BAGIAN 2: YANG BELUM BISA DILAKUKAN ================= -->
 
       <!-- Poin: Belum Ada Absensi Kehadiran (Bukan HRIS) -->
       <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
@@ -273,16 +232,16 @@
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
             ✕ BELUM TERSEDIA
           </span>
-          <span class="text-xs text-rose-400 font-mono">BUKAN FUNGSI HR</span>
+          <span class="text-xs text-rose-400 font-mono">BATASAN SDM / HR</span>
         </div>
         <h3 class="text-lg font-bold text-white">Belum Ada Pencatatan Absensi & Kehadiran Personel</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          <span class="font-bold text-rose-400">Pemberitahuan:</span> DNP Monitor adalah sistem pelacakan alur kerja dokumen riksa uji, <span class="underline">bukan</span> sistem HRIS (Human Resource Information System). Sistem ini belum menyediakan fitur presensi jam kerja harian, absen *clock-in / clock-out*, pencatatan lembur, maupun manajemen cuti karyawan.
+          <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> DNP Monitor adalah sistem pelacakan dokumen alur kerja riksa uji alat, <span class="underline">bukan</span> sistem absensi pegawai. Sistem ini belum memiliki fitur pencatatan jam hadir harian, absensi sidik jari / foto wajah (*clock-in / clock-out*), rekap lembur, maupun jatah cuti karyawan.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Sistem Absensi</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada Presensi Harian</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Modul Penggajian</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Sistem Presensi Harian</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada Absen Datang/Pulang</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Dikelola Terpisah oleh Divisi HR</span>
         </div>
       </div>
 
@@ -292,15 +251,15 @@
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
             ✕ BELUM TERSEDIA
           </span>
-          <span class="text-xs text-rose-400 font-mono">BUKAN FUNGSI EVALUASI HR</span>
+          <span class="text-xs text-rose-400 font-mono">BATASAN EVALUASI HR</span>
         </div>
         <h3 class="text-lg font-bold text-white">Belum Ada Penilaian Kinerja Karyawan (Performance Review / KPI)</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          Sistem belum menyediakan modul evaluasi penilaian kinerja individu berkala (*performance appraisal*), formulir penilaian kompetensi tahunan, atau perhitungan rapor KPI karyawan. Sistem hanya mencatat status riwayat pekerjaan teknis (selesai, tertunda, atau revisi) untuk keperluan pelacakan berkas klien.
+          Sistem belum menyediakan modul evaluasi kinerja berkala pegawai (*performance appraisal*), formulir penilaian kompetensi tahunan, maupun perhitungan rapor skor KPI individu staf. Sistem saat ini hanya mencatat status riwayat pekerjaan teknis (apakah pekerjaan selesai, tertunda, atau perlu revisi dokumen).
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada KPI Individu</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Performance Review HR</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Belum Ada Rapor KPI Individu</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Penilaian Kinerja SDM</span>
           <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Fokus pada Berkas Pekerjaan</span>
         </div>
       </div>
@@ -309,94 +268,18 @@
       <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
         <div class="flex justify-between items-start">
           <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            ✕ BATASAN TEKNIS
+            ✕ BATASAN OPERASIONAL
           </span>
-          <span class="text-xs text-rose-400 font-mono">STABILITAS PRODUKSI</span>
+          <span class="text-xs text-rose-400 font-mono">STABILITAS KERJA</span>
         </div>
         <h3 class="text-lg font-bold text-white">Pembaruan Eksperimental "v3" (20 Tahap) Tidak Digunakan</h3>
         <p class="text-xs text-slate-300 leading-relaxed">
-          <span class="font-bold text-rose-400">Mengapa Versi 3 Ditinggalkan:</span> Cabang eksperimental <code class="text-rose-300">v3</code> yang memecah alur menjadi 20 tahap menyebabkan beban administrasi berlebih di lapangan, menimbulkan siklus ketergantungan kode yang tidak stabil, dan memperumit alur kerja teknisi. Sistem produksi secara resmi dikunci pada **alur 16 tahap stabil** di cabang utama (*main*).
+          <span class="font-bold text-rose-400">Penjelasan Keputusan Versi:</span> Uji coba versi 3 yang memecah alur menjadi 20 tahap telah dibatalkan karena menambah kerumitan klik bagi teknisi lapangan dan memperlambat operasional. Sistem yang berlaku dan didukung penuh oleh manajemen adalah **alur 16 tahap stabil** yang saat ini berjalan.
         </p>
         <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">v3 Tidak Dipakai</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan 20 Tahap</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Terkunci di 16 Tahap Stabil</span>
-        </div>
-      </div>
-
-      <!-- Poin: Tidak Ada API Langsung ke Disnaker -->
-      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            ✕ BATASAN EKSTERNAL
-          </span>
-          <span class="text-xs text-rose-400 font-mono">REGULASI PEMERINTAH</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Tidak Terhubung API Langsung ke Server Disnaker / Kemnaker</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Layanan dinas ketenagakerjaan pemerintah daerah (Disnaker) dan Kementerian Ketenagakerjaan RI tidak menyediakan antarmuka pertukaran data otomatis (*Public Web API*). Oleh karena itu, pencatatan status pengesahan Suket pada Tahap 8 menggunakan nomor tanda terima fisik dan pembaruan tanggal manual oleh admin.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Ada API Disnaker</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Sinkronisasi Kemnaker</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Pencatatan Tanda Terima Manual</span>
-        </div>
-      </div>
-
-      <!-- Poin: Tidak Ada Rekonsiliasi Bank Otomatis -->
-      <div class="card-item bg-slate-900 border border-rose-900/40 rounded-xl p-6 space-y-3 relative hover:border-rose-700/60 transition" data-type="cannot_do" data-category="cannot_do">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            ✕ BATASAN OPERASIONAL
-          </span>
-          <span class="text-xs text-rose-400 font-mono">TRANSAKSI PERBANKAN</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Tidak Ada Tarikan Otomatis Mutasi Rekening Bank / Payment Gateway</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Sistem tidak membaca otomatis mutasi rekening koran bank (seperti API BCA/Mandiri) dan tidak menggunakan gerbang pembayaran otomatis (*Payment Gateway* seperti Midtrans). Verifikasi transfer masuk pada Tahap 14 tetap menuntut verifikasi manual oleh petugas Keuangan dengan meneliti file bukti transfer yang diunggah.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tanpa Tarikan Mutasi Bank Otomatis</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Bukan Payment Gateway</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded">Verifikasi Bukti Transfer Manual</span>
-        </div>
-      </div>
-
-      <!-- Poin: Tidak Menggunakan WebSockets Real-Time -->
-      <div class="card-item bg-slate-900 border border-purple-900/40 rounded-xl p-6 space-y-3 relative hover:border-purple-700/60 transition" data-type="governance" data-category="governance">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            ⚙ TATA KELOLA ARSITEKTUR
-          </span>
-          <span class="text-xs text-purple-400 font-mono">INFRASTRUKTUR SERVER</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Menggunakan Polling Berkala, Bukan Server WebSocket Terbuka</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Untuk menjaga kestabilan memori server VPS dan menghindari biaya pemeliharaan soket pihak ketiga (Pusher/Soketi), sistem menggunakan sinkronisasi HTTP ringan berdurasi 8 detik. Mekanisme ini otomatis berhenti ketika pengguna sedang mengunggah file demi mencegah tabrakan data.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-purple-300">Polling Ringan 8 Detik</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-purple-300">Hemat Konsumsi RAM Server</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Proteksi Anti Tabrakan Data</span>
-        </div>
-      </div>
-
-      <!-- Poin: Single Enterprise Bukan Multi-Tenant SaaS -->
-      <div class="card-item bg-slate-900 border border-purple-900/40 rounded-xl p-6 space-y-3 relative hover:border-purple-700/60 transition" data-type="governance" data-category="governance">
-        <div class="flex justify-between items-start">
-          <span class="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            ⚙ TATA KELOLA ARSITEKTUR
-          </span>
-          <span class="text-xs text-purple-400 font-mono">KEPEMILIKAN DATA</span>
-        </div>
-        <h3 class="text-lg font-bold text-white">Instalasi Khusus Perusahaan Tunggal (Bukan Multi-Tenant SaaS)</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          Platform didesain dan diinstal khusus untuk satu entitas operasional internal perusahaan PJK3. Sistem tidak dirancang untuk menjual langganan publik berbasis subdomain (*multi-tenant*), sehingga integritas database tetap privat, cepat, dan terisolasi secara aman.
-        </p>
-        <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-purple-300">Khusus Perusahaan Tunggal</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-purple-300">Bukan SaaS Publik Komersial</span>
-          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Keamanan Database Privat</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Versi v3 Ditinggalkan</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-rose-300">Tidak Menggunakan 20 Tahap</span>
+          <span class="bg-slate-950 px-2 py-0.5 rounded text-emerald-400">Resmi Berjalan di 16 Tahap Stabil</span>
         </div>
       </div>
 
@@ -405,14 +288,14 @@
     <!-- Pesan Pencarian Tidak Ditemukan -->
     <div id="noResults" class="hidden p-12 text-center bg-slate-900/40 rounded-xl border border-slate-800">
       <svg class="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <p class="text-sm font-semibold text-slate-300">Tidak ada poin kapabilitas yang cocok dengan kata kunci pencarian Anda.</p>
-      <p class="text-xs text-slate-500 mt-1">Coba kata kunci lain seperti: "absensi", "kinerja", "v3", "tagihan", atau "tim ru".</p>
+      <p class="text-sm font-semibold text-slate-300">Tidak ada poin informasi yang cocok dengan kata kunci pencarian Anda.</p>
+      <p class="text-xs text-slate-500 mt-1">Coba kata kunci lain seperti: "16 tahap", "absensi", "kinerja", "tagihan", atau "tim ru".</p>
     </div>
 
     <!-- Catatan Penutup Dokumen -->
     <footer class="pt-8 border-t border-slate-800/80 text-center space-y-2 text-xs text-slate-500">
-      <p>Panduan Resmi Tata Kelola Sistem DNP Monitor • Fondasi: Laravel 10 + Inertia.js + React 18</p>
-      <p>Terverifikasi Penuh Melalui 335+ Pengujian Otomatis Tanpa Eror</p>
+      <p>Panduan Resmi Tata Kelola Operasional DNP Monitor • Khusus Pengguna & Manajer</p>
+      <p>Alur Kerja Resmi: 16 Tahap Berjalan Stabil</p>
     </footer>
 
   </main>
@@ -426,20 +309,17 @@
       let countAll = 0;
       let countCan = 0;
       let countCannot = 0;
-      let countGov = 0;
 
       allCards.forEach(card => {
         countAll++;
         const cat = card.getAttribute('data-category');
         if (cat === 'can_do') countCan++;
         if (cat === 'cannot_do') countCannot++;
-        if (cat === 'governance') countGov++;
       });
 
       document.getElementById('count-all').textContent = countAll;
       document.getElementById('count-can').textContent = countCan;
       document.getElementById('count-cannot').textContent = countCannot;
-      document.getElementById('count-gov').textContent = countGov;
     }
 
     function filterCapability(category) {

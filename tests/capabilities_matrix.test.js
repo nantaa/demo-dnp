@@ -3,35 +3,38 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-describe('Project Capabilities & Boundaries HTML Specification (Bahasa Indonesia)', () => {
+describe('Project Capabilities & Boundaries HTML Specification (User & Manager Focus)', () => {
   const htmlPath = path.resolve(process.cwd(), 'public/PROJECT_CAPABILITIES_AND_BOUNDARIES.html');
 
   test('HTML file exists in public directory', () => {
     assert.ok(fs.existsSync(htmlPath), 'PROJECT_CAPABILITIES_AND_BOUNDARIES.html must exist');
   });
 
-  test('HTML is in Bahasa Indonesia and documents 16 stages and core features', () => {
+  test('HTML documents core operational capabilities relevant to User & Manager', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
-    assert.ok(content.includes('16 Tahap') || content.includes('16-Tahap') || content.includes('16 Stages'), 'Must document 16-stage architecture in Bahasa');
-    assert.ok(content.includes('Tim RU'), 'Must document Tim RU role parity');
-    assert.ok(content.includes('PPN 11%'), 'Must document PPN 11% calculation');
-    assert.ok(content.includes('Daily Digest') || content.includes('Laporan Harian'), 'Must document Daily Digest email');
-    assert.ok(content.includes('Preview Dokumen') || content.includes('Modal Preview') || content.includes('Preview'), 'Must document preview popup modal');
+    assert.ok(content.includes('16 Tahap') || content.includes('16-Tahap'), 'Must document 16-stage architecture in Bahasa');
+    assert.ok(content.includes('Tim RU'), 'Must document Tim RU role parity and price privacy');
+    assert.ok(content.includes('PPN 11%'), 'Must document PPN 11% calculation and Stage 14 lock');
+    assert.ok(content.includes('Preview Dokumen') || content.includes('Modal Preview') || content.includes('Tinjau Langsung'), 'Must document preview popup modal');
     assert.ok(content.includes('Invoice, Kwitansi & Faktur Pajak'), 'Must document Stage 10 unified invoice upload');
   });
 
-  test('HTML explicitly documents system limitations including HRIS and v3', () => {
+  test('HTML explicitly documents operational limitations: Attendance, Performance Review, and v3', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
     assert.ok(content.includes('v3') || content.includes('Versi 3'), 'Must explain v3 exclusion');
-    assert.ok(content.toLowerCase().includes('absensi') || content.toLowerCase().includes('kehadiran'), 'Must document absence of attendance/presensi tracking');
+    assert.ok(content.toLowerCase().includes('absensi') || content.toLowerCase().includes('kehadiran'), 'Must document absence of attendance tracking');
     assert.ok(content.toLowerCase().includes('kinerja') || content.toLowerCase().includes('kpi'), 'Must document absence of performance appraisal/review');
-    assert.ok(content.includes('Disnaker'), 'Must document Disnaker manual tracking reality');
   });
 
-  test('HTML completely hides academic module and all its implications', () => {
+  test('HTML hides developer-only infrastructure cards per user request', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
-    assert.ok(!content.toLowerCase().includes('academic thesis'), 'Must not contain academic thesis references');
-    assert.ok(!content.toLowerCase().includes('thesis-docket'), 'Must not contain thesis-docket references');
+    assert.ok(!content.includes('Daily Digest'), 'Must hide Daily Digest');
+    assert.ok(!content.includes('Mesin Rekomendasi Penugasan Inspektur'), 'Must hide Rekomendasi Inspektur');
+    assert.ok(!content.includes('Tidak Terhubung API Langsung ke Server Disnaker'), 'Must hide Disnaker API details');
+    assert.ok(!content.includes('Tidak Ada Tarikan Otomatis Mutasi Rekening Bank'), 'Must hide bank mutation details');
+    assert.ok(!content.includes('Instalasi Khusus Perusahaan Tunggal'), 'Must hide Multi-Tenant SaaS details');
+    assert.ok(!content.includes('Menggunakan Polling Berkala, Bukan Server WebSocket'), 'Must hide WebSocket/Polling details');
+    assert.ok(!content.toLowerCase().includes('academic thesis'), 'Must keep academic references hidden');
   });
 
   test('HTML contains interactive search and category filtering in Bahasa', () => {

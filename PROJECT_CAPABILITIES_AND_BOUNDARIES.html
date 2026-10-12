@@ -139,19 +139,37 @@
         font-weight: 600 !important;
       }
 
-      /* Cards Section */
+      /* Main Container in Print */
+      main {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+      }
+
+      /* Cards Section & Grid */
       .cards-section {
+        display: block !important;
+        width: 100% !important;
+      }
+
+      #cardsGrid {
         display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: 14px !important;
+        width: 100% !important;
       }
 
       .card-item {
-        display: block !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
         background: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
         border-radius: 8px !important;
-        padding: 16px !important;
+        padding: 14px 16px !important;
         break-inside: avoid !important;
         page-break-inside: avoid !important;
       }
@@ -852,57 +870,6 @@
             <div class="p-2 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-[11px] text-emerald-300">
               🔐 <strong>Kunci Finansial:</strong> Suket dilarang dikirim (Tahap 15 terkunci) sebelum bayar Lunas.
             </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- 2. Infografis Peran SLA: Alarm Berkas vs Rapor Kinerja Staf -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
-        <div class="border-b border-slate-800 pb-4">
-          <span class="text-xs font-mono font-bold text-sky-400 uppercase tracking-widest">Penjelasan Logika
-            Indikator</span>
-          <h3 class="text-xl font-extrabold text-white">Infografis Peran SLA: Alarm Berkas vs Rapor Kinerja Staf</h3>
-          <p class="text-xs text-slate-400 mt-1">Mengapa indikator SLA hari di DNP Monitor tidak boleh dijadikan ukuran
-            nilai rapor individu staf saat ini:</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          <!-- Sisi Kiri: Yang Dilakukan Sistem (Alarm Berkas) -->
-          <div class="p-5 rounded-xl bg-slate-950/80 border border-emerald-500/30 space-y-3">
-            <div class="flex items-center gap-2">
-              <span
-                class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-sm flex items-center justify-center">✓</span>
-              <h4 class="font-bold text-base text-white">Fungsi Nyata SLA: "Alarm Antrean Berkas"</h4>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Kartu Kanban berubah warna menjadi <strong>Kuning</strong> atau <strong>Merah</strong> murni untuk memberi
-              peringatan kepada tim operasional bahwa berkas sudah tertahan melebihi estimasi hari kerja.
-            </p>
-            <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside pt-1">
-              <li>Mencegah berkas terselip atau terlupakan di satu divisi.</li>
-              <li>Memberikan peringatan H-5 sebelum batas waktu 30 hari di Disnaker.</li>
-              <li>Membantu koordinasi antar-staf saat serah terima dokumen.</li>
-            </ul>
-          </div>
-
-          <!-- Sisi Kanan: Yang Belum Dilakukan (Bukan Rapor Staf) -->
-          <div class="p-5 rounded-xl bg-slate-950/80 border border-rose-500/30 space-y-3">
-            <div class="flex items-center gap-2">
-              <span
-                class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 font-bold text-sm flex items-center justify-center">✕</span>
-              <h4 class="font-bold text-base text-white">Bukan Sebagai: "Rapor Penilaian Staf"</h4>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Sistem <strong>BELUM</strong> menghitung persentase ketepatan waktu (on-time completion rate) pegawai
-              karena keterlambatan sering kali disebabkan oleh faktor eksternal di luar kendali staf.
-            </p>
-            <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside pt-1">
-              <li>Keterlambatan di Dinas (Tahap 8) tergantung pada jadwal pejabat dinas.</li>
-              <li>Keterlambatan pembayaran (Tahap 11) tergantung pada persetujuan keuangan klien.</li>
-              <li>Menghitung KPI staf dari SLA berkas saat ini tidak adil bagi personel internal.</li>
-            </ul>
           </div>
 
         </div>

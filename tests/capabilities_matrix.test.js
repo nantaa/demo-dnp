@@ -44,11 +44,11 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager V
     assert.ok(content.includes('Deviasi') || content.includes('Anomali') || content.includes('di Luar Alur') || content.includes('di Luar SOP'), 'Must document inability to handle non-standard edge cases outside 16-stage flow');
   });
 
-  test('HTML contains focused visual presentation and excludes side-by-side comparison matrix', () => {
+  test('HTML contains focused visual presentation pipeline and excludes comparison matrix & Infografis SLA', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
     assert.ok(content.includes('visual-section') || content.includes('visualSection'), 'Must contain visual section container');
     assert.ok(content.includes('Bagan Alur 16 Tahap') || content.includes('Visualisasi Alur'), 'Must include 16-stage visual pipeline');
-    assert.ok(content.includes('Infografis Peran SLA') || content.includes('Peran SLA'), 'Must include SLA infographic');
+    assert.ok(!content.includes('Infografis Peran SLA') && !content.includes('Infografis SLA'), 'Must exclude Infografis SLA per user instruction');
     assert.ok(!content.includes('Matriks Perbandingan Sistem') && !content.includes('Tabel Perbandingan Visual'), 'Must exclude side-by-side comparison matrix per user instruction');
   });
 
@@ -66,10 +66,11 @@ describe('Project Capabilities & Boundaries HTML Specification (User & Manager V
     assert.equal(cannotDoMatches, 6, 'Must have exactly 6 cannot_do cards');
   });
 
-  test('HTML contains high-contrast print stylesheet for Cetak PDF', () => {
+  test('HTML contains high-contrast print stylesheet for Cetak PDF with proportional 2-column grid', () => {
     const content = fs.readFileSync(htmlPath, 'utf8');
     assert.ok(content.includes('@media print'), 'Must include @media print stylesheet');
     assert.ok(content.includes('print-color-adjust'), 'Must enable print color adjustment');
+    assert.ok(content.includes('#cardsGrid'), 'Must style #cardsGrid in print');
     assert.ok(content.includes('#0f172a !important'), 'Must override dark text for high contrast on white paper');
     assert.ok(content.includes('page-break-inside: avoid') || content.includes('break-inside: avoid'), 'Must prevent card break across pages');
   });

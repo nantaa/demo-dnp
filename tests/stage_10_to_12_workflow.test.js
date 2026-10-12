@@ -66,9 +66,7 @@ describe('Stage 10 to 12 Workflow Adjustment Test Suite', () => {
         });
 
         test('DOC_TYPES_BY_STAGE maps appropriate documents per stage', () => {
-            assert.ok(DOC_TYPES_BY_STAGE[10].includes('Invoice (PDF)'));
-            assert.ok(DOC_TYPES_BY_STAGE[10].includes('Kwitansi'));
-            assert.ok(DOC_TYPES_BY_STAGE[10].includes('Faktur Pajak'));
+            assert.ok(DOC_TYPES_BY_STAGE[10].includes('Invoice, Kwitansi & Faktur Pajak'));
 
             assert.ok(DOC_TYPES_BY_STAGE[11].includes('Bukti Follow-up / Penagihan'));
             assert.ok(DOC_TYPES_BY_STAGE[14].includes('Bukti Potong PPh'));

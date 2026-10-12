@@ -257,9 +257,18 @@ const NoteField = React.memo(function NoteField({ value, onChange }) {
     );
 });
 
-const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional, isINS = false, onPreview }) => {
+const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, canManageStageDocs, deleteDoc, isOptional, isINS = false, onPreview, acceptedTypes }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const existing = (docs || []).filter(d => d.stage === stageId && (!type || d.type === type));
+    const existing = (docs || []).filter(d => {
+        if (d.stage !== stageId) return false;
+        if (stageId === 10) {
+            return ['Invoice, Kwitansi & Faktur Pajak', 'Invoice (PDF)', 'Invoice', 'Kwitansi', 'Faktur Pajak', 'Faktur / Invoice', 'Faktur'].includes(d.type) || d.stage === 10;
+        }
+        if (acceptedTypes && Array.isArray(acceptedTypes)) {
+            return acceptedTypes.includes(d.type);
+        }
+        return (!type || d.type === type);
+    });
     const canManage = typeof canManageStageDocs === 'function' ? canManageStageDocs(stageId) : true;
     const handlePreview = onPreview || (typeof window !== 'undefined' ? window.__dnpPreviewDoc : null);
 
@@ -283,9 +292,15 @@ const UploadSlot = ({ type, stageId, docs, triggerUpload, uploadFileDirectly, ca
         e.stopPropagation();
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const file = e.dataTransfer.files[0];
-            if (uploadFileDirectly) {
-                uploadFileDirectly(file, stageId, type);
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length === 1) {
+                if (uploadFileDirectly) uploadFileDirectly(files[0], stageId, type);
+            } else {
+                files.forEach((file, idx) => {
+                    setTimeout(() => {
+                        if (uploadFileDirectly) uploadFileDirectly(file, stageId, type);
+                    }, idx * 500);
+                });
             }
         }
     };
@@ -871,10 +886,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             if (!invDate) return showError('Validasi', 'Tanggal Invoice Diterbitkan wajib diisi.');
             
             const hasInvoiceDoc = (job.documents || []).some(d => 
-                ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi', 'Bukti Transfer'].includes(d.type) ||
+                ['Invoice, Kwitansi & Faktur Pajak', 'Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi', 'Bukti Transfer'].includes(d.type) ||
                 d.stage === 10
             );
-            if (!hasInvoiceDoc) return showError('Dokumen Belum Lengkap', 'Dokumen "Invoice (PDF)" atau dokumen penagihan wajib diunggah sebelum melanjutkan.');
+            if (!hasInvoiceDoc) return showError('Dokumen Belum Lengkap', 'Dokumen "Invoice, Kwitansi & Faktur Pajak" atau dokumen penagihan wajib diunggah sebelum melanjutkan.');
 
             setIsMoving(true);
             router.post(`/jobs/${job.id}/move`, {
@@ -2364,12 +2379,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
                 {/* ── STAGE 10 (Pembuatan Invoice — Finance) ──────────── */}
                 {s === 10 && (() => {
-                    const hasInvoiceDoc10 = (job.documents || []).some(d => ['Invoice (PDF)', 'Invoice', 'Faktur / Invoice'].includes(d.type));
+                    const hasInvoiceDoc10 = (job.documents || []).some(d => ['Invoice, Kwitansi & Faktur Pajak', 'Invoice (PDF)', 'Invoice', 'Faktur / Invoice', 'Faktur', 'Faktur Pajak', 'Kwitansi'].includes(d.type) || d.stage === 10);
                     const s10CanMove = s10.invoice_no?.trim() && s10.total_invoice_amount && parseFloat(s10.total_invoice_amount) > 0 && s10.tgl_invoice_issued && hasInvoiceDoc10;
                     const s10DisabledMsg = !s10.invoice_no?.trim() ? 'Isi Nomor Invoice terlebih dahulu' :
                         (!s10.total_invoice_amount || parseFloat(s10.total_invoice_amount) <= 0) ? 'Isi Total Invoice (Nilai Tagihan) dengan benar' :
                         !s10.tgl_invoice_issued ? 'Isi Tanggal Invoice Diterbitkan terlebih dahulu' :
-                        !hasInvoiceDoc10 ? 'Upload Dokumen "Invoice (PDF)" terlebih dahulu' : '';
+                        !hasInvoiceDoc10 ? 'Upload Dokumen "Invoice, Kwitansi & Faktur Pajak" terlebih dahulu' : '';
 
                     return (
                         <div className="space-y-3">

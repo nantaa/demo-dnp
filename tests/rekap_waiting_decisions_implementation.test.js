@@ -18,11 +18,10 @@ describe('Rekap Masukan — Resolved Waiting Items Test Suite', () => {
             }
         });
 
-        test('Stage 10 contains "Faktur Pajak"', () => {
+        test('Stage 10 contains unified "Invoice, Kwitansi & Faktur Pajak"', () => {
             const stage10Docs = DOC_TYPES_BY_STAGE[10];
             assert.ok(Array.isArray(stage10Docs), 'Stage 10 docs must be an array');
-            assert.ok(stage10Docs.includes('Faktur Pajak'), 'Stage 10 must include "Faktur Pajak"');
-            assert.ok(stage10Docs.includes('Invoice (PDF)'), 'Stage 10 must preserve "Invoice (PDF)"');
+            assert.ok(stage10Docs.includes('Invoice, Kwitansi & Faktur Pajak'), 'Stage 10 must include unified "Invoice, Kwitansi & Faktur Pajak"');
         });
     });
 

@@ -123,7 +123,7 @@ export const DOC_TYPES_BY_STAGE = {
     7: ['Bukti Penyerahan ke Disnaker'],
     8: ['Tanda Terima Disnaker', 'Revisi Dokumen Disnaker', 'Scan File Disnaker'],
     9: ['Suket (Asli) dari Disnaker'],
-    10: ['Invoice (PDF)', 'Kwitansi', 'Faktur Pajak'],
+    10: ['Invoice, Kwitansi & Faktur Pajak'],
     11: ['Bukti Follow-up / Penagihan', 'Surat Pengantar Tagihan', 'Dokumen Tagihan Tambahan'],
     14: ['Bukti Transfer', 'Bukti Transfer / Pembayaran', 'Bukti Potong PPh', 'Kwitansi Lunas', 'Keterangan Pelunasan'],
     15: ['Tanda Terima Suket', 'Bukti Pengiriman / Resi', 'Dokumen Penyerahan'],

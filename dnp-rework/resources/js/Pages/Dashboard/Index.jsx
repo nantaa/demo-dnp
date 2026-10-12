@@ -239,10 +239,10 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
         };
 
         // Active unpaid invoices (Piutang Berjalan):
-        // Jobs with invoice generated or in stages 10, 11, 14, 15 that are not yet marked paid
+        // Jobs in billing stages 11, 14, 15 that are not yet marked paid.
+        // Stage 10 jobs belong exclusively to siapTagih (drafting queue) to prevent double counting.
         const isUnpaid = (j) => !j.paid && j.payment_status !== 'paid' && j.s14_payment_status !== 'paid';
-        const hasInvoice = (j) => Boolean(j.invoice_no || [11, 14, 15].includes(j.stage) || (j.stage === 10 && j.invoice_no));
-        const piutangBerjalan = jobs.filter(j => hasInvoice(j) && isUnpaid(j) && j.stage < 16);
+        const piutangBerjalan = jobs.filter(j => [11, 14, 15].includes(j.stage) && isUnpaid(j));
 
         const piutangOverdue = piutangBerjalan.filter(j => {
             const dueDate = getDueDate(j);
@@ -266,7 +266,11 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             else arBuckets['>90'].push(j);
         });
 
-        const tandaTerimaPending = jobs.filter(j => (j.stage === 11 || j.stage === 15) && !j.tanda_terima_kembali);
+        const tandaTerimaPending = jobs.filter(j => 
+            j.stage === 15 && 
+            !j.tanda_terima_kembali && 
+            !(j.documents || []).some(d => d.stage === 15 && ['Tanda Terima Suket', 'Dokumen Penyerahan'].includes(d.type))
+        );
 
         return {
             active, completed, thisMonth, overdue, pipeline, monthRevenue, byStage,
@@ -1565,7 +1569,7 @@ function FinDashboard({ stats, onSelectJob }) {
                     <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
                         <div>
                             <div className="text-xs text-blue-600 font-bold uppercase tracking-wider">Daftar Piutang Berjalan · Accounts Receivable</div>
-                            <h3 className="text-lg font-bold text-gray-800 mt-0.5">Invoice Belum Lunas (Tahap 10 – 15)</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mt-0.5">Invoice Belum Lunas (Tahap 11 – 15)</h3>
                         </div>
                         <span className="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
                             {piutangBerjalan.length} INVOICE AKTIF

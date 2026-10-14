@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNP Monitor — Simulator Alur Kanban 16 Tahap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#151e2e',
+              925: '#0b1120',
+              950: '#030712',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar for horizontal Kanban */
+    .kanban-scroll::-webkit-scrollbar {
+      height: 10px;
+    }
+    .kanban-scroll::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 6px;
+    }
+    .kanban-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 6px;
+    }
+    .kanban-scroll::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .dragging {
+      opacity: 0.4;
+      transform: scale(0.98);
+    }
+    .drag-over {
+      background-color: rgba(14, 165, 233, 0.08) !important;
+      border-color: #0284c7 !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- ================= TOP NAVIGATION HEADER ================= -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-full px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Mode Info -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-500 flex items-center justify-center font-black text-white shadow-md shadow-sky-500/20">
+          DNP
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-extrabold text-white tracking-tight">Simulator Alur Kanban</h1>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              ⚡ Bebas Logic Gate & Kunci Berkas
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Eksplorasi interaktif pergerakan pekerjaan melintasi 16 tahap resmi</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="openNewJobModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/30 transition flex items-center gap-1.5">
+          <span>+</span> Tambah Pekerjaan
+        </button>
+        <button onclick="resetToSampleJobs()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          🔄 Reset Data Demo
+        </button>
+        <button onclick="toggleLogDrawer()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          📋 Riwayat Gerak (<span id="logBadgeCount">0</span>)
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Phase Selector Filter Tabs -->
+    <div class="px-4 sm:px-6 py-2 bg-slate-925 border-t border-slate-800/80 flex items-center gap-2 overflow-x-auto text-xs">
+      <span class="text-slate-500 font-mono text-[11px] whitespace-nowrap">Navigasi Fase:</span>
+      <button onclick="filterPhase('all')" class="phase-btn active px-3 py-1 rounded-md bg-sky-600 text-white font-semibold whitespace-nowrap transition" data-phase="all">
+        Semua 16 Tahap
+      </button>
+      <button onclick="filterPhase('p1')" class="phase-btn px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition" data-phase="p1">
+        Fase 1: Masuk Berkas (1 - 3)
+      </button>
+      <button onclick="filterPhase('p2')" class="phase-btn px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition" data-phase="p2">
+        Fase 2: Teknis Lapangan (4, 4b, 5, 6)
+      </button>
+      <button onclick="filterPhase('p3')" class="phase-btn px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition" data-phase="p3">
+        Fase 3: Disnaker (7 - 9)
+      </button>
+      <button onclick="filterPhase('p4')" class="phase-btn px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition" data-phase="p4">
+        Fase 4: Tagihan & Suket (10, 11, 11b, 11c, 12, Selesai)
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= INSTRUCTION BANNER ================= -->
+  <div class="px-4 sm:px-6 py-2 bg-sky-950/40 border-b border-sky-900/40 text-xs text-sky-200 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-sky-400">💡</span>
+      <span><strong>Cara Eksplorasi:</strong> Tarik kartu (*Drag & Drop*) ke kolom mana pun, atau gunakan tombol <strong>[⏮️]</strong> dan <strong>[⏭️]</strong> pada kartu untuk memajukan alur pekerjaan secara urut.</span>
+    </div>
+    <span class="text-[11px] font-mono text-sky-400/80 hidden sm:inline">Total Pekerjaan Aktif: <strong id="totalJobsCount">0</strong></span>
+  </div>
+
+  <!-- ================= KANBAN BOARD CONTAINER ================= -->
+  <main class="flex-1 p-4 sm:p-6 overflow-hidden flex flex-col">
+    <div id="kanbanBoard" class="kanban-scroll flex-1 flex gap-3 overflow-x-auto pb-4 items-start select-none">
+      <!-- 16 Columns Rendered Dynamically via JS -->
+    </div>
+  </main>
+
+  <!-- ================= MOVEMENT ACTIVITY LOG DRAWER ================= -->
+  <div id="logDrawer" class="border-t border-slate-800 bg-slate-900/95 transition-all duration-300 max-h-48 overflow-y-auto hidden">
+    <div class="px-4 py-2 bg-slate-950 border-b border-slate-800 flex justify-between items-center text-xs">
+      <span class="font-mono font-bold text-slate-300">📋 Catatan Riwayat Pergerakan Simulasi</span>
+      <div class="flex items-center gap-2">
+        <button onclick="clearActivityLog()" class="text-rose-400 hover:text-rose-300 text-[11px]">Bersihkan Log</button>
+        <button onclick="toggleLogDrawer()" class="text-slate-400 hover:text-white font-bold ml-2">✕</button>
+      </div>
+    </div>
+    <div id="logContainer" class="p-3 font-mono text-xs text-slate-300 space-y-1">
+      <div class="text-slate-500 italic">Belum ada aktivitas perpindahan kartu.</div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: DETAIL & QUICK MOVE PEKERJAAN ================= -->
+  <div id="jobDetailModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl relative">
+      <button onclick="closeJobDetailModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      
+      <div>
+        <span id="modalSpk" class="text-xs font-mono font-bold text-sky-400"></span>
+        <h3 id="modalClient" class="text-lg font-bold text-white mt-0.5"></h3>
+        <p id="modalUnits" class="text-xs text-slate-400 mt-1"></p>
+      </div>
+
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5 text-xs font-mono">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Tahap Saat Ini:</span>
+          <span id="modalCurrentStage" class="text-emerald-400 font-bold"></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">PIC Role:</span>
+          <span id="modalRole" class="text-slate-300"></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Estimasi SLA:</span>
+          <span id="modalSla" class="text-slate-300"></span>
+        </div>
+      </div>
+
+      <!-- Quick Jump Stage Dropdown -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-semibold text-slate-300">Pindahkan Langsung ke Tahap:</label>
+        <div class="flex gap-2">
+          <select id="modalStageSelect" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500">
+            <!-- Populated via JS -->
+          </select>
+          <button onclick="handleModalJump()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg transition">
+            Pindah
+          </button>
+        </div>
+      </div>
+
+      <!-- Individual Job History -->
+      <div class="space-y-1.5">
+        <span class="text-xs font-semibold text-slate-400">Jejak Perjalanan Pekerjaan Ini:</span>
+        <div id="modalHistoryContainer" class="max-h-32 overflow-y-auto bg-slate-950 p-2.5 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-400 space-y-1">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button onclick="closeJobDetailModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TAMBAH PEKERJAAN BARU ================= -->
+  <div id="newJobModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl relative">
+      <button onclick="closeNewJobModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      
+      <div>
+        <h3 class="text-base font-bold text-white">Tambah Pekerjaan Simulasi Baru</h3>
+        <p class="text-xs text-slate-400">Buat kartu SPK contoh untuk diuji coba pergerakannya</p>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Nama Klien / Perusahaan:</label>
+          <input id="inputClientName" type="text" placeholder="Contoh: PT Pelabuhan Indonesia" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Daftar Unit Alat (Multi-Unit):</label>
+          <input id="inputUnits" type="text" placeholder="Contoh: 3 Unit Crane, 2 Unit Forklift" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500">
+        </div>
+        <div>
+          <label class="block text-slate-300 mb-1 font-semibold">Mulai di Kolom Tahap:</label>
+          <select id="inputInitialStage" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="closeNewJobModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition">
+          Batal
+        </button>
+        <button onclick="handleCreateJobSubmit()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg transition">
+          Buat Kartu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // 16 Official Stages Definition (Faithful to Constants.js)
+    const STAGES = [
+      { id: 1, name: 'PO / SPK / Proposal', short: 'PO / SPK', role: 'MKT', phase: 'p1', displayId: '1', sla: '—' },
+      { id: 2, name: 'Verifikasi Dokumen', short: 'Verifikasi', role: 'ADM', phase: 'p1', displayId: '2', sla: '1 Hari' },
+      { id: 3, name: 'Penjadwalan', short: 'Penjadwalan', role: 'ADM', phase: 'p1', displayId: '3', sla: '1 Hari' },
+      { id: 4, name: 'Pelaksanaan RU', short: 'Inspeksi RU', role: 'TRU', phase: 'p2', displayId: '4', sla: '—' },
+      { id: 13, name: 'Aktualisasi Unit', short: 'Aktualisasi Unit', role: 'MKT', phase: 'p2', displayId: '4b', sla: '1 Hari' },
+      { id: 5, name: 'Penyusunan LHPP', short: 'Penyusunan LHPP', role: 'TRU', phase: 'p2', displayId: '5', sla: '3 Hari' },
+      { id: 6, name: 'Review Laporan Teknis', short: 'Review Ahli K3', role: 'AHLI', phase: 'p2', displayId: '6', sla: '1 Hari' },
+      { id: 7, name: 'Verifikasi ke Dinas', short: 'Kirim Dinas', role: 'ADM', phase: 'p3', displayId: '7', sla: '1 Hari' },
+      { id: 8, name: 'Proses Disnaker', short: 'Disnaker', role: 'ADM', phase: 'p3', displayId: '8', sla: '30 Hari' },
+      { id: 9, name: 'Pengurusan Suket', short: 'Ambil Suket', role: 'ADM', phase: 'p3', displayId: '9', sla: '1 Hari' },
+      { id: 10, name: 'Invoice & Kwitansi', short: 'Invoice 1 Pintu', role: 'FIN', phase: 'p4', displayId: '10', sla: '1 Hari' },
+      { id: 11, name: 'Penagihan / Follow-up', short: 'Penagihan MKT', role: 'MKT', phase: 'p4', displayId: '11', sla: '—' },
+      { id: 14, name: 'Verifikasi Bayar: Lunas', short: 'Verifikasi Lunas', role: 'FIN', phase: 'p4', displayId: '11b', sla: '1 Hari' },
+      { id: 15, name: 'Kirim SUKET ke Klien', short: 'Kirim Suket / Resi', role: 'MKT', phase: 'p4', displayId: '11c', sla: '—' },
+      { id: 12, name: 'Final Financial Closing', short: 'Closing Kas', role: 'FIN', phase: 'p4', displayId: '12', sla: '—' },
+      { id: 16, name: 'Selesai', short: 'Arsip Selesai', role: 'SUP', phase: 'p4', displayId: '✓', sla: '—' }
+    ];
+
+    // Sample Preset Jobs
+    const SAMPLE_JOBS = [
+      {
+        id: 'job-1',
+        spk: 'SPK-2026-0891',
+        client: 'PT Semen Nusantara Tbk',
+        units: '3 Unit Overhead Crane, 1 Unit Boiler',
+        stageId: 4,
+        history: ['Dibuat pada Tahap 1', 'Maju ke Tahap 2', 'Maju ke Tahap 3', 'Maju ke Tahap 4 (Pelaksanaan RU)']
+      },
+      {
+        id: 'job-2',
+        spk: 'SPK-2026-0902',
+        client: 'PT Astra Auto Component',
+        units: '5 Unit Forklift Diesel, 2 Unit Genset',
+        stageId: 8,
+        history: ['Dibuat pada Tahap 1', 'Maju ke Tahap 4', 'Maju ke Tahap 4b', 'Maju ke Tahap 5', 'Maju ke Tahap 8 (Proses Disnaker)']
+      },
+      {
+        id: 'job-3',
+        spk: 'SPK-2026-0915',
+        client: 'RSUD Harapan Bangsa',
+        units: '2 Unit Passenger Lift, 1 Unit Dumbwaiter',
+        stageId: 10,
+        history: ['Dibuat pada Tahap 1', 'Maju ke Tahap 6', 'Maju ke Tahap 8', 'Maju ke Tahap 10 (Invoice & Kwitansi)']
+      },
+      {
+        id: 'job-4',
+        spk: 'SPK-2026-0920',
+        client: 'PT Indofood CBP Sukses Makmur',
+        units: '4 Unit Bejana Tekan, 2 Unit Kompresor',
+        stageId: 1,
+        history: ['Dibuat pada Tahap 1 (PO/SPK/Proposal)']
+      }
+    ];
+
+    let jobs = JSON.parse(JSON.stringify(SAMPLE_JOBS));
+    let activityLogs = [];
+    let currentFilterPhase = 'all';
+    let draggedJobId = null;
+    let selectedJobForModal = null;
+
+    // Render Board
+    function renderBoard() {
+      const board = document.getElementById('kanbanBoard');
+      if (!board) return;
+      board.innerHTML = '';
+
+      const filteredStages = currentFilterPhase === 'all' 
+        ? STAGES 
+        : STAGES.filter(s => s.phase === currentFilterPhase);
+
+      filteredStages.forEach((stage, index) => {
+        const stageJobs = jobs.filter(j => j.stageId === stage.id);
+        const col = document.createElement('div');
+        col.className = 'w-72 min-w-[18rem] bg-slate-900 border border-slate-800 rounded-xl flex flex-col max-h-[calc(100vh-12rem)] shadow-lg transition-colors';
+        col.setAttribute('data-stage-id', stage.id);
+        col.ondragover = handleDragOver;
+        col.ondragleave = handleDragLeave;
+        col.ondrop = (e) => handleDrop(e, stage.id);
+
+        // Header column
+        const header = document.createElement('div');
+        header.className = 'p-3 border-b border-slate-800/80 bg-slate-950/60 rounded-t-xl flex justify-between items-center';
+        
+        const roleColors = {
+          'MKT': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+          'ADM': 'bg-purple-500/15 text-purple-400 border-purple-500/30',
+          'TRU': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+          'AHLI': 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+          'FIN': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+          'SUP': 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+        };
+
+        header.innerHTML = `
+          <div class="flex items-center gap-2 overflow-hidden">
+            <span class="w-6 h-6 rounded-md bg-slate-800 text-slate-200 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+              ${stage.displayId}
+            </span>
+            <div class="truncate">
+              <h2 class="text-xs font-bold text-white truncate" title="${stage.name}">${stage.name}</h2>
+              <span class="text-[10px] text-slate-400 font-mono">SLA: ${stage.sla}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${roleColors[stage.role] || 'bg-slate-800 text-slate-300'}">
+              ${stage.role}
+            </span>
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300">
+              ${stageJobs.length}
+            </span>
+          </div>
+        `;
+        col.appendChild(header);
+
+        // Cards Container
+        const cardsContainer = document.createElement('div');
+        cardsContainer.className = 'p-2 space-y-2.5 overflow-y-auto flex-1 min-h-[140px]';
+        
+        if (stageJobs.length === 0) {
+          cardsContainer.innerHTML = `
+            <div class="h-28 border border-dashed border-slate-800 rounded-lg flex items-center justify-center text-[11px] text-slate-600 font-mono text-center p-2">
+              Tarik kartu ke sini
+            </div>
+          `;
+        } else {
+          stageJobs.forEach(job => {
+            const card = document.createElement('div');
+            card.className = 'bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-lg p-3 space-y-2 cursor-grab active:cursor-grabbing shadow transition hover:shadow-sky-500/5';
+            card.setAttribute('draggable', 'true');
+            card.ondragstart = (e) => handleDragStart(e, job.id);
+            card.ondragend = handleDragEnd;
+
+            // Sequential Prev / Next stage detection
+            const currentStageIdx = STAGES.findIndex(s => s.id === job.stageId);
+            const prevStage = currentStageIdx > 0 ? STAGES[currentStageIdx - 1] : null;
+            const nextStage = currentStageIdx < STAGES.length - 1 ? STAGES[currentStageIdx + 1] : null;
+
+            card.innerHTML = `
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-mono font-bold text-sky-400 bg-sky-950/40 px-1.5 py-0.5 rounded border border-sky-900/40">
+                  ${job.spk}
+                </span>
+                <button onclick="openJobDetailModal('${job.id}')" class="text-slate-400 hover:text-white text-xs px-1" title="Lihat Riwayat & Detail">
+                  👁️
+                </button>
+              </div>
+              <div>
+                <h3 class="text-xs font-bold text-white leading-tight">${job.client}</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5 truncate" title="${job.units}">🔧 ${job.units}</p>
+              </div>
+              <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                <button 
+                  onclick="moveJobBackward('${job.id}')" 
+                  ${!prevStage ? 'disabled' : ''} 
+                  class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 text-slate-300 font-semibold transition text-[10px] flex items-center gap-1"
+                  title="${prevStage ? 'Kembalikan ke ' + prevStage.name : 'Tahap Pertama'}">
+                  ⏮️ Mundur
+                </button>
+                <button 
+                  onclick="moveJobForward('${job.id}')" 
+                  ${!nextStage ? 'disabled' : ''} 
+                  class="px-2 py-1 rounded bg-sky-600 hover:bg-sky-500 disabled:opacity-30 disabled:hover:bg-sky-600 text-white font-semibold transition text-[10px] flex items-center gap-1 shadow-sm"
+                  title="${nextStage ? 'Maju ke ' + nextStage.name : 'Tahap Terakhir'}">
+                  Maju ⏭️
+                </button>
+              </div>
+            `;
+            cardsContainer.appendChild(card);
+          });
+        }
+
+        col.appendChild(cardsContainer);
+        board.appendChild(col);
+      });
+
+      // Update total jobs count
+      const totalCountEl = document.getElementById('totalJobsCount');
+      if (totalCountEl) totalCountEl.textContent = jobs.length;
+    }
+
+    // HTML5 Drag and Drop Handlers
+    function handleDragStart(e, jobId) {
+      draggedJobId = jobId;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', jobId);
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      draggedJobId = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const col = e.currentTarget;
+      if (!col.classList.contains('drag-over')) {
+        col.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e, targetStageId) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      const jobId = e.dataTransfer.getData('text/plain') || draggedJobId;
+      if (!jobId) return;
+
+      const job = jobs.find(j => j.id === jobId);
+      if (!job || job.stageId === targetStageId) return;
+
+      const fromStage = STAGES.find(s => s.id === job.stageId);
+      const toStage = STAGES.find(s => s.id === targetStageId);
+
+      job.stageId = targetStageId;
+      const logMsg = `Pindah via Drag & Drop dari [Tahap ${fromStage.displayId}: ${fromStage.name}] ke [Tahap ${toStage.displayId}: ${toStage.name}]`;
+      job.history.push(logMsg);
+      logActivity(job.spk, job.client, logMsg);
+
+      renderBoard();
+    }
+
+    // Move Forward Sequential
+    function moveJobForward(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+
+      const currentIdx = STAGES.findIndex(s => s.id === job.stageId);
+      if (currentIdx < STAGES.length - 1) {
+        const nextStage = STAGES[currentIdx + 1];
+        const prevStage = STAGES[currentIdx];
+        job.stageId = nextStage.id;
+        const logMsg = `Maju alur ke [Tahap ${nextStage.displayId}: ${nextStage.name}]`;
+        job.history.push(logMsg);
+        logActivity(job.spk, job.client, logMsg);
+        renderBoard();
+      }
+    }
+
+    // Move Backward Sequential
+    function moveJobBackward(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+
+      const currentIdx = STAGES.findIndex(s => s.id === job.stageId);
+      if (currentIdx > 0) {
+        const prevStage = STAGES[currentIdx - 1];
+        job.stageId = prevStage.id;
+        const logMsg = `Dikembalikan ke [Tahap ${prevStage.displayId}: ${prevStage.name}] (Simulasi Revisi)`;
+        job.history.push(logMsg);
+        logActivity(job.spk, job.client, logMsg);
+        renderBoard();
+      }
+    }
+
+    // Direct Jump via Modal
+    function handleModalJump() {
+      if (!selectedJobForModal) return;
+      const select = document.getElementById('modalStageSelect');
+      const targetStageId = parseInt(select.value);
+      if (isNaN(targetStageId)) return;
+
+      const job = jobs.find(j => j.id === selectedJobForModal.id);
+      if (!job) return;
+
+      const fromStage = STAGES.find(s => s.id === job.stageId);
+      const toStage = STAGES.find(s => s.id === targetStageId);
+
+      job.stageId = targetStageId;
+      const logMsg = `Pindah langsung ke [Tahap ${toStage.displayId}: ${toStage.name}]`;
+      job.history.push(logMsg);
+      logActivity(job.spk, job.client, logMsg);
+
+      closeJobDetailModal();
+      renderBoard();
+    }
+
+    // Filter by Phase Tabs
+    function filterPhase(phase) {
+      currentFilterPhase = phase;
+      document.querySelectorAll('.phase-btn').forEach(btn => {
+        if (btn.getAttribute('data-phase') === phase) {
+          btn.className = 'phase-btn active px-3 py-1 rounded-md bg-sky-600 text-white font-semibold whitespace-nowrap transition';
+        } else {
+          btn.className = 'phase-btn px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap transition';
+        }
+      });
+      renderBoard();
+    }
+
+    // Activity Logger
+    function logActivity(spk, client, action) {
+      const timeStr = new Date().toLocaleTimeString('id-ID');
+      activityLogs.unshift({ time: timeStr, spk, client, action });
+      if (activityLogs.length > 50) activityLogs.pop();
+      updateLogUI();
+    }
+
+    function updateLogUI() {
+      const container = document.getElementById('logContainer');
+      const badge = document.getElementById('logBadgeCount');
+      if (badge) badge.textContent = activityLogs.length;
+
+      if (!container) return;
+      if (activityLogs.length === 0) {
+        container.innerHTML = '<div class="text-slate-500 italic">Belum ada aktivitas perpindahan kartu.</div>';
+        return;
+      }
+
+      container.innerHTML = activityLogs.map(item => `
+        <div class="flex items-start gap-2 border-b border-slate-800/60 pb-1">
+          <span class="text-slate-500 text-[10px] shrink-0">${item.time}</span>
+          <span class="text-sky-400 font-bold shrink-0">[${item.spk}]</span>
+          <span class="text-slate-200">${item.action}</span>
+        </div>
+      `).join('');
+    }
+
+    function toggleLogDrawer() {
+      const drawer = document.getElementById('logDrawer');
+      if (drawer) drawer.classList.toggle('hidden');
+    }
+
+    function clearActivityLog() {
+      activityLogs = [];
+      updateLogUI();
+    }
+
+    // Modals
+    function openJobDetailModal(jobId) {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
+      selectedJobForModal = job;
+
+      const stage = STAGES.find(s => s.id === job.stageId);
+
+      document.getElementById('modalSpk').textContent = job.spk;
+      document.getElementById('modalClient').textContent = job.client;
+      document.getElementById('modalUnits').textContent = '🔧 ' + job.units;
+      document.getElementById('modalCurrentStage').textContent = `Tahap ${stage.displayId}: ${stage.name}`;
+      document.getElementById('modalRole').textContent = stage.role;
+      document.getElementById('modalSla').textContent = stage.sla;
+
+      // Populate stage options
+      const select = document.getElementById('modalStageSelect');
+      select.innerHTML = STAGES.map(s => `
+        <option value="${s.id}" ${s.id === job.stageId ? 'selected' : ''}>
+          Tahap ${s.displayId}: ${s.name} (${s.role})
+        </option>
+      `).join('');
+
+      // Populate history
+      const historyEl = document.getElementById('modalHistoryContainer');
+      historyEl.innerHTML = job.history.map(h => `<div>• ${h}</div>`).join('');
+
+      document.getElementById('jobDetailModal').classList.remove('hidden');
+    }
+
+    function closeJobDetailModal() {
+      document.getElementById('jobDetailModal').classList.add('hidden');
+      selectedJobForModal = null;
+    }
+
+    function openNewJobModal() {
+      const select = document.getElementById('inputInitialStage');
+      select.innerHTML = STAGES.map(s => `
+        <option value="${s.id}">Tahap ${s.displayId}: ${s.name}</option>
+      `).join('');
+      document.getElementById('newJobModal').classList.remove('hidden');
+    }
+
+    function closeNewJobModal() {
+      document.getElementById('newJobModal').classList.add('hidden');
+    }
+
+    function handleCreateJobSubmit() {
+      const client = document.getElementById('inputClientName').value.trim();
+      const units = document.getElementById('inputUnits').value.trim();
+      const stageId = parseInt(document.getElementById('inputInitialStage').value) || 1;
+
+      if (!client) {
+        alert('Mohon isi nama klien / perusahaan.');
+        return;
+      }
+
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const newJob = {
+        id: 'job-' + Date.now(),
+        spk: `SPK-2026-${randomNum}`,
+        client: client,
+        units: units || '1 Unit Alat Riksa Uji',
+        stageId: stageId,
+        history: [`Dibuat pada Tahap ${stageId}`]
+      };
+
+      jobs.push(newJob);
+      logActivity(newJob.spk, newJob.client, `Kartu pekerjaan baru dibuat di Tahap ${stageId}`);
+      closeNewJobModal();
+      document.getElementById('inputClientName').value = '';
+      document.getElementById('inputUnits').value = '';
+      renderBoard();
+    }
+
+    function addNewJob(client, units, stageId) {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const job = {
+        id: 'job-' + Date.now(),
+        spk: `SPK-2026-${randomNum}`,
+        client: client || 'Klien Baru',
+        units: units || 'Multi-Unit Alat',
+        stageId: stageId || 1,
+        history: [`Dibuat pada Tahap ${stageId || 1}`]
+      };
+      jobs.push(job);
+      renderBoard();
+      return job;
+    }
+
+    function resetToSampleJobs() {
+      if (confirm('Kembalikan papan simulasi ke data contoh bawaan?')) {
+        jobs = JSON.parse(JSON.stringify(SAMPLE_JOBS));
+        activityLogs = [];
+        updateLogUI();
+        renderBoard();
+      }
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderBoard();
+      updateLogUI();
+    });
+    renderBoard();
+  </script>
+</body>
+</html>

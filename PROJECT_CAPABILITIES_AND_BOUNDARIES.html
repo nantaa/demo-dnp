@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DNP Monitor — Panduan Operasional Pengguna & Manajer</title>
+  <title>Aplikasi DNP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -31,7 +31,9 @@
         size: A4 portrait;
       }
 
-      *, *:before, *:after {
+      *,
+      *:before,
+      *:after {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         box-shadow: none !important;
@@ -42,7 +44,8 @@
         display: none !important;
       }
 
-      html, body {
+      html,
+      body {
         background: #ffffff !important;
         color: #0f172a !important;
         font-size: 10.5pt !important;
@@ -50,7 +53,12 @@
       }
 
       /* Base headings and text contrast */
-      h1, h2, h3, h4, h5, h6 {
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
         color: #0f172a !important;
         font-weight: 800 !important;
       }
@@ -64,20 +72,48 @@
         color: #0f172a !important;
       }
 
-      .text-slate-100, .text-slate-200, .text-slate-300 {
+      .text-slate-100,
+      .text-slate-200,
+      .text-slate-300 {
         color: #334155 !important;
       }
 
-      .text-slate-400, .text-slate-500 {
+      .text-slate-400,
+      .text-slate-500 {
         color: #475569 !important;
       }
 
       /* Color accents high-contrast on white paper */
-      .text-emerald-400, .text-emerald-300 { color: #047857 !important; font-weight: 700 !important; }
-      .text-sky-400, .text-sky-300 { color: #0369a1 !important; font-weight: 700 !important; }
-      .text-amber-400, .text-amber-300, .text-amber-200 { color: #b45309 !important; font-weight: 700 !important; }
-      .text-purple-400, .text-purple-300 { color: #7e22ce !important; font-weight: 700 !important; }
-      .text-rose-400, .text-rose-300 { color: #be123c !important; font-weight: 700 !important; }
+      .text-emerald-400,
+      .text-emerald-300 {
+        color: #047857 !important;
+        font-weight: 700 !important;
+      }
+
+      .text-sky-400,
+      .text-sky-300 {
+        color: #0369a1 !important;
+        font-weight: 700 !important;
+      }
+
+      .text-amber-400,
+      .text-amber-300,
+      .text-amber-200 {
+        color: #b45309 !important;
+        font-weight: 700 !important;
+      }
+
+      .text-purple-400,
+      .text-purple-300 {
+        color: #7e22ce !important;
+        font-weight: 700 !important;
+      }
+
+      .text-rose-400,
+      .text-rose-300 {
+        color: #be123c !important;
+        font-weight: 700 !important;
+      }
 
       /* Top Header */
       header {
@@ -122,19 +158,19 @@
       }
 
       /* 4 Metric Summary Cards in Hero */
-      section.bg-gradient-to-b .grid > div {
+      section.bg-gradient-to-b .grid>div {
         background: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
         border-radius: 8px !important;
         padding: 12px !important;
       }
 
-      section.bg-gradient-to-b .grid > div .text-white {
+      section.bg-gradient-to-b .grid>div .text-white {
         color: #0f172a !important;
         font-weight: 900 !important;
       }
 
-      section.bg-gradient-to-b .grid > div .text-slate-400 {
+      section.bg-gradient-to-b .grid>div .text-slate-400 {
         color: #475569 !important;
         font-weight: 600 !important;
       }
@@ -310,7 +346,7 @@
               16 Tahap Aktif
             </span>
           </h1>
-          <p class="text-xs text-slate-400">Ringkasan Fungsi & Batasan Kerja untuk Pengguna & Manajer</p>
+          <p class="text-xs text-slate-400">Ringkasan Fungsi & Batasan Kerja Aplikasi</p>
         </div>
       </div>
       <div class="flex items-center gap-2 no-print w-full sm:w-auto">
@@ -325,6 +361,11 @@
             📊 Presentasi Visual & Bagan
           </button>
         </div>
+        <a href="KANBAN_FLOW_SIMULATOR.html"
+          class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-1.5 shadow-sm">
+          <span>⚡</span>
+          Buka Simulator Kanban
+        </a>
         <button onclick="window.print()"
           class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -345,8 +386,6 @@
       class="bg-gradient-to-b from-slate-900 to-slate-900/60 rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
       <div class="absolute -right-20 -top-20 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="max-w-3xl space-y-3">
-        <span class="text-xs uppercase font-mono font-bold tracking-widest text-sky-400">Panduan Resmi
-          Operasional</span>
         <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Apa yang BISA dan BELUM BISA Dilakukan
           Sistem</h2>
         <p class="text-sm text-slate-300 leading-relaxed">
@@ -369,7 +408,7 @@
           <div class="text-[11px] text-sky-400 mt-0.5">Tim RU Bebas Angka Harga</div>
         </div>
         <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800">
-          <div class="text-xs font-medium text-slate-400">Status Versi 3</div>
+          <div class="text-xs font-medium text-slate-400">Status Versi Full</div>
           <div class="text-2xl font-black text-white mt-1">Ditunda</div>
           <div class="text-[11px] text-amber-400 mt-0.5">Fokus Stabilitas 16 Tahap</div>
         </div>
@@ -460,11 +499,11 @@
             </span>
             <span class="text-xs text-slate-500 font-mono">KEAMANAN & PRIVASI</span>
           </div>
-          <h3 class="text-lg font-bold text-white">Akses Tim RU Terproteksi dari Angka Finansial</h3>
+          <h3 class="text-lg font-bold text-white">Akses Terproteksi dari Angka Finansial</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            Personel teknis (Tim Riksa Uji / Inspektur) memiliki akses khusus untuk memeriksa jadwal, mengunggah foto
-            lapangan, dan menyusun laporan LHPP. Namun, demi kerahasiaan operasional, seluruh angka komersial (harga
-            penawaran, nilai PO, tagihan invoice, dan faktur pajak) otomatis disembunyikan dari pandangan Tim RU.
+            Demi kerahasiaan operasional, seluruh angka komersial (harga
+            penawaran, nilai PO, tagihan invoice, dan faktur pajak) otomatis disembunyikan dan hanya dapat diakses oleh
+            personnel terkait.
           </p>
           <div class="pt-2 border-t border-slate-800/80 flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
             <span class="bg-slate-950 px-2 py-0.5 rounded">Akses Tim RU Lengkap</span>
@@ -583,9 +622,10 @@
             </span>
             <span class="text-xs text-rose-400 font-mono">BATASAN SDM & EVALUASI</span>
           </div>
-          <h3 class="text-lg font-bold text-white">Belum Ada Absensi & Penilaian Kinerja SLA / On-Time Job Done</h3>
+          <h3 class="text-lg font-bold text-white">Versi Ini Belum Ada Absensi & Penilaian Kinerja SLA / On-Time Job
+            Done</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            <span class="font-bold text-rose-400">Penjelasan Penting untuk Manajer:</span>
+            <span class="font-bold text-rose-400">Penjelasan Penting:</span>
             <br>1. <strong>Bukan Sistem Absensi:</strong> Sistem ini tidak memiliki fitur presensi jam hadir kerja,
             absen sidik jari / foto clock-in/out, lembur, maupun jatah cuti karyawan.
             <br>2. <strong>Belum Ada Pelacakan Kinerja Berbasis SLA / Ketepatan Waktu ("On-Time Job Done"):</strong>
@@ -637,9 +677,10 @@
             </span>
             <span class="text-xs text-rose-400 font-mono">SKEMA PEMBAYARAN</span>
           </div>
-          <h3 class="text-lg font-bold text-white">Belum Mendukung Pembayaran Uang Muka (DP) & Termin Bertahap</h3>
+          <h3 class="text-lg font-bold text-white">Versi Ini Belum Mendukung Pembayaran Uang Muka (DP) & Termin Bertahap
+          </h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> Sistem penagihan di Tahap 14 bersifat
+            <span class="font-bold text-rose-400"></span> Sistem penagihan di Tahap 14 bersifat
             biner: status hanya mengenal <em>Belum Bayar</em> atau <em>Lunas Penuh (100%)</em>. DNP Monitor belum
             memiliki modul buku besar piutang (accounts receivable ledger) untuk mencatat cicilan bertahap, setoran DP
             (misal: uang muka 30% atau 50%), maupun pelacakan sisa saldo tagihan yang belum dibayarkan oleh klien.
@@ -663,9 +704,10 @@
             </span>
             <span class="text-xs text-rose-400 font-mono">MANAJEMEN KARTU KANBAN</span>
           </div>
-          <h3 class="text-lg font-bold text-white">Belum Mendukung Pemecahan Kartu Unit (Split / Parent-Child Job)</h3>
+          <h3 class="text-lg font-bold text-white">Versi Ini Belum Mendukung Pemecahan Kartu Unit (Split / Parent-Child
+            Job)</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> Meskipun sistem mendukung banyak unit
+            <span class="font-bold text-rose-400"></span> Meskipun sistem mendukung banyak unit
             alat dalam 1 SPK, seluruh unit tersebut terikat pada <strong>satu kartu alur pekerjaan yang sama</strong>.
             Jika di lapangan terjadi kasus sebagian unit selesai diperiksa namun unit lainnya tertunda (pending
             perbaikan atau uji ulang), sistem belum bisa memecah kartu (split job) menjadi anak pekerjaan
@@ -690,10 +732,11 @@
             </span>
             <span class="text-xs text-rose-400 font-mono">PENGUNCIAN FINANSIAL</span>
           </div>
-          <h3 class="text-lg font-bold text-white">Belum Ada Dispensasi Suket Duluan Baru Bayar (Sistem Tempo / TOP)
+          <h3 class="text-lg font-bold text-white">Dispensasi Suket Duluan Baru Bayar (Sistem Tempo / TOP) Tidak
+            Diterapkan di Versi Ini
           </h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> Sistem menerapkan aturan pengamanan
+            <span class="font-bold text-rose-400"></span> Sistem menerapkan aturan pengamanan
             ketat: Tahap 15 (Pengiriman Suket) dikunci otomatis hingga Tahap 14 diverifikasi <em>Lunas</em>. Untuk klien
             besar atau BUMN yang memiliki perjanjian tempo (Term of Payment / TOP) di mana berkas Suket asli wajib
             diserahkan terlebih dahulu sebelum pembayaran diproses kemudian hari, sistem belum memiliki alur approval
@@ -718,10 +761,11 @@
             </span>
             <span class="text-xs text-rose-400 font-mono">BATASAN KASUS KHUSUS</span>
           </div>
-          <h3 class="text-lg font-bold text-white">Tidak Menangani Kasus Deviasi / Anomali di Luar Alur Baku 16 Tahap
+          <h3 class="text-lg font-bold text-white">Versi Ini Tidak Menangani Kasus Deviasi / Anomali di Luar Alur Baku
+            16 Tahap
           </h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            <span class="font-bold text-rose-400">Penjelasan untuk Manajer:</span> DNP Monitor dibangun secara
+            <span class="font-bold text-rose-400"></span> DNP Monitor dibangun secara
             deterministik mengikuti rel alur 16 tahap standar riksa uji. Segala bentuk kasus anomali di luar SOP alur
             baku (misal: pembatalan proyek di tengah jalan dengan klaim biaya operasional, perubahan nama badan usaha
             klien saat berkas sudah diproses dinas, atau tukar guling tipe alat) tidak dapat diselesaikan otomatis oleh
@@ -880,8 +924,6 @@
 
     <!-- Catatan Penutup Dokumen -->
     <footer class="pt-8 border-t border-slate-800/80 text-center space-y-2 text-xs text-slate-500">
-      <p>Panduan Resmi Tata Kelola Operasional DNP Monitor • Khusus Pengguna & Manajer</p>
-      <p>Alur Kerja Resmi: 16 Tahap Berjalan Stabil</p>
     </footer>
 
   </main>

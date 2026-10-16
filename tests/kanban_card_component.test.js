@@ -21,14 +21,17 @@ describe('Kanban Card Visual Redesign & Dual-Wave Test Suite', () => {
         );
     });
 
-    it('2. Kanban/Index.jsx implements dual-layer vector wave with pointer-events-none watermark', () => {
+    it('2. Kanban/Index.jsx implements amber divider line and compact wave strictly in footer', () => {
         assert.ok(fs.existsSync(kanbanIndexPath), 'Kanban/Index.jsx must exist');
         const content = fs.readFileSync(kanbanIndexPath, 'utf8');
 
-        // Check for dual vector wave artwork at bottom-right
-        assert.match(content, /pointer-events-none/, 'Vector wave must have pointer-events-none so clicks pass through');
+        // Check for amber/yellow divider line
+        assert.match(content, /border-amber|#FBBF24|#F59E0B|#EAB308/i, 'Must have amber/yellow divider line above MKT: Intang');
+
+        // Check for wave container height constrained to footer
+        assert.match(content, /pointer-events-none/, 'Vector wave must have pointer-events-none');
         assert.match(content, /absolute\s+bottom-0\s+right-0/, 'Wave must be positioned at bottom-right corner');
-        assert.match(content, /#B1DFF7/i, 'Must contain Vector 630 base color (#B1DFF7)');
+        assert.match(content, /h-\[3[0-9]px\]|max-h-\[4[0-9]px\]/, 'Wave height must be constrained to footer (30-40px)');
         assert.match(content, /#4ABFF0/i, 'Must contain Vector 632 cyan gradient color (#4ABFF0)');
     });
 

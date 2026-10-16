@@ -14,9 +14,19 @@
 *.db
 /sample/
 
+# Markdown and Tests (Hidden from GitHub)
+*.md
+**/*.md
+/tests/
+*.test.js
+/docs/
+.serena/
+InstallationLog.txt
+
 # Standard Ignores
 .env
 .DS_Store
 .claude/
 .playwright-mcp/
 scratch/
+

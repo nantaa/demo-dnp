@@ -3,6 +3,7 @@
 /server/
 /public/
 /node_modules/
+/dnp-rework/node_modules/
 /package.json
 /package-lock.json
 /vite.config.js

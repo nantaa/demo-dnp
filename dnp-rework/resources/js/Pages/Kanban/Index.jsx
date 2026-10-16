@@ -277,11 +277,21 @@ export default function KanbanIndex({ jobs, auth }) {
                                     }`} />
 
                                     {/* Dual Figma Wave Artwork (Vector 630 + Vector 632) zoomed in at Bottom-Right */}
-                                    <div className="absolute bottom-0 right-0 pointer-events-none z-0 select-none leading-none w-[260px] h-[80px]">
+                                    <div className="absolute bottom-0 right-0 pointer-events-none z-0 select-none leading-none w-[280px] h-[90px]">
                                         {/* Vector 630: light blue wave base layer */}
-                                        <img src="/Vector 630.svg" alt="" className="absolute bottom-0 right-0 w-[230px] h-auto" draggable="false" />
+                                        <svg viewBox="0 0 178 68" fill="none" className="absolute bottom-0 right-0 w-[240px] h-auto">
+                                            <path opacity="0.41" d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z" fill="#B1DFF7"/>
+                                        </svg>
                                         {/* Vector 632: cyan gradient wave foreground layer */}
-                                        <img src="/Vector 632.svg" alt="" className="absolute bottom-0 right-0 w-[260px] h-auto" draggable="false" />
+                                        <svg viewBox="0 0 213 84" fill="none" className="absolute bottom-0 right-0 w-[280px] h-auto">
+                                            <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill="url(#wg_idx)"/>
+                                            <defs>
+                                                <linearGradient id="wg_idx" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                                    <stop stopColor="#4ABFF0"/>
+                                                    <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
+                                                </linearGradient>
+                                            </defs>
+                                        </svg>
                                     </div>
 
                                     {/* Main Card Content */}
@@ -367,7 +377,7 @@ export default function KanbanIndex({ jobs, auth }) {
                                             </div>
                                         )}
                                         
-                                        <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t border-amber-400/70 pt-2 relative z-10">
+                                        <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-200/90 pt-2 relative z-10">
                                             <span className="font-medium text-slate-500">MKT: <strong className="text-slate-700">{job.owner_marketing}</strong></span>
                                             {(() => {
                                                 if (job.stage === 4 && job.tgl_pelaksanaan) {

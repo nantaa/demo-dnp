@@ -21,20 +21,20 @@ describe('Kanban Card Visual Redesign & Dual-Wave Test Suite', () => {
         );
     });
 
-    it('2. Kanban/Index.jsx implements grey divider line and dual-layer zoomed wave inside card', () => {
+    it('2. Kanban/Index.jsx implements amber divider line and dual-layer zoomed wave inside card', () => {
         assert.ok(fs.existsSync(kanbanIndexPath), 'Kanban/Index.jsx must exist');
         const content = fs.readFileSync(kanbanIndexPath, 'utf8');
 
-        // Grey divider line above MKT: Intang
-        assert.match(content, /border-slate-200|border-slate-100/i, 'Must have grey divider line above MKT: Intang');
+        // Amber/yellow divider line above MKT: Intang (Figma spec)
+        assert.match(content, /border-amber-400/i, 'Must have amber/yellow divider line above MKT: Intang');
 
-        // Dual wave elements: Vector 630 (#B1DFF7) and Vector 632 (#4ABFF0)
-        assert.match(content, /#B1DFF7/i, 'Must contain Vector 630 base color (#B1DFF7)');
-        assert.match(content, /#4ABFF0/i, 'Must contain Vector 632 cyan gradient color (#4ABFF0)');
+        // Dual wave SVG img references: Vector 630.svg and Vector 632.svg
+        assert.match(content, /Vector 630\.svg/, 'Must reference Vector 630.svg');
+        assert.match(content, /Vector 632\.svg/, 'Must reference Vector 632.svg');
 
         // Wave container positioning
         assert.match(content, /pointer-events-none/, 'Vector wave must have pointer-events-none');
-        assert.match(content, /absolute\s+bottom-0\s+right-0/, 'Wave must be positioned at bottom-right corner');
+        assert.match(content, /absolute bottom-0 right-0/, 'Wave must be positioned at bottom-right corner');
     });
 
     it('3. Kanban cards maintain SLA / Overdue status pill on the bottom right', () => {

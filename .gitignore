@@ -28,5 +28,7 @@ InstallationLog.txt
 .DS_Store
 .claude/
 .playwright-mcp/
+.vscode/
 scratch/
+
 

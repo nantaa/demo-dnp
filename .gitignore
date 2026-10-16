@@ -4,6 +4,7 @@
 /public/
 /node_modules/
 /dnp-rework/node_modules/
+/dnp-rework/public/build/
 /package.json
 /package-lock.json
 /vite.config.js

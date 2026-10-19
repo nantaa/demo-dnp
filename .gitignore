@@ -18,10 +18,24 @@
 *.md
 **/*.md
 /tests/
+tests/
 *.test.js
 /docs/
 .serena/
 InstallationLog.txt
+
+# Temporary Test & Preview HTML Files
+dnp-rework/public/*.html
+dnp-rework/public/target2.png
+
+# Scratch and Temporary Analysis Files
+scratch/
+scratch_docx/
+scratch.zip
+row.xml
+vpserrordnp.txt
+implementation_plan*
+~$*
 
 # Standard Ignores
 .env
@@ -29,6 +43,5 @@ InstallationLog.txt
 .claude/
 .playwright-mcp/
 .vscode/
-scratch/
 
 

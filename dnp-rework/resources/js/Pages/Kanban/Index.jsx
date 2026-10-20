@@ -268,50 +268,50 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
+            {/* Fixed Board Background Wave (Stationary / Non-scrollable — Exactly like Figma) */}
+            {waveMode === 'board' && (
+                <div
+                    className="fixed bottom-0 left-0 lg:left-60 right-0 pointer-events-none z-0 select-none overflow-hidden h-[300px] sm:h-[360px]"
+                    aria-hidden="true"
+                >
+                    {/* Vector 630 (Soft Cyan Base Wave from Figma) */}
+                    <svg
+                        viewBox="0 0 178 68"
+                        fill="none"
+                        className="absolute bottom-0 right-0 w-[950px] sm:w-[1250px] lg:w-[1450px] h-auto max-w-none"
+                    >
+                        <path
+                            opacity="0.41"
+                            d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z"
+                            fill="#B1DFF7"
+                        />
+                    </svg>
+
+                    {/* Vector 632 (Cyan Gradient Flowing Wave from Figma) */}
+                    <svg
+                        viewBox="0 0 213 84"
+                        fill="none"
+                        className="absolute bottom-0 right-[-30px] w-[1150px] sm:w-[1500px] lg:w-[1750px] h-auto max-w-none"
+                    >
+                        <path
+                            d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"
+                            fill="url(#figma_board_wave_grad)"
+                        />
+                        <defs>
+                            <linearGradient id="figma_board_wave_grad" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#4ABFF0"/>
+                                <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            )}
+
             <div
                 ref={boardRef}
                 onScroll={handleBoardScroll}
-                className="flex h-full overflow-x-auto space-x-4 pb-4 relative min-h-[calc(100vh-210px)]"
+                className="flex h-full overflow-x-auto space-x-4 pb-4 relative z-10 min-h-[calc(100vh-210px)]"
             >
-                {/* Board-level background wave (Alternative 2: placed behind cards and columns) */}
-                {waveMode === 'board' && (
-                    <div
-                        className="absolute bottom-0 left-0 pointer-events-none z-0 select-none overflow-hidden"
-                        style={{ width: `${Math.max(boardScrollWidth, 4800)}px`, height: '360px' }}
-                        aria-hidden="true"
-                    >
-                        <svg
-                            viewBox="0 0 4800 360"
-                            fill="none"
-                            preserveAspectRatio="none"
-                            className="w-full h-full"
-                        >
-                            <defs>
-                                <linearGradient id="board_wave_bg1" x1="0" y1="0" x2="0" y2="360" gradientUnits="userSpaceOnUse">
-                                    <stop stopColor="#4ABFF0" stopOpacity="0.45" />
-                                    <stop offset="0.6" stopColor="#B1DFF7" stopOpacity="0.3" />
-                                    <stop offset="1" stopColor="#E0F2FE" stopOpacity="0.1" />
-                                </linearGradient>
-                                <linearGradient id="board_wave_bg2" x1="0" y1="120" x2="4800" y2="350" gradientUnits="userSpaceOnUse">
-                                    <stop stopColor="#00A8E8" stopOpacity="0.35" />
-                                    <stop offset="0.45" stopColor="#4ABFF0" stopOpacity="0.25" />
-                                    <stop offset="1" stopColor="#0A385C" stopOpacity="0.15" />
-                                </linearGradient>
-                            </defs>
-                            {/* Base flowing wave matching user screenshot */}
-                            <path
-                                opacity="0.65"
-                                d="M0 360 L0 300 C900 290, 1400 110, 2400 210 C3400 310, 4000 120, 4800 230 L4800 360 Z"
-                                fill="url(#board_wave_bg1)"
-                            />
-                            {/* Foreground curved wave sweep */}
-                            <path
-                                d="M0 360 L0 330 C1000 340, 1600 150, 2600 240 C3600 320, 4200 160, 4800 270 L4800 360 Z"
-                                fill="url(#board_wave_bg2)"
-                            />
-                        </svg>
-                    </div>
-                )}
                 {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin enables showSelesai */}
                 {STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai)).map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);

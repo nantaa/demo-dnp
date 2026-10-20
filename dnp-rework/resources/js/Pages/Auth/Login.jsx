@@ -65,9 +65,9 @@ export default function Login({ status, canResetPassword }) {
             onSuccess: (page) => {
                 // If response succeeds but auth.user is still absent, the login was rejected
                 if (!page?.props?.auth?.user) {
-                    const fallbackMsg = page?.props?.errors?.email 
-                        || page?.props?.errors?.password 
-                        || page?.props?.errors?.error 
+                    const fallbackMsg = page?.props?.errors?.email
+                        || page?.props?.errors?.password
+                        || page?.props?.errors?.error
                         || 'Email atau password yang Anda masukkan tidak sesuai.';
                     setLocalError(fallbackMsg);
                     showError('Gagal Masuk', fallbackMsg);
@@ -122,10 +122,10 @@ export default function Login({ status, canResetPassword }) {
                     </div>
                     <div className="text-center">
                         <div className="text-white font-black text-lg tracking-widest uppercase leading-none">
-                            MORIKU APP
+                            APLIKASI 16 KANBAN
                         </div>
                         <div className="text-[#00A8E8] text-[11px] font-semibold tracking-wider mt-1.5 uppercase">
-                            Monitoring Riksa Uji · PT Delta Nusantara Persada
+                            PT Delta Nusantara Persada
                         </div>
                     </div>
                 </div>
@@ -173,11 +173,10 @@ export default function Login({ status, canResetPassword }) {
                                         setLocalError('');
                                         setData('email', e.target.value);
                                     }}
-                                    className={`w-full px-4 py-3 rounded-xl text-sm text-gray-900 focus:outline-none transition-all placeholder:text-slate-300 ${
-                                        (localError || errors.email) 
-                                            ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400' 
+                                    className={`w-full px-4 py-3 rounded-xl text-sm text-gray-900 focus:outline-none transition-all placeholder:text-slate-300 ${(localError || errors.email)
+                                            ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400'
                                             : 'bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#00A8E8] focus:border-[#00A8E8]'
-                                    }`}
+                                        }`}
                                     placeholder="name@deltaindo.co.id"
                                     required
                                     autoFocus
@@ -198,11 +197,10 @@ export default function Login({ status, canResetPassword }) {
                                         setLocalError('');
                                         setData('password', e.target.value);
                                     }}
-                                    className={`w-full px-4 py-3 rounded-xl text-sm text-gray-900 focus:outline-none transition-all placeholder:text-slate-300 ${
-                                        (localError || errors.password) 
-                                            ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400' 
+                                    className={`w-full px-4 py-3 rounded-xl text-sm text-gray-900 focus:outline-none transition-all placeholder:text-slate-300 ${(localError || errors.password)
+                                            ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400'
                                             : 'bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#00A8E8] focus:border-[#00A8E8]'
-                                    }`}
+                                        }`}
                                     placeholder="••••••••"
                                     required
                                 />

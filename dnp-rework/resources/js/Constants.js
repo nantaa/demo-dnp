@@ -18,6 +18,53 @@ export const STAGES = [
     { id: 16, name: 'Selesai', short: 'Selesai', role: 'superadmin', sla: null, hidden: true, displayId: '✓' },
 ];
 
+export const PIC_THEMES = {
+    marketing: {
+        border: 'border-t-sky-500',
+        badge: 'bg-sky-700 text-white',
+        accent: 'from-sky-600 to-cyan-400',
+        label: 'MKT',
+        name: 'Marketing',
+    },
+    admin: {
+        border: 'border-t-blue-600',
+        badge: 'bg-blue-800 text-white',
+        accent: 'from-blue-700 to-indigo-500',
+        label: 'ADM',
+        name: 'Admin Dokumen',
+    },
+    inspektur: {
+        border: 'border-t-teal-500',
+        badge: 'bg-teal-800 text-white',
+        accent: 'from-teal-600 to-emerald-400',
+        label: 'TRU',
+        name: 'Tim Riksa Uji',
+    },
+    tim_ahli: {
+        border: 'border-t-amber-500',
+        badge: 'bg-amber-700 text-white',
+        accent: 'from-amber-600 to-yellow-400',
+        label: 'AHLI',
+        name: 'Tim Ahli',
+    },
+    finance: {
+        border: 'border-t-violet-600',
+        badge: 'bg-violet-800 text-white',
+        accent: 'from-violet-700 to-purple-400',
+        label: 'FIN',
+        name: 'Admin Keuangan',
+    },
+    superadmin: {
+        border: 'border-t-emerald-600',
+        badge: 'bg-emerald-800 text-white',
+        accent: 'from-emerald-600 to-teal-400',
+        label: 'SUP',
+        name: 'Superadmin',
+    },
+};
+PIC_THEMES.tim_ru = PIC_THEMES.inspektur;
+PIC_THEMES.inspector = PIC_THEMES.inspektur;
+
 export const getStageDisplayId = (stageId) => {
     const stage = STAGES.find(s => s.id === (typeof stageId === 'number' ? stageId : parseInt(stageId)));
     return stage?.displayId || String(stageId || '');

@@ -3,7 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES } from '@/Constants';
+import { STAGES, PIC_THEMES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
 import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -261,6 +261,7 @@ export default function KanbanIndex({ jobs, auth }) {
                             title={stage.name}
                             count={columnJobs.length}
                             isLocked={isLocked}
+                            role={stage.role}
                         >
                             {columnJobs.map(job => (
                                 <div
@@ -271,7 +272,7 @@ export default function KanbanIndex({ jobs, auth }) {
                                     {/* DNP Accent Line Indicator */}
                                     <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${job.stage === 16
                                             ? 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-100'
-                                            : 'bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100'
+                                            : `bg-gradient-to-r ${PIC_THEMES[stage.role]?.accent || 'from-[#0A385C] to-[#00A8E8]'} opacity-100`
                                         }`} />
 
                                     {/* Figma-aligned dual waves: both shifted 20px left with lowered cyan wave */}

@@ -274,7 +274,7 @@ export default function KanbanIndex({ jobs, auth }) {
                                         }`} />
 
                                     {/* Figma-aligned dual waves: keep the gray base fixed and offset the blue foreground independently. */}
-                                    <div className="absolute -bottom-[52px] right-0 pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
+                                    <div className="absolute bottom-0 right-0 pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
                                         <img
                                             src="/Vector%20630.svg"
                                             alt=""

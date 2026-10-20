@@ -14,6 +14,16 @@ export default function KanbanIndex({ jobs, auth }) {
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
 
+    // Cyan wave offset options: lets user preview all 5 rightward positions directly on the board
+    const WAVE_OPTIONS = [
+        { id: '1', label: '1 (-18px)', offset: '-18px' },
+        { id: '2', label: '2 (-32px)', offset: '-32px' },
+        { id: '3', label: '3 (-48px)', offset: '-48px' },
+        { id: '4', label: '4 (-60px)', offset: '-60px' },
+        { id: '5', label: '5 (-75px)', offset: '-75px' },
+    ];
+    const [waveMode, setWaveMode] = useState('all'); // 'all' displays all 5 options across cards, or pick a specific one
+
     // Refs and state for horizontal (side) scrollbar synchronization
     const boardRef = useRef(null);
     const topScrollRef = useRef(null);
@@ -181,6 +191,30 @@ export default function KanbanIndex({ jobs, auth }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Cyan Wave Position Switcher */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase px-1">Cyan Wave:</span>
+                        <button
+                            type="button"
+                            onClick={() => setWaveMode('all')}
+                            className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${waveMode === 'all' ? 'bg-[#0A385C] text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                            title="Tampilkan variasi 1-5 bergantian pada kartu"
+                        >
+                            Semua (1-5)
+                        </button>
+                        {WAVE_OPTIONS.map(opt => (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setWaveMode(opt.id)}
+                                className={`px-2 py-0.5 rounded text-[11px] font-bold transition ${waveMode === opt.id ? 'bg-[#00A8E8] text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                                title={`Set seluruh kartu ke ${opt.label}`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+
                     {['marketing', 'manager'].includes(auth.user.role) && (
                         <Link href={route('jobs.create')} className="bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
                             <Plus size={14} /> Job Baru
@@ -261,7 +295,12 @@ export default function KanbanIndex({ jobs, auth }) {
                             count={columnJobs.length}
                             isLocked={isLocked}
                         >
-                            {columnJobs.map(job => (
+                            {columnJobs.map((job, idx) => {
+                                const currentWaveOpt = waveMode === 'all'
+                                    ? WAVE_OPTIONS[idx % WAVE_OPTIONS.length]
+                                    : (WAVE_OPTIONS.find(o => o.id === waveMode) || WAVE_OPTIONS[2]);
+
+                                return (
                                 <div
                                     key={job.id}
                                     onClick={() => setSelectedJob(job)}
@@ -285,7 +324,8 @@ export default function KanbanIndex({ jobs, auth }) {
                                         <svg
                                             viewBox="0 0 213 84"
                                             fill="none"
-                                            className="absolute bottom-[8px] right-[-48px] w-[220px] h-auto max-w-none select-none"
+                                            style={{ right: currentWaveOpt.offset }}
+                                            className="absolute bottom-[8px] w-[220px] h-auto max-w-none select-none transition-all duration-300"
                                         >
                                             <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx_${job.id})`}/>
                                             <defs>
@@ -300,12 +340,19 @@ export default function KanbanIndex({ jobs, auth }) {
                                     {/* Main Card Content */}
                                     <div className="relative z-10">
                                         <div className="flex justify-between items-start mb-2">
-                                            <span
-                                                className="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200 truncate max-w-[170px]"
-                                                title={(!isINS && job.no_po) ? `No PO / SPK: ${job.no_po} | ID Sistem: ${job.kode}` : `ID Sistem: ${job.kode}`}
-                                            >
-                                                {(!isINS && job.no_po) ? `PO: ${job.no_po}` : job.kode}
-                                            </span>
+                                            <div className="flex items-center gap-1">
+                                                <span
+                                                    className="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200 truncate max-w-[170px]"
+                                                    title={(!isINS && job.no_po) ? `No PO / SPK: ${job.no_po} | ID Sistem: ${job.kode}` : `ID Sistem: ${job.kode}`}
+                                                >
+                                                    {(!isINS && job.no_po) ? `PO: ${job.no_po}` : job.kode}
+                                                </span>
+                                                {waveMode === 'all' && (
+                                                    <span className="text-[9px] font-mono font-bold bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded border border-sky-300">
+                                                        {currentWaveOpt.label}
+                                                    </span>
+                                                )}
+                                            </div>
                                             {job.units > 1 && (
                                                 <span className="text-[10px] font-extrabold px-2 py-0.5 bg-[#E0F2FE] text-[#0A385C] rounded-full border border-[#00A8E8]/30">
                                                     {job.units} Unit
@@ -466,7 +513,8 @@ export default function KanbanIndex({ jobs, auth }) {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </KanbanColumn>
                     );
                 })}

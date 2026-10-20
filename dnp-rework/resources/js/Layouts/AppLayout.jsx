@@ -122,7 +122,7 @@ export default function AppLayout({ header, children }) {
 
                 <div className="px-3 sm:px-6 py-2.5 flex items-center justify-between">
                     {/* Left: Hamburger + Logo */}
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 ml-5">
                         {/* Mobile hamburger */}
                         <button
                             className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors text-[#0A385C]"

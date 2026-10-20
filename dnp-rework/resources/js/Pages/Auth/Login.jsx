@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, Head, Link, router, usePage } from '@inertiajs/react';
 import { AlertCircle } from 'lucide-react';
 import { showError } from '@/swal';
+import loginBg from '../../../../resources/images/Frame 2147224429.svg';
 
 // Reusable concentric arc "ulir/thread" decoration
 // origin: 'tl' | 'tr' | 'bl' | 'br' controls which corner the arcs radiate from
@@ -82,29 +83,19 @@ export default function Login({ status, canResetPassword }) {
     };
 
     return (
-        <div className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden font-sans"
-            style={{ background: 'linear-gradient(135deg, #0A1F3A 0%, #0A385C 50%, #063970 100%)' }}
-        >
+        <div className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden font-sans bg-[#062444]">
             <Head title="Log in - PT Delta Nusantara Persada" />
 
-            {/* Thread / Ulir decorations — top-left corner */}
-            <div className="absolute top-0 left-0 pointer-events-none select-none">
-                <ThreadDecor size={320} color="#00A8E8" opacity={0.12} origin="tl" count={10} strokeWidth={1.5} />
-            </div>
-
-            {/* Thread / Ulir decorations — bottom-right corner */}
-            <div className="absolute bottom-0 right-0 pointer-events-none select-none">
-                <ThreadDecor size={380} color="#00A8E8" opacity={0.10} origin="br" count={12} strokeWidth={1.5} />
-            </div>
-
-            {/* Thread / Ulir decorations — bottom-left (smaller, accent) */}
-            <div className="absolute bottom-0 left-0 pointer-events-none select-none">
-                <ThreadDecor size={180} color="#ffffff" opacity={0.05} origin="bl" count={6} strokeWidth={1} />
-            </div>
-
-            {/* Thread / Ulir decorations — top-right (smaller, accent) */}
-            <div className="absolute top-0 right-0 pointer-events-none select-none">
-                <ThreadDecor size={200} color="#ffffff" opacity={0.05} origin="tr" count={6} strokeWidth={1} />
+            {/* Background SVG from Figma (Frame 2147224429.svg) */}
+            <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
+                <img
+                    src={loginBg}
+                    alt=""
+                    className="w-full h-full object-cover object-center"
+                    onError={(e) => {
+                        e.target.src = '/images/Frame 2147224429.svg';
+                    }}
+                />
             </div>
 
             {/* Login Card */}

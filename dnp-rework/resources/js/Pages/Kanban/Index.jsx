@@ -268,41 +268,63 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
-            {/* Fixed Board Background Wave (Stationary / Non-scrollable — Exactly like Figma) */}
+            {/* Fixed Board Background Wave (Stationary / Non-scrollable — High Fidelity Manual SVG matching Figma) */}
             {waveMode === 'board' && (
                 <div
-                    className="fixed bottom-0 left-0 lg:left-60 right-0 pointer-events-none z-0 select-none overflow-hidden h-[300px] sm:h-[360px]"
+                    className="fixed bottom-0 left-0 lg:left-60 right-0 pointer-events-none z-0 select-none overflow-hidden h-[340px] sm:h-[420px]"
                     aria-hidden="true"
                 >
-                    {/* Vector 630 (Soft Cyan Base Wave from Figma) */}
                     <svg
-                        viewBox="0 0 178 68"
+                        viewBox="0 0 1600 420"
                         fill="none"
-                        className="absolute bottom-0 right-0 w-[950px] sm:w-[1250px] lg:w-[1450px] h-auto max-w-none"
+                        preserveAspectRatio="none"
+                        className="w-full h-full"
+                        xmlns="http://www.w3.org/2000/svg"
                     >
-                        <path
-                            opacity="0.41"
-                            d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z"
-                            fill="#B1DFF7"
-                        />
-                    </svg>
-
-                    {/* Vector 632 (Cyan Gradient Flowing Wave from Figma) */}
-                    <svg
-                        viewBox="0 0 213 84"
-                        fill="none"
-                        className="absolute bottom-0 right-[-30px] w-[1150px] sm:w-[1500px] lg:w-[1750px] h-auto max-w-none"
-                    >
-                        <path
-                            d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"
-                            fill="url(#figma_board_wave_grad)"
-                        />
                         <defs>
-                            <linearGradient id="figma_board_wave_grad" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#4ABFF0"/>
-                                <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
+                            {/* Main Vibrant Cyan Gradient for the flowing crest wave */}
+                            <linearGradient id="manual_board_crest" x1="450" y1="380" x2="1600" y2="150" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stopColor="#00A8E8" stopOpacity="0.12" />
+                                <stop offset="35%" stopColor="#00A8E8" stopOpacity="0.45" />
+                                <stop offset="70%" stopColor="#38BDF8" stopOpacity="0.38" />
+                                <stop offset="100%" stopColor="#7DD3FC" stopOpacity="0.20" />
+                            </linearGradient>
+
+                            {/* Soft Blue Ambient Fill for the base wave */}
+                            <linearGradient id="manual_board_base" x1="320" y1="420" x2="1600" y2="120" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stopColor="#B1DFF7" stopOpacity="0.08" />
+                                <stop offset="45%" stopColor="#BAE6FD" stopOpacity="0.32" />
+                                <stop offset="100%" stopColor="#E0F2FE" stopOpacity="0.48" />
+                            </linearGradient>
+
+                            {/* Subtle highlights along the wave edge */}
+                            <linearGradient id="manual_board_edge" x1="500" y1="360" x2="1500" y2="160" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stopColor="#0284C7" stopOpacity="0.0" />
+                                <stop offset="40%" stopColor="#0284C7" stopOpacity="0.35" />
+                                <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.10" />
                             </linearGradient>
                         </defs>
+
+                        {/* Base Soft Ambient Wave: Starts under Column 3, rolls smoothly upwards across Column 4 & 4b to the right */}
+                        <path
+                            d="M 280 420 C 520 380, 720 260, 980 200 C 1240 140, 1440 175, 1600 185 L 1600 420 Z"
+                            fill="url(#manual_board_base)"
+                        />
+
+                        {/* Flowing Crest Ribbon: Elegant curved band matching Figma's exact diagonal trajectory */}
+                        <path
+                            d="M 360 420 C 580 370, 780 255, 1020 195 C 1260 135, 1460 170, 1600 180 L 1600 270 C 1450 250, 1260 215, 1010 270 C 760 325, 570 395, 450 420 Z"
+                            fill="url(#manual_board_crest)"
+                        />
+
+                        {/* Thin crisp stroke along the crest curve for sharp definition */}
+                        <path
+                            d="M 360 420 C 580 370, 780 255, 1020 195 C 1260 135, 1460 170, 1600 180"
+                            stroke="url(#manual_board_edge)"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            fill="none"
+                        />
                     </svg>
                 </div>
             )}

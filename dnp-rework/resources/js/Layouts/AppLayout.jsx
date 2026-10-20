@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { showError, showSuccess, showConfirm } from '@/swal';
-import { 
+import {
     LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
@@ -58,7 +58,7 @@ export default function AppLayout({ header, children }) {
             }
             link.type = 'image/png';
             link.href = '/moriku-logo.png';
-        } catch(e) {}
+        } catch (e) { }
 
         // Intercept global inertia events
         const removeErrorListener = router.on('error', (event) => {
@@ -68,7 +68,7 @@ export default function AppLayout({ header, children }) {
                 showError('Validasi Gagal', msgs);
             }
         });
-        
+
         const removeExceptionListener = router.on('exception', (event) => {
             event.preventDefault(); // Prevent default modal
             let msg = event.detail.exception?.message || 'Terjadi kesalahan sistem.';
@@ -139,7 +139,7 @@ export default function AppLayout({ header, children }) {
                                     PT Delta Nusantara Persada
                                 </div>
                                 <div className="text-sm sm:text-base font-bold leading-tight text-slate-800 sm:mt-0.5">
-                                    <span className="hidden sm:inline text-[#00A8E8]">Riksa Uji · </span>Monitoring
+                                    <span className="hidden sm:inline text-[#00A8E8]">Aplikasi · </span>16 Kanban
                                 </div>
                             </div>
                         </div>
@@ -242,11 +242,10 @@ export default function AppLayout({ header, children }) {
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => setSidebarOpen(false)}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                                        active
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${active
                                             ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
                                             : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
-                                    }`}
+                                        }`}
                                 >
                                     <Icon size={18} strokeWidth={active ? 2.5 : 1.5} />
                                     {item.label}
@@ -286,11 +285,10 @@ export default function AppLayout({ header, children }) {
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                                            active
+                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${active
                                                 ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
                                                 : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
-                                        }`}
+                                            }`}
                                     >
                                         <Icon size={17} strokeWidth={active ? 2.5 : 1.5} />
                                         {item.label}
@@ -324,9 +322,8 @@ export default function AppLayout({ header, children }) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg min-w-[52px] transition-colors ${
-                                    active ? 'text-[#00A8E8]' : 'text-slate-500'
-                                }`}
+                                className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg min-w-[52px] transition-colors ${active ? 'text-[#00A8E8]' : 'text-slate-500'
+                                    }`}
                             >
                                 <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
                                 <span className={`text-[9px] font-semibold leading-tight text-center ${active ? 'text-[#00A8E8]' : 'text-slate-500'}`}>

@@ -276,25 +276,19 @@ export default function KanbanIndex({ jobs, auth }) {
                                             : 'bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100'
                                     }`} />
 
-                                    {/* Figma-aligned dual waves: matched directly to Figma reference */}
-                                    <div className="absolute -bottom-[38px] right-0 pointer-events-none z-0 select-none w-[185px] h-[74px] overflow-visible" aria-hidden="true">
-                                        <svg
-                                            viewBox="0 0 178 68"
-                                            fill="none"
-                                            className="absolute bottom-0 right-0 w-[165px] h-auto max-w-none select-none"
-                                        >
-                                            <path opacity="0.41" d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z" fill="#B1DFF7"/>
+                                    {/* Dual Figma Wave Artwork (Vector 630 + Vector 632) at Bottom-Right */}
+                                    <div className="absolute bottom-0 right-0 pointer-events-none z-0 select-none leading-none w-[160px] h-[32px]">
+                                        {/* Vector 630: light blue wave base layer */}
+                                        <svg viewBox="0 0 160 32" fill="none" className="absolute bottom-0 right-0 w-[160px] h-[32px]">
+                                            <path opacity="0.41" d="M10 32C50 30 100 16 160 12V32H10Z" fill="#B1DFF7"/>
                                         </svg>
-                                        <svg
-                                            viewBox="0 0 213 84"
-                                            fill="none"
-                                            className="absolute bottom-0 right-0 w-[185px] h-auto max-w-none select-none"
-                                        >
-                                            <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx1_${job.id})`}/>
+                                        {/* Vector 632: cyan gradient wave foreground layer */}
+                                        <svg viewBox="0 0 160 32" fill="none" className="absolute bottom-0 right-0 w-[160px] h-[32px]">
+                                            <path d="M0 32C45 28 95 8 160 4V22C115 24 65 30 0 32Z" fill={`url(#wg_idx_${job.id})`}/>
                                             <defs>
-                                                <linearGradient id={`wg_idx1_${job.id}`} x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                                <linearGradient id={`wg_idx_${job.id}`} x1="40" y1="6" x2="150" y2="30" gradientUnits="userSpaceOnUse">
                                                     <stop stopColor="#4ABFF0"/>
-                                                    <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
+                                                    <stop offset="1" stopColor="#4ABFF0" stopOpacity="0.1"/>
                                                 </linearGradient>
                                             </defs>
                                         </svg>

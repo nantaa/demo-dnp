@@ -285,11 +285,11 @@ export default function KanbanIndex({ jobs, auth }) {
                                         <svg
                                             viewBox="0 0 213 84"
                                             fill="none"
-                                            className="absolute bottom-[8px] right-[-18px] w-[220px] h-auto max-w-none select-none"
+                                            className="absolute bottom-[8px] right-[-48px] w-[220px] h-auto max-w-none select-none"
                                         >
-                                            <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx3_${job.id})`}/>
+                                            <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx_${job.id})`}/>
                                             <defs>
-                                                <linearGradient id={`wg_idx3_${job.id}`} x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                                <linearGradient id={`wg_idx_${job.id}`} x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
                                                     <stop stopColor="#4ABFF0"/>
                                                     <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
                                                 </linearGradient>

@@ -14,13 +14,13 @@ export default function KanbanIndex({ jobs, auth }) {
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
 
-    // Cyan wave offset options: lets user preview all 5 rightward positions directly on the board
+    // 5 alternatives of lowered cyan wave at Option 5 horizontal position (right: -75px)
     const WAVE_OPTIONS = [
-        { id: '1', label: '1 (-18px)', offset: '-18px' },
-        { id: '2', label: '2 (-32px)', offset: '-32px' },
-        { id: '3', label: '3 (-48px)', offset: '-48px' },
-        { id: '4', label: '4 (-60px)', offset: '-60px' },
-        { id: '5', label: '5 (-75px)', offset: '-75px' },
+        { id: '1', label: '1 (8px / Current)', bottom: '8px', right: '-75px' },
+        { id: '2', label: '2 (5px / -3px)', bottom: '5px', right: '-75px' },
+        { id: '3', label: '3 (2px / -6px)', bottom: '2px', right: '-75px' },
+        { id: '4', label: '4 (-1px / -9px)', bottom: '-1px', right: '-75px' },
+        { id: '5', label: '5 (-5px / -13px)', bottom: '-5px', right: '-75px' },
     ];
     const [waveMode, setWaveMode] = useState('all'); // 'all' displays all 5 options across cards, or pick a specific one
 
@@ -191,9 +191,9 @@ export default function KanbanIndex({ jobs, auth }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* Cyan Wave Position Switcher */}
+                    {/* Cyan Wave Lowering Switcher */}
                     <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase px-1">Cyan Wave:</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase px-1">Lower Cyan (right -75px):</span>
                         <button
                             type="button"
                             onClick={() => setWaveMode('all')}
@@ -324,8 +324,8 @@ export default function KanbanIndex({ jobs, auth }) {
                                         <svg
                                             viewBox="0 0 213 84"
                                             fill="none"
-                                            style={{ right: currentWaveOpt.offset }}
-                                            className="absolute bottom-[8px] w-[220px] h-auto max-w-none select-none transition-all duration-300"
+                                            style={{ right: currentWaveOpt.right, bottom: currentWaveOpt.bottom }}
+                                            className="absolute w-[220px] h-auto max-w-none select-none transition-all duration-300"
                                         >
                                             <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx_${job.id})`}/>
                                             <defs>

@@ -9,7 +9,7 @@ export default function KanbanCard({ job, isINS, onClick }) {
             const pelDate = new Date(job.tgl_pelaksanaan);
             pelDate.setHours(0, 0, 0, 0);
             const diffDays = Math.round((today - pelDate) / (1000 * 60 * 60 * 24));
-            
+
             if (diffDays === 0) {
                 return <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-extrabold border border-blue-300">HARI H</span>;
             } else if (diffDays > 0) {
@@ -22,8 +22,8 @@ export default function KanbanCard({ job, isINS, onClick }) {
         if (job.stage === 8 && job.s8_progress_status) {
             const sMap = {
                 progress: { label: 'PROSES DISNAKER', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
-                stuck:    { label: 'TERKENDALA',       cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                ready:    { label: 'SELESAI DISNAKER', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                stuck: { label: 'TERKENDALA', cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                ready: { label: 'SELESAI DISNAKER', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
             };
             const badge = sMap[job.s8_progress_status];
             if (badge) {
@@ -33,16 +33,16 @@ export default function KanbanCard({ job, isINS, onClick }) {
 
         if (job.stage === 9 && job.s9_progress_status) {
             const s9Map = {
-                diterima:               { label: 'DITERIMA',               cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
-                scan:                   { label: 'SCAN',                   cls: 'bg-purple-100 text-purple-800 font-bold border-purple-300' },
-                penamaan_cover:         { label: 'PENAMAAN COVER',         cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
-                pembuatan_tanda_terima: { label: 'TANDA TERIMA',           cls: 'bg-cyan-100 text-cyan-800 font-bold border-cyan-300' },
-                selesai:                { label: 'SELESAI',                cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
-                not_started:            { label: 'NOT STARTED',            cls: 'bg-gray-100 text-gray-700 border-gray-300' },
-                delayed:                { label: 'DELAYED',                cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
-                in_progress:            { label: 'IN PROGRESS',            cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
-                almost_done:            { label: 'ALMOST DONE',            cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
-                done:                   { label: 'DONE',                   cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                diterima: { label: 'DITERIMA', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                scan: { label: 'SCAN', cls: 'bg-purple-100 text-purple-800 font-bold border-purple-300' },
+                penamaan_cover: { label: 'PENAMAAN COVER', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                pembuatan_tanda_terima: { label: 'TANDA TERIMA', cls: 'bg-cyan-100 text-cyan-800 font-bold border-cyan-300' },
+                selesai: { label: 'SELESAI', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                not_started: { label: 'NOT STARTED', cls: 'bg-gray-100 text-gray-700 border-gray-300' },
+                delayed: { label: 'DELAYED', cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                done: { label: 'DONE', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
             };
             const badge = s9Map[job.s9_progress_status];
             if (badge) {
@@ -56,15 +56,15 @@ export default function KanbanCard({ job, isINS, onClick }) {
 
         const stageInfo = STAGES.find(s => s.id === job.stage);
         if (!stageInfo?.sla) return null;
-        
+
         let slaDays = stageInfo.sla;
         if (job.stage === 6) slaDays *= (job.units || 1);
-        
+
         const startDate = new Date(job.stage_started_at || job.updated_at);
         const now = new Date();
         const diffTime = Math.abs(now - startDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         let status = 'ON TRACK';
         let color = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold';
         if (diffDays > slaDays) {
@@ -83,39 +83,36 @@ export default function KanbanCard({ job, isINS, onClick }) {
     };
 
     return (
-        <div 
+        <div
             onClick={onClick}
             className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
         >
             {/* DNP Accent Line Indicator */}
-            <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${
-                job.stage === 16
+            <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${job.stage === 16
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-100'
                     : 'bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100'
-            }`} />
+                }`} />
 
-            {/* Dual Figma Wave Artwork (Vector 630 + Vector 632) at Bottom-Right */}
-            <div className="absolute bottom-0 right-0 pointer-events-none z-0 select-none leading-none w-[160px] h-[32px]">
-                {/* Vector 630: light blue wave base layer */}
-                <svg viewBox="0 0 160 32" fill="none" className="absolute bottom-0 right-0 w-[160px] h-[32px]">
-                    <path opacity="0.41" d="M10 32C50 30 100 16 160 12V32H10Z" fill="#B1DFF7"/>
-                </svg>
-                {/* Vector 632: cyan gradient wave foreground layer */}
-                <svg viewBox="0 0 160 32" fill="none" className="absolute bottom-0 right-0 w-[160px] h-[32px]">
-                    <path d="M0 32C45 28 95 8 160 4V22C115 24 65 30 0 32Z" fill={`url(#wg_card_${job.id})`}/>
-                    <defs>
-                        <linearGradient id={`wg_card_${job.id}`} x1="40" y1="6" x2="150" y2="30" gradientUnits="userSpaceOnUse">
-                            <stop stopColor="#4ABFF0"/>
-                            <stop offset="1" stopColor="#4ABFF0" stopOpacity="0.1"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
+            {/* Original Figma wave assets; card overflow-hidden clips them to the rounded frame. */}
+            <div className="absolute -bottom-[52px] right-0 pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
+                <img
+                    src="/Vector%20630.svg"
+                    alt=""
+                    draggable={false}
+                    className="absolute bottom-0 right-0 w-[190px] h-auto max-w-none select-none"
+                />
+                <img
+                    src="/Vector%20632.svg"
+                    alt=""
+                    draggable={false}
+                    className="absolute bottom-[8px] right-[-18px] w-[220px] h-auto max-w-none select-none"
+                />
             </div>
 
             {/* Main Content Area */}
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-2">
-                    <span 
+                    <span
                         className="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] border border-slate-200 truncate max-w-[170px]"
                         title={(!isINS && job.no_po) ? `No PO / SPK: ${job.no_po} | ID Sistem: ${job.kode}` : `ID Sistem: ${job.kode}`}
                     >
@@ -139,8 +136,8 @@ export default function KanbanCard({ job, isINS, onClick }) {
                 {job.stage === 8 && (() => {
                     const sMap = {
                         progress: { label: 'PROSES DISNAKER', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
-                        stuck:    { label: 'TERKENDALA',       cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
-                        ready:    { label: 'SELESAI DISNAKER', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
+                        stuck: { label: 'TERKENDALA', cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
+                        ready: { label: 'SELESAI DISNAKER', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
                     };
                     const badge = sMap[job.s8_progress_status] || { label: 'DISNAKER (BELUM DIUPDATE)', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
                     return (
@@ -165,11 +162,11 @@ export default function KanbanCard({ job, isINS, onClick }) {
                 {/* Stage 9 Suket Status Banner */}
                 {job.stage === 9 && (() => {
                     const s9Map = {
-                        diterima:               { label: 'DITERIMA',               cls: 'bg-blue-50 text-blue-800 border-blue-200' },
-                        scan:                   { label: 'SCAN',                   cls: 'bg-purple-50 text-purple-800 border-purple-200' },
-                        penamaan_cover:         { label: 'PENAMAAN COVER',         cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+                        diterima: { label: 'DITERIMA', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
+                        scan: { label: 'SCAN', cls: 'bg-purple-50 text-purple-800 border-purple-200' },
+                        penamaan_cover: { label: 'PENAMAAN COVER', cls: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
                         pembuatan_tanda_terima: { label: 'PEMBUATAN TANDA TERIMA', cls: 'bg-amber-50 text-amber-800 border-amber-200' },
-                        selesai:                { label: 'SELESAI',                cls: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+                        selesai: { label: 'SELESAI', cls: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
                     };
                     const badge = s9Map[job.s9_progress_status] || { label: 'SUKET (DALAM PROSES)', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
                     return (
@@ -199,7 +196,7 @@ export default function KanbanCard({ job, isINS, onClick }) {
                         ))}
                     </div>
                 )}
-                
+
                 {/* Footer with Marketing and SLA / Overdue Badge */}
                 <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-200/90 pt-2 relative z-10">
                     <span className="font-medium text-slate-500">

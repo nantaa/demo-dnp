@@ -1,15 +1,24 @@
 import React from 'react';
 import { PIC_THEMES, getRoleTheme } from '@/Constants';
 
-export default function KanbanColumn({ stageNumber, title, count, isLocked, role, children }) {
+export default function KanbanColumn({ stageNumber, title, count, isLocked, role, noTopBorder, children }) {
     const theme = getRoleTheme(role);
 
     return (
-        <div className={`w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all relative z-10 ${isLocked ? 'border-t-slate-400' : 'border-t-[#00A8E8]'}`}>
+        <div
+            className="w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all relative z-10"
+            style={{ borderTopColor: isLocked ? '#94a3b8' : (noTopBorder ? '#cbd5e1' : theme.primary) }}
+        >
             <div className="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl">
                 <div className="flex items-center gap-2 min-w-0">
                     {stageNumber && (
-                        <span className="shrink-0 bg-[#0A385C] text-white text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs">
+                        <span
+                            className="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs"
+                            style={{
+                                backgroundColor: theme.dark,
+                                color: theme.light || '#ffffff',
+                            }}
+                        >
                             {stageNumber}
                         </span>
                     )}

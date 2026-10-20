@@ -181,7 +181,7 @@ export default function KanbanIndex({ jobs, auth }) {
                         </button>
                     </div>
 
-                    {/* Wave Placement Style Switcher (2 Variations) */}
+                    {/* Wave Placement Style Switcher (3 Variations) */}
                     <div className="flex items-center ml-2 bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-2xs">
                         <button
                             type="button"
@@ -191,7 +191,7 @@ export default function KanbanIndex({ jobs, auth }) {
                                     ? 'bg-white text-[#0A385C] shadow-xs'
                                     : 'text-slate-500 hover:text-slate-800'
                             }`}
-                            title="Desain 1: Wave di dalam setiap kartu"
+                            title="Desain 1: Wave di dalam setiap kartu + aksen atas"
                         >
                             Wave di Kartu
                         </button>
@@ -205,7 +205,19 @@ export default function KanbanIndex({ jobs, auth }) {
                             }`}
                             title="Desain 2: Wave di latar belakang board (di belakang kartu)"
                         >
-                            Wave di Background Board
+                            Wave Background Board
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setWaveMode('left-accent')}
+                            className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold ${
+                                waveMode === 'left-accent'
+                                    ? 'bg-white text-indigo-700 shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                            title="Desain 3: Aksen kiri kartu + garis bawah MKT tebal berwarna (kolom & atas kartu polos)"
+                        >
+                            Aksen Kiri + Garis MKT
                         </button>
                     </div>
                 </div>
@@ -330,6 +342,7 @@ export default function KanbanIndex({ jobs, auth }) {
                             count={columnJobs.length}
                             isLocked={isLocked}
                             role={stage.role}
+                            noTopBorder={waveMode === 'left-accent'}
                         >
                             {columnJobs.map(job => (
                                 <div
@@ -337,14 +350,29 @@ export default function KanbanIndex({ jobs, auth }) {
                                     onClick={() => setSelectedJob(job)}
                                     className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
                                 >
-                                    {/* DNP Accent Line Indicator */}
-                                    <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${job.stage === 16
-                                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-100'
-                                            : 'bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100'
-                                        }`} />
+                                    {/* DNP Accent Line Indicator: Top for card/board mode, Left for left-accent mode */}
+                                    {waveMode !== 'left-accent' ? (
+                                        <div
+                                            className={`absolute top-0 left-0 right-0 h-1 transition-opacity opacity-100 ${PIC_THEMES[stage.role]?.accent || ''}`}
+                                            style={{
+                                                background: job.stage === 16
+                                                    ? 'linear-gradient(to right, #176132, #35B558)'
+                                                    : `linear-gradient(to right, ${PIC_THEMES[stage.role]?.dark || '#0A385C'}, ${PIC_THEMES[stage.role]?.primary || '#00A8E8'})`
+                                            }}
+                                        />
+                                    ) : (
+                                        <div
+                                            className="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-xl transition-all"
+                                            style={{
+                                                background: job.stage === 16
+                                                    ? 'linear-gradient(to bottom, #176132, #35B558)'
+                                                    : `linear-gradient(to bottom, ${PIC_THEMES[stage.role]?.dark || '#0A385C'}, ${PIC_THEMES[stage.role]?.primary || '#00A8E8'})`
+                                            }}
+                                        />
+                                    )}
 
-                                    {/* Figma-aligned dual waves: only rendered when waveMode === 'card' */}
-                                    {waveMode === 'card' && (
+                                    {/* Figma-aligned dual waves: rendered for card mode and left-accent mode */}
+                                    {waveMode !== 'board' && (
                                         <div className="absolute -bottom-[52px] right-[20px] pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
                                             <svg
                                                 viewBox="0 0 178 68"
@@ -452,11 +480,16 @@ export default function KanbanIndex({ jobs, auth }) {
                                             </div>
                                         )}
 
+                                        {/* Divider line above MKT personnel and wave: bold & color-accented in left-accent mode */}
                                         <div
-                                            className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t-2 border-slate-200 pt-2 relative z-10"
-                                            style={{
+                                            className={`mt-3 flex justify-between items-center text-[10px] text-slate-400 pt-2 relative z-10 transition-colors ${
+                                                waveMode === 'left-accent'
+                                                    ? 'border-t-2'
+                                                    : 'border-t border-slate-200/90'
+                                            }`}
+                                            style={waveMode === 'left-accent' ? {
                                                 borderTopColor: PIC_THEMES[stage.role]?.primary || '#00A8E8'
-                                            }}
+                                            } : undefined}
                                         >
                                             <span className="font-medium text-slate-500">MKT: <strong className="text-slate-700">{job.owner_marketing}</strong></span>
                                             {(() => {

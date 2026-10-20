@@ -121,10 +121,10 @@ export default function Login({ status, canResetPassword }) {
                         />
                     </div>
                     <div className="text-center">
-                        <div className="text-white font-black text-lg tracking-widest uppercase leading-none">
+                        <div className="text-[#00A8E8] font-black text-lg tracking-widest uppercase leading-none">
                             APLIKASI 16 KANBAN
                         </div>
-                        <div className="text-[#00A8E8] text-[11px] font-semibold tracking-wider mt-1.5 uppercase">
+                        <div className="text-white text-[15px] font-semibold tracking-wider mt-1.5 uppercase">
                             PT Delta Nusantara Persada
                         </div>
                     </div>
@@ -174,8 +174,8 @@ export default function Login({ status, canResetPassword }) {
                                         setData('email', e.target.value);
                                     }}
                                     className={`w-full px-4 py-3 rounded-xl text-sm text-gray-900 focus:outline-none transition-all placeholder:text-slate-300 ${(localError || errors.email)
-                                            ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400'
-                                            : 'bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#00A8E8] focus:border-[#00A8E8]'
+                                        ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400'
+                                        : 'bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#00A8E8] focus:border-[#00A8E8]'
                                         }`}
                                     placeholder="name@deltaindo.co.id"
                                     required
@@ -198,8 +198,8 @@ export default function Login({ status, canResetPassword }) {
                                         setData('password', e.target.value);
                                     }}
                                     className={`w-full px-4 py-3 rounded-xl text-sm text-gray-900 focus:outline-none transition-all placeholder:text-slate-300 ${(localError || errors.password)
-                                            ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400'
-                                            : 'bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#00A8E8] focus:border-[#00A8E8]'
+                                        ? 'bg-red-50/50 border border-red-400 focus:ring-2 focus:ring-red-400'
+                                        : 'bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-[#00A8E8] focus:border-[#00A8E8]'
                                         }`}
                                     placeholder="••••••••"
                                     required

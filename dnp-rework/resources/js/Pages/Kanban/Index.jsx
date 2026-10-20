@@ -386,15 +386,15 @@ export default function KanbanIndex({ jobs, auth }) {
                                         <div
                                             className="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-xl transition-all"
                                             style={{
-                                                background: job.stage === 16
-                                                    ? 'linear-gradient(to bottom, #176132, #35B558)'
-                                                    : `linear-gradient(to bottom, ${PIC_THEMES[stage.role]?.dark || '#0A385C'}, ${PIC_THEMES[stage.role]?.primary || '#00A8E8'})`
+                                                backgroundColor: job.stage === 16
+                                                    ? '#35B558'
+                                                    : (PIC_THEMES[stage.role]?.primary || '#00A8E8')
                                             }}
                                         />
                                     )}
 
-                                    {/* Figma-aligned dual waves: rendered for card mode and left-accent mode */}
-                                    {waveMode !== 'board' && (
+                                    {/* Figma-aligned dual waves: ONLY rendered in 'card' mode (deleted in left-accent and board mode) */}
+                                    {waveMode === 'card' && (
                                         <div className="absolute -bottom-[52px] right-[20px] pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
                                             <svg
                                                 viewBox="0 0 178 68"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, Head, Link, router, usePage } from '@inertiajs/react';
 import { AlertCircle } from 'lucide-react';
 import { showError } from '@/swal';
-import loginBg from '../../../../resources/images/Frame 2147224429.svg';
+import loginBg from '../../../../resources/images/b3720ddb8d010de8df66d72f157d5519677223d6 (1).jpg';
 
 // Reusable concentric arc "ulir/thread" decoration
 // origin: 'tl' | 'tr' | 'bl' | 'br' controls which corner the arcs radiate from
@@ -86,14 +86,14 @@ export default function Login({ status, canResetPassword }) {
         <div className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden font-sans bg-[#062444]">
             <Head title="Log in - PT Delta Nusantara Persada" />
 
-            {/* Background SVG from Figma (Frame 2147224429.svg) */}
+            {/* Background SVG from Figma (b3720ddb8d010de8df66d72f157d5519677223d6 (1).jpg) */}
             <div className="absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
                 <img
                     src={loginBg}
                     alt=""
                     className="w-full h-full object-cover object-center"
                     onError={(e) => {
-                        e.target.src = '/images/Frame 2147224429.svg';
+                        e.target.src = '/images/b3720ddb8d010de8df66d72f157d5519677223d6 (1).jpg';
                     }}
                 />
             </div>

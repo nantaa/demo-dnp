@@ -1,19 +1,24 @@
 import React from 'react';
-import { PIC_THEMES } from '@/Constants';
+import { PIC_THEMES, getRoleTheme } from '@/Constants';
 
 export default function KanbanColumn({ stageNumber, title, count, isLocked, role, children }) {
-    const theme = PIC_THEMES[role] || {
-        border: 'border-t-[#00A8E8]',
-        badge: 'bg-[#0A385C] text-white',
-        label: '',
-    };
+    const theme = getRoleTheme(role);
 
     return (
-        <div className={`w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all ${isLocked ? 'border-t-slate-400' : theme.border}`}>
+        <div
+            className="w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all"
+            style={{ borderTopColor: isLocked ? '#94a3b8' : theme.primary }}
+        >
             <div className="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl">
                 <div className="flex items-center gap-2 min-w-0">
                     {stageNumber && (
-                        <span className={`shrink-0 ${theme.badge} text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs`}>
+                        <span
+                            className="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs"
+                            style={{
+                                backgroundColor: theme.dark,
+                                color: theme.light || '#ffffff',
+                            }}
+                        >
                             {stageNumber}
                         </span>
                     )}
@@ -26,20 +31,13 @@ export default function KanbanColumn({ stageNumber, title, count, isLocked, role
                         {title}
                     </h2>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    {theme.label && (
-                        <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200/80 uppercase">
-                            {theme.label}
-                        </span>
-                    )}
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${
-                        count > 0 
-                            ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs' 
-                            : 'bg-slate-100 text-slate-400 border-slate-200'
-                    }`}>
-                        {count}
-                    </span>
-                </div>
+                <span className={`shrink-0 ml-2 px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${
+                    count > 0 
+                        ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs' 
+                        : 'bg-slate-100 text-slate-400 border-slate-200'
+                }`}>
+                    {count}
+                </span>
             </div>
             
             <div className="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-3">

@@ -270,10 +270,14 @@ export default function KanbanIndex({ jobs, auth }) {
                                     className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
                                 >
                                     {/* DNP Accent Line Indicator */}
-                                    <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${job.stage === 16
-                                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-100'
-                                            : `bg-gradient-to-r ${PIC_THEMES[stage.role]?.accent || 'from-[#0A385C] to-[#00A8E8]'} opacity-100`
-                                        }`} />
+                                    <div
+                                        className={`absolute top-0 left-0 right-0 h-1 transition-opacity opacity-100 ${PIC_THEMES[stage.role]?.accent || ''}`}
+                                        style={{
+                                            background: job.stage === 16
+                                                ? 'linear-gradient(to right, #176132, #35B558)'
+                                                : `linear-gradient(to right, ${PIC_THEMES[stage.role]?.dark || '#0A385C'}, ${PIC_THEMES[stage.role]?.primary || '#00A8E8'})`
+                                        }}
+                                    />
 
                                     {/* Figma-aligned dual waves: both shifted 20px left with lowered cyan wave */}
                                     <div className="absolute -bottom-[52px] right-[20px] pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">

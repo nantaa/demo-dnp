@@ -20,50 +20,111 @@ export const STAGES = [
 
 export const PIC_THEMES = {
     marketing: {
-        border: 'border-t-sky-500',
-        badge: 'bg-sky-700 text-white',
-        accent: 'from-sky-600 to-cyan-400',
+        primary: '#2A9FBC', // Aqua-Marine (PMS 7459 C)
+        dark: '#0E4F5F',
+        light: '#B7E2EC',
+        border: 'border-t-[#2A9FBC]',
+        badge: 'bg-[#0E4F5F] text-[#B7E2EC]',
+        pillBorder: 'border-[#2A9FBC]',
+        pillBg: 'bg-[#2A9FBC]/10',
+        avatarBg: 'bg-[#0E4F5F]',
+        avatarText: 'text-[#2A9FBC]',
+        accent: 'from-[#0E4F5F] to-[#2A9FBC]',
         label: 'MKT',
         name: 'Marketing',
     },
     admin: {
-        border: 'border-t-blue-600',
-        badge: 'bg-blue-800 text-white',
-        accent: 'from-blue-700 to-indigo-500',
+        primary: '#4764AF', // Blue (PMS 7456 C)
+        dark: '#193B68',
+        light: '#A9C9ED',
+        border: 'border-t-[#4764AF]',
+        badge: 'bg-[#193B68] text-[#A9C9ED]',
+        pillBorder: 'border-[#4764AF]',
+        pillBg: 'bg-[#4764AF]/10',
+        avatarBg: 'bg-[#193B68]',
+        avatarText: 'text-[#4764AF]',
+        accent: 'from-[#193B68] to-[#4764AF]',
         label: 'ADM',
         name: 'Admin Dokumen',
     },
     inspektur: {
-        border: 'border-t-teal-500',
-        badge: 'bg-teal-800 text-white',
-        accent: 'from-teal-600 to-emerald-400',
+        primary: '#6BC6B3', // Turquoise (PMS 3248 C)
+        dark: '#36635A',
+        light: '#97D4C7',
+        border: 'border-t-[#6BC6B3]',
+        badge: 'bg-[#36635A] text-[#97D4C7]',
+        pillBorder: 'border-[#6BC6B3]',
+        pillBg: 'bg-[#6BC6B3]/10',
+        avatarBg: 'bg-[#36635A]',
+        avatarText: 'text-[#6BC6B3]',
+        accent: 'from-[#36635A] to-[#6BC6B3]',
         label: 'TRU',
         name: 'Tim Riksa Uji',
     },
     tim_ahli: {
-        border: 'border-t-amber-500',
-        badge: 'bg-amber-700 text-white',
-        accent: 'from-amber-600 to-yellow-400',
+        primary: '#F7B71F', // Yellow (PMS 7408 C)
+        dark: '#7C5C25',
+        light: '#FACD85',
+        border: 'border-t-[#F7B71F]',
+        badge: 'bg-[#7C5C25] text-[#FACD85]',
+        pillBorder: 'border-[#F7B71F]',
+        pillBg: 'bg-[#F7B71F]/10',
+        avatarBg: 'bg-[#7C5C25]',
+        avatarText: 'text-[#F7B71F]',
+        accent: 'from-[#7C5C25] to-[#F7B71F]',
         label: 'AHLI',
         name: 'Tim Ahli',
     },
     finance: {
-        border: 'border-t-violet-600',
-        badge: 'bg-violet-800 text-white',
-        accent: 'from-violet-700 to-purple-400',
+        primary: '#90499B', // Purple (PMS 258 C)
+        dark: '#49254C',
+        light: '#E2C4DE',
+        border: 'border-t-[#90499B]',
+        badge: 'bg-[#49254C] text-[#E2C4DE]',
+        pillBorder: 'border-[#90499B]',
+        pillBg: 'bg-[#90499B]/10',
+        avatarBg: 'bg-[#49254C]',
+        avatarText: 'text-[#90499B]',
+        accent: 'from-[#49254C] to-[#90499B]',
         label: 'FIN',
         name: 'Admin Keuangan',
     },
+    manager: {
+        primary: '#A62E5C', // Plum (PMS 7434)
+        dark: '#661C3D',
+        light: '#D1488C',
+        border: 'border-t-[#A62E5C]',
+        badge: 'bg-[#661C3D] text-[#D1488C]',
+        pillBorder: 'border-[#A62E5C]',
+        pillBg: 'bg-[#A62E5C]/10',
+        avatarBg: 'bg-[#661C3D]',
+        avatarText: 'text-[#A62E5C]',
+        accent: 'from-[#661C3D] to-[#A62E5C]',
+        label: 'MGR',
+        name: 'Kadiv RU / Manager',
+    },
     superadmin: {
-        border: 'border-t-emerald-600',
-        badge: 'bg-emerald-800 text-white',
-        accent: 'from-emerald-600 to-teal-400',
+        primary: '#35B558', // Green (PMS 7481 C)
+        dark: '#176132',
+        light: '#5DBE7F',
+        border: 'border-t-[#35B558]',
+        badge: 'bg-[#176132] text-[#5DBE7F]',
+        pillBorder: 'border-[#35B558]',
+        pillBg: 'bg-[#35B558]/10',
+        avatarBg: 'bg-[#176132]',
+        avatarText: 'text-[#35B558]',
+        accent: 'from-[#176132] to-[#35B558]',
         label: 'SUP',
-        name: 'Superadmin',
+        name: 'Super Administrator',
     },
 };
 PIC_THEMES.tim_ru = PIC_THEMES.inspektur;
 PIC_THEMES.inspector = PIC_THEMES.inspektur;
+
+export const getRoleTheme = (role) => {
+    const key = String(role || '').toLowerCase();
+    return PIC_THEMES[key] || PIC_THEMES.superadmin;
+};
 
 export const getStageDisplayId = (stageId) => {
     const stage = STAGES.find(s => s.id === (typeof stageId === 'number' ? stageId : parseInt(stageId)));

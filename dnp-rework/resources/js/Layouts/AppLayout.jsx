@@ -5,7 +5,7 @@ import {
     LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
-import { ROLES } from '../Constants';
+import { ROLES, PIC_THEMES, getRoleTheme } from '../Constants';
 import logoImg from '../../images/logo.png';
 
 // Concentric arc "ulir / thread" decoration — radiates from a corner
@@ -96,6 +96,7 @@ export default function AppLayout({ header, children }) {
     ];
 
     const userRole = (user?.role || '').toLowerCase();
+    const userTheme = getRoleTheme(user?.role);
     const visibleNav = navItems.filter(item => !item.roles || item.roles.includes(userRole));
 
     const handleLogout = async (e) => {
@@ -147,13 +148,32 @@ export default function AppLayout({ header, children }) {
                     {/* Right: User info + Notification Bell + Profile + Logout */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         <NotificationBell />
-                        <Link href="/profile" className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-[#00A8E8] rounded-full hover:bg-slate-100 transition-all shadow-2xs">
-                            <div className="w-6 h-6 bg-[#0A385C] text-[#00A8E8] flex items-center justify-center text-[10px] font-extrabold rounded-full flex-shrink-0 border border-[#00A8E8]/40">
-                                {ROLES[user?.role]?.label || 'USR'}
+                        <Link
+                            href="/profile"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all shadow-2xs hover:shadow-xs group"
+                            style={{
+                                border: `1.5px solid ${userTheme.primary}`,
+                                backgroundColor: `${userTheme.primary}12`,
+                            }}
+                        >
+                            <div
+                                className="w-6 h-6 flex items-center justify-center text-[10px] font-black rounded-full flex-shrink-0"
+                                style={{
+                                    backgroundColor: userTheme.dark,
+                                    color: userTheme.primary,
+                                    border: `1px solid ${userTheme.primary}60`,
+                                }}
+                            >
+                                {ROLES[user?.role]?.label || userTheme.label || 'USR'}
                             </div>
                             <div className="hidden sm:block text-left">
                                 <div className="text-xs font-bold leading-none text-slate-800">{user?.name || 'User'}</div>
-                                <div className="text-[9px] font-semibold text-[#0A385C] tracking-wide uppercase mt-0.5">{ROLES[user?.role]?.name || user?.role || 'Pengguna'}</div>
+                                <div
+                                    className="text-[9px] font-extrabold tracking-wide uppercase mt-0.5"
+                                    style={{ color: userTheme.dark }}
+                                >
+                                    {ROLES[user?.role]?.name || user?.role || 'Pengguna'}
+                                </div>
                             </div>
                             <div className="sm:hidden text-xs font-bold text-slate-800">{(user?.name || 'User').split(' ')[0]}</div>
                         </Link>
@@ -192,12 +212,21 @@ export default function AppLayout({ header, children }) {
                 {/* User info in drawer */}
                 <div className="px-4 py-3 border-b border-white/10 bg-white/5">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#00A8E8]/20 text-[#00A8E8] border border-[#00A8E8]/40 flex items-center justify-center text-sm font-bold rounded-full">
-                            {ROLES[user.role]?.label || 'USR'}
+                        <div
+                            className="w-10 h-10 flex items-center justify-center text-sm font-bold rounded-full"
+                            style={{
+                                backgroundColor: userTheme.dark,
+                                color: userTheme.primary,
+                                border: `1.5px solid ${userTheme.primary}80`,
+                            }}
+                        >
+                            {ROLES[user?.role]?.label || userTheme.label || 'USR'}
                         </div>
                         <div>
-                            <div className="font-bold text-sm text-white">{user.name}</div>
-                            <div className="text-xs text-slate-400">{ROLES[user.role]?.name || user.role}</div>
+                            <div className="font-bold text-sm text-white">{user?.name}</div>
+                            <div className="text-xs font-semibold uppercase" style={{ color: userTheme.primary }}>
+                                {ROLES[user?.role]?.name || user?.role}
+                            </div>
                         </div>
                     </div>
                 </div>

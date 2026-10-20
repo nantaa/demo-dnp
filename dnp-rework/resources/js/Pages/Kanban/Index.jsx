@@ -13,6 +13,7 @@ export default function KanbanIndex({ jobs, auth }) {
     const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
+    const [waveMode, setWaveMode] = useState('card'); // 'card' (wave in card) | 'board' (wave behind cards)
 
     // Refs and state for horizontal (side) scrollbar synchronization
     const boardRef = useRef(null);
@@ -179,6 +180,34 @@ export default function KanbanIndex({ jobs, auth }) {
                             <ChevronRight size={16} />
                         </button>
                     </div>
+
+                    {/* Wave Placement Style Switcher (2 Variations) */}
+                    <div className="flex items-center ml-2 bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => setWaveMode('card')}
+                            className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold ${
+                                waveMode === 'card'
+                                    ? 'bg-white text-[#0A385C] shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                            title="Desain 1: Wave di dalam setiap kartu"
+                        >
+                            Wave di Kartu
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setWaveMode('board')}
+                            className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold ${
+                                waveMode === 'board'
+                                    ? 'bg-white text-[#00A8E8] shadow-xs'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                            title="Desain 2: Wave di latar belakang board (di belakang kartu)"
+                        >
+                            Wave di Background Board
+                        </button>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
 
@@ -230,8 +259,47 @@ export default function KanbanIndex({ jobs, auth }) {
             <div
                 ref={boardRef}
                 onScroll={handleBoardScroll}
-                className="flex h-full overflow-x-auto space-x-4 pb-4"
+                className="flex h-full overflow-x-auto space-x-4 pb-4 relative min-h-[calc(100vh-210px)]"
             >
+                {/* Board-level background wave (Alternative 2: placed behind cards and columns) */}
+                {waveMode === 'board' && (
+                    <div
+                        className="absolute bottom-0 left-0 pointer-events-none z-0 select-none overflow-hidden"
+                        style={{ width: `${Math.max(boardScrollWidth, 4800)}px`, height: '360px' }}
+                        aria-hidden="true"
+                    >
+                        <svg
+                            viewBox="0 0 4800 360"
+                            fill="none"
+                            preserveAspectRatio="none"
+                            className="w-full h-full"
+                        >
+                            <defs>
+                                <linearGradient id="board_wave_bg1" x1="0" y1="0" x2="0" y2="360" gradientUnits="userSpaceOnUse">
+                                    <stop stopColor="#4ABFF0" stopOpacity="0.45" />
+                                    <stop offset="0.6" stopColor="#B1DFF7" stopOpacity="0.3" />
+                                    <stop offset="1" stopColor="#E0F2FE" stopOpacity="0.1" />
+                                </linearGradient>
+                                <linearGradient id="board_wave_bg2" x1="0" y1="120" x2="4800" y2="350" gradientUnits="userSpaceOnUse">
+                                    <stop stopColor="#00A8E8" stopOpacity="0.35" />
+                                    <stop offset="0.45" stopColor="#4ABFF0" stopOpacity="0.25" />
+                                    <stop offset="1" stopColor="#0A385C" stopOpacity="0.15" />
+                                </linearGradient>
+                            </defs>
+                            {/* Base flowing wave matching user screenshot */}
+                            <path
+                                opacity="0.65"
+                                d="M0 360 L0 300 C900 290, 1400 110, 2400 210 C3400 310, 4000 120, 4800 230 L4800 360 Z"
+                                fill="url(#board_wave_bg1)"
+                            />
+                            {/* Foreground curved wave sweep */}
+                            <path
+                                d="M0 360 L0 330 C1000 340, 1600 150, 2600 240 C3600 320, 4200 160, 4800 270 L4800 360 Z"
+                                fill="url(#board_wave_bg2)"
+                            />
+                        </svg>
+                    </div>
+                )}
                 {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin enables showSelesai */}
                 {STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai)).map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);
@@ -270,38 +338,36 @@ export default function KanbanIndex({ jobs, auth }) {
                                     className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative overflow-hidden"
                                 >
                                     {/* DNP Accent Line Indicator */}
-                                    <div
-                                        className={`absolute top-0 left-0 right-0 h-1 transition-opacity opacity-100 ${PIC_THEMES[stage.role]?.accent || ''}`}
-                                        style={{
-                                            background: job.stage === 16
-                                                ? 'linear-gradient(to right, #176132, #35B558)'
-                                                : `linear-gradient(to right, ${PIC_THEMES[stage.role]?.dark || '#0A385C'}, ${PIC_THEMES[stage.role]?.primary || '#00A8E8'})`
-                                        }}
-                                    />
+                                    <div className={`absolute top-0 left-0 right-0 h-1 transition-opacity ${job.stage === 16
+                                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 opacity-100'
+                                            : 'bg-gradient-to-r from-[#0A385C] to-[#00A8E8] opacity-0 group-hover:opacity-100'
+                                        }`} />
 
-                                    {/* Figma-aligned dual waves: both shifted 20px left with lowered cyan wave */}
-                                    <div className="absolute -bottom-[52px] right-[20px] pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
-                                        <svg
-                                            viewBox="0 0 178 68"
-                                            fill="none"
-                                            className="absolute bottom-0 right-0 w-[190px] h-auto max-w-none select-none"
-                                        >
-                                            <path opacity="0.41" d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z" fill="#B1DFF7"/>
-                                        </svg>
-                                        <svg
-                                            viewBox="0 0 213 84"
-                                            fill="none"
-                                            className="absolute -bottom-[5px] right-[-75px] w-[220px] h-auto max-w-none select-none"
-                                        >
-                                            <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx_${job.id})`}/>
-                                            <defs>
-                                                <linearGradient id={`wg_idx_${job.id}`} x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
-                                                    <stop stopColor="#4ABFF0"/>
-                                                    <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
-                                                </linearGradient>
-                                            </defs>
-                                        </svg>
-                                    </div>
+                                    {/* Figma-aligned dual waves: only rendered when waveMode === 'card' */}
+                                    {waveMode === 'card' && (
+                                        <div className="absolute -bottom-[52px] right-[20px] pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
+                                            <svg
+                                                viewBox="0 0 178 68"
+                                                fill="none"
+                                                className="absolute bottom-0 right-0 w-[190px] h-auto max-w-none select-none"
+                                            >
+                                                <path opacity="0.41" d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z" fill="#B1DFF7"/>
+                                            </svg>
+                                            <svg
+                                                viewBox="0 0 213 84"
+                                                fill="none"
+                                                className="absolute -bottom-[5px] right-[-75px] w-[220px] h-auto max-w-none select-none"
+                                            >
+                                                <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx_${job.id})`}/>
+                                                <defs>
+                                                    <linearGradient id={`wg_idx_${job.id}`} x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                                        <stop stopColor="#4ABFF0"/>
+                                                        <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
+                                                    </linearGradient>
+                                                </defs>
+                                            </svg>
+                                        </div>
+                                    )}
 
                                     {/* Main Card Content */}
                                     <div className="relative z-10">
@@ -386,7 +452,12 @@ export default function KanbanIndex({ jobs, auth }) {
                                             </div>
                                         )}
 
-                                        <div className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-200/90 pt-2 relative z-10">
+                                        <div
+                                            className="mt-3 flex justify-between items-center text-[10px] text-slate-400 border-t-2 border-slate-200 pt-2 relative z-10"
+                                            style={{
+                                                borderTopColor: PIC_THEMES[stage.role]?.primary || '#00A8E8'
+                                            }}
+                                        >
                                             <span className="font-medium text-slate-500">MKT: <strong className="text-slate-700">{job.owner_marketing}</strong></span>
                                             {(() => {
                                                 if (job.stage === 4 && job.tgl_pelaksanaan) {

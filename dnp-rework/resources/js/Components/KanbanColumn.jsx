@@ -6,10 +6,14 @@ export default function KanbanColumn({ stageNumber, title, count, isLocked, role
 
     return (
         <div
-            className="w-80 flex flex-col rounded-2xl bg-slate-100/90 flex-shrink-0 border border-slate-300 border-t-4 shadow-xs backdrop-blur-xs transition-all relative z-10"
+            className="w-80 flex flex-col rounded-2xl flex-shrink-0 border border-slate-300 border-t-4 shadow-xs transition-all relative"
             style={{ borderTopColor: isLocked ? '#94a3b8' : (noTopBorder ? '#cbd5e1' : theme.primary) }}
         >
-            <div className="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl">
+            {/* Column Background (z-0: beneath the wave) */}
+            <div className="absolute inset-0 bg-slate-100/90 rounded-2xl z-0 pointer-events-none" />
+
+            {/* Column Header (z-20: above the wave) */}
+            <div className="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl relative z-20">
                 <div className="flex items-center gap-2 min-w-0">
                     {stageNumber && (
                         <span
@@ -40,7 +44,8 @@ export default function KanbanColumn({ stageNumber, title, count, isLocked, role
                 </span>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-3">
+            {/* Cards List (z-20: above the wave) */}
+            <div className="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-3 relative z-20">
                 {children}
             </div>
         </div>

@@ -10,18 +10,23 @@ export default function KanbanColumn({
     role,
     noTopBorder,
     isCollapsed = false,
-    collapsedVariant = 'capsule', // 'capsule' (New floating pill reference) | 'classic' (Full height strip)
+    collapsedVariant = 'wave-behind', // 'wave-behind' (Wave behind capsule at z-20) | 'wave-front' (Wave in front of capsule at z-0)
     onToggleCollapse,
     children,
 }) {
     const theme = getRoleTheme(role);
 
-    // Collapsed Mode: Variant B - Capsule Floating Pill (Exact User Reference)
-    if (isCollapsed && collapsedVariant === 'capsule') {
+    // Collapsed Mode: Capsule Floating Pill
+    // - 'wave-behind': Capsule is at z-20 (above the z-10 wave, so wave flows behind capsule)
+    // - 'wave-front': Capsule is at z-0 (below the z-10 wave, so wave flows in front of capsule)
+    if (isCollapsed) {
+        const isWaveBehind = collapsedVariant !== 'wave-front';
         return (
             <div
                 onClick={onToggleCollapse}
-                className="w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative cursor-pointer py-4 px-1.5 select-none self-start"
+                className={`w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative cursor-pointer py-4 px-1.5 select-none self-start ${
+                    isWaveBehind ? 'z-20' : 'z-0'
+                }`}
                 style={{ height: 'min(640px, calc(100vh - 220px))' }}
                 title={`${title} (${count} Job) — Klik untuk membuka kolom`}
                 aria-label={`Buka kolom ${title}`}
@@ -61,69 +66,6 @@ export default function KanbanColumn({
                     <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black bg-[#F0F9FF] text-[#00A8E8] border border-[#7DD3FC] shadow-2xs">
                         {count}
                     </span>
-                </div>
-            </div>
-        );
-    }
-
-    // Collapsed Mode: Variant A - Classic Full-Height Strip (Preserved)
-    if (isCollapsed) {
-        return (
-            <div
-                onClick={onToggleCollapse}
-                className="w-14 min-w-[56px] flex flex-col items-center rounded-2xl flex-shrink-0 border border-slate-300 border-t-4 shadow-xs transition-all relative cursor-pointer hover:bg-slate-200/80 group py-3 select-none"
-                style={{ borderTopColor: isLocked ? '#94a3b8' : (noTopBorder ? '#cbd5e1' : theme.primary) }}
-                title={`${title} (${count} Job) — Klik untuk membuka kolom (Jira Expand)`}
-                aria-label={`Buka kolom ${title}`}
-            >
-                {/* Column Background */}
-                <div className="absolute inset-0 bg-slate-100/90 rounded-2xl z-0 pointer-events-none group-hover:bg-slate-200/60 transition-colors" />
-
-                {/* Top Badge: Stage Number, Count Badge, and Lock status */}
-                <div className="relative z-20 flex flex-col items-center gap-1.5 mb-2">
-                    {stageNumber && (
-                        <span
-                            className="w-7 h-7 flex items-center justify-center text-[11px] font-black rounded-lg shadow-2xs"
-                            style={{
-                                backgroundColor: theme.dark,
-                                color: theme.light || '#ffffff',
-                            }}
-                        >
-                            {stageNumber}
-                        </span>
-                    )}
-                    <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-black border transition-colors ${
-                            count > 0
-                                ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs'
-                                : 'bg-slate-100 text-slate-400 border-slate-200'
-                        }`}
-                    >
-                        {count}
-                    </span>
-                    {isLocked && (
-                        <svg className="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                        </svg>
-                    )}
-                </div>
-
-                {/* Vertical Stage Title */}
-                <div className="flex-1 flex items-center justify-center relative z-20 overflow-hidden my-3">
-                    <span
-                        className="font-extrabold text-slate-700 text-xs uppercase tracking-wider whitespace-nowrap"
-                        style={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                        }}
-                    >
-                        {title}
-                    </span>
-                </div>
-
-                {/* Expand Indicator icon at the bottom */}
-                <div className="relative z-20 pt-1 text-slate-400 group-hover:text-[#00A8E8] transition-colors">
-                    <ChevronsRight size={16} />
                 </div>
             </div>
         );

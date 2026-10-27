@@ -10,23 +10,17 @@ export default function KanbanColumn({
     role,
     noTopBorder,
     isCollapsed = false,
-    collapsedVariant = 'wave-behind', // 'wave-behind' (Wave behind capsule at z-20) | 'wave-front' (Wave in front of capsule at z-0)
     onToggleCollapse,
     children,
 }) {
     const theme = getRoleTheme(role);
 
     // Collapsed Mode: Capsule Floating Pill
-    // - 'wave-behind': Capsule is at z-20 (above the z-10 wave, so wave flows behind capsule)
-    // - 'wave-front': Capsule is at z-0 (below the z-10 wave, so wave flows in front of capsule)
     if (isCollapsed) {
-        const isWaveBehind = collapsedVariant !== 'wave-front';
         return (
             <div
                 onClick={onToggleCollapse}
-                className={`w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative cursor-pointer py-4 px-1.5 select-none self-start ${
-                    isWaveBehind ? 'z-20' : 'z-0'
-                }`}
+                className="w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative cursor-pointer py-4 px-1.5 select-none self-start"
                 style={{ height: 'min(640px, calc(100vh - 220px))' }}
                 title={`${title} (${count} Job) — Klik untuk membuka kolom`}
                 aria-label={`Buka kolom ${title}`}

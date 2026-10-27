@@ -268,17 +268,17 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
-            {/* Board Background Wave (Exact Card Vector Geometry, Corner-Anchored, Layered at z-10 Above Column BG & Below Cards) */}
+            {/* Board Background Wave (Exact Card Vector Geometry, Dedicated Corner-Anchored Box at z-10) */}
             {waveMode === 'board' && (
                 <div
-                    className="fixed bottom-0 left-0 lg:left-60 right-0 pointer-events-none z-10 select-none overflow-hidden h-[340px] sm:h-[420px]"
+                    className="fixed bottom-0 right-0 w-[520px] sm:w-[680px] lg:w-[780px] h-[260px] sm:h-[320px] pointer-events-none z-10 select-none overflow-hidden"
                     aria-hidden="true"
                 >
                     {/* Layer 1: Vector 630 Soft Cyan Base Wave (Anchored to Bottom-Right Corner) */}
                     <svg
                         viewBox="0 0 178 68"
                         fill="none"
-                        className="absolute bottom-0 right-0 w-[850px] sm:w-[1100px] lg:w-[1400px] h-auto max-w-none select-none opacity-90"
+                        className="absolute bottom-0 right-0 w-[440px] sm:w-[560px] lg:w-[660px] h-auto max-w-none select-none opacity-90"
                     >
                         <path
                             opacity="0.41"
@@ -291,7 +291,7 @@ export default function KanbanIndex({ jobs, auth }) {
                     <svg
                         viewBox="0 0 213 84"
                         fill="none"
-                        className="absolute bottom-[-15px] right-[-30px] w-[1050px] sm:w-[1350px] lg:w-[1650px] h-auto max-w-none select-none"
+                        className="absolute -bottom-2.5 -right-6 w-[500px] sm:w-[640px] lg:w-[740px] h-auto max-w-none select-none"
                     >
                         <path
                             d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"

@@ -180,32 +180,6 @@ export default function KanbanIndex({ jobs, auth }) {
                             <ChevronRight size={16} />
                         </button>
                     </div>
-
-                    {/* Corner Wave Reference Variations Switcher */}
-                    <div className="flex items-center ml-2 bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-2xs overflow-x-auto max-w-[660px]">
-                        {[
-                            { id: 'ref-large', label: 'Ref Large (920px)', title: 'Sesuai permintaan: diperbesar, cyan geser kanan, grey geser kiri' },
-                            { id: 'ref-high', label: 'Ref XL (1150px)', title: 'Skala ekstra lebar bentang horizontal maksimal' },
-                            { id: 'ref-standard', label: 'Ref Mid (780px)', title: 'Skala proporsional menengah' },
-                            { id: 'ref-subtle', label: 'Ref Subtle', title: 'Skala Large dengan opasitas lembut 60%' },
-                            { id: 'ref-vibrant', label: 'Ref Vibrant', title: 'Skala Large dengan gradien cyan #00A8E8 lebih pekat' },
-                            { id: 'none', label: 'Polos', title: 'Tanpa wave sudut' },
-                        ].map((opt) => (
-                            <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => setCornerWaveStyle(opt.id)}
-                                className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold whitespace-nowrap ${
-                                    cornerWaveStyle === opt.id
-                                        ? 'bg-white text-[#00A8E8] shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-800'
-                                }`}
-                                title={opt.title}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
                 </div>
                 <div className="flex items-center gap-2">
 

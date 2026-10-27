@@ -260,8 +260,8 @@ export default function KanbanIndex({ jobs, auth }) {
                     'ref-subtle': {
                         container: 'w-[1350px] h-[380px]',
                         wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
-                        v630: 'w-[1200px] right-[180px] bottom-0',
-                        v632: 'w-[1350px] right-[-240px] -bottom-[70px]',
+                        v630: 'w-[1125px] right-[170px] bottom-0',
+                        v632: 'w-[1350px] right-[-255px] -bottom-[90px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',

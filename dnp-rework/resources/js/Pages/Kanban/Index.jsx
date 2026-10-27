@@ -229,6 +229,26 @@ export default function KanbanIndex({ jobs, auth }) {
                             <ChevronRight size={16} />
                         </button>
                     </div>
+
+                    {/* Jira-Style Master Collapse/Expand Toggle (Fits all 15 stages in 1 single frame) */}
+                    <button
+                        type="button"
+                        onClick={toggleAllColumns}
+                        className="px-2.5 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition border border-slate-300 shadow-2xs ml-1 select-none"
+                        title={isAllCollapsed ? "Buka Semua Kolom (Expand All)" : "Kecilkan Semua Kolom ke 1 Layar Penuh (Jira Collapse All)"}
+                    >
+                        {isAllCollapsed ? (
+                            <>
+                                <ChevronsRight size={14} className="text-[#00A8E8]" />
+                                <span>Buka Semua</span>
+                            </>
+                        ) : (
+                            <>
+                                <ChevronsLeft size={14} className="text-[#00A8E8]" />
+                                <span>1 Layar Penuh ({visibleStages.length} Kolom)</span>
+                            </>
+                        )}
+                    </button>
                 </div>
                 <div className="flex items-center gap-2">
 
@@ -405,6 +425,8 @@ export default function KanbanIndex({ jobs, auth }) {
                             isLocked={isLocked}
                             role={stage.role}
                             noTopBorder={true}
+                            isCollapsed={collapsedStages.includes(stage.id)}
+                            onToggleCollapse={() => toggleStageCollapse(stage.id)}
                         >
                             {columnJobs.map(job => (
                                 <div

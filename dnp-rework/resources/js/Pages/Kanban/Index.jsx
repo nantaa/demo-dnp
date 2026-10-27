@@ -13,7 +13,7 @@ export default function KanbanIndex({ jobs, auth }) {
     const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
-    const [waveMode, setWaveMode] = useState('card'); // 'card' (wave in card) | 'board' (wave behind cards)
+    const [cornerWaveStyle, setCornerWaveStyle] = useState('ref-standard'); // 'ref-standard' | 'ref-large' | 'ref-subtle' | 'ref-high' | 'ref-vibrant' | 'none'
 
     // Refs and state for horizontal (side) scrollbar synchronization
     const boardRef = useRef(null);
@@ -181,44 +181,30 @@ export default function KanbanIndex({ jobs, auth }) {
                         </button>
                     </div>
 
-                    {/* Wave Placement Style Switcher (3 Variations) */}
-                    <div className="flex items-center ml-2 bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-2xs">
-                        <button
-                            type="button"
-                            onClick={() => setWaveMode('card')}
-                            className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold ${
-                                waveMode === 'card'
-                                    ? 'bg-white text-[#0A385C] shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-800'
-                            }`}
-                            title="Desain 1: Wave di dalam setiap kartu + aksen atas"
-                        >
-                            Wave di Kartu
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setWaveMode('board')}
-                            className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold ${
-                                waveMode === 'board'
-                                    ? 'bg-white text-[#00A8E8] shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-800'
-                            }`}
-                            title="Desain 2: Wave di latar belakang board (di belakang kartu)"
-                        >
-                            Wave Background Board
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setWaveMode('left-accent')}
-                            className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold ${
-                                waveMode === 'left-accent'
-                                    ? 'bg-white text-indigo-700 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-800'
-                            }`}
-                            title="Desain 3: Aksen kiri kartu + garis bawah MKT tebal berwarna (kolom & atas kartu polos)"
-                        >
-                            Aksen Kiri + Garis MKT
-                        </button>
+                    {/* Corner Wave Reference Variations Switcher */}
+                    <div className="flex items-center ml-2 bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-2xs overflow-x-auto max-w-[660px]">
+                        {[
+                            { id: 'ref-standard', label: 'Ref Standard', title: 'Persis referensi card, proporsi pas sudut kanan' },
+                            { id: 'ref-large', label: 'Ref Large', title: 'Persis referensi card, bentang lebih lebar' },
+                            { id: 'ref-subtle', label: 'Ref Subtle', title: 'Persis referensi card, opasitas lembut' },
+                            { id: 'ref-high', label: 'Ref High', title: 'Persis referensi card, lengkungan lebih naik' },
+                            { id: 'ref-vibrant', label: 'Ref Vibrant', title: 'Persis referensi card, kontras gradien lebih pekat' },
+                            { id: 'none', label: 'Polos', title: 'Tanpa wave sudut' },
+                        ].map((opt) => (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setCornerWaveStyle(opt.id)}
+                                className={`px-2.5 py-1 rounded-md transition text-[11px] font-bold whitespace-nowrap ${
+                                    cornerWaveStyle === opt.id
+                                        ? 'bg-white text-[#00A8E8] shadow-xs'
+                                        : 'text-slate-500 hover:text-slate-800'
+                                }`}
+                                title={opt.title}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -268,44 +254,97 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
-            {/* Board Background Wave (Exact Card Vector Geometry, Dedicated Corner-Anchored Box at z-10) */}
-            {(waveMode === 'board' || waveMode === 'left-accent') && (
-                <div
-                    className="fixed bottom-0 right-0 w-[520px] sm:w-[680px] lg:w-[780px] h-[260px] sm:h-[320px] pointer-events-none z-10 select-none overflow-hidden"
-                    aria-hidden="true"
-                >
-                    {/* Layer 1: Vector 630 Soft Cyan Base Wave (Anchored to Bottom-Right Corner) */}
-                    <svg
-                        viewBox="0 0 178 68"
-                        fill="none"
-                        className="absolute bottom-0 right-0 w-[440px] sm:w-[560px] lg:w-[660px] h-auto max-w-none select-none opacity-90"
-                    >
-                        <path
-                            opacity="0.41"
-                            d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z"
-                            fill="#B1DFF7"
-                        />
-                    </svg>
+            {/* Corner Wave Background Layering (Exact Reference Card Geometry, Bottom-Clipped) */}
+            {cornerWaveStyle !== 'none' && (() => {
+                const configs = {
+                    'ref-standard': {
+                        container: 'w-[420px] h-[92px]',
+                        wrapper: '-bottom-[86px] right-0 w-[420px] h-[168px]',
+                        v630: 'w-[375px]',
+                        v632: 'w-[420px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-large': {
+                        container: 'w-[580px] h-[126px]',
+                        wrapper: '-bottom-[119px] right-0 w-[580px] h-[232px]',
+                        v630: 'w-[517px]',
+                        v632: 'w-[580px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-subtle': {
+                        container: 'w-[420px] h-[92px]',
+                        wrapper: '-bottom-[86px] right-0 w-[420px] h-[168px]',
+                        v630: 'w-[375px]',
+                        v632: 'w-[420px]',
+                        opacity: 'opacity-60',
+                        gradStops: ['#4ABFF0', 0.8, '#4ABFF0', 0],
+                        baseOpacity: '0.28',
+                    },
+                    'ref-high': {
+                        container: 'w-[260px] h-[58px]',
+                        wrapper: '-bottom-[53px] right-0 w-[260px] h-[104px]',
+                        v630: 'w-[232px]',
+                        v632: 'w-[260px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-vibrant': {
+                        container: 'w-[460px] h-[100px]',
+                        wrapper: '-bottom-[94px] right-0 w-[460px] h-[184px]',
+                        v630: 'w-[410px]',
+                        v632: 'w-[460px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#00A8E8', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.52',
+                    },
+                };
+                const cfg = configs[cornerWaveStyle] || configs['ref-standard'];
 
-                    {/* Layer 2: Vector 632 Cyan Gradient Wave (Corner-Clipped S-Curve) */}
-                    <svg
-                        viewBox="0 0 213 84"
-                        fill="none"
-                        className="absolute -bottom-2.5 -right-6 w-[500px] sm:w-[640px] lg:w-[740px] h-auto max-w-none select-none"
+                return (
+                    <div
+                        className={`fixed bottom-0 right-0 ${cfg.container} pointer-events-none z-10 select-none overflow-hidden ${cfg.opacity}`}
+                        aria-hidden="true"
                     >
-                        <path
-                            d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"
-                            fill="url(#figma_board_corner_wave_grad)"
-                        />
-                        <defs>
-                            <linearGradient id="figma_board_corner_wave_grad" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#4ABFF0"/>
-                                <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </div>
-            )}
+                        <div className={`absolute ${cfg.wrapper} pointer-events-none z-0 select-none overflow-visible`}>
+                            {/* Vector 630: Soft Cyan Base Wave from Figma */}
+                            <svg
+                                viewBox="0 0 178 68"
+                                fill="none"
+                                className={`absolute bottom-0 right-0 ${cfg.v630} h-auto max-w-none select-none`}
+                            >
+                                <path
+                                    opacity={cfg.baseOpacity}
+                                    d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z"
+                                    fill="#B1DFF7"
+                                />
+                            </svg>
+
+                            {/* Vector 632: Cyan Gradient Flowing Crest Wave from Figma */}
+                            <svg
+                                viewBox="0 0 213 84"
+                                fill="none"
+                                className={`absolute bottom-0 right-0 ${cfg.v632} h-auto max-w-none select-none`}
+                            >
+                                <path
+                                    d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"
+                                    fill="url(#ref_board_wave_grad)"
+                                />
+                                <defs>
+                                    <linearGradient id="ref_board_wave_grad" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                        <stop stopColor={cfg.gradStops[0]} stopOpacity={cfg.gradStops[1]} />
+                                        <stop offset="1" stopColor={cfg.gradStops[2]} stopOpacity={cfg.gradStops[3]} />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                    </div>
+                );
+            })()}
 
             <div
                 ref={boardRef}
@@ -342,7 +381,7 @@ export default function KanbanIndex({ jobs, auth }) {
                             count={columnJobs.length}
                             isLocked={isLocked}
                             role={stage.role}
-                            noTopBorder={waveMode === 'left-accent'}
+                            noTopBorder={true}
                         >
                             {columnJobs.map(job => (
                                 <div
@@ -350,52 +389,15 @@ export default function KanbanIndex({ jobs, auth }) {
                                     onClick={() => setSelectedJob(job)}
                                     className="bg-white p-3.5 mb-2 rounded-xl shadow-xs border border-slate-200/90 cursor-pointer hover:border-[#00A8E8] hover:shadow-md transition-all group relative z-20 overflow-hidden"
                                 >
-                                    {/* DNP Accent Line Indicator: Top for card/board mode, Left for left-accent mode */}
-                                    {waveMode !== 'left-accent' ? (
-                                        <div
-                                            className={`absolute top-0 left-0 right-0 h-1 transition-opacity opacity-100 ${PIC_THEMES[stage.role]?.accent || ''}`}
-                                            style={{
-                                                background: job.stage === 16
-                                                    ? 'linear-gradient(to right, #176132, #35B558)'
-                                                    : `linear-gradient(to right, ${PIC_THEMES[stage.role]?.dark || '#0A385C'}, ${PIC_THEMES[stage.role]?.primary || '#00A8E8'})`
-                                            }}
-                                        />
-                                    ) : (
-                                        <div
-                                            className="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-xl transition-all"
-                                            style={{
-                                                backgroundColor: job.stage === 16
-                                                    ? '#35B558'
-                                                    : (PIC_THEMES[stage.role]?.primary || '#00A8E8')
-                                            }}
-                                        />
-                                    )}
-
-                                    {/* Figma-aligned dual waves: ONLY rendered in 'card' mode (deleted in left-accent and board mode) */}
-                                    {waveMode === 'card' && (
-                                        <div className="absolute -bottom-[52px] right-[20px] pointer-events-none z-0 select-none w-[220px] h-[84px] overflow-visible" aria-hidden="true">
-                                            <svg
-                                                viewBox="0 0 178 68"
-                                                fill="none"
-                                                className="absolute bottom-0 right-0 w-[190px] h-auto max-w-none select-none"
-                                            >
-                                                <path opacity="0.41" d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z" fill="#B1DFF7"/>
-                                            </svg>
-                                            <svg
-                                                viewBox="0 0 213 84"
-                                                fill="none"
-                                                className="absolute -bottom-[5px] right-[-75px] w-[220px] h-auto max-w-none select-none"
-                                            >
-                                                <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill={`url(#wg_idx_${job.id})`}/>
-                                                <defs>
-                                                    <linearGradient id={`wg_idx_${job.id}`} x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
-                                                        <stop stopColor="#4ABFF0"/>
-                                                        <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
-                                                    </linearGradient>
-                                                </defs>
-                                            </svg>
-                                        </div>
-                                    )}
+                                    {/* Aksen Kiri Bar: Role-colored solid pill indicator on card left edge */}
+                                    <div
+                                        className="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-xl transition-all"
+                                        style={{
+                                            backgroundColor: job.stage === 16
+                                                ? '#35B558'
+                                                : (PIC_THEMES[stage.role]?.primary || '#00A8E8')
+                                        }}
+                                    />
 
                                     {/* Main Card Content */}
                                     <div className="relative z-10">
@@ -480,16 +482,12 @@ export default function KanbanIndex({ jobs, auth }) {
                                             </div>
                                         )}
 
-                                        {/* Divider line above MKT personnel and wave: bold & color-accented in left-accent mode */}
+                                        {/* Divider line above MKT personnel: solid color accent matching PIC role */}
                                         <div
-                                            className={`mt-3 flex justify-between items-center text-[10px] text-slate-400 pt-2 relative z-10 transition-colors ${
-                                                waveMode === 'left-accent'
-                                                    ? 'border-t-2'
-                                                    : 'border-t border-slate-200/90'
-                                            }`}
-                                            style={waveMode === 'left-accent' ? {
+                                            className="mt-3 flex justify-between items-center text-[10px] text-slate-400 pt-2 relative z-10 transition-colors border-t-2"
+                                            style={{
                                                 borderTopColor: PIC_THEMES[stage.role]?.primary || '#00A8E8'
-                                            } : undefined}
+                                            }}
                                         >
                                             <span className="font-medium text-slate-500">MKT: <strong className="text-slate-700">{job.owner_marketing}</strong></span>
                                             {(() => {

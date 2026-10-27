@@ -10,12 +10,63 @@ export default function KanbanColumn({
     role,
     noTopBorder,
     isCollapsed = false,
+    collapsedVariant = 'capsule', // 'capsule' (New floating pill reference) | 'classic' (Full height strip)
     onToggleCollapse,
     children,
 }) {
     const theme = getRoleTheme(role);
 
-    // Collapsed Mode (Jira-Style Vertical Strip: w-14 / 56px, fits all 15 stages in 1 single frame < 1000px)
+    // Collapsed Mode: Variant B - Capsule Floating Pill (Exact User Reference)
+    if (isCollapsed && collapsedVariant === 'capsule') {
+        return (
+            <div
+                onClick={onToggleCollapse}
+                className="w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative cursor-pointer py-4 px-1.5 select-none self-start"
+                style={{ height: 'min(640px, calc(100vh - 220px))' }}
+                title={`${title} (${count} Job) — Klik untuk membuka kolom`}
+                aria-label={`Buka kolom ${title}`}
+            >
+                {/* Top: Stage Number Pill in role theme color + Lock icon */}
+                <div className="flex flex-col items-center gap-1.5 shrink-0">
+                    {stageNumber && (
+                        <span
+                            className="min-w-[28px] h-7 px-1 flex items-center justify-center text-[11px] font-black rounded-lg shadow-2xs text-white"
+                            style={{ backgroundColor: theme.primary }}
+                        >
+                            {stageNumber}
+                        </span>
+                    )}
+                    {isLocked && (
+                        <svg className="w-3.5 h-3.5 text-slate-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                    )}
+                </div>
+
+                {/* Middle: Vertical Title reading downwards (Top to Bottom) */}
+                <div className="flex-1 flex items-center justify-center overflow-hidden my-3 py-2">
+                    <span
+                        className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider whitespace-nowrap"
+                        style={{
+                            writingMode: 'vertical-rl',
+                            textOrientation: 'mixed',
+                        }}
+                    >
+                        {title}
+                    </span>
+                </div>
+
+                {/* Bottom: Circular Count Pill */}
+                <div className="shrink-0">
+                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black bg-[#F0F9FF] text-[#00A8E8] border border-[#7DD3FC] shadow-2xs">
+                        {count}
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
+    // Collapsed Mode: Variant A - Classic Full-Height Strip (Preserved)
     if (isCollapsed) {
         return (
             <div

@@ -28,6 +28,27 @@ export default function KanbanIndex({ jobs, auth }) {
         return [];
     });
 
+    // Collapsed Column Style Variant: 'capsule' (Floating Pill) | 'classic' (Jira Full Strip)
+    const [collapsedVariant, setCollapsedVariant] = useState(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            try {
+                return localStorage.getItem('dnp_kanban_collapsed_variant') || 'capsule';
+            } catch (e) {
+                return 'capsule';
+            }
+        }
+        return 'capsule';
+    });
+
+    const handleSetCollapsedVariant = (variant) => {
+        setCollapsedVariant(variant);
+        if (typeof window !== 'undefined' && window.localStorage) {
+            try {
+                localStorage.setItem('dnp_kanban_collapsed_variant', variant);
+            } catch (e) {}
+        }
+    };
+
     const toggleStageCollapse = (stageId) => {
         setCollapsedStages(prev => {
             const next = prev.includes(stageId)

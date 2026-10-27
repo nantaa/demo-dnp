@@ -1,9 +1,84 @@
 import React from 'react';
 import { PIC_THEMES, getRoleTheme } from '@/Constants';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 
-export default function KanbanColumn({ stageNumber, title, count, isLocked, role, noTopBorder, children }) {
+export default function KanbanColumn({
+    stageNumber,
+    title,
+    count,
+    isLocked,
+    role,
+    noTopBorder,
+    isCollapsed = false,
+    onToggleCollapse,
+    children,
+}) {
     const theme = getRoleTheme(role);
 
+    // Collapsed Mode (Jira-Style Vertical Strip: w-14 / 56px, fits all 15 stages in 1 single frame < 1000px)
+    if (isCollapsed) {
+        return (
+            <div
+                onClick={onToggleCollapse}
+                className="w-14 min-w-[56px] flex flex-col items-center rounded-2xl flex-shrink-0 border border-slate-300 border-t-4 shadow-xs transition-all relative cursor-pointer hover:bg-slate-200/80 group py-3 select-none"
+                style={{ borderTopColor: isLocked ? '#94a3b8' : (noTopBorder ? '#cbd5e1' : theme.primary) }}
+                title={`${title} (${count} Job) — Klik untuk membuka kolom (Jira Expand)`}
+                aria-label={`Buka kolom ${title}`}
+            >
+                {/* Column Background */}
+                <div className="absolute inset-0 bg-slate-100/90 rounded-2xl z-0 pointer-events-none group-hover:bg-slate-200/60 transition-colors" />
+
+                {/* Top Badge: Stage Number, Count Badge, and Lock status */}
+                <div className="relative z-20 flex flex-col items-center gap-1.5 mb-2">
+                    {stageNumber && (
+                        <span
+                            className="w-7 h-7 flex items-center justify-center text-[11px] font-black rounded-lg shadow-2xs"
+                            style={{
+                                backgroundColor: theme.dark,
+                                color: theme.light || '#ffffff',
+                            }}
+                        >
+                            {stageNumber}
+                        </span>
+                    )}
+                    <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-black border transition-colors ${
+                            count > 0
+                                ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs'
+                                : 'bg-slate-100 text-slate-400 border-slate-200'
+                        }`}
+                    >
+                        {count}
+                    </span>
+                    {isLocked && (
+                        <svg className="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                    )}
+                </div>
+
+                {/* Vertical Stage Title */}
+                <div className="flex-1 flex items-center justify-center relative z-20 overflow-hidden my-3">
+                    <span
+                        className="font-extrabold text-slate-700 text-xs uppercase tracking-wider whitespace-nowrap"
+                        style={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                        }}
+                    >
+                        {title}
+                    </span>
+                </div>
+
+                {/* Expand Indicator icon at the bottom */}
+                <div className="relative z-20 pt-1 text-slate-400 group-hover:text-[#00A8E8] transition-colors">
+                    <ChevronsRight size={16} />
+                </div>
+            </div>
+        );
+    }
+
+    // Expanded Mode (Normal Kanban Column: w-80 / 320px)
     return (
         <div
             className="w-80 flex flex-col rounded-2xl flex-shrink-0 border border-slate-300 border-t-4 shadow-xs transition-all relative"
@@ -35,13 +110,29 @@ export default function KanbanColumn({ stageNumber, title, count, isLocked, role
                         {title}
                     </h2>
                 </div>
-                <span className={`shrink-0 ml-2 px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${
-                    count > 0 
-                        ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs' 
-                        : 'bg-slate-100 text-slate-400 border-slate-200'
-                }`}>
-                    {count}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${
+                        count > 0 
+                            ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs' 
+                            : 'bg-slate-100 text-slate-400 border-slate-200'
+                    }`}>
+                        {count}
+                    </span>
+                    {onToggleCollapse && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleCollapse();
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                            title="Kecilkan kolom (Jira Collapse)"
+                            aria-label={`Kecilkan kolom ${title}`}
+                        >
+                            <ChevronsLeft size={16} />
+                        </button>
+                    )}
+                </div>
             </div>
             
             {/* Cards List (z-20: above the wave) */}

@@ -269,7 +269,7 @@ export default function KanbanIndex({ jobs, auth }) {
             </div>
 
             {/* Board Background Wave (Exact Card Vector Geometry, Dedicated Corner-Anchored Box at z-10) */}
-            {waveMode === 'board' && (
+            {(waveMode === 'board' || waveMode === 'left-accent') && (
                 <div
                     className="fixed bottom-0 right-0 w-[520px] sm:w-[680px] lg:w-[780px] h-[260px] sm:h-[320px] pointer-events-none z-10 select-none overflow-hidden"
                     aria-hidden="true"

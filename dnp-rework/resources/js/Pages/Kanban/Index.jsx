@@ -268,46 +268,42 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
-            {/* Board Background Wave (Pure CSS Manual Construction — No SVG, Above Column Background, Below Cards) */}
+            {/* Board Background Wave (Exact Card Vector Geometry, Corner-Anchored, Layered at z-10 Above Column BG & Below Cards) */}
             {waveMode === 'board' && (
                 <div
-                    className="fixed bottom-0 left-0 lg:left-60 right-0 pointer-events-none z-10 select-none overflow-hidden h-[340px] sm:h-[400px]"
+                    className="fixed bottom-0 left-0 lg:left-60 right-0 pointer-events-none z-10 select-none overflow-hidden h-[340px] sm:h-[420px]"
                     aria-hidden="true"
                 >
-                    {/* Ambient soft blue base wave */}
-                    <div
-                        className="absolute -bottom-28 left-[18%] sm:left-[22%] w-[115%] h-[440px] pointer-events-none"
-                        style={{
-                            borderRadius: '55% 45% 0 0 / 100% 100% 0 0',
-                            background: 'linear-gradient(125deg, rgba(177, 223, 247, 0.22) 0%, rgba(186, 230, 253, 0.48) 40%, rgba(224, 242, 254, 0.70) 100%)',
-                            transform: 'rotate(-3deg)',
-                            transformOrigin: 'bottom left',
-                        }}
-                    />
+                    {/* Layer 1: Vector 630 Soft Cyan Base Wave (Anchored to Bottom-Right Corner) */}
+                    <svg
+                        viewBox="0 0 178 68"
+                        fill="none"
+                        className="absolute bottom-0 right-0 w-[850px] sm:w-[1100px] lg:w-[1400px] h-auto max-w-none select-none opacity-90"
+                    >
+                        <path
+                            opacity="0.41"
+                            d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z"
+                            fill="#B1DFF7"
+                        />
+                    </svg>
 
-                    {/* Flowing crest ribbon wave (matching Figma cyan gradient) */}
-                    <div
-                        className="absolute -bottom-20 left-[22%] sm:left-[26%] w-[100%] h-[380px] pointer-events-none"
-                        style={{
-                            borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
-                            borderTop: '32px solid rgba(74, 191, 240, 0.50)',
-                            background: 'linear-gradient(180deg, rgba(56, 189, 248, 0.25) 0%, rgba(186, 230, 253, 0.08) 60%, transparent 100%)',
-                            transform: 'rotate(-2.5deg)',
-                            transformOrigin: 'bottom left',
-                            boxShadow: '0 -4px 18px rgba(0, 168, 232, 0.20)',
-                        }}
-                    />
-
-                    {/* Secondary subtle crest highlight arc */}
-                    <div
-                        className="absolute -bottom-16 left-[28%] sm:left-[32%] w-[88%] h-[320px] pointer-events-none"
-                        style={{
-                            borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
-                            borderTop: '6px solid rgba(2, 132, 199, 0.35)',
-                            transform: 'rotate(-1.5deg)',
-                            transformOrigin: 'bottom left',
-                        }}
-                    />
+                    {/* Layer 2: Vector 632 Cyan Gradient Wave (Corner-Clipped S-Curve) */}
+                    <svg
+                        viewBox="0 0 213 84"
+                        fill="none"
+                        className="absolute bottom-[-15px] right-[-30px] w-[1050px] sm:w-[1350px] lg:w-[1650px] h-auto max-w-none select-none"
+                    >
+                        <path
+                            d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"
+                            fill="url(#figma_board_corner_wave_grad)"
+                        />
+                        <defs>
+                            <linearGradient id="figma_board_corner_wave_grad" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                                <stop stopColor="#4ABFF0"/>
+                                <stop offset="1" stopColor="#4ABFF0" stopOpacity="0"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
                 </div>
             )}
 

@@ -19,8 +19,24 @@ export const STAGES = [
 ];
 
 export const PIC_THEMES = {
-    marketing: {
-        primary: '#2A9FBC', // Aqua-Marine (PMS 7459 C)
+    // 1. Super Admin - Black #000000
+    superadmin: {
+        primary: '#000000',
+        dark: '#111827',
+        light: '#F3F4F6',
+        border: 'border-t-[#000000]',
+        badge: 'bg-[#111827] text-white',
+        pillBorder: 'border-black',
+        pillBg: 'bg-black/10',
+        avatarBg: 'bg-[#111827]',
+        avatarText: 'text-white',
+        accent: 'from-black to-gray-800',
+        label: 'SUP',
+        name: 'Super Administrator',
+    },
+    // 2. Tim Ru - Aqua Marine #2A9FBC
+    inspektur: {
+        primary: '#2A9FBC',
         dark: '#0E4F5F',
         light: '#B7E2EC',
         border: 'border-t-[#2A9FBC]',
@@ -30,39 +46,12 @@ export const PIC_THEMES = {
         avatarBg: 'bg-[#0E4F5F]',
         avatarText: 'text-[#2A9FBC]',
         accent: 'from-[#0E4F5F] to-[#2A9FBC]',
-        label: 'MKT',
-        name: 'Marketing',
-    },
-    admin: {
-        primary: '#4764AF', // Blue (PMS 7456 C)
-        dark: '#193B68',
-        light: '#A9C9ED',
-        border: 'border-t-[#4764AF]',
-        badge: 'bg-[#193B68] text-[#A9C9ED]',
-        pillBorder: 'border-[#4764AF]',
-        pillBg: 'bg-[#4764AF]/10',
-        avatarBg: 'bg-[#193B68]',
-        avatarText: 'text-[#4764AF]',
-        accent: 'from-[#193B68] to-[#4764AF]',
-        label: 'ADM',
-        name: 'Admin Dokumen',
-    },
-    inspektur: {
-        primary: '#6BC6B3', // Turquoise (PMS 3248 C)
-        dark: '#36635A',
-        light: '#97D4C7',
-        border: 'border-t-[#6BC6B3]',
-        badge: 'bg-[#36635A] text-[#97D4C7]',
-        pillBorder: 'border-[#6BC6B3]',
-        pillBg: 'bg-[#6BC6B3]/10',
-        avatarBg: 'bg-[#36635A]',
-        avatarText: 'text-[#6BC6B3]',
-        accent: 'from-[#36635A] to-[#6BC6B3]',
         label: 'TRU',
         name: 'Tim Riksa Uji',
     },
-    tim_ahli: {
-        primary: '#F7B71F', // Yellow (PMS 7408 C)
+    // 3. Admin - Yellow #F7B71F
+    admin: {
+        primary: '#F7B71F',
         dark: '#7C5C25',
         light: '#FACD85',
         border: 'border-t-[#F7B71F]',
@@ -72,25 +61,12 @@ export const PIC_THEMES = {
         avatarBg: 'bg-[#7C5C25]',
         avatarText: 'text-[#F7B71F]',
         accent: 'from-[#7C5C25] to-[#F7B71F]',
-        label: 'AHLI',
-        name: 'Tim Ahli',
+        label: 'ADM',
+        name: 'Admin Dokumen',
     },
-    finance: {
-        primary: '#90499B', // Purple (PMS 258 C)
-        dark: '#49254C',
-        light: '#E2C4DE',
-        border: 'border-t-[#90499B]',
-        badge: 'bg-[#49254C] text-[#E2C4DE]',
-        pillBorder: 'border-[#90499B]',
-        pillBg: 'bg-[#90499B]/10',
-        avatarBg: 'bg-[#49254C]',
-        avatarText: 'text-[#90499B]',
-        accent: 'from-[#49254C] to-[#90499B]',
-        label: 'FIN',
-        name: 'Admin Keuangan',
-    },
-    manager: {
-        primary: '#A62E5C', // Plum (PMS 7434)
+    // 4. Marketing - Plum #A62E5C
+    marketing: {
+        primary: '#A62E5C',
         dark: '#661C3D',
         light: '#D1488C',
         border: 'border-t-[#A62E5C]',
@@ -100,11 +76,12 @@ export const PIC_THEMES = {
         avatarBg: 'bg-[#661C3D]',
         avatarText: 'text-[#A62E5C]',
         accent: 'from-[#661C3D] to-[#A62E5C]',
-        label: 'MGR',
-        name: 'Kadiv RU / Manager',
+        label: 'MKT',
+        name: 'Marketing',
     },
-    superadmin: {
-        primary: '#35B558', // Green (PMS 7481 C)
+    // 5. Finance - Green #35B558
+    finance: {
+        primary: '#35B558',
         dark: '#176132',
         light: '#5DBE7F',
         border: 'border-t-[#35B558]',
@@ -114,12 +91,45 @@ export const PIC_THEMES = {
         avatarBg: 'bg-[#176132]',
         avatarText: 'text-[#35B558]',
         accent: 'from-[#176132] to-[#35B558]',
-        label: 'SUP',
-        name: 'Super Administrator',
+        label: 'FIN',
+        name: 'Admin Keuangan',
+    },
+    // 6. Tenaga Ahli - Purple #90499B
+    tim_ahli: {
+        primary: '#90499B',
+        dark: '#49254C',
+        light: '#E2C4DE',
+        border: 'border-t-[#90499B]',
+        badge: 'bg-[#49254C] text-[#E2C4DE]',
+        pillBorder: 'border-[#90499B]',
+        pillBg: 'bg-[#90499B]/10',
+        avatarBg: 'bg-[#49254C]',
+        avatarText: 'text-[#90499B]',
+        accent: 'from-[#49254C] to-[#90499B]',
+        label: 'AHLI',
+        name: 'Tenaga Ahli',
+    },
+    // 7. Management - Blue #4764AF
+    manager: {
+        primary: '#4764AF',
+        dark: '#193B68',
+        light: '#A9C9ED',
+        border: 'border-t-[#4764AF]',
+        badge: 'bg-[#193B68] text-[#A9C9ED]',
+        pillBorder: 'border-[#4764AF]',
+        pillBg: 'bg-[#4764AF]/10',
+        avatarBg: 'bg-[#193B68]',
+        avatarText: 'text-[#4764AF]',
+        accent: 'from-[#193B68] to-[#4764AF]',
+        label: 'MGR',
+        name: 'Management / Kadiv RU',
     },
 };
 PIC_THEMES.tim_ru = PIC_THEMES.inspektur;
 PIC_THEMES.inspector = PIC_THEMES.inspektur;
+PIC_THEMES.management = PIC_THEMES.manager;
+PIC_THEMES.tenaga_ahli = PIC_THEMES.tim_ahli;
+PIC_THEMES.super_admin = PIC_THEMES.superadmin;
 
 export const getRoleTheme = (role) => {
     const key = String(role || '').toLowerCase();

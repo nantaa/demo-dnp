@@ -38,7 +38,7 @@ export default function KanbanIndex({ jobs, auth }) {
             if (typeof window !== 'undefined' && window.localStorage) {
                 try {
                     localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(next));
-                } catch (e) {}
+                } catch (e) { }
             }
             return next;
         });
@@ -53,7 +53,7 @@ export default function KanbanIndex({ jobs, auth }) {
             if (typeof window !== 'undefined' && window.localStorage) {
                 try {
                     localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify([]));
-                } catch (e) {}
+                } catch (e) { }
             }
         } else {
             const allIds = visibleStages.map(s => s.id);
@@ -61,7 +61,7 @@ export default function KanbanIndex({ jobs, auth }) {
             if (typeof window !== 'undefined' && window.localStorage) {
                 try {
                     localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(allIds));
-                } catch (e) {}
+                } catch (e) { }
             }
         }
     };
@@ -247,7 +247,7 @@ export default function KanbanIndex({ jobs, auth }) {
                         ) : (
                             <>
                                 <ChevronsLeft size={14} className="text-[#00A8E8]" />
-                                <span>1 Layar Penuh ({visibleStages.length} Kolom)</span>
+                                <span>Buka Semua</span>
                             </>
                         )}
                     </button>
@@ -263,8 +263,8 @@ export default function KanbanIndex({ jobs, auth }) {
                         <button
                             onClick={() => setShowSelesai(s => !s)}
                             className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition ${showSelesai
-                                    ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
+                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300'
                                 }`}
                             title="Tampilkan / Sembunyikan kolom arsip job Selesai pada Kanban board"
                         >

@@ -270,6 +270,36 @@ export default function KanbanIndex({ jobs, auth }) {
                             </>
                         )}
                     </button>
+
+                    {/* Collapsed Column Style Variation Switcher (Capsule vs Classic Strip) */}
+                    <div className="flex items-center bg-white border border-slate-300 rounded-lg p-0.5 shadow-2xs text-xs ml-1 select-none">
+                        <button
+                            type="button"
+                            onClick={() => handleSetCollapsedVariant('capsule')}
+                            className={`px-2.5 py-1 rounded-md font-bold text-xs transition flex items-center gap-1.5 ${
+                                collapsedVariant === 'capsule'
+                                    ? 'bg-[#00A8E8] text-white shadow-2xs'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                            }`}
+                            title="Variasi Kapsul: Floating Pill dengan nomor stage di atas, teks vertikal top-to-bottom, dan badge job di bawah (Sesuai Mockup)"
+                        >
+                            <span className="w-1.5 h-3 rounded-full border border-current inline-block"></span>
+                            <span>Kapsul</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleSetCollapsedVariant('classic')}
+                            className={`px-2.5 py-1 rounded-md font-bold text-xs transition flex items-center gap-1.5 ${
+                                collapsedVariant === 'classic'
+                                    ? 'bg-[#00A8E8] text-white shadow-2xs'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                            }`}
+                            title="Variasi Klasik: Full Height Strip Jira dengan border atas warna PIC, expand chevron, dan teks bottom-to-top"
+                        >
+                            <span className="w-1.5 h-3 rounded-xs border-t-2 border-current inline-block"></span>
+                            <span>Klasik</span>
+                        </button>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
 

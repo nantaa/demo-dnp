@@ -13,7 +13,7 @@ export default function KanbanIndex({ jobs, auth }) {
     const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
-    const [cornerWaveStyle, setCornerWaveStyle] = useState('ref-standard'); // 'ref-standard' | 'ref-large' | 'ref-subtle' | 'ref-high' | 'ref-vibrant' | 'none'
+    const [cornerWaveStyle, setCornerWaveStyle] = useState('ref-subtle'); // 'ref-subtle' (user-selected alternative 4) | 'ref-large' | 'ref-high' | 'ref-standard' | 'ref-vibrant' | 'none'
 
     // Refs and state for horizontal (side) scrollbar synchronization
     const boardRef = useRef(null);
@@ -184,11 +184,11 @@ export default function KanbanIndex({ jobs, auth }) {
                     {/* Corner Wave Reference Variations Switcher */}
                     <div className="flex items-center ml-2 bg-slate-100 p-0.5 rounded-lg border border-slate-300 text-xs font-semibold shadow-2xs overflow-x-auto max-w-[660px]">
                         {[
-                            { id: 'ref-standard', label: 'Ref Standard', title: 'Persis referensi card, proporsi pas sudut kanan' },
-                            { id: 'ref-large', label: 'Ref Large', title: 'Persis referensi card, bentang lebih lebar' },
-                            { id: 'ref-subtle', label: 'Ref Subtle', title: 'Persis referensi card, opasitas lembut' },
-                            { id: 'ref-high', label: 'Ref High', title: 'Persis referensi card, lengkungan lebih naik' },
-                            { id: 'ref-vibrant', label: 'Ref Vibrant', title: 'Persis referensi card, kontras gradien lebih pekat' },
+                            { id: 'ref-large', label: 'Ref Large (920px)', title: 'Sesuai permintaan: diperbesar, cyan geser kanan, grey geser kiri' },
+                            { id: 'ref-high', label: 'Ref XL (1150px)', title: 'Skala ekstra lebar bentang horizontal maksimal' },
+                            { id: 'ref-standard', label: 'Ref Mid (780px)', title: 'Skala proporsional menengah' },
+                            { id: 'ref-subtle', label: 'Ref Subtle', title: 'Skala Large dengan opasitas lembut 60%' },
+                            { id: 'ref-vibrant', label: 'Ref Vibrant', title: 'Skala Large dengan gradien cyan #00A8E8 lebih pekat' },
                             { id: 'none', label: 'Polos', title: 'Tanpa wave sudut' },
                         ].map((opt) => (
                             <button
@@ -254,56 +254,56 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
-            {/* Corner Wave Background Layering (Exact Reference Card Geometry, Bottom-Clipped) */}
+            {/* Corner Wave Background Layering (Exact Reference Wave with Calibrated X/Y Directional Shift) */}
             {cornerWaveStyle !== 'none' && (() => {
                 const configs = {
-                    'ref-standard': {
-                        container: 'w-[420px] h-[92px]',
-                        wrapper: '-bottom-[86px] right-0 w-[420px] h-[168px]',
-                        v630: 'w-[375px]',
-                        v632: 'w-[420px]',
+                    'ref-large': {
+                        container: 'w-[1300px] h-[380px]',
+                        wrapper: '-bottom-[150px] right-0 w-[1300px] h-[520px]',
+                        v630: 'w-[1200px] right-[180px] bottom-0',
+                        v632: 'w-[1300px] right-[-280px] -bottom-[55px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
-                    'ref-large': {
-                        container: 'w-[580px] h-[126px]',
-                        wrapper: '-bottom-[119px] right-0 w-[580px] h-[232px]',
-                        v630: 'w-[517px]',
-                        v632: 'w-[580px]',
+                    'ref-high': {
+                        container: 'w-[1350px] h-[380px]',
+                        wrapper: '-bottom-[150px] right-0 w-[1350px] h-[540px]',
+                        v630: 'w-[1200px] right-[180px] bottom-0',
+                        v632: 'w-[1350px] right-[-340px] -bottom-[75px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-standard': {
+                        container: 'w-[1250px] h-[380px]',
+                        wrapper: '-bottom-[140px] right-0 w-[1250px] h-[500px]',
+                        v630: 'w-[1180px] right-[180px] bottom-0',
+                        v632: 'w-[1250px] right-[-220px] -bottom-[40px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
                     'ref-subtle': {
-                        container: 'w-[420px] h-[92px]',
-                        wrapper: '-bottom-[86px] right-0 w-[420px] h-[168px]',
-                        v630: 'w-[375px]',
-                        v632: 'w-[420px]',
-                        opacity: 'opacity-60',
-                        gradStops: ['#4ABFF0', 0.8, '#4ABFF0', 0],
-                        baseOpacity: '0.28',
-                    },
-                    'ref-high': {
-                        container: 'w-[260px] h-[58px]',
-                        wrapper: '-bottom-[53px] right-0 w-[260px] h-[104px]',
-                        v630: 'w-[232px]',
-                        v632: 'w-[260px]',
+                        container: 'w-[1350px] h-[380px]',
+                        wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
+                        v630: 'w-[1100px] right-[240px] bottom-0',
+                        v632: 'w-[1350px] right-[-260px] -bottom-[55px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
                     'ref-vibrant': {
-                        container: 'w-[460px] h-[100px]',
-                        wrapper: '-bottom-[94px] right-0 w-[460px] h-[184px]',
-                        v630: 'w-[410px]',
-                        v632: 'w-[460px]',
+                        container: 'w-[1300px] h-[380px]',
+                        wrapper: '-bottom-[150px] right-0 w-[1300px] h-[520px]',
+                        v630: 'w-[1200px] right-[180px] bottom-0',
+                        v632: 'w-[1300px] right-[-280px] -bottom-[55px]',
                         opacity: 'opacity-100',
                         gradStops: ['#00A8E8', 1, '#4ABFF0', 0],
                         baseOpacity: '0.52',
                     },
                 };
-                const cfg = configs[cornerWaveStyle] || configs['ref-standard'];
+                const cfg = configs[cornerWaveStyle] || configs['ref-subtle'];
 
                 return (
                     <div
@@ -311,11 +311,11 @@ export default function KanbanIndex({ jobs, auth }) {
                         aria-hidden="true"
                     >
                         <div className={`absolute ${cfg.wrapper} pointer-events-none z-0 select-none overflow-visible`}>
-                            {/* Vector 630: Soft Cyan Base Wave from Figma */}
+                            {/* Vector 630: Soft Base Wave (Checkmarked Position) */}
                             <svg
                                 viewBox="0 0 178 68"
                                 fill="none"
-                                className={`absolute bottom-0 right-0 ${cfg.v630} h-auto max-w-none select-none`}
+                                className={`absolute ${cfg.v630} h-auto max-w-none select-none`}
                             >
                                 <path
                                     opacity={cfg.baseOpacity}
@@ -324,11 +324,11 @@ export default function KanbanIndex({ jobs, auth }) {
                                 />
                             </svg>
 
-                            {/* Vector 632: Cyan Gradient Flowing Crest Wave from Figma */}
+                            {/* Vector 632: Cyan Gradient Wave (Shifted Right & Lowered) */}
                             <svg
                                 viewBox="0 0 213 84"
                                 fill="none"
-                                className={`absolute bottom-0 right-0 ${cfg.v632} h-auto max-w-none select-none`}
+                                className={`absolute ${cfg.v632} h-auto max-w-none select-none`}
                             >
                                 <path
                                     d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z"

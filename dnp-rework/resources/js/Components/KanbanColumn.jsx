@@ -98,11 +98,10 @@ export default function KanbanColumn({
                     </h2>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${
-                        count > 0 
-                            ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs' 
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border transition-colors ${count > 0
+                            ? 'bg-[#00A8E8]/15 text-[#0A385C] border-[#00A8E8]/40 shadow-2xs'
                             : 'bg-slate-100 text-slate-400 border-slate-200'
-                    }`}>
+                        }`}>
                         {count}
                     </span>
                     {onToggleCollapse && (
@@ -113,7 +112,7 @@ export default function KanbanColumn({
                                 onToggleCollapse();
                             }}
                             className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                            title="Kecilkan kolom (Jira Collapse)"
+                            title="Kecilkan kolom"
                             aria-label={`Kecilkan kolom ${title}`}
                         >
                             <ChevronsLeft size={16} />
@@ -121,7 +120,7 @@ export default function KanbanColumn({
                     )}
                 </div>
             </div>
-            
+
             {/* Cards List (z-20: above the wave) */}
             <div className="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-3 relative z-20">
                 {children}

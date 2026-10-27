@@ -477,6 +477,7 @@ export default function KanbanIndex({ jobs, auth }) {
                             role={stage.role}
                             noTopBorder={true}
                             isCollapsed={collapsedStages.includes(stage.id)}
+                            collapsedVariant={collapsedVariant}
                             onToggleCollapse={() => toggleStageCollapse(stage.id)}
                         >
                             {columnJobs.map(job => (

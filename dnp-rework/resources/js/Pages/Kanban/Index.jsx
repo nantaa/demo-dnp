@@ -28,16 +28,20 @@ export default function KanbanIndex({ jobs, auth }) {
         return [];
     });
 
-    // Collapsed Column Style Variant: 'capsule' (Floating Pill) | 'classic' (Jira Full Strip)
+    // Collapsed Column Wave Layer Variant: 'wave-behind' (Wave behind capsule at z-20) | 'wave-front' (Wave in front of capsule at z-0)
     const [collapsedVariant, setCollapsedVariant] = useState(() => {
         if (typeof window !== 'undefined' && window.localStorage) {
             try {
-                return localStorage.getItem('dnp_kanban_collapsed_variant') || 'capsule';
+                const stored = localStorage.getItem('dnp_kanban_collapsed_variant');
+                if (stored === 'wave-front' || stored === 'wave-behind') {
+                    return stored;
+                }
+                return 'wave-behind';
             } catch (e) {
-                return 'capsule';
+                return 'wave-behind';
             }
         }
-        return 'capsule';
+        return 'wave-behind';
     });
 
     const handleSetCollapsedVariant = (variant) => {
@@ -271,33 +275,33 @@ export default function KanbanIndex({ jobs, auth }) {
                         )}
                     </button>
 
-                    {/* Collapsed Column Style Variation Switcher (Capsule vs Classic Strip) */}
+                    {/* Collapsed Column Wave Layer Switcher (Wave Belakang vs Wave Depan) */}
                     <div className="flex items-center bg-white border border-slate-300 rounded-lg p-0.5 shadow-2xs text-xs ml-1 select-none">
                         <button
                             type="button"
-                            onClick={() => handleSetCollapsedVariant('capsule')}
+                            onClick={() => handleSetCollapsedVariant('wave-behind')}
                             className={`px-2.5 py-1 rounded-md font-bold text-xs transition flex items-center gap-1.5 ${
-                                collapsedVariant === 'capsule'
+                                collapsedVariant !== 'wave-front'
                                     ? 'bg-[#00A8E8] text-white shadow-2xs'
                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                             }`}
-                            title="Variasi Kapsul: Floating Pill dengan nomor stage di atas, teks vertikal top-to-bottom, dan badge job di bawah (Sesuai Mockup)"
+                            title="Wave di Belakang: Kapsul melayang di atas wave (z-20), wave mengalir di belakang kapsul sehingga teks dan badge 100% jelas"
                         >
                             <span className="w-1.5 h-3 rounded-full border border-current inline-block"></span>
-                            <span>Kapsul</span>
+                            <span>Wave Belakang</span>
                         </button>
                         <button
                             type="button"
-                            onClick={() => handleSetCollapsedVariant('classic')}
+                            onClick={() => handleSetCollapsedVariant('wave-front')}
                             className={`px-2.5 py-1 rounded-md font-bold text-xs transition flex items-center gap-1.5 ${
-                                collapsedVariant === 'classic'
+                                collapsedVariant === 'wave-front'
                                     ? 'bg-[#00A8E8] text-white shadow-2xs'
                                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                             }`}
-                            title="Variasi Klasik: Full Height Strip Jira dengan border atas warna PIC, expand chevron, dan teks bottom-to-top"
+                            title="Wave di Depan: Wave mengalir di atas kapsul (z-10), kapsul berada di lapisan bawah"
                         >
-                            <span className="w-1.5 h-3 rounded-xs border-t-2 border-current inline-block"></span>
-                            <span>Klasik</span>
+                            <span className="w-1.5 h-3 rounded-full border border-dashed border-current inline-block"></span>
+                            <span>Wave Depan</span>
                         </button>
                     </div>
                 </div>

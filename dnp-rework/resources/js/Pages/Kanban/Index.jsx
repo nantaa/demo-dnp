@@ -247,7 +247,7 @@ export default function KanbanIndex({ jobs, auth }) {
                         ) : (
                             <>
                                 <ChevronsLeft size={14} className="text-[#00A8E8]" />
-                                <span>Buka Semua</span>
+                                <span>Tutup Semua</span>
                             </>
                         )}
                     </button>

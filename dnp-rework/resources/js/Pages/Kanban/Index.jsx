@@ -5,7 +5,7 @@ import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { STAGES, PIC_THEMES } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
-import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
@@ -14,6 +14,55 @@ export default function KanbanIndex({ jobs, auth }) {
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
     const [cornerWaveStyle, setCornerWaveStyle] = useState('ref-subtle'); // 'ref-subtle' (user-selected alternative 4) | 'ref-large' | 'ref-high' | 'ref-standard' | 'ref-vibrant' | 'none'
+
+    // Jira-Style Collapsible Columns state with localStorage persistence
+    const [collapsedStages, setCollapsedStages] = useState(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            try {
+                const stored = localStorage.getItem('dnp_kanban_collapsed_stages');
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+        return [];
+    });
+
+    const toggleStageCollapse = (stageId) => {
+        setCollapsedStages(prev => {
+            const next = prev.includes(stageId)
+                ? prev.filter(id => id !== stageId)
+                : [...prev, stageId];
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(next));
+                } catch (e) {}
+            }
+            return next;
+        });
+    };
+
+    const visibleStages = STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai));
+    const isAllCollapsed = visibleStages.length > 0 && visibleStages.every(s => collapsedStages.includes(s.id));
+
+    const toggleAllColumns = () => {
+        if (isAllCollapsed) {
+            setCollapsedStages([]);
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify([]));
+                } catch (e) {}
+            }
+        } else {
+            const allIds = visibleStages.map(s => s.id);
+            setCollapsedStages(allIds);
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(allIds));
+                } catch (e) {}
+            }
+        }
+    };
 
     // Refs and state for horizontal (side) scrollbar synchronization
     const boardRef = useRef(null);

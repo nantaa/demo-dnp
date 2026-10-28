@@ -6,9 +6,11 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\Api\InspectorRecommendationController;
+use App\Http\Middleware\BlockAiAndScraperBots;
 use Inertia\Inertia;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware([BlockAiAndScraperBots::class])->group(function () {
+    Route::middleware(['auth', 'verified'])->group(function () {
     // Feature 1: Role-based Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     
@@ -106,31 +108,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/inventory/form-disnaker/{id}', [InventoryController::class, 'destroyFormDisnaker'])->name('inventory.form-disnaker.destroy');
 });
 
-require __DIR__.'/auth.php'; // Keep Breeze Auth routes
+    require __DIR__.'/auth.php'; // Keep Breeze Auth routes
 
-Route::get('/run-migrations-dnp', function() {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-        return '<pre>Migration Output:\n' . \Illuminate\Support\Facades\Artisan::output() . '</pre>';
-    } catch (\Exception $e) {
-        return 'Migration failed: ' . $e->getMessage() . '\n\nTrace:\n' . $e->getTraceAsString();
-    }
-});
-
-Route::get('/check-db-schema', function() {
-    try {
-        $columns = \Illuminate\Support\Facades\Schema::getColumnListing('job_inspectors');
-        $types = [];
-        foreach ($columns as $column) {
-            $types[$column] = \Illuminate\Support\Facades\Schema::getColumnType('job_inspectors', $column);
+    Route::get('/run-migrations-dnp', function() {
+        if (!app()->environment('local') && !auth()->check()) {
+            abort(403, 'Unauthorized debug route.');
         }
-        return response()->json([
-            'table' => 'job_inspectors',
-            'columns' => $types,
-            'dnp_jobs_exists' => \Illuminate\Support\Facades\Schema::hasTable('dnp_jobs'),
-            'users_exists' => \Illuminate\Support\Facades\Schema::hasTable('users'),
-        ]);
-    } catch (\Exception $e) {
-        return 'Error: ' . $e->getMessage();
-    }
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            return '<pre>Migration Output:\n' . \Illuminate\Support\Facades\Artisan::output() . '</pre>';
+        } catch (\Exception $e) {
+            return 'Migration failed: ' . $e->getMessage() . '\n\nTrace:\n' . $e->getTraceAsString();
+        }
+    });
+
+    Route::get('/check-db-schema', function() {
+        if (!app()->environment('local') && !auth()->check()) {
+            abort(403, 'Unauthorized debug route.');
+        }
+        try {
+            $columns = \Illuminate\Support\Facades\Schema::getColumnListing('job_inspectors');
+            $types = [];
+            foreach ($columns as $column) {
+                $types[$column] = \Illuminate\Support\Facades\Schema::getColumnType('job_inspectors', $column);
+            }
+            return response()->json([
+                'table' => 'job_inspectors',
+                'columns' => $types,
+                'dnp_jobs_exists' => \Illuminate\Support\Facades\Schema::hasTable('dnp_jobs'),
+                'users_exists' => \Illuminate\Support\Facades\Schema::hasTable('users'),
+            ]);
+        } catch (\Exception $e) {
+            return 'Error: ' . $e->getMessage();
+        }
+    });
 });
+

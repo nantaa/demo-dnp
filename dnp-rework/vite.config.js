@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.jsx'],
@@ -15,4 +15,12 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
-});
+    build: {
+        sourcemap: false,
+        chunkSizeWarningLimit: 1200,
+    },
+    esbuild: {
+        drop: mode === 'production' ? ['console', 'debugger'] : [],
+    },
+}));
+

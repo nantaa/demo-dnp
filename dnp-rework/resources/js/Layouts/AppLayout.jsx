@@ -81,7 +81,7 @@ export default function AppLayout({ header, children }) {
                 document.getElementsByTagName('head')[0].appendChild(link);
             }
             link.type = 'image/png';
-            link.href = '/moriku-logo.png';
+            link.href = '/DNP Logo Baru.png';
         } catch (e) { }
 
         // Intercept global inertia events
@@ -230,6 +230,7 @@ export default function AppLayout({ header, children }) {
             <div className={`fixed inset-y-0 left-0 z-50 w-72 shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 style={{ background: 'linear-gradient(180deg, #0A1F3A 0%, #0A385C 100%)' }}
             >
+                <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
                     <div className="flex items-center gap-2.5">
                         <img src="/DNP Logo Baru.png" alt="DNP Logo" className="h-11 w-auto object-contain shrink-0" onError={(e) => { e.target.src = logoImg; }} />
                         <div>

@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow">
     <title inertia>{{ config('app.name', 'DNP Monitoring System') }}</title>
-    <link rel="icon" type="image/png" href="/moriku-logo.png">
+    <link rel="icon" type="image/png" href="/DNP Logo Baru.png">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

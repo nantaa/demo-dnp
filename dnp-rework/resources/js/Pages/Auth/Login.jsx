@@ -105,10 +105,10 @@ export default function Login({ status, canResetPassword }) {
                 <div className="flex flex-col items-center mb-7">
                     <div className="bg-white p-3 rounded-2xl shadow-xl border border-white/20 mb-3 inline-flex items-center justify-center">
                         <img
-                            src="/images/logo.png"
+                            src="/DNP Logo Baru.png"
                             alt="PT Delta Nusantara Persada"
-                            className="h-12 w-auto object-contain"
-                            onError={(e) => { e.target.style.display = 'none'; }}
+                            className="h-16 w-auto object-contain"
+                            onError={(e) => { e.target.src = '/images/logo.png'; }}
                         />
                     </div>
                     <div className="text-center">

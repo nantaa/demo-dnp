@@ -29,7 +29,7 @@ export default function KanbanColumn({
                 <div className="flex flex-col items-center gap-1.5 shrink-0">
                     {stageNumber && (
                         <span
-                            className="min-w-[28px] h-7 px-1 flex items-center justify-center text-[11px] font-black rounded-lg shadow-2xs text-white"
+                            className="min-w-[32px] h-8 px-1.5 flex items-center justify-center text-xs font-black rounded-lg shadow-2xs text-white"
                             style={{ backgroundColor: theme.primary }}
                         >
                             {stageNumber}
@@ -42,10 +42,10 @@ export default function KanbanColumn({
                     )}
                 </div>
 
-                {/* Middle: Vertical Title reading downwards (Top to Bottom) */}
+                {/* Middle: Vertical Title reading downwards (Top to Bottom) - Bigger font */}
                 <div className="flex-1 flex items-center justify-center overflow-hidden my-3 py-2">
                     <span
-                        className="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider whitespace-nowrap"
+                        className="font-extrabold text-slate-800 text-[13px] sm:text-sm uppercase tracking-wider whitespace-nowrap"
                         style={{
                             writingMode: 'vertical-rl',
                             textOrientation: 'mixed',
@@ -57,7 +57,7 @@ export default function KanbanColumn({
 
                 {/* Bottom: Circular Count Pill */}
                 <div className="shrink-0">
-                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black bg-[#F0F9FF] text-[#00A8E8] border border-[#7DD3FC] shadow-2xs">
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black bg-[#F0F9FF] text-[#00A8E8] border border-[#7DD3FC] shadow-2xs">
                         {count}
                     </span>
                 </div>
@@ -93,7 +93,7 @@ export default function KanbanColumn({
                             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                         </svg>
                     )}
-                    <h2 className="font-extrabold text-slate-800 text-xs uppercase tracking-wide truncate" title={title}>
+                    <h2 className="font-extrabold text-slate-800 text-sm uppercase tracking-wide truncate" title={title}>
                         {title}
                     </h2>
                 </div>

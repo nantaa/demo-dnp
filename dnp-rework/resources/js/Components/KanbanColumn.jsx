@@ -20,7 +20,7 @@ export default function KanbanColumn({
         return (
             <div
                 onClick={onToggleCollapse}
-                className="w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative z-20 cursor-pointer py-4 px-1.5 select-none self-start"
+                className="flex-1 min-w-[56px] flex flex-col items-center justify-between rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative z-20 cursor-pointer py-4 px-1.5 select-none self-start"
                 style={{ height: 'min(640px, calc(100vh - 220px))' }}
                 title={`${title} (${count} Job) — Klik untuk membuka kolom`}
                 aria-label={`Buka kolom ${title}`}

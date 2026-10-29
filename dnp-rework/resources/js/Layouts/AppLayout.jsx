@@ -37,6 +37,30 @@ export default function AppLayout({ header, children }) {
     const user = auth?.user || {};
     const currentRoute = window.location.pathname;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            try {
+                return localStorage.getItem('dnp_sidebar_collapsed') === 'true';
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    });
+
+    const toggleSidebar = () => {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            setSidebarOpen(prev => !prev);
+        } else {
+            setDesktopSidebarCollapsed(prev => {
+                const next = !prev;
+                try {
+                    localStorage.setItem('dnp_sidebar_collapsed', String(next));
+                } catch (e) { }
+                return next;
+            });
+        }
+    };
 
     // Watch for Laravel session flash messages (e.g. back()->with('error', '...') or with('success', '...'))
     useEffect(() => {
@@ -123,11 +147,12 @@ export default function AppLayout({ header, children }) {
                 <div className="px-3 sm:px-6 py-2.5 flex items-center justify-between">
                     {/* Left: Hamburger + Logo */}
                     <div className="flex items-center gap-2 sm:gap-3 ml-5">
-                        {/* Mobile hamburger */}
+                        {/* Always-active hamburger button (mobile drawer & desktop mini sidebar toggle) */}
                         <button
-                            className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors text-[#0A385C]"
-                            onClick={() => setSidebarOpen(true)}
-                            aria-label="Open menu"
+                            className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-[#0A385C] focus:outline-hidden"
+                            onClick={toggleSidebar}
+                            aria-label="Toggle sidebar menu"
+                            title={desktopSidebarCollapsed ? "Perluas Sidebar" : "Perkecil Sidebar"}
                         >
                             <Menu size={20} />
                         </button>
@@ -272,12 +297,19 @@ export default function AppLayout({ header, children }) {
             {/* ── Desktop Sidebar + Main ─────────────────────────────────── */}
             <div className="flex flex-1 overflow-hidden">
                 {/* Desktop sidebar — hidden on mobile */}
-                <nav className="hidden lg:flex w-60 shrink-0 overflow-y-auto flex-col relative"
+                <nav
+                    className={`hidden lg:flex shrink-0 overflow-y-auto overflow-x-hidden flex-col relative transition-all duration-300 ease-in-out ${
+                        desktopSidebarCollapsed ? 'w-16' : 'w-60'
+                    }`}
                     style={{ background: 'linear-gradient(180deg, #0A1F3A 0%, #0A2D50 60%, #0A385C 100%)' }}
                 >
-                    <div className="px-4 pt-5 pb-3">
-                        <div className="text-[10px] tracking-widest uppercase text-[#00A8E8]/60 font-bold mb-4 px-1">Menu Utama</div>
-                        <div className="space-y-0.5">
+                    <div className={`pt-5 pb-3 transition-all duration-300 ${desktopSidebarCollapsed ? 'px-2' : 'px-4'}`}>
+                        {!desktopSidebarCollapsed ? (
+                            <div className="text-[10px] tracking-widest uppercase text-[#00A8E8]/60 font-bold mb-4 px-1">Menu Utama</div>
+                        ) : (
+                            <div className="h-4 mb-2" />
+                        )}
+                        <div className="space-y-1">
                             {visibleNav.map((item) => {
                                 const active = currentRoute === item.href;
                                 const Icon = item.icon;
@@ -285,13 +317,20 @@ export default function AppLayout({ header, children }) {
                                     <Link
                                         key={item.href}
                                         href={item.href}
-                                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${active
+                                        title={item.label}
+                                        className={`flex items-center rounded-lg text-sm font-medium transition-all ${
+                                            desktopSidebarCollapsed
+                                                ? 'justify-center py-2.5 px-0'
+                                                : 'gap-3 px-3 py-2.5'
+                                        } ${active
                                                 ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
                                                 : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
                                             }`}
                                     >
-                                        <Icon size={17} strokeWidth={active ? 2.5 : 1.5} />
-                                        {item.label}
+                                        <Icon size={18} strokeWidth={active ? 2.5 : 1.5} className="shrink-0" />
+                                        {!desktopSidebarCollapsed && (
+                                            <span className="truncate whitespace-nowrap">{item.label}</span>
+                                        )}
                                     </Link>
                                 );
                             })}
@@ -300,7 +339,7 @@ export default function AppLayout({ header, children }) {
 
                     {/* Thread/Ulir decoration at sidebar bottom */}
                     <div className="mt-auto pointer-events-none select-none flex justify-end">
-                        <ThreadDecor size={160} color="#00A8E8" opacity={0.08} origin="br" count={9} strokeWidth={1.5} />
+                        <ThreadDecor size={desktopSidebarCollapsed ? 64 : 160} color="#00A8E8" opacity={0.08} origin="br" count={desktopSidebarCollapsed ? 4 : 9} strokeWidth={1.5} />
                     </div>
                 </nav>
 

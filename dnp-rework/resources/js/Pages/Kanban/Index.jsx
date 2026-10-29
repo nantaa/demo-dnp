@@ -303,46 +303,46 @@ export default function KanbanIndex({ jobs, auth }) {
             {cornerWaveStyle !== 'none' && (() => {
                 const configs = {
                     'ref-subtle': {
-                        container: 'w-[1350px] h-[380px]',
-                        wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
-                        v630: 'w-[1125px] right-[170px] bottom-0',
-                        v632: 'w-[1350px] right-[-255px] -bottom-[90px]',
+                        container: 'w-full min-w-[1600px] h-[380px]',
+                        wrapper: '-bottom-[160px] right-0 w-[1650px] h-[540px]',
+                        v630: 'w-[1350px] right-[220px] bottom-0',
+                        v632: 'w-[1650px] right-[-255px] -bottom-[90px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
                     'ref-large': {
-                        container: 'w-[1350px] h-[380px]',
-                        wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
-                        v630: 'w-[1250px] right-[160px] bottom-0',
-                        v632: 'w-[1350px] right-[-220px] -bottom-[75px]',
+                        container: 'w-full min-w-[1600px] h-[380px]',
+                        wrapper: '-bottom-[160px] right-0 w-[1650px] h-[540px]',
+                        v630: 'w-[1450px] right-[200px] bottom-0',
+                        v632: 'w-[1650px] right-[-220px] -bottom-[75px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
                     'ref-high': {
-                        container: 'w-[1400px] h-[380px]',
-                        wrapper: '-bottom-[160px] right-0 w-[1400px] h-[540px]',
-                        v630: 'w-[1300px] right-[130px] bottom-0',
-                        v632: 'w-[1400px] right-[-270px] -bottom-[80px]',
+                        container: 'w-full min-w-[1600px] h-[380px]',
+                        wrapper: '-bottom-[160px] right-0 w-[1650px] h-[540px]',
+                        v630: 'w-[1500px] right-[180px] bottom-0',
+                        v632: 'w-[1650px] right-[-270px] -bottom-[80px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
                     'ref-standard': {
-                        container: 'w-[1300px] h-[380px]',
-                        wrapper: '-bottom-[150px] right-0 w-[1300px] h-[520px]',
-                        v630: 'w-[1180px] right-[200px] bottom-0',
-                        v632: 'w-[1300px] right-[-220px] -bottom-[65px]',
+                        container: 'w-full min-w-[1600px] h-[380px]',
+                        wrapper: '-bottom-[150px] right-0 w-[1600px] h-[520px]',
+                        v630: 'w-[1400px] right-[240px] bottom-0',
+                        v632: 'w-[1600px] right-[-220px] -bottom-[65px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
                     'ref-vibrant': {
-                        container: 'w-[1350px] h-[380px]',
-                        wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
-                        v630: 'w-[1200px] right-[180px] bottom-0',
-                        v632: 'w-[1350px] right-[-240px] -bottom-[70px]',
+                        container: 'w-full min-w-[1600px] h-[380px]',
+                        wrapper: '-bottom-[160px] right-0 w-[1650px] h-[540px]',
+                        v630: 'w-[1450px] right-[220px] bottom-0',
+                        v632: 'w-[1650px] right-[-240px] -bottom-[70px]',
                         opacity: 'opacity-100',
                         gradStops: ['#00A8E8', 1, '#4ABFF0', 0],
                         baseOpacity: '0.52',
@@ -353,6 +353,10 @@ export default function KanbanIndex({ jobs, auth }) {
                 return (
                     <div
                         className={`fixed bottom-0 right-0 ${cfg.container} pointer-events-none z-10 select-none overflow-hidden ${cfg.opacity}`}
+                        style={{
+                            maskImage: 'linear-gradient(to right, transparent 0%, black 15%)',
+                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%)',
+                        }}
                         aria-hidden="true"
                     >
                         <div className={`absolute ${cfg.wrapper} pointer-events-none z-0 select-none overflow-visible`}>
@@ -394,7 +398,7 @@ export default function KanbanIndex({ jobs, auth }) {
             <div
                 ref={boardRef}
                 onScroll={handleBoardScroll}
-                className="flex h-full overflow-x-auto space-x-4 pb-4 relative min-h-[calc(100vh-210px)]"
+                className="flex h-full overflow-x-auto space-x-4 pb-4 relative min-h-[calc(100vh-210px)] w-full min-w-full"
             >
                 {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin enables showSelesai */}
                 {STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai)).map((stage) => {

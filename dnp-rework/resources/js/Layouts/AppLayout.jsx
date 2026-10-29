@@ -355,7 +355,7 @@ export default function AppLayout({ header, children }) {
                 </nav>
 
                 {/* Main content — add bottom padding on mobile for bottom nav */}
-                <main className="flex-1 overflow-x-auto bg-slate-100 p-3 sm:p-6 pb-20 lg:pb-6">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-3 sm:p-6 pb-20 lg:pb-6">
                     {children}
                 </main>
             </div>

@@ -69,13 +69,16 @@ export default function KanbanIndex({ jobs, auth }) {
     const boardRef = useRef(null);
     const topScrollRef = useRef(null);
     const isSyncingRef = useRef(false);
+    const isSyncingDriverRef = useRef(null); // 'board' | 'top' | null
+    const isSyncingTimeoutRef = useRef(null);
     const [boardScrollWidth, setBoardScrollWidth] = useState(0);
 
-    // Track scroll width of board container dynamically
+    // Track scroll width of board container dynamically with threshold diffing to prevent re-render loops
     useEffect(() => {
         const updateWidth = () => {
             if (boardRef.current) {
-                setBoardScrollWidth(boardRef.current.scrollWidth);
+                const sw = boardRef.current.scrollWidth;
+                setBoardScrollWidth(prev => (Math.abs(prev - sw) > 2 ? sw : prev));
             }
         };
         updateWidth();
@@ -90,38 +93,52 @@ export default function KanbanIndex({ jobs, auth }) {
         return () => {
             if (ro) ro.disconnect();
             window.removeEventListener('resize', updateWidth);
+            if (isSyncingTimeoutRef.current) {
+                clearTimeout(isSyncingTimeoutRef.current);
+            }
         };
     }, [jobs, showSelesai]);
 
-    // Bi-directional scroll handlers with recursive loop protection
+    // Butter-smooth bi-directional scroll handlers with active driver lock
+    // Prevents echo scroll event desync, frame drops, and backward position jumping during fast side scrolling
     const handleTopScroll = () => {
-        if (isSyncingRef.current) return;
+        if (isSyncingDriverRef.current === 'board') return;
+        isSyncingDriverRef.current = 'top';
         isSyncingRef.current = true;
+
         if (boardRef.current && topScrollRef.current) {
-            boardRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+            if (boardRef.current.scrollLeft !== topScrollRef.current.scrollLeft) {
+                boardRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+            }
         }
-        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
-            window.requestAnimationFrame(() => {
-                isSyncingRef.current = false;
-            });
-        } else {
+
+        if (isSyncingTimeoutRef.current) {
+            clearTimeout(isSyncingTimeoutRef.current);
+        }
+        isSyncingTimeoutRef.current = setTimeout(() => {
+            isSyncingDriverRef.current = null;
             isSyncingRef.current = false;
-        }
+        }, 100);
     };
 
     const handleBoardScroll = () => {
-        if (isSyncingRef.current) return;
+        if (isSyncingDriverRef.current === 'top') return;
+        isSyncingDriverRef.current = 'board';
         isSyncingRef.current = true;
+
         if (boardRef.current && topScrollRef.current) {
-            topScrollRef.current.scrollLeft = boardRef.current.scrollLeft;
+            if (topScrollRef.current.scrollLeft !== boardRef.current.scrollLeft) {
+                topScrollRef.current.scrollLeft = boardRef.current.scrollLeft;
+            }
         }
-        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
-            window.requestAnimationFrame(() => {
-                isSyncingRef.current = false;
-            });
-        } else {
+
+        if (isSyncingTimeoutRef.current) {
+            clearTimeout(isSyncingTimeoutRef.current);
+        }
+        isSyncingTimeoutRef.current = setTimeout(() => {
+            isSyncingDriverRef.current = null;
             isSyncingRef.current = false;
-        }
+        }, 100);
     };
 
     const scrollByStage = (direction) => {
@@ -292,7 +309,7 @@ export default function KanbanIndex({ jobs, auth }) {
             <div
                 ref={topScrollRef}
                 onScroll={handleTopScroll}
-                className="overflow-x-auto overflow-y-hidden mb-3 bg-slate-200/90 hover:bg-slate-200 border border-slate-300 rounded-lg p-0.5 sticky top-0 z-10 transition-colors shadow-xs"
+                className="overflow-x-auto overflow-y-hidden mb-3 bg-slate-200/90 hover:bg-slate-200 border border-slate-300 rounded-lg p-0.5 sticky top-0 z-10 transition-colors shadow-xs overscroll-x-contain"
                 style={{ height: '14px' }}
                 title="Geser ke samping untuk melihat seluruh stage Kanban"
             >
@@ -394,7 +411,7 @@ export default function KanbanIndex({ jobs, auth }) {
             <div
                 ref={boardRef}
                 onScroll={handleBoardScroll}
-                className="flex h-full overflow-x-auto space-x-4 pb-4 relative min-h-[calc(100vh-210px)] w-full min-w-full"
+                className="flex h-full overflow-x-auto space-x-4 pb-4 relative min-h-[calc(100vh-210px)] w-full min-w-full overscroll-x-contain"
             >
                 {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin enables showSelesai */}
                 {STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai)).map((stage) => {

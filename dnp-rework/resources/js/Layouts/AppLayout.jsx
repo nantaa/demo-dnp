@@ -159,10 +159,10 @@ export default function AppLayout({ header, children }) {
 
                         <div className="flex items-center gap-3">
                             <img
-                                src="/DNP Logo Baru.png"
+                                src={logoImg}
                                 alt="PT Delta Nusantara Persada"
                                 className="h-12 sm:h-14 w-auto object-contain shrink-0"
-                                onError={(e) => { e.target.src = logoImg; }}
+                                onError={(e) => { e.target.src = '/DNP Logo Baru.png'; }}
                             />
                             <div>
                                 <div className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#0A385C] font-extrabold leading-none">
@@ -232,7 +232,7 @@ export default function AppLayout({ header, children }) {
             >
                 <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
                     <div className="flex items-center gap-2.5">
-                        <img src="/DNP Logo Baru.png" alt="DNP Logo" className="h-11 w-auto object-contain shrink-0" onError={(e) => { e.target.src = logoImg; }} />
+                        <img src={logoImg} alt="DNP Logo" className="h-11 w-auto object-contain shrink-0" onError={(e) => { e.target.src = '/DNP Logo Baru.png'; }} />
                         <div>
                             <div className="text-[9px] tracking-wider uppercase text-white/80 font-bold leading-none">PT DELTA NUSANTARA PERSADA</div>
                             <div className="text-xs font-extrabold text-white mt-0.5">

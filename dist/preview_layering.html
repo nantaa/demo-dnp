@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board - Collapsed Columns Preview (Capsule vs Classic)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; background-color: #f1f5f9; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
+        .writing-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+        .writing-vertical-classic {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="min-h-screen relative flex">
+
+    <!-- Sidebar (z-30) -->
+    <div class="fixed top-0 left-0 bottom-0 w-60 bg-[#062444] text-white p-4 z-30 flex flex-col justify-between">
+        <div>
+            <div class="font-bold tracking-wider text-xs mb-6 text-slate-400 uppercase">MENU UTAMA</div>
+            <div class="space-y-2 text-sm text-slate-300">
+                <div class="p-2 rounded bg-white/10 font-bold text-white flex items-center gap-2">
+                    <span>Kanban</span>
+                </div>
+                <div class="p-2 rounded hover:bg-white/5">Dashboard</div>
+                <div class="p-2 rounded hover:bg-white/5">Daftar Job</div>
+            </div>
+        </div>
+        <div class="text-xs text-slate-400">PT Delta Nusantara Persada</div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="ml-60 flex-1 min-h-screen flex flex-col relative">
+
+        <!-- Top Bar Header (z-30) matching Jira Kanban Header -->
+        <div class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-30 gap-4 flex-wrap">
+            <div class="flex items-center gap-3">
+                <h1 class="text-lg font-bold text-gray-900 tracking-tight">Kanban Board</h1>
+                <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
+                    Total 16 Job
+                </span>
+
+                <!-- Quick Horizontal Scroll Nav Buttons -->
+                <div class="flex items-center bg-white border border-slate-300 rounded-lg p-0.5 shadow-2xs">
+                    <button
+                        type="button"
+                        onclick="scrollBoard(-1)"
+                        class="p-1 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center justify-center"
+                        title="Geser Kanban ke Kiri"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <div class="w-[1px] h-3.5 bg-slate-200"></div>
+                    <button
+                        type="button"
+                        onclick="scrollBoard(1)"
+                        class="p-1 rounded hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition flex items-center justify-center"
+                        title="Geser Kanban ke Kanan"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+
+                <!-- Master Collapse/Expand Toggle (Fits all 15 stages in 1 single frame) -->
+                <button
+                    id="btn-master-toggle"
+                    type="button"
+                    onclick="toggleAllColumns()"
+                    class="px-2.5 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition border border-slate-300 shadow-2xs select-none"
+                    title="Kecilkan Semua Kolom ke 1 Layar Penuh / Buka Semua"
+                >
+                    <span id="master-toggle-icon" class="text-[#00A8E8] font-bold">◀◀</span>
+                    <span id="master-toggle-label">1 Layar Penuh (15 Kolom)</span>
+                </button>
+
+            </div>
+
+            <!-- Role Legend Badge Summary -->
+            <div class="hidden xl:flex items-center gap-2 text-[11px] font-medium text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                <span class="font-bold text-slate-700">Role PIC:</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#A62E5C]"></span>Marketing</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#F7B71F]"></span>Admin</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#2A9FBC]"></span>Tim RU</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#90499B]"></span>Tenaga Ahli</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#35B558]"></span>Finance</span>
+            </div>
+        </div>
+
+        <!-- Locked Dynamic Corner Wave (z-10): Approved Perfect Coordinates -->
+        <div id="corner-wave-container" class="fixed bottom-0 right-0 w-[1350px] h-[380px] pointer-events-none z-10 select-none overflow-hidden opacity-100" aria-hidden="true">
+            <div class="absolute -bottom-[160px] right-0 w-[1350px] h-[540px] pointer-events-none z-0 select-none overflow-visible">
+                <!-- Grey Base Wave Vector 630 -->
+                <svg id="svg-v630" viewBox="0 0 178 68" fill="none" class="absolute bottom-0 right-[170px] w-[1125px] h-auto max-w-none select-none">
+                    <path opacity="0.41" d="M0.158887 41.0282L9.18329e-06 67.9551C95.2567 18.2973 106.604 2.27715 177.059 21.0089C120.265 -10.6205 84.6216 -8.5443 0.158887 41.0282Z" fill="#B1DFF7" />
+                </svg>
+                <!-- Cyan Wave Vector 632 -->
+                <svg id="svg-v632" viewBox="0 0 213 84" fill="none" class="absolute -bottom-[90px] right-[-255px] w-[1350px] h-auto max-w-none select-none">
+                    <path d="M212.508 83.3342L212.652 58.8123C161.854 31.5198 128.227 12.2315 105.172 4.58484C57.946 -7.88466 33.6576 7.09955 -2.05659e-06 25.3391C-2.05659e-06 25.3391 51.2766 3.87579 94.6169 22.458C137.957 41.0401 212.508 83.3342 212.508 83.3342Z" fill="url(#prev_ref_grad)" />
+                    <defs>
+                        <linearGradient id="prev_ref_grad" x1="43.5112" y1="11.3829" x2="135.756" y2="-40.0729" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#4ABFF0"/>
+                            <stop offset="1" stop-color="#4ABFF0" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Board Horizontal Scroll Container (z-20 relative context) -->
+        <div id="board-container" class="flex-1 overflow-x-auto p-6 flex space-x-2.5 relative min-h-[calc(100vh-80px)] select-none">
+            <!-- Columns rendered dynamically via renderBoard() -->
+        </div>
+    </div>
+
+    <script>
+        // 15 Stages exactly matching Constants.js and User Reference Mockup
+        const STAGES = [
+            { id: 1, displayId: '1', name: 'PO / SPK / Proposal', role: 'marketing', color: '#A62E5C', count: 2, locked: true },
+            { id: 2, displayId: '2', name: 'Verifikasi Dokumen', role: 'admin', color: '#F7B71F', count: 2, locked: true },
+            { id: 3, displayId: '3', name: 'Penjadwalan', role: 'admin', color: '#F7B71F', count: 2, locked: true },
+            { id: 4, displayId: '4', name: 'Pelaksanaan RU', role: 'inspektur', color: '#2A9FBC', count: 2, locked: true },
+            { id: 13, displayId: '4b', name: 'Aktualisasi Unit', role: 'admin', color: '#F7B71F', count: 2, locked: true },
+            { id: 5, displayId: '5', name: 'Penyusunan LHPP', role: 'inspektur', color: '#2A9FBC', count: 2, locked: true },
+            { id: 6, displayId: '6', name: 'Review Laporan Teknis', role: 'tim_ahli', color: '#90499B', count: 2, locked: true },
+            { id: 7, displayId: '7', name: 'Verifikasi Dinas', role: 'admin', color: '#F7B71F', count: 2, locked: true },
+            { id: 8, displayId: '8', name: 'Proses Disnaker', role: 'admin', color: '#F7B71F', count: 2, locked: true },
+            { id: 9, displayId: '9', name: 'Pengurusan Suket', role: 'admin', color: '#F7B71F', count: 2, locked: true },
+            { id: 10, displayId: '10', name: 'Invoice & Kwitansi', role: 'finance', color: '#35B558', count: 2, locked: true },
+            { id: 11, displayId: '11', name: 'Penagihan / Follow Up', role: 'marketing', color: '#A62E5C', count: 2, locked: true },
+            { id: 14, displayId: '11b', name: 'Verifikasi Bayar', role: 'finance', color: '#35B558', count: 2, locked: true },
+            { id: 15, displayId: '11c', name: 'Kirim Suket Klien', role: 'marketing', color: '#A62E5C', count: 2, locked: true },
+            { id: 12, displayId: '12', name: 'Final Financial Closing', role: 'superadmin', color: '#94a3b8', count: 2, locked: true },
+        ];
+
+        // Default: All columns collapsed into 1 frame (100% visible on screen) in Capsule style
+        let collapsedStages = STAGES.map(s => s.id);
+
+        function toggleStage(id) {
+            if (collapsedStages.includes(id)) {
+                collapsedStages = collapsedStages.filter(x => x !== id);
+            } else {
+                collapsedStages.push(id);
+            }
+            updateMasterButton();
+            renderBoard();
+        }
+
+        function toggleAllColumns() {
+            if (collapsedStages.length === STAGES.length) {
+                // If all are collapsed, expand all
+                collapsedStages = [];
+            } else {
+                // Collapse all to 1 frame
+                collapsedStages = STAGES.map(s => s.id);
+            }
+            updateMasterButton();
+            renderBoard();
+        }
+
+        function updateMasterButton() {
+            const isAll = collapsedStages.length === STAGES.length;
+            const icon = document.getElementById('master-toggle-icon');
+            const label = document.getElementById('master-toggle-label');
+            if (isAll) {
+                icon.innerText = '▶▶';
+                label.innerText = 'Buka Semua';
+            } else {
+                icon.innerText = '◀◀';
+                label.innerText = '1 Layar Penuh (15 Kolom)';
+            }
+        }
+
+        function scrollBoard(dir) {
+            const container = document.getElementById('board-container');
+            if (container) {
+                container.scrollBy({ left: 340 * dir, behavior: 'smooth' });
+            }
+        }
+
+        function renderBoard() {
+            const container = document.getElementById('board-container');
+            if (!container) return;
+
+            let html = '';
+
+            STAGES.forEach(stage => {
+                const isCollapsed = collapsedStages.includes(stage.id);
+
+                if (isCollapsed) {
+                    // Collapsed Capsule Floating Pill (z-20: wave flows behind the capsule)
+                    html += `
+                        <div
+                            onclick="toggleStage(${stage.id})"
+                            class="w-14 min-w-[56px] flex flex-col items-center justify-between rounded-2xl flex-shrink-0 bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative z-20 cursor-pointer py-4 px-1.5 select-none self-start"
+                            style="height: min(640px, calc(100vh - 170px))"
+                            title="${stage.name} (${stage.count} Job) — Klik untuk membuka kolom"
+                        >
+                            <!-- Top: Stage Number Pill in role theme color + Lock icon -->
+                            <div class="flex flex-col items-center gap-1.5 shrink-0">
+                                <span
+                                    class="min-w-[28px] h-7 px-1 flex items-center justify-center text-[11px] font-black rounded-lg shadow-2xs text-white"
+                                    style="background-color: ${stage.color}"
+                                >
+                                    ${stage.displayId}
+                                </span>
+                                <svg class="w-3.5 h-3.5 text-slate-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+
+                            <!-- Middle: Vertical Title reading downwards (Top to Bottom) -->
+                            <div class="flex-1 flex items-center justify-center overflow-hidden my-3 py-2">
+                                <span
+                                    class="font-extrabold text-slate-800 text-[11px] uppercase tracking-wider whitespace-nowrap writing-vertical"
+                                >
+                                    ${stage.name}
+                                </span>
+                            </div>
+
+                            <!-- Bottom: Circular Count Pill -->
+                            <div class="shrink-0">
+                                <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black bg-[#F0F9FF] text-[#00A8E8] border border-[#7DD3FC] shadow-2xs">
+                                    ${stage.count}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Expanded Column Mode (w-80 / 320px)
+                    html += `
+                        <div class="w-80 flex flex-col rounded-2xl flex-shrink-0 border border-slate-300 shadow-xs relative">
+                            <div class="absolute inset-0 bg-slate-100/90 rounded-2xl z-0 pointer-events-none"></div>
+
+                            <!-- Header -->
+                            <div class="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl relative z-20">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs text-white" style="background-color: ${stage.color}">
+                                        ${stage.displayId}
+                                    </span>
+                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <h2 class="font-extrabold text-slate-800 text-xs uppercase tracking-wide truncate" title="${stage.name}">
+                                        ${stage.name}
+                                    </h2>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-black bg-[#00A8E8]/15 text-[#0A385C] border border-[#00A8E8]/40 shadow-2xs">
+                                        ${stage.count}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onclick="toggleStage(${stage.id})"
+                                        class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                                        title="Kecilkan kolom ini"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Cards Container -->
+                            <div class="flex-1 p-3 space-y-3 relative z-20">
+                                <div class="bg-white p-3.5 rounded-xl shadow-xs border border-slate-200/90 hover:shadow-md transition relative overflow-hidden">
+                                    <!-- Aksen Kiri Bar -->
+                                    <div class="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-xl" style="background-color: ${stage.color}"></div>
+                                    <div class="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] inline-block mb-2">PO: S${stage.id}/X/2026</div>
+                                    <h3 class="font-bold text-sm text-slate-900 leading-tight mb-1">TEST STAGE ${stage.displayId}</h3>
+                                    <p class="text-xs text-slate-500 mb-2">Pesawat Uap (Boiler)</p>
+                                    <div class="border-t-2 border-[#00A8E8] pt-2 flex justify-between text-[10px] text-slate-400">
+                                        <span>MKT: Intang</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+                    // Expanded Column Mode (w-80 / 320px)
+                    html += `
+                        <div class="w-80 flex flex-col rounded-2xl flex-shrink-0 border border-slate-300 shadow-xs relative">
+                            <div class="absolute inset-0 bg-slate-100/90 rounded-2xl z-0 pointer-events-none"></div>
+
+                            <!-- Header -->
+                            <div class="p-3.5 flex justify-between items-center border-b border-slate-200 bg-white rounded-t-2xl relative z-20">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="shrink-0 text-[11px] font-black px-2 py-0.5 rounded-md shadow-2xs text-white" style="background-color: ${stage.color}">
+                                        ${stage.displayId}
+                                    </span>
+                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <h2 class="font-extrabold text-slate-800 text-xs uppercase tracking-wide truncate" title="${stage.name}">
+                                        ${stage.name}
+                                    </h2>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-black bg-[#00A8E8]/15 text-[#0A385C] border border-[#00A8E8]/40 shadow-2xs">
+                                        ${stage.count}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onclick="toggleStage(${stage.id})"
+                                        class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                                        title="Kecilkan kolom ini"
+                                    >
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Cards Container -->
+                            <div class="flex-1 p-3 space-y-3 relative z-20">
+                                <div class="bg-white p-3.5 rounded-xl shadow-xs border border-slate-200/90 hover:shadow-md transition relative overflow-hidden">
+                                    <!-- Aksen Kiri Bar -->
+                                    <div class="absolute top-0 bottom-0 left-0 w-1.5 rounded-l-xl" style="background-color: ${stage.color}"></div>
+                                    <div class="text-[11px] font-bold bg-slate-100 px-2 py-0.5 rounded-full text-[#0A385C] inline-block mb-2">PO: S${stage.id}/X/2026</div>
+                                    <h3 class="font-bold text-sm text-slate-900 leading-tight mb-1">TEST STAGE ${stage.displayId}</h3>
+                                    <p class="text-xs text-slate-500 mb-2">Pesawat Uap (Boiler)</p>
+                                    <div class="border-t-2 border-[#00A8E8] pt-2 flex justify-between text-[10px] text-slate-400">
+                                        <span>MKT: Intang</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Initialize board on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderBoard();
+        });
+    </script>
+</body>
+</html>

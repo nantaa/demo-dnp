@@ -3,6 +3,7 @@ import { useForm, Head, Link, router, usePage } from '@inertiajs/react';
 import { AlertCircle } from 'lucide-react';
 import { showError } from '@/swal';
 import loginBg from '../../../../resources/images/b3720ddb8d010de8df66d72f157d5519677223d6 (1).jpg';
+import logoImg from '../../../../resources/images/logo.png';
 
 // Reusable concentric arc "ulir/thread" decoration
 // origin: 'tl' | 'tr' | 'bl' | 'br' controls which corner the arcs radiate from
@@ -103,12 +104,12 @@ export default function Login({ status, canResetPassword }) {
 
                 {/* Logo + Brand above card */}
                 <div className="flex flex-col items-center mb-7">
-                    <div className="bg-white p-3 rounded-2xl shadow-xl border border-white/20 mb-3 inline-flex items-center justify-center">
+                    <div className="bg-white p-3.5 rounded-2xl shadow-xl border border-white/20 mb-3 inline-flex items-center justify-center">
                         <img
-                            src="/DNP Logo Baru.png"
+                            src={logoImg}
                             alt="PT Delta Nusantara Persada"
-                            className="h-16 w-auto object-contain"
-                            onError={(e) => { e.target.src = '/images/logo.png'; }}
+                            className="h-16 sm:h-20 w-auto object-contain"
+                            onError={(e) => { e.target.src = '/DNP Logo Baru.png'; }}
                         />
                     </div>
                     <div className="text-center">

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Preview Manual Board Wave vs Figma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; background-color: #f1f5f9; font-family: ui-sans-serif, system-ui, sans-serif; overflow-x: hidden; }
+    </style>
+</head>
+<body class="min-h-screen relative">
+
+    <!-- Mock Sidebar on Left (w-60 / 240px) -->
+    <div class="fixed top-0 left-0 bottom-0 w-60 bg-[#062444] text-white p-4 z-20 flex flex-col justify-between">
+        <div>
+            <div class="font-bold tracking-wider text-sm mb-6">MENU UTAMA</div>
+            <div class="space-y-2 text-sm text-slate-300">
+                <div class="p-2 rounded bg-white/10 font-bold text-white">Kanban</div>
+                <div class="p-2 rounded hover:bg-white/5">Dashboard</div>
+                <div class="p-2 rounded hover:bg-white/5">Daftar Job</div>
+            </div>
+        </div>
+        <div class="text-xs text-slate-400">DNP Monitor</div>
+    </div>
+
+    <!-- Main Content Area (left-60) -->
+    <div class="ml-60 min-h-screen relative flex flex-col">
+        <!-- Top bar -->
+        <div class="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-10">
+            <div class="font-bold text-slate-800">Kanban Board</div>
+            <div class="text-xs text-slate-500 font-medium">Wave Background Board (Manual High-Fidelity SVG)</div>
+        </div>
+
+        <!-- Stationary Manual Wave Background in Viewport -->
+        <div class="fixed bottom-0 left-60 right-0 pointer-events-none z-0 select-none overflow-hidden h-[360px] sm:h-[420px]" aria-hidden="true">
+            <svg
+                viewBox="0 0 1600 420"
+                fill="none"
+                preserveAspectRatio="none"
+                class="w-full h-full"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <defs>
+                    <!-- Main Vibrant Cyan Gradient for the flowing crest wave -->
+                    <linearGradient id="manual_board_crest" x1="450" y1="380" x2="1600" y2="150" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#00A8E8" stop-opacity="0.12" />
+                        <stop offset="35%" stop-color="#00A8E8" stop-opacity="0.45" />
+                        <stop offset="70%" stop-color="#38BDF8" stop-opacity="0.38" />
+                        <stop offset="100%" stop-color="#7DD3FC" stop-opacity="0.20" />
+                    </linearGradient>
+
+                    <!-- Soft Blue Ambient Fill for the base wave -->
+                    <linearGradient id="manual_board_base" x1="320" y1="420" x2="1600" y2="120" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#B1DFF7" stop-opacity="0.08" />
+                        <stop offset="45%" stop-color="#BAE6FD" stop-opacity="0.32" />
+                        <stop offset="100%" stop-color="#E0F2FE" stop-opacity="0.48" />
+                    </linearGradient>
+
+                    <!-- Subtle highlights along the wave edge -->
+                    <linearGradient id="manual_board_edge" x1="500" y1="360" x2="1500" y2="160" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#0284C7" stop-opacity="0.0" />
+                        <stop offset="40%" stop-color="#0284C7" stop-opacity="0.35" />
+                        <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.10" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Base Soft Ambient Wave: Starts under Column 3, rolls smoothly upwards across Column 4 & 4b to the right -->
+                <path
+                    d="M 280 420 C 520 380, 720 260, 980 200 C 1240 140, 1440 175, 1600 185 L 1600 420 Z"
+                    fill="url(#manual_board_base)"
+                />
+
+                <!-- Flowing Crest Ribbon: Elegant curved band matching Figma's exact diagonal trajectory -->
+                <path
+                    d="M 360 420 C 580 370, 780 255, 1020 195 C 1260 135, 1460 170, 1600 180 L 1600 270 C 1450 250, 1260 215, 1010 270 C 760 325, 570 395, 450 420 Z"
+                    fill="url(#manual_board_crest)"
+                />
+
+                <!-- Thin crisp stroke along the crest curve for sharp definition -->
+                <path
+                    d="M 360 420 C 580 370, 780 255, 1020 195 C 1260 135, 1460 170, 1600 180"
+                    stroke="url(#manual_board_edge)"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    fill="none"
+                />
+            </svg>
+        </div>
+
+        <!-- Kanban Columns Container (Horizontal Scroll) -->
+        <div class="flex-1 overflow-x-auto p-6 flex space-x-4 relative z-10">
+            <!-- Stage 1 -->
+            <div class="w-72 shrink-0 bg-slate-100/75 backdrop-blur-xs rounded-xl p-3 border border-slate-200/80 shadow-xs flex flex-col h-[750px]">
+                <div class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                    <span>1. PO / SPK / PROPOSAL</span>
+                    <span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">2</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow-xs border border-slate-200/60 mb-2">
+                    <div class="text-xs font-bold text-slate-800">TEST STAGE 1</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Proteksi Kebakaran</div>
+                    <div class="text-[10px] text-slate-400 mt-2">MKT: Intang</div>
+                </div>
+            </div>
+
+            <!-- Stage 2 -->
+            <div class="w-72 shrink-0 bg-slate-100/75 backdrop-blur-xs rounded-xl p-3 border border-slate-200/80 shadow-xs flex flex-col h-[750px]">
+                <div class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                    <span>2. VERIFIKASI DOKUMEN</span>
+                    <span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">1</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow-xs border border-slate-200/60 mb-2">
+                    <div class="text-xs font-bold text-slate-800">TEST STAGE 2</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Eskalator / Travelator</div>
+                    <div class="text-[10px] text-slate-400 mt-2">MKT: Intang</div>
+                </div>
+            </div>
+
+            <!-- Stage 3 (Wave begins here, under bottom edge) -->
+            <div class="w-72 shrink-0 bg-slate-100/75 backdrop-blur-xs rounded-xl p-3 border border-cyan-400/80 shadow-sm flex flex-col h-[750px]">
+                <div class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                    <span>3. PENJADWALAN</span>
+                    <span class="bg-cyan-100 text-cyan-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">2</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow-xs border border-slate-200/60 mb-2">
+                    <div class="text-xs font-bold text-slate-800">TEST STAGE 11B</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Instalasi Listrik & PP</div>
+                    <div class="text-[10px] text-slate-400 mt-2">MKT: Intang</div>
+                </div>
+            </div>
+
+            <!-- Stage 4 (Wave crest passes through here) -->
+            <div class="w-72 shrink-0 bg-slate-100/75 backdrop-blur-xs rounded-xl p-3 border border-slate-200/80 shadow-xs flex flex-col h-[750px]">
+                <div class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                    <span>4. PELAKSANAAN RU</span>
+                    <span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">2</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow-xs border border-slate-200/60 mb-2">
+                    <div class="text-xs font-bold text-slate-800">TEST STAGE 3</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Instalasi Listrik</div>
+                    <div class="text-[10px] text-slate-400 mt-2">MKT: Intang</div>
+                </div>
+            </div>
+
+            <!-- Stage 4b (Wave continues) -->
+            <div class="w-72 shrink-0 bg-slate-100/75 backdrop-blur-xs rounded-xl p-3 border border-slate-200/80 shadow-xs flex flex-col h-[750px]">
+                <div class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                    <span>4b. AKTUALISASI UNIT</span>
+                    <span class="bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+                </div>
+                <div class="text-center text-xs text-slate-400 py-8 italic">Tidak ada job</div>
+            </div>
+
+            <!-- Stage 5 -->
+            <div class="w-72 shrink-0 bg-slate-100/75 backdrop-blur-xs rounded-xl p-3 border border-slate-200/80 shadow-xs flex flex-col h-[750px]">
+                <div class="font-bold text-xs text-slate-700 mb-3 flex items-center justify-between">
+                    <span>5. PENYUSUNAN LHPP</span>
+                    <span class="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">1</span>
+                </div>
+                <div class="bg-white rounded-lg p-3 shadow-xs border border-slate-200/60 mb-2">
+                    <div class="text-xs font-bold text-slate-800">TEST STAGE 5</div>
+                    <div class="text-[11px] text-slate-500 mt-1">Lift / Dumbwaiter</div>
+                    <div class="text-[10px] text-slate-400 mt-2">MKT: Intang</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

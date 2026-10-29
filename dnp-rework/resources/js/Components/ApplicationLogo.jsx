@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function ApplicationLogo({ className = "h-12 w-auto", showText = true, textClassName = "" }) {
+export default function ApplicationLogo({ className = "h-14 w-auto object-contain", showText = true, textClassName = "" }) {
     return (
         <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center shrink-0">
-                <img src="/images/logo.png" alt="DNP Logo" className={className} />
+                <img src="/DNP Logo Baru.png" alt="DNP Logo" className={className} onError={(e) => { e.target.src = '/images/logo.png'; }} />
             </div>
 
             {showText && (

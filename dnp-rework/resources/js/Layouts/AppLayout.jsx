@@ -144,9 +144,9 @@ export default function AppLayout({ header, children }) {
                 {/* DNP Top Gradient Line Accent */}
                 <div className="h-1.5 bg-gradient-to-r from-[#063970] via-[#0A385C] to-[#00A8E8]" />
 
-                <div className="px-3 sm:px-6 py-2.5 flex items-center justify-between">
+                <div className="px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between min-h-[64px] sm:min-h-[72px]">
                     {/* Left: Hamburger + Logo */}
-                    <div className="flex items-center gap-2 sm:gap-3 ml-5">
+                    <div className="flex items-center gap-2 sm:gap-3.5 ml-3 sm:ml-5">
                         {/* Always-active hamburger button (mobile drawer & desktop mini sidebar toggle) */}
                         <button
                             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-[#0A385C] focus:outline-hidden"
@@ -157,14 +157,20 @@ export default function AppLayout({ header, children }) {
                             <Menu size={20} />
                         </button>
 
-                        <div className="flex items-center gap-2.5">
-                            <img src={logoImg} alt="PT Delta Nusantara Persada" className="h-9 w-auto object-contain shrink-0" />
+                        <div className="flex items-center gap-3">
+                            <img
+                                src="/DNP Logo Baru.png"
+                                alt="PT Delta Nusantara Persada"
+                                className="h-12 sm:h-14 w-auto object-contain shrink-0"
+                                onError={(e) => { e.target.src = logoImg; }}
+                            />
                             <div>
-                                <div className="hidden sm:block text-[10px] tracking-widest uppercase text-[#0A385C] font-extrabold leading-none">
-                                    PT Delta Nusantara Persada
+                                <div className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#0A385C] font-extrabold leading-none">
+                                    PT DELTA NUSANTARA PERSADA
                                 </div>
-                                <div className="text-sm sm:text-base font-bold leading-tight text-slate-800 sm:mt-0.5">
-                                    <span className="hidden sm:inline text-[#00A8E8]">Aplikasi · </span>16 Kanban
+                                <div className="text-sm sm:text-base font-extrabold leading-tight mt-0.5">
+                                    <span className="text-[#D9381E]">Riksa Uji</span>
+                                    <span className="text-[#0A385C]"> - Monitoring</span>
                                 </div>
                             </div>
                         </div>
@@ -224,10 +230,14 @@ export default function AppLayout({ header, children }) {
             <div className={`fixed inset-y-0 left-0 z-50 w-72 shadow-2xl transform transition-transform duration-300 ease-in-out lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 style={{ background: 'linear-gradient(180deg, #0A1F3A 0%, #0A385C 100%)' }}
             >
-                <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-                    <div className="flex items-center gap-2">
-                        <img src="/images/logo.png" alt="DNP Logo" className="h-8 w-auto object-contain shrink-0" />
-                        <span className="font-bold text-sm text-white">DNP Monitor</span>
+                    <div className="flex items-center gap-2.5">
+                        <img src="/DNP Logo Baru.png" alt="DNP Logo" className="h-11 w-auto object-contain shrink-0" onError={(e) => { e.target.src = logoImg; }} />
+                        <div>
+                            <div className="text-[9px] tracking-wider uppercase text-white/80 font-bold leading-none">PT DELTA NUSANTARA PERSADA</div>
+                            <div className="text-xs font-extrabold text-white mt-0.5">
+                                <span className="text-[#FF6B6B]">Riksa Uji</span> - Monitoring
+                            </div>
+                        </div>
                     </div>
                     <button onClick={() => setSidebarOpen(false)} className="p-2 rounded hover:bg-white/10 text-white/70">
                         <X size={18} />

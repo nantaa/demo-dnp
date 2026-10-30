@@ -166,7 +166,7 @@ export default function AppLayout({ header, children }) {
                             />
                             <div>
                                 <div className="text-[10px] sm:text-[11px] tracking-wider uppercase text-[#0A385C] font-extrabold leading-none">
-                                    PT DELTA NUSANTARA PERSADA
+                                    PT DELTA NUSANTARA Persada
                                 </div>
                                 <div className="text-sm sm:text-base font-extrabold leading-tight mt-0.5">
                                     <span className="text-[#D9381E]">Riksa Uji</span>
@@ -279,8 +279,8 @@ export default function AppLayout({ header, children }) {
                                     href={item.href}
                                     onClick={() => setSidebarOpen(false)}
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${active
-                                            ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
+                                        ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
                                         }`}
                                 >
                                     <Icon size={18} strokeWidth={active ? 2.5 : 1.5} />
@@ -309,9 +309,8 @@ export default function AppLayout({ header, children }) {
             <div className="flex flex-1 overflow-hidden">
                 {/* Desktop sidebar — hidden on mobile */}
                 <nav
-                    className={`hidden lg:flex shrink-0 overflow-y-auto overflow-x-hidden flex-col relative transition-all duration-300 ease-in-out ${
-                        desktopSidebarCollapsed ? 'w-16' : 'w-60'
-                    }`}
+                    className={`hidden lg:flex shrink-0 overflow-y-auto overflow-x-hidden flex-col relative transition-all duration-300 ease-in-out ${desktopSidebarCollapsed ? 'w-16' : 'w-60'
+                        }`}
                     style={{ background: 'linear-gradient(180deg, #0A1F3A 0%, #0A2D50 60%, #0A385C 100%)' }}
                 >
                     <div className={`pt-5 pb-3 transition-all duration-300 ${desktopSidebarCollapsed ? 'px-2' : 'px-4'}`}>
@@ -329,11 +328,10 @@ export default function AppLayout({ header, children }) {
                                         key={item.href}
                                         href={item.href}
                                         title={item.label}
-                                        className={`flex items-center rounded-lg text-sm font-medium transition-all ${
-                                            desktopSidebarCollapsed
+                                        className={`flex items-center rounded-lg text-sm font-medium transition-all ${desktopSidebarCollapsed
                                                 ? 'justify-center py-2.5 px-0'
                                                 : 'gap-3 px-3 py-2.5'
-                                        } ${active
+                                            } ${active
                                                 ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
                                                 : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
                                             }`}

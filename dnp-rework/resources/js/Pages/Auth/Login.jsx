@@ -116,8 +116,8 @@ export default function Login({ status, canResetPassword }) {
                         <div className="text-[#00A8E8] font-black text-lg tracking-widest uppercase leading-none">
                             APLIKASI 16 KANBAN
                         </div>
-                        <div className="text-white text-[15px] font-semibold tracking-wider mt-1.5 uppercase">
-                            PT Delta Nusantara Persada
+                        <div className="text-white text-[15px] font-semibold tracking-wider mt-1.5">
+                            PT DELTA NUSANTARA Persada
                         </div>
                     </div>
                 </div>

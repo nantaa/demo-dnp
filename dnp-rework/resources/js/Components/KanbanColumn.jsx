@@ -3,6 +3,7 @@ import { PIC_THEMES, getRoleTheme } from '@/Constants';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export default function KanbanColumn({
+    id,
     stageNumber,
     title,
     count,
@@ -19,6 +20,7 @@ export default function KanbanColumn({
     if (isCollapsed) {
         return (
             <div
+                id={id}
                 onClick={onToggleCollapse}
                 className="flex-1 min-w-[56px] flex flex-col items-center justify-between rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-md hover:border-[#00A8E8] transition-all relative z-20 cursor-pointer py-4 px-1.5 select-none self-start"
                 style={{ height: 'min(640px, calc(100vh - 220px))' }}
@@ -68,6 +70,7 @@ export default function KanbanColumn({
     // Expanded Mode (Normal Kanban Column: w-80 / 320px)
     return (
         <div
+            id={id}
             className="w-80 flex flex-col rounded-2xl flex-shrink-0 border border-slate-300 border-t-4 shadow-xs transition-all relative"
             style={{ borderTopColor: isLocked ? '#94a3b8' : (noTopBorder ? '#cbd5e1' : theme.primary) }}
         >

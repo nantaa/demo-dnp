@@ -3,7 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES, PIC_THEMES } from '@/Constants';
+import { STAGES, PIC_THEMES, getRoleTheme } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
 import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
@@ -145,6 +145,29 @@ export default function KanbanIndex({ jobs, auth }) {
         if (boardRef.current) {
             boardRef.current.scrollBy({ left: 340 * direction, behavior: 'smooth' });
         }
+    };
+
+    const scrollToStage = (stageDisplayId, stageId) => {
+        // If the target stage is currently collapsed, uncollapse it automatically so the user can see its contents
+        if (stageId && collapsedStages.includes(stageId)) {
+            const next = collapsedStages.filter(id => id !== stageId);
+            setCollapsedStages(next);
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(next));
+                } catch (e) { }
+            }
+        }
+
+        setTimeout(() => {
+            const el = document.getElementById(`col-stage-${stageDisplayId}`);
+            if (el && boardRef.current) {
+                const boardRect = boardRef.current.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                const leftOffset = elRect.left - boardRect.left + boardRef.current.scrollLeft - 16;
+                boardRef.current.scrollTo({ left: Math.max(0, leftOffset), behavior: 'smooth' });
+            }
+        }, 40);
     };
 
     // Live background polling sync to keep Kanban updated across all active users
@@ -305,6 +328,57 @@ export default function KanbanIndex({ jobs, auth }) {
                 </div>
             </div>
 
+            {/* Quick Navigation Number Buttons Strip (v3 Style with PIC Theme Coding) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-1.5 mb-2.5 bg-white/90 backdrop-blur-xs border border-slate-200/90 rounded-xl shadow-2xs select-none">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 px-1">
+                    Lompat ke:
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                    {visibleStages.map((stage) => {
+                        const count = jobs.filter(j => j.stage === stage.id).length;
+                        const theme = getRoleTheme(stage.role);
+                        const displayId = stage.displayId || stage.id;
+                        const isCollapsed = collapsedStages.includes(stage.id);
+
+                        return (
+                            <button
+                                key={stage.id}
+                                type="button"
+                                onClick={() => scrollToStage(displayId, stage.id)}
+                                className={`group shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
+                                    isCollapsed
+                                        ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-xs'
+                                }`}
+                                title={`Lompat ke Stage ${displayId}: ${stage.name} (${count} Job)${isCollapsed ? ' — Klik untuk membuka kolom' : ''}`}
+                            >
+                                <span
+                                    className="min-w-[20px] h-5 px-1 flex items-center justify-center rounded text-[10px] text-white font-black shadow-2xs transition-transform group-hover:scale-105"
+                                    style={{ backgroundColor: theme.primary }}
+                                >
+                                    {displayId}
+                                </span>
+                                <span className="truncate max-w-[75px] text-[11px] font-bold text-slate-700">
+                                    {stage.short}
+                                </span>
+                                {count > 0 ? (
+                                    <span
+                                        className="text-[10px] px-1.5 py-0.2 rounded-full font-black text-white shrink-0"
+                                        style={{ backgroundColor: theme.primary }}
+                                    >
+                                        {count}
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] text-slate-400 font-semibold px-0.5">
+                                        0
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Top horizontal (side) scrollbar synchronized with the Kanban board */}
             <div
                 ref={topScrollRef}
@@ -438,6 +512,7 @@ export default function KanbanIndex({ jobs, auth }) {
                     return (
                         <KanbanColumn
                             key={stage.id}
+                            id={`col-stage-${stage.displayId || stage.id}`}
                             stageNumber={stage.displayId || stage.id}
                             title={stage.name}
                             count={columnJobs.length}

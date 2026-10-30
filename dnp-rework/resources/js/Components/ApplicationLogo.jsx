@@ -11,7 +11,7 @@ export default function ApplicationLogo({ className = "h-14 w-auto object-contai
             {showText && (
                 <div className={`flex flex-col text-left ${textClassName}`}>
                     <span className="font-extrabold tracking-tight text-gray-900 text-base leading-tight uppercase font-sans">
-                        DELTA NUSANTARA <span className="text-[#00A8E8]">PERSADA</span>
+                        DELTA NUSANTARA <span className="text-[#00A8E8]">Persada</span>
                     </span>
                     <span className="text-[10px] font-semibold text-gray-500 tracking-wider uppercase">
                         Inspection <span className="text-[#E11D48]">|</span> consultant

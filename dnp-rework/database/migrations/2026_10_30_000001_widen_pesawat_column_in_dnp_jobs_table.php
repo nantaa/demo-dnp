@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -14,14 +14,14 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('dnp_jobs')) {
-             = DB::getDriverName();
-            if ( === 'pgsql') {
+            $driver = DB::getDriverName();
+            if ($driver === 'pgsql') {
                 DB::statement('ALTER TABLE dnp_jobs ALTER COLUMN pesawat TYPE text');
-            } elseif ( === 'mysql') {
+            } elseif ($driver === 'mysql') {
                 DB::statement('ALTER TABLE dnp_jobs MODIFY pesawat TEXT');
             } else {
-                Schema::table('dnp_jobs', function (Blueprint ) {
-                    ->text('pesawat')->change();
+                Schema::table('dnp_jobs', function (Blueprint $table) {
+                    $table->text('pesawat')->change();
                 });
             }
         }
@@ -30,14 +30,14 @@ return new class extends Migration
     public function down(): void
     {
         if (Schema::hasTable('dnp_jobs')) {
-             = DB::getDriverName();
-            if ( === 'pgsql') {
+            $driver = DB::getDriverName();
+            if ($driver === 'pgsql') {
                 DB::statement('ALTER TABLE dnp_jobs ALTER COLUMN pesawat TYPE varchar(50)');
-            } elseif ( === 'mysql') {
+            } elseif ($driver === 'mysql') {
                 DB::statement('ALTER TABLE dnp_jobs MODIFY pesawat VARCHAR(50)');
             } else {
-                Schema::table('dnp_jobs', function (Blueprint ) {
-                    ->string('pesawat', 50)->change();
+                Schema::table('dnp_jobs', function (Blueprint $table) {
+                    $table->string('pesawat', 50)->change();
                 });
             }
         }

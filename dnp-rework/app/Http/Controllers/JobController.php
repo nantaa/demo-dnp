@@ -52,7 +52,7 @@ class JobController extends Controller
         }
 
         // Inspector role can act on inspector stages (4 and 5)
-        if (in_array($user->role, ['inspektur', 'inspector'])) {
+        if (in_array($user->role, ['inspektur', 'inspector', 'tim_ru'])) {
             if (in_array($stage, [4, 5])) {
                 return true;
             }
@@ -745,7 +745,7 @@ class JobController extends Controller
         $user = Auth::user();
         $isInspector = $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id
-            || $user->role === 'inspektur';
+            || in_array($user->role, ['inspektur', 'inspector', 'tim_ru']);
         if (!$isInspector && !$user->isSuperadmin() && $user->role !== 'manager') {
             abort(403, 'Only assigned inspectors can submit Stage 4 data.');
         }
@@ -755,6 +755,10 @@ class JobController extends Controller
             'unit_count_notes' => 'nullable|string',
             's4_checklist'     => 'nullable|array',  // {nameplate,visual,dimensi,...}: {status,catatan}
         ]);
+
+        if ($request->has('notes')) {
+            $validated['notes'] = $request->input('notes');
+        }
 
         $job->update($validated);
 
@@ -822,7 +826,12 @@ class JobController extends Controller
             $storedValue = trim($raw);
         }
 
-        $job->update(['link_lhpp' => $storedValue]);
+        $updateData = ['link_lhpp' => $storedValue];
+        if ($request->has('notes')) {
+            $updateData['notes'] = $request->input('notes');
+        }
+
+        $job->update($updateData);
 
         return back()->with('success', 'Link LHPP unit berhasil disimpan.');
     }

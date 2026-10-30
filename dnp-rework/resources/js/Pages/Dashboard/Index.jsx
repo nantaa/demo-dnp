@@ -7,7 +7,8 @@ import { showSuccess } from '@/swal';
 import { 
     Activity, Plus, CheckCircle2, Bell, FileCheck, Calendar, AlertTriangle, 
     Wrench, Hourglass, ClipboardList, Upload, Banknote, Package, Eye, 
-    Building2, HardHat, ChevronLeft, ChevronRight, User, Shield, Briefcase
+    Building2, HardHat, ChevronLeft, ChevronRight, User, Shield, Briefcase,
+    MapPin, ArrowRight
 } from 'lucide-react';
 
 const PESAWAT_TYPES = [
@@ -949,14 +950,9 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
 // ============================================================
 function InsDashboard({ stats, user, onSelectJob }) {
     const { lhppJobs, stage4Mine } = stats;
-    const fileRef = useRef(null);
-    const activeJob = stage4Mine[0] || lhppJobs[0];
-
-    const handleFileChange = () => {
-        if (!activeJob) return;
-        showSuccess('Shortcut Aktif', 'Shortcut HP Upload berhasil dipicu. Silakan upload file pada detail sheet di tab Lapangan.');
-        onSelectJob(activeJob);
-    };
+    const allAssignedTasks = useMemo(() => {
+        return [...(stage4Mine || []), ...(lhppJobs || [])];
+    }, [stage4Mine, lhppJobs]);
 
     return (
         <div className="space-y-6">
@@ -973,46 +969,136 @@ function InsDashboard({ stats, user, onSelectJob }) {
                 <KPICard label="Selesai Bulan Ini" value={stats.thisMonth.length} sub="kontribusi tim" icon={CheckCircle2} accentClass="text-green-600" />
             </div>
 
-            {/* Quick Upload Widget */}
-            <div className="bg-orange-50/30 border-2 border-dashed border-orange-500/50 rounded-xl p-6 shadow-sm">
-                <div className="mb-4">
-                    <div className="text-xs text-orange-600 font-extrabold uppercase tracking-wider">⚡ QUICK UPLOAD WIDGET</div>
-                    <h3 className="text-lg font-bold text-gray-800 mt-0.5">Upload Cepat dari HP</h3>
-                </div>
-                {!activeJob ? (
-                    <div className="text-center text-sm text-gray-500 py-8 bg-white/50 border border-gray-200 rounded-lg">
-                        Tidak ada job aktif di lapangan atau LHPP. Buka Kanban Board untuk memilih.
-                    </div>
-                ) : (
-                    <div>
-                        <div className="text-sm text-gray-500 mb-3">Foto/BAP akan otomatis tertaut ke job aktif:</div>
-                        <div onClick={() => onSelectJob(activeJob)} 
-                            className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:justify-between md:items-center cursor-pointer hover:border-orange-500 transition-colors mb-4 gap-2">
-                            <div>
-                                <span className="font-mono font-bold text-sm text-gray-800">{activeJob.kode}</span>
-                                <h4 className="font-bold text-gray-800 mt-0.5">{activeJob.klien}</h4>
-                                <p className="text-xs text-gray-400 mt-1">{activeJob.lokasi} · {PESAWAT_TYPES.find(p => p.code === activeJob.pesawat)?.name} × {activeJob.units}</p>
+            {/* Jadwal & Tugas Lapangan Hari Ini */}
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gradient-to-r from-amber-50/50 via-white to-indigo-50/30">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                            <HardHat className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-base font-bold text-gray-800">Jadwal & Tugas Lapangan Hari Ini</h3>
+                                <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800">
+                                    {allAssignedTasks.length} TUGAS AKTIF
+                                </span>
                             </div>
-                            <span className="inline-flex self-start md:self-auto px-2.5 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
-                                S{activeJob.stage} - {STAGES.find(s => s.id === activeJob.stage)?.name}
-                            </span>
-                        </div>
-
-                        {/* Drag and drop / click box */}
-                        <div onClick={() => fileRef.current?.click()}
-                            onDragOver={e => { e.preventDefault(); }}
-                            onDrop={e => { e.preventDefault(); handleFileChange(); }}
-                            className="bg-white border-2 border-dashed border-orange-400 rounded-xl p-8 text-center cursor-pointer hover:bg-orange-50/50 transition-colors">
-                            <Upload className="mx-auto h-8 w-8 text-orange-500 opacity-60 mb-2" />
-                            <div className="text-sm font-bold text-gray-700">Drag & drop foto / BAP di sini</div>
-                            <div className="text-xs text-gray-400 mt-1">atau klik untuk pilih file · max 20MB/file</div>
-                            <input ref={fileRef} type="file" multiple className="hidden" accept="*" onChange={handleFileChange} />
-                        </div>
-                        <div className="text-[10px] text-gray-400 mt-3 leading-relaxed">
-                             Widget ini shortcut. Setelah diklik/file dipilih, detail job akan terbuka untuk mengarahkan Anda ke tab Lapangan dan melengkapi dokumen.
+                            <p className="text-xs text-gray-500 mt-0.5">Daftar penugasan inspeksi lapangan (Tahap 4) dan penyusunan LHPP (Tahap 5) Anda.</p>
                         </div>
                     </div>
-                )}
+                    <Link
+                        href="/kanban"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline self-start sm:self-auto"
+                    >
+                        Buka Semua di Kanban Board →
+                    </Link>
+                </div>
+
+                <div className="p-5">
+                    {allAssignedTasks.length === 0 ? (
+                        <div className="text-center py-10 px-4 bg-gray-50/60 rounded-xl border border-dashed border-gray-200">
+                            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
+                            <h4 className="text-sm font-bold text-gray-700">Tidak ada jadwal lapangan aktif hari ini</h4>
+                            <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+                                Semua penugasan inspeksi fisik dan LHPP telah diselesaikan atau menunggu jadwal tugas baru dari Koordinator/Admin.
+                            </p>
+                            <div className="mt-4">
+                                <Link
+                                    href="/kanban"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                                >
+                                    Pantau Pipeline Kanban Board
+                                </Link>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {allAssignedTasks.map(job => {
+                                const isStage4 = job.stage === 4 || job.stage === 13;
+                                const pesawatObj = PESAWAT_TYPES.find(p => p.code === job.pesawat);
+                                const pesawatName = pesawatObj?.name || job.pesawat;
+                                const stageName = STAGES.find(s => s.id === job.stage)?.name || `Stage ${job.stage}`;
+
+                                return (
+                                    <div
+                                        key={job.id}
+                                        className="bg-white rounded-xl border border-gray-200 hover:border-amber-400 hover:shadow-md transition-all p-4 flex flex-col justify-between gap-3 group"
+                                    >
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className="font-mono text-xs font-bold text-gray-800 px-2 py-0.5 rounded bg-gray-100 border border-gray-200">
+                                                    {job.kode}
+                                                </span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                    isStage4
+                                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                        : 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                                                }`}>
+                                                    S{job.stage} · {stageName}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <h4 className="font-bold text-gray-900 text-sm group-hover:text-amber-700 transition">
+                                                    {job.klien}
+                                                </h4>
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                                    <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                                    <span className="truncate">{job.lokasi || 'Lokasi belum ditentukan'}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2 text-xs">
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-semibold text-gray-400 block">Pesawat</span>
+                                                    <span className="font-medium text-gray-700 truncate block">
+                                                        {pesawatName} × {job.actual_units ?? job.units} Unit
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] uppercase font-semibold text-gray-400 block">
+                                                        {isStage4 ? 'Tanggal Lapangan' : 'SLA LHPP'}
+                                                    </span>
+                                                    <span className="font-medium text-gray-700 block">
+                                                        {isStage4 
+                                                            ? formatDate(job.tgl_lapangan || job.tgl_mulai || job.created_at)
+                                                            : (job.remainingDays !== undefined 
+                                                                ? (job.remainingDays < 0 ? `Terlambat ${Math.abs(job.remainingDays)}h` : `${job.remainingDays}h tersisa`)
+                                                                : 'SOP 3 hari/unit')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2 border-t border-gray-100">
+                                            <button
+                                                type="button"
+                                                onClick={() => onSelectJob(job)}
+                                                className={`w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-sm ${
+                                                    isStage4
+                                                        ? 'bg-amber-600 hover:bg-amber-700'
+                                                        : 'bg-indigo-600 hover:bg-indigo-700'
+                                                }`}
+                                            >
+                                                {isStage4 ? (
+                                                    <>
+                                                        <span>Buka Job & Upload Foto Lapangan</span>
+                                                        <ArrowRight className="w-3.5 h-3.5" />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span>Buka Penyusunan LHPP & Link Dokumen</span>
+                                                        <ArrowRight className="w-3.5 h-3.5" />
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Countdown LHPP */}

@@ -489,6 +489,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     });
     const [lhppLinks, setLhppLinks] = useState(() => parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
     const [isSavingLink, setIsSavingLink] = useState(false);
+    const [isSavingStage, setIsSavingStage] = useState(false);
     const [s7, setS7] = useState({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
     const [s8, setS8] = useState({
         tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
@@ -1160,7 +1161,33 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.post(`/jobs/${job.id}/return-to-stage1`, { notes: returnNotes }, { onSuccess: () => onClose() });
     };
 
-    const handleSaveS4  = () => router.post(`/jobs/${job.id}/stage4-data`,   s4,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 4.') });
+    const executeSave = (url, payload, successMsg, customCb) => {
+        if (isSavingStage || isSavingLink) return;
+        setIsSavingStage(true);
+        const finalPayload = { ...payload };
+        if (data.notes && finalPayload.notes === undefined) {
+            finalPayload.notes = data.notes;
+        }
+
+        router.post(url, finalPayload, {
+            preserveScroll: true,
+            preserveState: true,
+            only: ['jobs', 'flash'],
+            onSuccess: () => {
+                showSuccess('Berhasil', successMsg || 'Perubahan berhasil disimpan.');
+                if (typeof customCb === 'function') customCb();
+            },
+            onError: (errs) => {
+                const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : (errs || 'Gagal menyimpan perubahan.');
+                showError('Gagal Simpan', msg);
+            },
+            onFinish: () => {
+                setIsSavingStage(false);
+            }
+        });
+    };
+
+    const handleSaveS4  = () => executeSave(`/jobs/${job.id}/stage4-data`, s4, 'Data lapangan berhasil disimpan.');
     const handleUpdateLhppLink = (index, field, value) => {
         setLhppLinks(prev => {
             const next = [...prev];
@@ -1197,13 +1224,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     const handleSaveLhppLinks = () => {
+        if (isSavingLink || isSavingStage) return;
         setIsSavingLink(true);
-        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks }, {
+        router.post(`/jobs/${job.id}/stage5-data`, { link_lhpp: lhppLinks, notes: data.notes }, {
             preserveScroll: true,
             preserveState: true,
+            only: ['jobs', 'flash'],
             onSuccess: () => {
                 setIsSavingLink(false);
-                showSuccess('Berhasil', 'Daftar link LHPP unit berhasil disimpan.');
+                showSuccess('Berhasil', 'Daftar link LHPP unit & catatan berhasil disimpan.');
             },
             onError: (errs) => {
                 setIsSavingLink(false);
@@ -1217,15 +1246,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
     const handleSaveS5  = () => {
         if (!s5.s5_review_decision) return showError('Validasi', 'Pilih keputusan review!');
-        router.post(`/jobs/${job.id}/stage5-review`, s5, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Keputusan disimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan keputusan review.') });
+        executeSave(`/jobs/${job.id}/stage5-review`, s5, 'Keputusan review berhasil disimpan.');
     };
-    const handleSaveS7  = () => router.post(`/jobs/${job.id}/stage7-data`,  s7,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 7.') });
-    const handleSaveS8  = () => router.post(`/jobs/${job.id}/stage8-data`,  s8,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 8.') });
-    const handleSaveS9  = () => router.post(`/jobs/${job.id}/stage9-data`,  s9,  { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 9.') });
-    const handleSaveS10 = () => router.post(`/jobs/${job.id}/stage10-data`, s10, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan data Stage 10.') });
-    const handleSaveS11 = () => router.post(`/jobs/${job.id}/stage11-data`, s11, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Data follow-up penagihan tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan follow-up penagihan.') });
-    const handleSaveS14 = () => router.post(`/jobs/${job.id}/stage14-data`, s14, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Status Pembayaran 11b Tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan status pembayaran.') });
-    const handleSaveS15 = () => router.post(`/jobs/${job.id}/stage15-data`, s15, { preserveScroll: true, preserveState: true, onSuccess: () => showSuccess('Berhasil', 'Informasi pengiriman SUKET tersimpan.'), onError: (errs) => showError('Gagal Simpan', typeof errs === 'object' ? Object.values(errs).flat().join('\n') : 'Gagal menyimpan info pengiriman.') });
+    const handleSaveS7  = () => executeSave(`/jobs/${job.id}/stage7-data`, s7, 'Tanggal penyerahan berhasil disimpan.');
+    const handleSaveS8  = () => executeSave(`/jobs/${job.id}/stage8-data`, s8, 'Data progres Disnaker berhasil disimpan.');
+    const handleSaveS9  = () => executeSave(`/jobs/${job.id}/stage9-data`, s9, 'Status Suket berhasil disimpan.');
+    const handleSaveS10 = () => executeSave(`/jobs/${job.id}/stage10-data`, s10, 'Data tagihan berhasil disimpan.');
+    const handleSaveS11 = () => executeSave(`/jobs/${job.id}/stage11-data`, s11, 'Data follow-up penagihan berhasil disimpan.');
+    const handleSaveS14 = () => executeSave(`/jobs/${job.id}/stage14-data`, s14, 'Status pembayaran berhasil disimpan.');
+    const handleSaveS15 = () => executeSave(`/jobs/${job.id}/stage15-data`, s15, 'Informasi pengiriman SUKET berhasil disimpan.');
 
     const handleUpdateJob = (e) => {
         e.preventDefault();
@@ -1895,9 +1924,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                         placeholder="Jelaskan mengapa jumlah berbeda…" />
                                 </div>
                             )}
-                            <button type="button" onClick={handleSaveS4}
-                                className="mt-2 px-3 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded font-medium">
-                                Simpan Data Lapangan
+                            <button type="button" onClick={handleSaveS4} disabled={isSavingStage}
+                                className="mt-2 px-3.5 py-1.5 text-xs bg-gray-800 hover:bg-gray-900 text-white rounded font-medium disabled:opacity-50 transition shadow-sm">
+                                {isSavingStage ? 'Menyimpan...' : 'Simpan Data Lapangan'}
                             </button>
                         </div>
                         {/* Photo Uploads */}
@@ -2164,10 +2193,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     <button
                                         type="button"
                                         onClick={handleSaveLhppLinks}
-                                        disabled={isSavingLink}
+                                        disabled={isSavingLink || isSavingStage}
                                         className="px-3.5 py-1.5 rounded text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 shadow-sm transition"
                                     >
-                                        {isSavingLink ? 'Menyimpan...' : 'Simpan Semua Link LHPP'}
+                                        {isSavingLink || isSavingStage ? 'Menyimpan...' : 'Simpan Semua Link LHPP'}
                                     </button>
                                     <button
                                         type="button"
@@ -2306,8 +2335,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 placeholder="Catatan kondisi, syarat, atau alasan penolakan…" />
                         </div>
                         <button type="button" onClick={handleSaveS5}
-                            className="w-full py-2 rounded text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700">
-                            Simpan Keputusan Review
+                            disabled={isSavingStage}
+                            className="w-full py-2 rounded text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition">
+                            {isSavingStage ? 'Menyimpan...' : 'Simpan Keputusan Review'}
                         </button>
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
                         <div className="flex gap-2">
@@ -2333,8 +2363,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 className="w-full text-sm border border-gray-300 rounded px-2 py-1.5" />
                         </div>
                         <button type="button" onClick={handleSaveS7}
-                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                            Simpan Tanggal Penyerahan
+                            disabled={isSavingStage}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition">
+                            {isSavingStage ? 'Menyimpan...' : 'Simpan Tanggal Penyerahan'}
                         </button>
                         <UploadSlot type="Bukti Penyerahan ke Disnaker" stageId={7} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
@@ -2392,8 +2423,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             );
                         })()}
                         <button type="button" onClick={handleSaveS8}
-                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                            Simpan Data Disnaker
+                            disabled={isSavingStage}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition">
+                            {isSavingStage ? 'Menyimpan...' : 'Simpan Data Disnaker'}
                         </button>
                         {(DOC_TYPES_BY_STAGE[8] || []).map(t => <UploadSlot key={t} type={t} stageId={8} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
@@ -2413,8 +2445,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </select>
                         </div>
                         <button type="button" onClick={handleSaveS9}
-                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                            Simpan Status
+                            disabled={isSavingStage}
+                            className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition">
+                            {isSavingStage ? 'Menyimpan...' : 'Simpan Status'}
                         </button>
                         {(DOC_TYPES_BY_STAGE[9] || []).map(t => <UploadSlot key={t} type={t} stageId={9} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
                         <NoteField value={data.notes} onChange={e => setData('notes', e.target.value)} />
@@ -2504,8 +2537,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             </div>
                             {canEditNilai && (
                                 <button type="button" onClick={handleSaveS10}
-                                    className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800">
-                                    Simpan Data Invoice & Faktur
+                                    disabled={isSavingStage}
+                                    className="px-4 py-2 rounded text-sm font-semibold bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition">
+                                    {isSavingStage ? 'Menyimpan...' : 'Simpan Data Invoice & Faktur'}
                                 </button>
                             )}
                             {(DOC_TYPES_BY_STAGE[10] || []).map(t => <UploadSlot key={t} type={t} stageId={10} docs={job.documents} triggerUpload={triggerUpload} uploadFileDirectly={uploadFileDirectly} canManageStageDocs={canManageStageDocs} deleteDoc={deleteDoc} isINS={isINS} />)}
@@ -2577,9 +2611,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <button
                                 type="button"
                                 onClick={handleSaveS11}
-                                className="px-3 py-1.5 rounded text-xs font-semibold bg-gray-700 text-white hover:bg-gray-800 transition"
+                                disabled={isSavingStage}
+                                className="px-3 py-1.5 rounded text-xs font-semibold bg-gray-700 text-white hover:bg-gray-800 disabled:opacity-50 transition"
                             >
-                                Simpan Data Follow-up
+                                {isSavingStage ? 'Menyimpan...' : 'Simpan Data Follow-up'}
                             </button>
                         </div>
 
@@ -2644,9 +2679,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <button
                                 type="button"
                                 onClick={handleSaveS14}
-                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm transition"
+                                disabled={isSavingStage}
+                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs shadow-sm disabled:opacity-50 transition"
                             >
-                                Simpan Status Pembayaran 11b
+                                {isSavingStage ? 'Menyimpan...' : 'Simpan Status Pembayaran 11b'}
                             </button>
                         )}
 
@@ -2713,9 +2749,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                             <button
                                 type="button"
                                 onClick={handleSaveS15}
-                                className="px-3 py-1.5 rounded text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap transition"
+                                disabled={isSavingStage}
+                                className="px-3 py-1.5 rounded text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap disabled:opacity-50 transition"
                             >
-                                Simpan Informasi SUKET
+                                {isSavingStage ? 'Menyimpan...' : 'Simpan Informasi SUKET'}
                             </button>
                         </div>
 
@@ -3816,7 +3853,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" accept="*" />
 
                 {/* Global Loader Overlay */}
-                {(processing || isUploading || isMoving) && (
+                {(processing || isUploading || isMoving || isSavingLink || isSavingStage) && (
                     <div 
                         data-dnp-busy="true"
                         className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl"

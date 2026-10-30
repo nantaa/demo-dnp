@@ -128,7 +128,7 @@ class JobController extends Controller
 
         $validated = $request->validate([
             'klien'           => 'required|string|max:255',
-            'pesawat'         => 'required|string|max:255',
+            'pesawat'         => 'required|string|max:2000',
             'lokasi'          => 'required|string',
             'owner_marketing' => 'required|string',
             'pic_klien'       => 'nullable|string',
@@ -151,7 +151,26 @@ class JobController extends Controller
         $validated['kode']  = $this->generateUniqueKode($year);
         $validated['stage'] = 1;
 
-        $job = Job::create($validated);
+        try {
+            $job = Job::create($validated);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Self-healing migration fallback for PostgreSQL varchar(50) -> text truncation
+            if (str_contains($e->getMessage(), '22001') || str_contains($e->getMessage(), 'right truncated')) {
+                try {
+                    $driver = \Illuminate\Support\Facades\DB::getDriverName();
+                    if ($driver === 'pgsql') {
+                        \Illuminate\Support\Facades\DB::statement('ALTER TABLE dnp_jobs ALTER COLUMN pesawat TYPE text');
+                    } elseif ($driver === 'mysql') {
+                        \Illuminate\Support\Facades\DB::statement('ALTER TABLE dnp_jobs MODIFY pesawat TEXT');
+                    }
+                    $job = Job::create($validated);
+                } catch (\Throwable $retryException) {
+                    throw $e;
+                }
+            } else {
+                throw $e;
+            }
+        }
 
         $this->recordHistoryLog($job, 1, 'Job created (PO/SPK received)');
 
@@ -176,7 +195,25 @@ class JobController extends Controller
             $data['tgl_po'] = null;
         }
 
-        $job->update($data);
+        try {
+            $job->update($data);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), '22001') || str_contains($e->getMessage(), 'right truncated')) {
+                try {
+                    $driver = \Illuminate\Support\Facades\DB::getDriverName();
+                    if ($driver === 'pgsql') {
+                        \Illuminate\Support\Facades\DB::statement('ALTER TABLE dnp_jobs ALTER COLUMN pesawat TYPE text');
+                    } elseif ($driver === 'mysql') {
+                        \Illuminate\Support\Facades\DB::statement('ALTER TABLE dnp_jobs MODIFY pesawat TEXT');
+                    }
+                    $job->update($data);
+                } catch (\Throwable $retryException) {
+                    throw $e;
+                }
+            } else {
+                throw $e;
+            }
+        }
 
         if ($request->has('inspector_ids')) {
             $job->inspectors()->sync($request->input('inspector_ids', []));

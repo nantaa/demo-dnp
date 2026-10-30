@@ -28,7 +28,10 @@ class DashboardController extends Controller
                 }
             },
             'unitsTracking',
-            'historyLogs.user'
+            'historyLogs' => function($q) {
+                $q->select(['id', 'job_id', 'stage', 'action', 'action_by_user_id', 'notes', 'created_at'])
+                  ->with('user:id,name,role');
+            }
         ])->orderBy('updated_at', 'desc');
 
         if ($user->role === 'marketing' && !$user->isSuperadmin()) {
@@ -40,8 +43,8 @@ class DashboardController extends Controller
                 'user'        => $user,
                 'permissions' => $stagePermissions,
             ],
-            'jobs' => $query->get(),
-            'inspectors' => \App\Models\InspectorProfile::whereHas('user', function($q) {
+            'jobs' => fn () => $query->get(),
+            'inspectors' => fn () => \App\Models\InspectorProfile::whereHas('user', function($q) {
                 $q->where('name', 'NOT LIKE', '%Diba Aini%');
             })->with('user')->get(),
         ];
@@ -72,12 +75,12 @@ class DashboardController extends Controller
     public function inventory()
     {
         $data = $this->getSharedData();
-        $data['inspectors'] = \App\Models\InspectorProfile::with('user')->get();
-        $data['alat_uji'] = \App\Models\AlatUji::all();
-        $data['sertifikat_pjk3'] = \App\Models\SertifikatPjk3::all();
-        $data['regulasi_k3'] = \App\Models\RegulasiK3::all();
-        $data['form_disnaker'] = \App\Models\FormDisnaker::all();
-        $data['users'] = \App\Models\User::orderBy('name')->get();
+        $data['inspectors']      = fn () => \App\Models\InspectorProfile::with('user')->get();
+        $data['alat_uji']        = fn () => \App\Models\AlatUji::all();
+        $data['sertifikat_pjk3'] = fn () => \App\Models\SertifikatPjk3::all();
+        $data['regulasi_k3']     = fn () => \App\Models\RegulasiK3::all();
+        $data['form_disnaker']   = fn () => \App\Models\FormDisnaker::all();
+        $data['users']           = fn () => \App\Models\User::orderBy('name')->get();
 
         return Inertia::render('Dashboard/AlatSkp', $data);
     }

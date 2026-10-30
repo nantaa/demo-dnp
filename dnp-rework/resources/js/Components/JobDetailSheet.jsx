@@ -402,6 +402,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [previewDoc,   setPreviewDoc]   = useState(null);
     const [isEditing,    setIsEditing]    = useState(false);
     const [isUploading,  setIsUploading]  = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStage,  setUploadStage]  = useState(null);
     const [uploadType,   setUploadType]   = useState('');
     const [photoNotes,   setPhotoNotes]   = useState({});   // key: photo type
@@ -513,7 +514,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     });
     const [isMoving, setIsMoving] = useState(false);
 
-    // Watchdog safety: never let loading overlay stay stuck forever
+    // Watchdog safety: never let loading overlay stay stuck forever (25s for file uploads up to 25MB)
     const [showStuckDismiss, setShowStuckDismiss] = useState(false);
     useEffect(() => {
         let dismissTimer;
@@ -522,14 +523,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             setShowStuckDismiss(false);
             dismissTimer = setTimeout(() => {
                 setShowStuckDismiss(true);
-            }, 5000);
+            }, 25000);
             hardResetTimer = setTimeout(() => {
                 setIsUploading(false);
                 setIsMoving(false);
                 setShowStuckDismiss(false);
-            }, 15000);
+                setUploadProgress(0);
+            }, 60000);
         } else {
             setShowStuckDismiss(false);
+            setUploadProgress(0);
         }
         return () => {
             clearTimeout(dismissTimer);
@@ -1010,7 +1013,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
         router.post(`/jobs/${job.id}/invoice-revise`, formData, {
             preserveScroll: true,
+            preserveState: true,
             forceFormData: true,
+            only: ['jobs'],
+            onProgress: (progress) => {
+                if (progress?.percentage) setUploadProgress(Math.round(progress.percentage));
+            },
             onSuccess: () => {
                 showSuccess('Berhasil', 'Data invoice berhasil direvisi secara paralel tanpa mengubah stage alur kerja.');
                 setShowReviseInvoiceModal(false);
@@ -1018,6 +1026,9 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             onError: (errs) => {
                 const msg = Object.values(errs).flat().join('\n') || 'Gagal merevisi invoice.';
                 showError('Gagal Revisi Invoice', msg);
+            },
+            onFinish: () => {
+                setUploadProgress(0);
             }
         });
     };
@@ -1261,6 +1272,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         }
 
         setIsUploading(true);
+        setUploadProgress(0);
         const fd = new FormData();
         fd.append('file', file);
         fd.append('type', type);
@@ -1273,6 +1285,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             forceFormData: true,
             preserveScroll: true,
             preserveState: true,
+            only: ['jobs'],
+            onProgress: (progress) => {
+                if (progress?.percentage) {
+                    setUploadProgress(Math.round(progress.percentage));
+                }
+            },
             onSuccess: () => {
                 showSuccess('Berhasil', 'Dokumen berhasil diunggah.');
             },
@@ -1282,6 +1300,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             },
             onFinish: () => {
                 setIsUploading(false);
+                setUploadProgress(0);
                 setUploadStage(null);
                 setUploadType('');
                 uploadTargetRef.current = { stage: null, type: null, extraNotes: '' };
@@ -1305,6 +1324,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             return;
         }
         setIsUploading(true);
+        setUploadProgress(0);
         const fd = new FormData();
         fd.append('file', file);
         fd.append('type', type);
@@ -1314,6 +1334,12 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             forceFormData: true,
             preserveScroll: true,
             preserveState: true,
+            only: ['jobs'],
+            onProgress: (progress) => {
+                if (progress?.percentage) {
+                    setUploadProgress(Math.round(progress.percentage));
+                }
+            },
             onSuccess: () => {
                 showSuccess('Berhasil', 'Dokumen berhasil diunggah.');
             },
@@ -1323,6 +1349,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
             },
             onFinish: () => {
                 setIsUploading(false);
+                setUploadProgress(0);
                 setUploadStage(null);
                 setUploadType('');
                 uploadTargetRef.current = { stage: null, type: null, extraNotes: '' };
@@ -1347,6 +1374,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         router.delete(`/jobs/${job.id}/documents/${docId}`, {
             preserveScroll: true,
             preserveState: true,
+            only: ['jobs'],
             onSuccess: () => showSuccess('Berhasil', 'Dokumen berhasil dihapus.'),
             onError: (errs) => {
                 const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
@@ -3778,11 +3806,35 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                         data-dnp-busy="true"
                         className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 rounded-xl"
                     >
-                        <div className="bg-white p-5 rounded-xl shadow-xl flex flex-col items-center gap-3 border border-slate-100 max-w-xs text-center">
+                        <div className="bg-white p-5 rounded-xl shadow-xl flex flex-col items-center gap-3 border border-slate-100 max-w-xs w-full text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-3 border-blue-600 border-t-transparent"></div>
-                            <div>
-                                <span className="font-semibold text-gray-800 text-sm block">Memproses...</span>
-                                <span className="text-[11px] text-gray-500 block mt-0.5">Mohon tunggu sementara data disinkronkan</span>
+                            <div className="w-full">
+                                {isUploading && uploadProgress > 0 && uploadProgress < 100 ? (
+                                    <>
+                                        <span className="font-semibold text-gray-800 text-sm block">
+                                            Mengunggah berkas: {uploadProgress}%
+                                        </span>
+                                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2 overflow-hidden">
+                                            <div 
+                                                className="bg-blue-600 h-1.5 rounded-full transition-all duration-150" 
+                                                style={{ width: `${uploadProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-[11px] text-gray-500 block mt-1">Mengirim data ke server...</span>
+                                    </>
+                                ) : isUploading && uploadProgress >= 100 ? (
+                                    <>
+                                        <span className="font-semibold text-gray-800 text-sm block">
+                                            Menyimpan data di server...
+                                        </span>
+                                        <span className="text-[11px] text-gray-500 block mt-0.5">Memproses berkas & menyinkronkan data</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="font-semibold text-gray-800 text-sm block">Memproses...</span>
+                                        <span className="text-[11px] text-gray-500 block mt-0.5">Mohon tunggu sementara data disinkronkan</span>
+                                    </>
+                                )}
                             </div>
                             {showStuckDismiss && (
                                 <button
@@ -3790,6 +3842,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                     onClick={() => {
                                         setIsUploading(false);
                                         setIsMoving(false);
+                                        setUploadProgress(0);
                                     }}
                                     className="mt-2 text-xs text-red-600 hover:text-red-700 font-semibold underline cursor-pointer"
                                 >

@@ -1276,13 +1276,16 @@ class JobController extends Controller
         $filename = $cleanName;
 
         // Check for duplicate filenames within the job folder to prevent accidental overwrites
-        if (Storage::disk('public')->exists("{$targetDir}/{$filename}")) {
+        // Memory-cached DB lookup prevents slow sequential filesystem disk calls
+        $existingNames = $job->documents()->pluck('name')->flip();
+        if (isset($existingNames[$filename]) || Storage::disk('public')->exists("{$targetDir}/{$filename}")) {
             $info = pathinfo($cleanName);
             $base = $info['filename'];
             $ext  = !empty($info['extension']) ? '.' . $info['extension'] : '';
             $counter = 1;
-            while (Storage::disk('public')->exists("{$targetDir}/{$base} ({$counter}){$ext}")) {
+            while (isset($existingNames["{$base} ({$counter}){$ext}"]) || Storage::disk('public')->exists("{$targetDir}/{$base} ({$counter}){$ext}")) {
                 $counter++;
+                if ($counter > 200) break;
             }
             $filename = "{$base} ({$counter}){$ext}";
         }

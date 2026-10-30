@@ -23,6 +23,7 @@
           'kanban': '/kanban',
           'jobs.index': '/jobs',
           'jobs.create': '/jobs/create',
+          'jobs.store': '/jobs',
           'reminder.suket': '/reminder-suket',
           'inventory': '/inventory',
           'pelaporan.index': '/pelaporan',

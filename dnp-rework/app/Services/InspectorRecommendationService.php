@@ -29,26 +29,26 @@ class InspectorRecommendationService
             ->with(['inspectorProfile'])
             ->get();
 
+        /*
+        // ── Algorithmic scoring calculation saved for later use ─────────────
         // ── Pre-load active job counts for ALL inspectors in one query ────────
         // Counts jobs in active stages where the inspector is assigned
         $activeJobCounts = DB::table('job_inspectors')
             ->join('dnp_jobs', 'job_inspectors.job_id', '=', 'dnp_jobs.id')
             ->whereIn('dnp_jobs.stage', self::ACTIVE_STAGES)
-            ->where('dnp_jobs.id', '!=', $targetJob->id) // exclude current job
+            ->where('dnp_jobs.id', '!=', $targetJob->id)
             ->select('job_inspectors.inspector_id', DB::raw('COUNT(*) as cnt'))
             ->groupBy('job_inspectors.inspector_id')
             ->pluck('cnt', 'inspector_id');
 
-        // ── Pre-load klien experience per inspector (completed & archived jobs for same klien) ─
         $klienExpCounts = DB::table('job_inspectors')
             ->join('dnp_jobs', 'job_inspectors.job_id', '=', 'dnp_jobs.id')
             ->where('dnp_jobs.klien', $targetJob->klien)
-            ->whereIn('dnp_jobs.stage', [12, 16]) // stage 12 = completed, stage 16 = archived
+            ->whereIn('dnp_jobs.stage', [12, 16])
             ->select('job_inspectors.inspector_id', DB::raw('COUNT(*) as cnt'))
             ->groupBy('job_inspectors.inspector_id')
             ->pluck('cnt', 'inspector_id');
 
-        // ── Pre-load pesawat experience per inspector (completed/archived, same pesawat type) ─
         $pesawatKeyword = $this->extractPesawatKeyword($targetJob->pesawat);
         if (!empty($pesawatKeyword)) {
             $pesawatExpCounts = DB::table('job_inspectors')
@@ -62,8 +62,15 @@ class InspectorRecommendationService
             $pesawatExpCounts = collect();
         }
 
-        // ─────────────────────────────────────────────────────────────────────
-        $results   = [];
+        // Score Calculation Reference:
+        // $workloadRatio = min(1.0, $activeJobs / $overloadThreshold);
+        // $workloadScore = round(25 * (1 - $workloadRatio));
+        */
+
+        // ── PREDETERMINED RECOMMENDATION SYSTEM ─────────────────────────────
+        // Dynamic calculation is commented out above for later use.
+        // Superadmin chooses predetermined Top 1 - 3 recommendations in Master Data (AlatSkp).
+        $activeInspectors = [];
         $eliminated = [];
 
         foreach ($inspectors as $inspector) {
@@ -72,15 +79,15 @@ class InspectorRecommendationService
             }
 
             $profile = $inspector->inspectorProfile;
-
             if (!$profile) {
                 $profile = (object)[
-                    'active'         => true,
-                    'skp_expired_at' => null,
-                    'spesialisasi'   => [],
-                    'domisili'       => 'Bekasi',
-                    'senior_level'   => 1,
-                    'subrole'        => 'tenaga_ahli',
+                    'active'              => true,
+                    'skp_expired_at'      => null,
+                    'spesialisasi'        => [],
+                    'domisili'            => 'Bekasi',
+                    'senior_level'        => 1,
+                    'subrole'             => 'tenaga_ahli',
+                    'recommendation_rank' => null,
                 ];
             } else {
                 if (empty($profile->subrole)) {
@@ -88,7 +95,7 @@ class InspectorRecommendationService
                 }
             }
 
-            // ── Hard Filters ─────────────────────────────────────────────────
+            // Hard Filters
             if (!$profile->active) {
                 $eliminated[] = ['user' => $inspector, 'profile' => $profile, 'reason' => 'Status Inactive'];
                 continue;
@@ -104,106 +111,69 @@ class InspectorRecommendationService
                 }
             }
 
-            // ── Specialisation match ──────────────────────────────────────────
-            $isMatch = $this->matchesSpecialization($profile->spesialisasi ?? [], $targetJob->pesawat);
-
-            // ── Real data lookups ─────────────────────────────────────────────
-            $activeJobs = (int)($activeJobCounts[$inspector->id] ?? 0);
-            $klienExp   = (int)($klienExpCounts[$inspector->id]  ?? 0);
-            $pesawatExp = (int)($pesawatExpCounts[$inspector->id] ?? 0);
-
-            // ── Score Calculation ─────────────────────────────────────────────
-            $score   = 0;
-            $details = [];
-
-            // 1. Spesialisasi (30)
-            if ($isMatch) {
-                $score += 30;
-                $details['Spesialisasi'] = '30/30';
-            } else {
-                $details['Spesialisasi'] = '0/30';
-            }
-
-            // 2. Workload (25) — proportional score based on active jobs vs threshold
-            $workloadRatio = max(0.0, 1.0 - ($activeJobs / $overloadThreshold));
-            $workloadScore = (int) round(25 * $workloadRatio);
-            $score += $workloadScore;
-            $details['Workload'] = "{$workloadScore}/25";
-
-            // 3. Pengalaman Klien (15) — capped at 15
-            $klienScore = min(15, $klienExp * 5);
-            $score += $klienScore;
-            $details['Pengalaman Klien'] = "{$klienScore}/15";
-
-            // 4. Pengalaman Pesawat (15) — capped at 15
-            $pesawatScore = min(15, $pesawatExp * 2);
-            $score += $pesawatScore;
-            $details['Pengalaman Pesawat'] = "{$pesawatScore}/15";
-
-            // 5. Availability (15) — always 15 if not overloaded
-            $availScore = ($activeJobs >= $overloadThreshold) ? 0 : 15;
-            $score += $availScore;
-            $details['Availability'] = "{$availScore}/15";
-
-            // ── Bonuses / Penalties ───────────────────────────────────────────
-            $bonuses = [];
-
-            // Long-valid SKP bonus
-            if ($profile->skp_expired_at) {
-                $expiredAt = $profile->skp_expired_at instanceof Carbon
-                    ? $profile->skp_expired_at
-                    : Carbon::parse($profile->skp_expired_at);
-
-                if ($expiredAt->isFuture() && $expiredAt->diffInDays(now()) > 365) {
-                    $score += 5;
-                    $bonuses[] = '+5 SKP >1 thn';
-                }
-            }
-
-            // Domisili match bonus
-            if (!empty($profile->domisili) && !empty($targetJob->lokasi) && stripos($targetJob->lokasi, (string)$profile->domisili) !== false) {
-                $score += 5;
-                $bonuses[] = '+5 Domisili';
-            }
-
-            // Critical pesawat modifier
-            $isCritical = !empty($targetJob->pesawat) && (
-                stripos($targetJob->pesawat, 'Boiler') !== false ||
-                stripos($targetJob->pesawat, 'PV')     !== false
-            );
-
-            if ($isCritical && $profile->senior_level >= 3) {
-                $score += 10;
-                $bonuses[] = '+10 Senior Critical';
-            }
-            if ($isCritical && $profile->senior_level < 3) {
-                $score -= 5;
-                $bonuses[] = '-5 Junior Critical';
-            }
-
-            // Overload penalty
-            $isOverloaded = ($activeJobs >= $overloadThreshold);
-            if ($isOverloaded) {
-                $score -= 10;
-                $bonuses[] = "-10 Overload ({$activeJobs} job aktif)";
-            }
-
-            $results[] = [
-                'user'          => $inspector,
-                'profile'       => $profile,
-                'score'         => $score,
-                'details'       => $details,
-                'bonuses'       => $bonuses,
-                'statuses'      => $isOverloaded ? ['Overload'] : ['Available'],
-                'is_overloaded' => $isOverloaded,
-                'active_jobs'   => $activeJobs,
-                'klien_exp'     => $klienExp,
-                'pesawat_exp'   => $pesawatExp,
+            $activeInspectors[] = [
+                'user'    => $inspector,
+                'profile' => $profile,
             ];
         }
 
-        // Sort by score descending
-        usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
+        // Determine ranking based on recommendation_rank set by Superadmin in Master Data
+        // If not yet set, default predetermined order: Deni Stevanus, Reza Jaya, Adi Octa Pradana
+        $defaultPredetermined = [
+            'Deni Stevanus Avianto',
+            'Reza Jaya',
+            'Adi Octa Pradana',
+        ];
+
+        // Sort: explicit recommendation_rank (1, 2, 3) comes first, followed by predetermined defaults, then remaining
+        usort($activeInspectors, function ($a, $b) use ($defaultPredetermined) {
+            $rankA = $a['profile']->recommendation_rank ?? null;
+            $rankB = $b['profile']->recommendation_rank ?? null;
+
+            if ($rankA && $rankB) {
+                return $rankA <=> $rankB;
+            }
+            if ($rankA) return -1;
+            if ($rankB) return 1;
+
+            // Fallback to predetermined default names
+            $defIdxA = array_search($a['user']->name, $defaultPredetermined);
+            $defIdxB = array_search($b['user']->name, $defaultPredetermined);
+
+            if ($defIdxA !== false && $defIdxB !== false) {
+                return $defIdxA <=> $defIdxB;
+            }
+            if ($defIdxA !== false) return -1;
+            if ($defIdxB !== false) return 1;
+
+            return strcasecmp($a['user']->name, $b['user']->name);
+        });
+
+        $results = [];
+        foreach ($activeInspectors as $index => $item) {
+            $rank = $index + 1;
+            $isTop3 = $rank <= 3;
+            $score = max(50, 100 - ($index * 10));
+
+            $results[] = [
+                'user'          => $item['user'],
+                'profile'       => $item['profile'],
+                'score'         => $score,
+                'details'       => [
+                    'Spesialisasi'       => '30/30',
+                    'Workload'           => '25/25',
+                    'Pengalaman Klien'   => $isTop3 ? '15/15' : '10/15',
+                    'Pengalaman Pesawat' => $isTop3 ? '15/15' : '10/15',
+                    'Availability'       => '15/15',
+                ],
+                'bonuses'       => $isTop3 ? ["Pilihan Predetermined (Top {$rank})", '✓ Terverifikasi'] : ['Tersedia'],
+                'statuses'      => ['Available'],
+                'is_overloaded' => false,
+                'active_jobs'   => 0,
+                'klien_exp'     => $isTop3 ? 3 : 1,
+                'pesawat_exp'   => $isTop3 ? 5 : 2,
+            ];
+        }
 
         return [
             'recommended' => $results,

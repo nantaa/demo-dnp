@@ -411,6 +411,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const uploadTargetRef = useRef({ stage: null, type: null, extraNotes: '' });
     const stageRefs = useRef({});
     const contentScrollRef = useRef(null);
+    const prevJobIdRef = useRef(job?.id);
+    const prevJobStageRef = useRef(job?.stage);
 
     // ── Stage Accordion / Dropdown & Auto-Scroll State ────────────────────────
     const [expandedStages, setExpandedStages] = useState(() => {
@@ -632,91 +634,98 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // Keep local form states synchronized when job prop updates
     useEffect(() => {
-        setIsUploading(false);
-        setIsMoving(false);
-        setIsSavingLink(false);
-        setUploadStage(null);
-        setUploadType('');
-        setData({
-            next_stage:      getNextStageId(job.stage),
-            notes:           '',
-            inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
-            report_writer_id: job.report_writer_id || '',
-            tgl_pelaksanaan: job.tgl_pelaksanaan || '',
-            jam_mulai:       job.jam_mulai || '08:00',
-            durasi_hari:     job.durasi_hari || 1,
-            disnaker_tujuan: job.disnaker_tujuan || '',
-            alat_ids:        parseJsonArray(job.alat_ids),
-            cert_ids:        parseJsonArray(job.cert_ids),
-        });
-        editForm.setData({
-            klien:   job.klien   || '',
-            pesawat: job.pesawat || '',
-            lokasi:  job.lokasi  || '',
-            nilai:   job.nilai   || '',
-            units:   job.units   || 1,
-        });
-        setS4({
-            actual_units:     job.actual_units     ?? job.units,
-            unit_count_notes: job.unit_count_notes ?? '',
-        });
-        setS5({
-            s5_review_decision: job.s5_review_decision ?? '',
-            s5_review_notes:    job.s5_review_notes    ?? '',
-        });
-        setLhppLinks(parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
-        setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
-        setS8({
-            tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
-            tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
-            s8_progress_status:         job.s8_progress_status         ?? '',
-            s8_delay_reason:            job.s8_delay_reason            ?? '',
-        });
-        setS9({ s9_progress_status: job.s9_progress_status ?? '' });
-        setS10({
-            invoice_no:           job.invoice_no           ?? '',
-            total_invoice_amount: job.total_invoice_amount ?? '',
-            tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
-            s10_progress_status:  job.s10_progress_status  ?? '',
-            tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
-            no_faktur_pajak:      job.no_faktur_pajak      ?? '',
-            tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
-        });
-        setS11({
-            tgl_submit_mkt: job.tgl_submit_mkt ?? '',
-            notes: '',
-        });
-        setS15({
-            no_resi: job.no_resi ?? '',
-            tgl_submit_mkt: job.tgl_submit_mkt ?? '',
-        });
-        setS14({
-            s14_payment_status: job.s14_payment_status ?? 'pending',
-            s14_payment_notes:  job.s14_payment_notes  ?? '',
-        });
-        setReviseInvoiceForm({
-            invoice_no:           job.invoice_no           ?? '',
-            total_invoice_amount: job.total_invoice_amount ?? job.nilai ?? '',
-            tgl_invoice_issued:   job.tgl_invoice_issued   ?? new Date().toISOString().slice(0, 10),
-            no_faktur_pajak:      job.no_faktur_pajak      ?? '',
-            tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
-            revision_notes:       '',
-        });
-        setRevisePoForm({
-            no_po:             job.no_po             ?? '',
-            tgl_po:            job.tgl_po            ?? '',
-            nilai:             job.nilai             ?? '',
-            termin_pembayaran: job.termin_pembayaran ?? 'FULL',
-            revision_notes:    '',
-        });
-        setScheduleDays(initScheduleDays(job));
+        // Guard against background polling wipes:
+        // Only reset in-progress form inputs if user switched to a different job or stage moved
+        if (prevJobIdRef.current !== job?.id || prevJobStageRef.current !== job?.stage) {
+            prevJobIdRef.current = job?.id;
+            prevJobStageRef.current = job?.stage;
 
-        const saved = parseJsonObject(job.s2_verify_data);
-        const init = {};
-        STAGE2_VERIFY_CHECKLIST.forEach(item => {
-            init[item.type] = saved[item.type] || '';
-        });
-        setS2Verify(init);
+            setIsUploading(false);
+            setIsMoving(false);
+            setIsSavingLink(false);
+            setUploadStage(null);
+            setUploadType('');
+            setData({
+                next_stage:      getNextStageId(job.stage),
+                notes:           '',
+                inspector_ids:   job.inspectors ? job.inspectors.map(i => i.id) : [],
+                report_writer_id: job.report_writer_id || '',
+                tgl_pelaksanaan: job.tgl_pelaksanaan || '',
+                jam_mulai:       job.jam_mulai || '08:00',
+                durasi_hari:     job.durasi_hari || 1,
+                disnaker_tujuan: job.disnaker_tujuan || '',
+                alat_ids:        parseJsonArray(job.alat_ids),
+                cert_ids:        parseJsonArray(job.cert_ids),
+            });
+            editForm.setData({
+                klien:   job.klien   || '',
+                pesawat: job.pesawat || '',
+                lokasi:  job.lokasi  || '',
+                nilai:   job.nilai   || '',
+                units:   job.units   || 1,
+            });
+            setS4({
+                actual_units:     job.actual_units     ?? job.units,
+                unit_count_notes: job.unit_count_notes ?? '',
+            });
+            setS5({
+                s5_review_decision: job.s5_review_decision ?? '',
+                s5_review_notes:    job.s5_review_notes    ?? '',
+            });
+            setLhppLinks(parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
+            setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
+            setS8({
+                tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
+                tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
+                s8_progress_status:         job.s8_progress_status         ?? '',
+                s8_delay_reason:            job.s8_delay_reason            ?? '',
+            });
+            setS9({ s9_progress_status: job.s9_progress_status ?? '' });
+            setS10({
+                invoice_no:           job.invoice_no           ?? '',
+                total_invoice_amount: job.total_invoice_amount ?? '',
+                tgl_invoice_issued:   job.tgl_invoice_issued   ?? '',
+                s10_progress_status:  job.s10_progress_status  ?? '',
+                tgl_submit_mkt:       job.tgl_submit_mkt       ?? '',
+                no_faktur_pajak:      job.no_faktur_pajak      ?? '',
+                tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
+            });
+            setS11({
+                tgl_submit_mkt: job.tgl_submit_mkt ?? '',
+                notes: '',
+            });
+            setS15({
+                no_resi: job.no_resi ?? '',
+                tgl_submit_mkt: job.tgl_submit_mkt ?? '',
+            });
+            setS14({
+                s14_payment_status: job.s14_payment_status ?? 'pending',
+                s14_payment_notes:  job.s14_payment_notes  ?? '',
+            });
+            setReviseInvoiceForm({
+                invoice_no:           job.invoice_no           ?? '',
+                total_invoice_amount: job.total_invoice_amount ?? job.nilai ?? '',
+                tgl_invoice_issued:   job.tgl_invoice_issued   ?? new Date().toISOString().slice(0, 10),
+                no_faktur_pajak:      job.no_faktur_pajak      ?? '',
+                tgl_faktur_pajak:     job.tgl_faktur_pajak ? String(job.tgl_faktur_pajak).slice(0, 10) : '',
+                revision_notes:       '',
+            });
+            setRevisePoForm({
+                no_po:             job.no_po             ?? '',
+                tgl_po:            job.tgl_po            ?? '',
+                nilai:             job.nilai             ?? '',
+                termin_pembayaran: job.termin_pembayaran ?? 'FULL',
+                revision_notes:    '',
+            });
+            setScheduleDays(initScheduleDays(job));
+
+            const saved = parseJsonObject(job.s2_verify_data);
+            const init = {};
+            STAGE2_VERIFY_CHECKLIST.forEach(item => {
+                init[item.type] = saved[item.type] || '';
+            });
+            setS2Verify(init);
+        }
     }, [job]);
 
     // ── Permissions ──────────────────────────────────────────────────────────
@@ -1733,10 +1742,16 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             </div>
                                         )}
                                         {!day.date && (
-                                            <p className="text-[10px] text-red-500 mt-1">Pilih tanggal untuk hari ini</p>
+                                            <p className="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
+                                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                                Pilih tanggal untuk hari ini
+                                            </p>
                                         )}
                                         {day.inspector_ids.length === 0 && (
-                                            <p className="text-[10px] text-red-500 mt-0.5">Pilih minimal 1 inspektur untuk hari ini</p>
+                                            <p className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
+                                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                                Pilih minimal 1 inspektur untuk hari ini
+                                            </p>
                                         )}
                                     </div>
                                 );

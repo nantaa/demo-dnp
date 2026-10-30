@@ -192,6 +192,40 @@ class InventoryController extends Controller
         return back()->with('success', 'Profil inspektur berhasil dihapus.');
     }
 
+    /**
+     * Set predetermined Top 1 - 3 system recommendations by Superadmin.
+     */
+    public function updateRecommendations(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'superadmin') {
+            abort(403, 'Hanya Superadmin yang berwenang menentukan predetermined rekomendasi sistem.');
+        }
+
+        $validated = $request->validate([
+            'rank_1_user_id' => 'nullable|exists:users,id',
+            'rank_2_user_id' => 'nullable|exists:users,id',
+            'rank_3_user_id' => 'nullable|exists:users,id',
+        ]);
+
+        // Reset all existing ranks
+        InspectorProfile::query()->update(['recommendation_rank' => null]);
+
+        $ranks = [
+            1 => $validated['rank_1_user_id'] ?? null,
+            2 => $validated['rank_2_user_id'] ?? null,
+            3 => $validated['rank_3_user_id'] ?? null,
+        ];
+
+        foreach ($ranks as $rank => $userId) {
+            if ($userId) {
+                InspectorProfile::where('user_id', $userId)->update(['recommendation_rank' => $rank]);
+            }
+        }
+
+        return back()->with('success', 'Rekomendasi sistem (Top 1 - 3) berhasil disimpan.');
+    }
+
     // ─── Sertifikat PJK3 ─────────────────────────────────────────────────
     public function storeSertifikat(Request $request)
     {

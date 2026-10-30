@@ -78,6 +78,27 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     const { role } = auth.user || {};
     const canManage = ['superadmin', 'admin', 'manager'].includes(role);
 
+    // Predetermined Recommendations State (Top 1 - 3)
+    const initialRank1 = inspectors.find(i => Number(i.recommendation_rank) === 1)?.user_id || '';
+    const initialRank2 = inspectors.find(i => Number(i.recommendation_rank) === 2)?.user_id || '';
+    const initialRank3 = inspectors.find(i => Number(i.recommendation_rank) === 3)?.user_id || '';
+
+    const [recRanks, setRecRanks] = useState({
+        rank_1_user_id: initialRank1,
+        rank_2_user_id: initialRank2,
+        rank_3_user_id: initialRank3,
+    });
+    const [savingRec, setSavingRec] = useState(false);
+
+    const handleSaveRecommendations = (e) => {
+        e?.preventDefault();
+        setSavingRec(true);
+        router.post('/inventory/recommendations', recRanks, {
+            preserveScroll: true,
+            onFinish: () => setSavingRec(false),
+        });
+    };
+
     // Modals states
     const [showAlatModal, setShowAlatModal] = useState(false);
     const [selectedAlat, setSelectedAlat] = useState(null);
@@ -750,6 +771,60 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                     </div>
                                 </div>
 
+                                {/* Predetermined Recommendation Settings (Superadmin) */}
+                                {role === 'superadmin' && (
+                                    <div className="p-4 bg-indigo-50/60 border-b border-indigo-100">
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-3">
+                                            <div>
+                                                <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                                                    Pengaturan Rekomendasi Sistem (Predetermined Top 1 - 3)
+                                                </h4>
+                                                <p className="text-[11px] text-indigo-700 mt-0.5">
+                                                    Tentukan 3 inspektur default yang menjadi prioritas rekomendasi sistem untuk Admin saat menjadwalkan pekerjaan (Stage 3).
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveRecommendations}
+                                                disabled={savingRec}
+                                                className="px-3.5 py-1.5 bg-indigo-600 text-white rounded text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm shrink-0"
+                                            >
+                                                {savingRec ? 'Menyimpan...' : 'Simpan Rekomendasi'}
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            {[1, 2, 3].map(rank => {
+                                                const fieldName = `rank_${rank}_user_id`;
+                                                const label = rank === 1 ? 'Top 1 (Prioritas Utama)' : rank === 2 ? 'Top 2 (Prioritas Kedua)' : 'Top 3 (Prioritas Ketiga)';
+                                                const badgeColor = rank === 1 ? 'bg-emerald-600 text-white' : rank === 2 ? 'bg-amber-500 text-white' : 'bg-teal-600 text-white';
+                                                return (
+                                                    <div key={rank} className="bg-white border border-indigo-200 rounded-lg p-2.5 shadow-xs">
+                                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${badgeColor}`}>
+                                                                Top {rank}
+                                                            </span>
+                                                            <span className="text-[11px] font-semibold text-gray-700">{label}</span>
+                                                        </div>
+                                                        <select
+                                                            value={recRanks[fieldName]}
+                                                            onChange={e => setRecRanks(prev => ({ ...prev, [fieldName]: e.target.value }))}
+                                                            className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 bg-white focus:ring-1 focus:ring-indigo-400"
+                                                        >
+                                                            <option value="">-- Pilih Inspektur --</option>
+                                                            {inspectors.map(insp => (
+                                                                <option key={insp.id} value={insp.user_id}>
+                                                                    {insp.user?.name || `Inspektur #${insp.id}`} {insp.subrole ? `(${insp.subrole})` : ''}
+                                                                </option>
+                            ))}
+                                                        </select>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-white border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500">
@@ -788,7 +863,19 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             return (
                                                 <tr key={insp.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
                                                     <td className="p-4 font-mono font-semibold">{insp.id}</td>
-                                                    <td className="p-4 font-semibold text-gray-900">{insp.user?.name || 'Unknown'}</td>
+                                                    <td className="p-4 font-semibold text-gray-900">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span>{insp.user?.name || 'Unknown'}</span>
+                                                            {insp.recommendation_rank && (
+                                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${
+                                                                    Number(insp.recommendation_rank) === 1 ? 'bg-emerald-600' :
+                                                                    Number(insp.recommendation_rank) === 2 ? 'bg-amber-500' : 'bg-teal-600'
+                                                                }`}>
+                                                                    Top {insp.recommendation_rank} Rekomendasi
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
                                                     <td className="p-4 font-mono text-xs">
                                                         {(() => {
                                                             let skpDetails = {};

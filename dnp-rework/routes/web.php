@@ -95,6 +95,7 @@ Route::middleware([BlockAiAndScraperBots::class])->group(function () {
     Route::post('/inventory/inspector', [InventoryController::class, 'storeInspector'])->name('inventory.inspector.store');
     Route::match(['put', 'post'], '/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'updateInspector'])->name('inventory.inspector.update');
     Route::delete('/inventory/inspector/{inspectorProfile}', [InventoryController::class, 'destroyInspector'])->name('inventory.inspector.destroy');
+    Route::post('/inventory/recommendations', [InventoryController::class, 'updateRecommendations'])->name('inventory.recommendations.update');
 
     Route::post('/inventory/sertifikat', [InventoryController::class, 'storeSertifikat'])->name('inventory.sertifikat.store');
     Route::match(['put', 'post'], '/inventory/sertifikat/{sertifikatPjk3}', [InventoryController::class, 'updateSertifikat'])->name('inventory.sertifikat.update');

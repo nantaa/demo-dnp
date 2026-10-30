@@ -407,6 +407,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [photoNotes,   setPhotoNotes]   = useState({});   // key: photo type
     const [returnNotes,  setReturnNotes]  = useState('');
     const fileInputRef = useRef(null);
+    const uploadTargetRef = useRef({ stage: null, type: null, extraNotes: '' });
     const stageRefs = useRef({});
     const contentScrollRef = useRef(null);
 
@@ -1220,24 +1221,54 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     };
 
     // Generic document upload (for most stages)
-    const triggerUpload = (stage, type) => {
-        setUploadStage(stage); setUploadType(type);
-        setTimeout(() => fileInputRef.current?.click(), 50);
+    const triggerUpload = (stage, type, extraNotes = '') => {
+        if (!stage || !type) return;
+        uploadTargetRef.current = { stage, type, extraNotes: extraNotes || '' };
+        setUploadStage(stage);
+        setUploadType(type);
+        if (fileInputRef.current) {
+            // CRITICAL: Always reset value BEFORE click so choosing the exact same file fires onChange every time!
+            fileInputRef.current.value = '';
+            fileInputRef.current.click();
+        }
     };
 
     const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 
     const onFileChange = (e) => {
-        const file = e.target.files[0];
-        if (!file || !uploadStage || !uploadType) return;
-        if (file.size > MAX_FILE_SIZE) {
-            showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB. Silakan kompres file Anda terlebih dahulu.');
-            e.target.value = '';
+        const file = e.target.files?.[0];
+        const target = uploadTargetRef.current || {};
+        const stage = target.stage || uploadStage;
+        const type = target.type || uploadType;
+        const extraNotes = target.extraNotes || '';
+
+        // If user cancelled file selection, reset value and exit cleanly
+        if (!file) {
+            if (e.target) e.target.value = '';
             return;
         }
+
+        if (!stage || !type) {
+            showError('Target Dokumen Tidak Ditemukan', 'Gagal mengenali tahap atau jenis dokumen yang dipilih. Silakan klik tombol + Upload kembali.');
+            if (e.target) e.target.value = '';
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB. Silakan kompres file Anda terlebih dahulu.');
+            if (e.target) e.target.value = '';
+            return;
+        }
+
         setIsUploading(true);
         const fd = new FormData();
-        fd.append('file', file); fd.append('type', uploadType); fd.append('stage', uploadStage);
+        fd.append('file', file);
+        fd.append('type', type);
+        fd.append('stage', stage);
+        if (extraNotes) {
+            fd.append('photo_notes', extraNotes);
+        }
+
         router.post(`/jobs/${job.id}/documents`, fd, {
             forceFormData: true,
             preserveScroll: true,
@@ -1253,9 +1284,14 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 setIsUploading(false);
                 setUploadStage(null);
                 setUploadType('');
+                uploadTargetRef.current = { stage: null, type: null, extraNotes: '' };
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
             },
         });
-        e.target.value = '';
+
+        if (e.target) e.target.value = '';
     };
 
     const uploadFileDirectly = (file, stageId, type, extraNotes = '') => {
@@ -1289,42 +1325,15 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 setIsUploading(false);
                 setUploadStage(null);
                 setUploadType('');
+                uploadTargetRef.current = { stage: null, type: null, extraNotes: '' };
             },
         });
     };
 
-    // Photo upload (Stage 4, with per-photo notes)
+    // Photo upload (Stage 4, with per-photo notes, routed through reliable persistent input)
     const uploadPhoto = (type) => {
-        const input = document.createElement('input');
-        input.type = 'file'; input.accept = '*';
-        input.onchange = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            if (file.size > MAX_FILE_SIZE) {
-                showError('Ukuran File Terlalu Besar', 'Maksimal ukuran file yang diperbolehkan adalah 25 MB.');
-                return;
-            }
-            setIsUploading(true);
-            const fd = new FormData();
-            fd.append('file', file); fd.append('type', type); fd.append('stage', 4);
-            const note = photoNotes[type] || '';
-            if (note) fd.append('photo_notes', note);
-            router.post(`/jobs/${job.id}/documents`, fd, {
-                forceFormData: true,
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    showSuccess('Berhasil', 'Foto berhasil diunggah.');
-                },
-                onError: (errs) => {
-                    const msg = typeof errs === 'object' ? Object.values(errs).flat().join('\n') : '';
-                    showError('Gagal Mengunggah Foto', msg || 'Gagal menyimpan foto ke server.');
-                },
-                onFinish: () => {
-                    setIsUploading(false);
-                },
-            });
-        };
-        input.click();
+        const note = photoNotes[type] || '';
+        triggerUpload(4, type, note);
     };
 
     const deleteDoc = async (docId) => {
@@ -3760,8 +3769,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                     {activeTab === 'info'     && renderEditInfo()}
                 </div>
 
-                {/* Hidden File Input for triggerUpload */}
-                <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
+                {/* Hidden File Input for triggerUpload with full format acceptance */}
+                <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" accept="*" />
 
                 {/* Global Loader Overlay */}
                 {(processing || isUploading || isMoving) && (
@@ -3973,7 +3982,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             id="revise-invoice-file"
                                             type="file"
                                             accept=".pdf,.jpg,.jpeg,.png"
-                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, invoice_file: e.target.files[0] }))}
+                                            onChange={e => {
+                                                const f = e.target.files?.[0];
+                                                if (f) setReviseInvoiceForm(prev => ({ ...prev, invoice_file: f }));
+                                            }}
                                             className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                         />
                                     </div>
@@ -3983,7 +3995,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                             id="revise-faktur-file"
                                             type="file"
                                             accept=".pdf,.jpg,.jpeg,.png"
-                                            onChange={e => setReviseInvoiceForm(prev => ({ ...prev, faktur_file: e.target.files[0] }))}
+                                            onChange={e => {
+                                                const f = e.target.files?.[0];
+                                                if (f) setReviseInvoiceForm(prev => ({ ...prev, faktur_file: f }));
+                                            }}
                                             className="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                         />
                                     </div>

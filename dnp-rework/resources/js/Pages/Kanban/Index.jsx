@@ -148,8 +148,11 @@ export default function KanbanIndex({ jobs, auth }) {
     };
 
     const scrollToStage = (stageDisplayId, stageId) => {
-        // If the target stage is currently collapsed, uncollapse it automatically so the user can see its contents
-        if (stageId && collapsedStages.includes(stageId)) {
+        if (!stageId) return;
+        const isCurrentlyCollapsed = collapsedStages.includes(stageId);
+
+        if (isCurrentlyCollapsed) {
+            // Capsule is closed -> Open it and smoothly scroll it into view
             const next = collapsedStages.filter(id => id !== stageId);
             setCollapsedStages(next);
             if (typeof window !== 'undefined' && window.localStorage) {
@@ -157,17 +160,26 @@ export default function KanbanIndex({ jobs, auth }) {
                     localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(next));
                 } catch (e) { }
             }
-        }
 
-        setTimeout(() => {
-            const el = document.getElementById(`col-stage-${stageDisplayId}`);
-            if (el && boardRef.current) {
-                const boardRect = boardRef.current.getBoundingClientRect();
-                const elRect = el.getBoundingClientRect();
-                const leftOffset = elRect.left - boardRect.left + boardRef.current.scrollLeft - 16;
-                boardRef.current.scrollTo({ left: Math.max(0, leftOffset), behavior: 'smooth' });
+            setTimeout(() => {
+                const el = document.getElementById(`col-stage-${stageDisplayId}`);
+                if (el && boardRef.current) {
+                    const boardRect = boardRef.current.getBoundingClientRect();
+                    const elRect = el.getBoundingClientRect();
+                    const leftOffset = elRect.left - boardRect.left + boardRef.current.scrollLeft - 16;
+                    boardRef.current.scrollTo({ left: Math.max(0, leftOffset), behavior: 'smooth' });
+                }
+            }, 40);
+        } else {
+            // Capsule is already open -> Clicking button again closes the capsule!
+            const next = [...collapsedStages, stageId];
+            setCollapsedStages(next);
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    localStorage.setItem('dnp_kanban_collapsed_stages', JSON.stringify(next));
+                } catch (e) { }
             }
-        }, 40);
+        }
     };
 
     // Live background polling sync to keep Kanban updated across all active users
@@ -336,60 +348,63 @@ export default function KanbanIndex({ jobs, auth }) {
                     { id: 'fase-3', title: 'Fase 3: Invoice & Suket', stageIds: [10, 11, 14, 15, 12, 16] },
                 ];
                 return (
-                    <div className="flex items-center gap-2.5 overflow-x-auto py-1.5 px-2 mb-2.5 bg-white/90 backdrop-blur-xs border border-slate-200/90 rounded-xl shadow-2xs select-none">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 px-1">
-                            Lompat:
-                        </span>
+                    <div className="flex items-center gap-3 overflow-x-auto py-1.5 px-2.5 mb-2 bg-white/95 backdrop-blur-xs border border-slate-200/90 rounded-xl shadow-2xs select-none">
                         {PROCESS_GROUPS.map((phase, pIdx) => {
                             const phaseStages = visibleStages.filter(s => phase.stageIds.includes(s.id));
                             if (phaseStages.length === 0) return null;
 
                             return (
                                 <React.Fragment key={phase.id}>
-                                    {pIdx > 0 && <div className="h-4 w-px bg-slate-200 shrink-0" />}
-                                    <div className="flex items-center gap-1 shrink-0">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight mr-0.5 shrink-0">
-                                            {phase.title}:
+                                    {pIdx > 0 && <div className="h-7 w-px bg-slate-200 shrink-0 self-center" />}
+                                    <div className="flex flex-col gap-1 shrink-0 py-0.5">
+                                        <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider leading-none">
+                                            {phase.title}
                                         </span>
-                                        {phaseStages.map((stage) => {
-                                            const count = jobs.filter(j => j.stage === stage.id).length;
-                                            const theme = getRoleTheme(stage.role);
-                                            const displayId = stage.displayId || stage.id;
-                                            const isCollapsed = collapsedStages.includes(stage.id);
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            {phaseStages.map((stage) => {
+                                                const count = jobs.filter(j => j.stage === stage.id).length;
+                                                const theme = getRoleTheme(stage.role);
+                                                const displayId = stage.displayId || stage.id;
+                                                const isCollapsed = collapsedStages.includes(stage.id);
 
-                                            return (
-                                                <button
-                                                    key={stage.id}
-                                                    type="button"
-                                                    onClick={() => scrollToStage(displayId, stage.id)}
-                                                    className={`group shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
-                                                        isCollapsed
-                                                            ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 opacity-60'
-                                                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-xs'
-                                                    }`}
-                                                    title={`Stage ${displayId}: ${stage.title || stage.name} (${count} Job)${isCollapsed ? ' — Klik untuk membuka kolom' : ''}`}
-                                                >
-                                                    <span
-                                                        className="min-w-[20px] h-5 px-1 flex items-center justify-center rounded text-[10px] text-white font-black shadow-2xs transition-transform group-hover:scale-105"
-                                                        style={{ backgroundColor: theme.primary }}
+                                                return (
+                                                    <button
+                                                        key={stage.id}
+                                                        type="button"
+                                                        onClick={() => scrollToStage(displayId, stage.id)}
+                                                        className={`group shrink-0 flex items-center gap-0.5 px-1 py-0.5 rounded-md text-xs font-bold border transition-all active:scale-95 ${
+                                                            isCollapsed
+                                                                ? 'bg-slate-100 text-slate-400 border-dashed border-slate-300 opacity-60 hover:opacity-100 hover:border-slate-400'
+                                                                : 'bg-white text-slate-800 border-slate-200 shadow-2xs hover:border-slate-300 hover:shadow-xs ring-1 ring-black/5'
+                                                        }`}
+                                                        title={`Stage ${displayId}: ${stage.title || stage.name} (${count} Job) — Klik untuk ${isCollapsed ? 'membuka' : 'menutup (kapsul)'}`}
                                                     >
-                                                        {displayId}
-                                                    </span>
-                                                    {count > 0 ? (
                                                         <span
-                                                            className="text-[10px] px-1.5 py-0.2 rounded-full font-black text-white shrink-0"
-                                                            style={{ backgroundColor: theme.primary }}
+                                                            className={`min-w-[18px] h-4.5 px-1 flex items-center justify-center rounded text-[10px] font-black transition-transform group-hover:scale-105 ${
+                                                                isCollapsed ? 'text-slate-500 bg-slate-200' : 'text-white shadow-2xs'
+                                                            }`}
+                                                            style={!isCollapsed ? { backgroundColor: theme.primary } : {}}
                                                         >
-                                                            {count}
+                                                            {displayId}
                                                         </span>
-                                                    ) : (
-                                                        <span className="text-[10px] text-slate-400 font-semibold px-0.5">
-                                                            0
-                                                        </span>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
+                                                        {count > 0 ? (
+                                                            <span
+                                                                className={`text-[9px] px-1 py-0 rounded-full font-black shrink-0 ${
+                                                                    isCollapsed ? 'bg-slate-300 text-slate-600' : 'text-white'
+                                                                }`}
+                                                                style={!isCollapsed ? { backgroundColor: theme.primary } : {}}
+                                                            >
+                                                                {count}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[9px] text-slate-400 font-semibold px-0.5">
+                                                                0
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </React.Fragment>
                             );

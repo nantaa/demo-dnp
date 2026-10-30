@@ -2,6 +2,8 @@
 /src/
 /server/
 /public/
+/dist/
+dist/
 /node_modules/
 /dnp-rework/node_modules/
 /dnp-rework/public/build/

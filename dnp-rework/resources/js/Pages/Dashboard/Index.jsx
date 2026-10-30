@@ -157,17 +157,25 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
         });
 
         const workloadByInspektur = isMGR || isSuper || isAHLI ? (inspectors || []).map(insp => {
-            const activeInspJobs = jobs.filter(j =>
-                [4, 13, 5, 6].includes(j.stage) &&
-                (j.inspectors || []).some(x => x.id === insp.user_id)
-            );
+            const inspUserId = String(insp.user_id || insp.id);
+            const inspId = String(insp.id);
+            const activeInspJobs = jobs.filter(j => {
+                if (![4, 13, 5, 6].includes(j.stage)) return false;
+                return (j.inspectors || []).some(x =>
+                    String(x.id) === inspUserId ||
+                    String(x.id) === inspId ||
+                    String(x.user_id) === inspUserId ||
+                    String(x.pivot?.inspector_id) === inspId ||
+                    String(x.pivot?.user_id) === inspUserId
+                ) || String(j.report_writer_id) === inspUserId;
+            });
             const lapanganCount = activeInspJobs.filter(j => j.stage === 4 || j.stage === 13).length;
             const lhppCount = activeInspJobs.filter(j => j.stage === 5).length;
             const overdueCount = activeInspJobs.filter(j => jobStatus(j) === 'overdue').length;
 
             return {
                 id: insp.id,
-                nama: insp.user?.name || 'Personel Tim RU',
+                nama: insp.user?.name || insp.nama || 'Personel Tim RU',
                 spesialisasi: insp.spesialisasi || [],
                 domisili: insp.domisili || '',
                 totalActive: activeInspJobs.length,
@@ -177,10 +185,24 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             };
         }).sort((a, b) => b.totalActive - a.totalActive) : [];
 
-        // MKT-specific
-        const mktTarget = MARKETING_TARGETS[user.name] || 150000000;
-        const mktRealisasi = thisMonth.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
-        const achievement = mktTarget > 0 ? Math.round((mktRealisasi / mktTarget) * 100) : 0;
+        // MKT-specific: Yearly (YTD) Omzet & Monthly metrics
+        const currentYear = new Date().getFullYear();
+        const thisYearJobs = personalFiltered.filter(j => {
+            const rawDate = j.created_at || j.tgl_po || j.updated_at;
+            if (!rawDate) return false;
+            return new Date(rawDate).getFullYear() === currentYear;
+        });
+
+        // Total deal intake brought in this year (all stages)
+        const mktOmzetYtd = thisYearJobs.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
+        // Total completed deals this year (Stage 12 / 16)
+        const mktClosingYtd = thisYearJobs.filter(j => j.stage === 12 || j.stage === 16).reduce((sum, j) => sum + Number(j.nilai || 0), 0);
+        
+        // Annual Target (12x monthly target baseline)
+        const mktTargetMonthly = MARKETING_TARGETS[user.name] || 150000000;
+        const mktTarget = mktTargetMonthly * 12; // Yearly target
+        const mktRealisasi = mktOmzetYtd; // Primary KPI is total deal omzet brought in YTD
+        const achievement = mktTarget > 0 ? Math.round((mktOmzetYtd / mktTarget) * 100) : 0;
         const expiringSukets = [];
         jobs.forEach(j => {
             (j.units_tracking || []).forEach(u => {
@@ -275,7 +297,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
         return {
             active, completed, thisMonth, overdue, pipeline, monthRevenue, byStage,
             lhppJobs, stage4Mine, lhppNeedReview, suketDisnaker, tidakLaikUnits, workloadByInspektur,
-            mktTarget, mktRealisasi, achievement, expiringSukets, funnel,
+            mktTarget, mktTargetMonthly, mktRealisasi, mktOmzetYtd, mktClosingYtd, achievement, currentYear, expiringSukets, funnel,
             antrianVerifikasi, butuhJadwal, h5Pending, logistikPending,
             siapTagih, verifikasiBayar, closingFinancial,
             piutangBerjalan, piutangOverdue, totalPiutang, totalOverdue, arBuckets, tandaTerimaPending,
@@ -439,7 +461,7 @@ function KPICard({ label, value, sub, icon: Icon, accentClass, bgClass = 'bg-whi
 // MARKETING DASHBOARD
 // ============================================================
 function MktDashboard({ stats, onSelectJob }) {
-    const { mktTarget, mktRealisasi, achievement, funnel = [], expiringSukets = [] } = stats;
+    const { mktTarget, mktTargetMonthly, mktRealisasi, mktOmzetYtd, mktClosingYtd, achievement, currentYear = new Date().getFullYear(), funnel = [], expiringSukets = [] } = stats;
     const maxFunnel = Math.max(...(funnel || []).map(f => f.count), 1);
 
     return (
@@ -448,7 +470,7 @@ function MktDashboard({ stats, onSelectJob }) {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <KPICard label="Job Saya Aktif" value={stats.active.length} sub={`pipeline ${formatRp(stats.pipeline)}`} icon={Activity} />
                 <KPICard label="Job Baru (Tahap 1)" value={stats.byStage[0]?.count || 0} sub="negosiasi / penawaran" icon={Plus} />
-                <KPICard label="Selesai Bulan Ini" value={stats.thisMonth.length} sub={formatRp(stats.monthRevenue)} icon={CheckCircle2} accentClass="text-green-600" />
+                <KPICard label={`Omzet Deal ${currentYear} (YTD)`} value={formatRp(mktOmzetYtd)} sub={`Closing Selesai: ${formatRp(mktClosingYtd)}`} icon={CheckCircle2} accentClass="text-green-600" />
                 <KPICard label="Suket ≤90h (Leads)"
                     value={expiringSukets.filter(s => s.days >= 0).length}
                     sub={expiringSukets.filter(s => s.days < 0).length > 0 ? `+${expiringSukets.filter(s => s.days < 0).length} expired` : 're-inspeksi'}
@@ -457,31 +479,37 @@ function MktDashboard({ stats, onSelectJob }) {
                     bgClass={expiringSukets.length > 0 ? 'bg-amber-50/50 border-amber-200' : 'bg-white'} />
             </div>
 
-            {/* Target vs Realisasi */}
+            {/* Target vs Realisasi Omzet Tahunan (YTD) */}
             <div className="bg-white border rounded-xl shadow-sm p-6">
                 <div className="flex justify-between items-baseline mb-4">
                     <div>
-                        <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Target Omzet Bulan Ini</div>
-                        <h3 className="text-lg font-bold text-gray-800 mt-0.5">Pencapaian Personal</h3>
+                        <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Target Omzet Tahunan (YTD {currentYear})</div>
+                        <h3 className="text-lg font-bold text-gray-800 mt-0.5">Pencapaian Omzet Personal Tahun Ini</h3>
                     </div>
                     <div className="text-right">
                         <div className={`text-4xl font-extrabold ${achievement >= 100 ? 'text-green-600' : achievement >= 75 ? 'text-gray-900' : achievement >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
                             {achievement}%
                         </div>
                         <div className="text-xs text-gray-500 font-medium mt-1">
-                            {achievement >= 100 ? ' Target tercapai' : `${100 - achievement}% lagi ke target`}
+                            {achievement >= 100 ? '✓ Target tahunan tercapai' : `${100 - achievement}% lagi ke target tahunan`}
                         </div>
                     </div>
                 </div>
                 <div className="flex justify-between text-sm mb-2">
-                    <span className="font-semibold text-gray-700">{formatRp(mktRealisasi)} realisasi</span>
-                    <span className="text-gray-400 font-medium">target {formatRp(mktTarget)}</span>
+                    <span className="font-semibold text-gray-700">
+                        {formatRp(mktOmzetYtd)} total deal masuk <span className="text-xs font-normal text-slate-500">({formatRp(mktClosingYtd)} lunas/selesai)</span>
+                    </span>
+                    <span className="text-gray-400 font-medium">target tahun {currentYear}: {formatRp(mktTarget)}</span>
                 </div>
                 <div className="h-4 bg-gray-100 rounded-full overflow-hidden border">
                     <div style={{ width: `${Math.min(100, achievement)}%` }}
                         className={`h-full transition-all duration-500 rounded-full ${
                             achievement >= 100 ? 'bg-green-600' : 'bg-orange-500'
                         }`} />
+                </div>
+                <div className="mt-3 flex justify-between text-xs text-slate-500 font-medium border-t pt-2">
+                    <span>Baseline target bulanan: {formatRp(mktTargetMonthly)} / bulan</span>
+                    <span>Closing bulan ini: {formatRp(stats.monthRevenue)} ({stats.thisMonth.length} job)</span>
                 </div>
             </div>
 

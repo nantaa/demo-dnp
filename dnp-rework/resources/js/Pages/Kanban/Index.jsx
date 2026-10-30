@@ -328,56 +328,75 @@ export default function KanbanIndex({ jobs, auth }) {
                 </div>
             </div>
 
-            {/* Quick Navigation Number Buttons Strip (v3 Style with PIC Theme Coding) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto py-1 px-1.5 mb-2.5 bg-white/90 backdrop-blur-xs border border-slate-200/90 rounded-xl shadow-2xs select-none">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 px-1">
-                    Lompat ke:
-                </span>
-                <div className="flex items-center gap-1 shrink-0">
-                    {visibleStages.map((stage) => {
-                        const count = jobs.filter(j => j.stage === stage.id).length;
-                        const theme = getRoleTheme(stage.role);
-                        const displayId = stage.displayId || stage.id;
-                        const isCollapsed = collapsedStages.includes(stage.id);
+            {/* Quick Navigation Number Buttons Strip (v3 Style - Numbers Only, Divided by Processes) */}
+            {(() => {
+                const PROCESS_GROUPS = [
+                    { id: 'fase-1', title: 'Fase 1: Pre-Field & RU', stageIds: [1, 2, 3, 4, 13] },
+                    { id: 'fase-2', title: 'Fase 2: Laporan & Dinas', stageIds: [5, 6, 7, 8, 9] },
+                    { id: 'fase-3', title: 'Fase 3: Invoice & Suket', stageIds: [10, 11, 14, 15, 12, 16] },
+                ];
+                return (
+                    <div className="flex items-center gap-2.5 overflow-x-auto py-1.5 px-2 mb-2.5 bg-white/90 backdrop-blur-xs border border-slate-200/90 rounded-xl shadow-2xs select-none">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 px-1">
+                            Lompat:
+                        </span>
+                        {PROCESS_GROUPS.map((phase, pIdx) => {
+                            const phaseStages = visibleStages.filter(s => phase.stageIds.includes(s.id));
+                            if (phaseStages.length === 0) return null;
 
-                        return (
-                            <button
-                                key={stage.id}
-                                type="button"
-                                onClick={() => scrollToStage(displayId, stage.id)}
-                                className={`group shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
-                                    isCollapsed
-                                        ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-xs'
-                                }`}
-                                title={`Lompat ke Stage ${displayId}: ${stage.name} (${count} Job)${isCollapsed ? ' — Klik untuk membuka kolom' : ''}`}
-                            >
-                                <span
-                                    className="min-w-[20px] h-5 px-1 flex items-center justify-center rounded text-[10px] text-white font-black shadow-2xs transition-transform group-hover:scale-105"
-                                    style={{ backgroundColor: theme.primary }}
-                                >
-                                    {displayId}
-                                </span>
-                                <span className="truncate max-w-[75px] text-[11px] font-bold text-slate-700">
-                                    {stage.short}
-                                </span>
-                                {count > 0 ? (
-                                    <span
-                                        className="text-[10px] px-1.5 py-0.2 rounded-full font-black text-white shrink-0"
-                                        style={{ backgroundColor: theme.primary }}
-                                    >
-                                        {count}
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] text-slate-400 font-semibold px-0.5">
-                                        0
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
+                            return (
+                                <React.Fragment key={phase.id}>
+                                    {pIdx > 0 && <div className="h-4 w-px bg-slate-200 shrink-0" />}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight mr-0.5 shrink-0">
+                                            {phase.title}:
+                                        </span>
+                                        {phaseStages.map((stage) => {
+                                            const count = jobs.filter(j => j.stage === stage.id).length;
+                                            const theme = getRoleTheme(stage.role);
+                                            const displayId = stage.displayId || stage.id;
+                                            const isCollapsed = collapsedStages.includes(stage.id);
+
+                                            return (
+                                                <button
+                                                    key={stage.id}
+                                                    type="button"
+                                                    onClick={() => scrollToStage(displayId, stage.id)}
+                                                    className={`group shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-xs font-bold border transition-all active:scale-95 ${
+                                                        isCollapsed
+                                                            ? 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 opacity-60'
+                                                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:shadow-xs'
+                                                    }`}
+                                                    title={`Stage ${displayId}: ${stage.title || stage.name} (${count} Job)${isCollapsed ? ' — Klik untuk membuka kolom' : ''}`}
+                                                >
+                                                    <span
+                                                        className="min-w-[20px] h-5 px-1 flex items-center justify-center rounded text-[10px] text-white font-black shadow-2xs transition-transform group-hover:scale-105"
+                                                        style={{ backgroundColor: theme.primary }}
+                                                    >
+                                                        {displayId}
+                                                    </span>
+                                                    {count > 0 ? (
+                                                        <span
+                                                            className="text-[10px] px-1.5 py-0.2 rounded-full font-black text-white shrink-0"
+                                                            style={{ backgroundColor: theme.primary }}
+                                                        >
+                                                            {count}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-slate-400 font-semibold px-0.5">
+                                                            0
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                );
+            })()}
 
             {/* Top horizontal (side) scrollbar synchronized with the Kanban board */}
             <div
@@ -390,10 +409,10 @@ export default function KanbanIndex({ jobs, auth }) {
                 <div style={{ width: `${boardScrollWidth || 4500}px`, height: '1px' }} />
             </div>
 
-            {/* Corner Wave Background Layering (Exact Reference Wave with Calibrated X/Y Directional Shift) */}
+            {/* Corner Wave Background Layering (Exact Reference Wave with Calibrated Proportional Scaling) */}
             {cornerWaveStyle !== 'none' && (() => {
                 const configs = {
-                    'ref-subtle': {
+                    'ref-100': {
                         container: 'w-[1350px] h-[380px]',
                         wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
                         v630: 'w-[1125px] right-[170px] bottom-0',
@@ -402,44 +421,63 @@ export default function KanbanIndex({ jobs, auth }) {
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
                     },
+                    'ref-80': {
+                        container: 'w-[1080px] h-[304px]',
+                        wrapper: '-bottom-[128px] right-0 w-[1080px] h-[432px]',
+                        v630: 'w-[900px] right-[136px] bottom-0',
+                        v632: 'w-[1080px] right-[-204px] -bottom-[72px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-65': {
+                        container: 'w-[878px] h-[247px]',
+                        wrapper: '-bottom-[104px] right-0 w-[878px] h-[351px]',
+                        v630: 'w-[731px] right-[110px] bottom-0',
+                        v632: 'w-[878px] right-[-166px] -bottom-[58px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-50': {
+                        container: 'w-[675px] h-[190px]',
+                        wrapper: '-bottom-[80px] right-0 w-[675px] h-[270px]',
+                        v630: 'w-[562px] right-[85px] bottom-0',
+                        v632: 'w-[675px] right-[-128px] -bottom-[45px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    'ref-35': {
+                        container: 'w-[472px] h-[133px]',
+                        wrapper: '-bottom-[56px] right-0 w-[472px] h-[189px]',
+                        v630: 'w-[394px] right-[60px] bottom-0',
+                        v632: 'w-[472px] right-[-89px] -bottom-[32px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
+                    // Legacy & Descriptive aliases
+                    'ref-subtle': {
+                        container: 'w-[878px] h-[247px]',
+                        wrapper: '-bottom-[104px] right-0 w-[878px] h-[351px]',
+                        v630: 'w-[731px] right-[110px] bottom-0',
+                        v632: 'w-[878px] right-[-166px] -bottom-[58px]',
+                        opacity: 'opacity-100',
+                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
+                        baseOpacity: '0.41',
+                    },
                     'ref-large': {
                         container: 'w-[1350px] h-[380px]',
                         wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
-                        v630: 'w-[1250px] right-[160px] bottom-0',
-                        v632: 'w-[1350px] right-[-220px] -bottom-[75px]',
+                        v630: 'w-[1125px] right-[170px] bottom-0',
+                        v632: 'w-[1350px] right-[-255px] -bottom-[90px]',
                         opacity: 'opacity-100',
                         gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
                         baseOpacity: '0.41',
-                    },
-                    'ref-high': {
-                        container: 'w-[1400px] h-[380px]',
-                        wrapper: '-bottom-[160px] right-0 w-[1400px] h-[540px]',
-                        v630: 'w-[1300px] right-[130px] bottom-0',
-                        v632: 'w-[1400px] right-[-270px] -bottom-[80px]',
-                        opacity: 'opacity-100',
-                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
-                        baseOpacity: '0.41',
-                    },
-                    'ref-standard': {
-                        container: 'w-[1300px] h-[380px]',
-                        wrapper: '-bottom-[150px] right-0 w-[1300px] h-[520px]',
-                        v630: 'w-[1180px] right-[200px] bottom-0',
-                        v632: 'w-[1300px] right-[-220px] -bottom-[65px]',
-                        opacity: 'opacity-100',
-                        gradStops: ['#4ABFF0', 1, '#4ABFF0', 0],
-                        baseOpacity: '0.41',
-                    },
-                    'ref-vibrant': {
-                        container: 'w-[1350px] h-[380px]',
-                        wrapper: '-bottom-[160px] right-0 w-[1350px] h-[540px]',
-                        v630: 'w-[1200px] right-[180px] bottom-0',
-                        v632: 'w-[1350px] right-[-240px] -bottom-[70px]',
-                        opacity: 'opacity-100',
-                        gradStops: ['#00A8E8', 1, '#4ABFF0', 0],
-                        baseOpacity: '0.52',
                     },
                 };
-                const cfg = configs[cornerWaveStyle] || configs['ref-subtle'];
+                const cfg = configs[cornerWaveStyle] || configs['ref-65'] || configs['ref-100'];
 
                 return (
                     <div

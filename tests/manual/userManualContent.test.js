@@ -24,8 +24,8 @@ assert(content.toLowerCase().includes('daftar gambar'), 'FAIL: Missing Daftar Ga
 // 3. Must reference all 18 figures
 for (let i = 1; i <= 18; i++) {
   assert(
-    content.includes(`Gambar ${i}:`),
-    `FAIL: Missing reference for Gambar ${i}:`
+    content.includes(`Gambar ${i}.`) || content.includes(`Gambar ${i}:`),
+    `FAIL: Missing reference for Gambar ${i}`
   );
 }
 

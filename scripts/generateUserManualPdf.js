@@ -7,6 +7,7 @@ const ROOT_DIR = process.cwd();
 const MD_PATH = path.join(ROOT_DIR, 'USER_MANUAL_END_USER.md');
 const TEMPLATE_PATH = path.join(ROOT_DIR, 'scripts', 'userManualPrintTemplate.html');
 const HTML_OUTPUT_PATH = path.join(ROOT_DIR, 'dist', 'user_manual_preview.html');
+const PDF_TEMP_OUTPUT = path.join(ROOT_DIR, 'dist', 'user_manual_render.pdf');
 const PDF_OUTPUT_PATH = path.join(ROOT_DIR, 'USER_MANUAL_END_USER.pdf');
 const COPY_PDF_PATH = path.join(ROOT_DIR, 'user manual.pdf');
 
@@ -31,6 +32,7 @@ function parseMarkdown(md) {
   let tableLines = [];
   let inList = false;
   let listType = 'ul';
+  let isCoverSection = true;
 
   function flushList() {
     if (inList) {
@@ -78,6 +80,25 @@ function parseMarkdown(md) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
+
+    // Check for Page Breaks
+    if (trimmed.includes('<!-- PAGE_BREAK: COVER -->')) {
+      flushList();
+      flushTable();
+      htmlOut.push('</div><div class="page-break"></div>');
+      isCoverSection = false;
+      continue;
+    }
+    if (trimmed.includes('<!-- PAGE_BREAK:')) {
+      flushList();
+      flushTable();
+      htmlOut.push('<div class="page-break"></div>');
+      continue;
+    }
+
+    if (isCoverSection && i === 0) {
+      htmlOut.push('<div class="cover-page">');
+    }
 
     // Code blocks
     if (trimmed.startsWith('```')) {
@@ -218,25 +239,10 @@ function parseMarkdown(md) {
   return htmlOut.join('\n');
 }
 
-console.log('[BUILD] Converting Markdown to HTML with embedded figures...');
+console.log('[BUILD] Converting Markdown to HTML with dual-tone black and white styling...');
 const bodyHtml = parseMarkdown(mdRaw);
 
-// Custom cover header matching BigBuilder reference
-const styledBody = `
-  <div class="cover-card">
-    <h1>PANDUAN PENGGUNA RESMI (USER GUIDE)</h1>
-    <div class="company-name">APLIKASI 16 KANBAN · PT DELTA NUSANTARA PERSADA</div>
-    <div class="portal-badge">🌐 TAUTAN RESMI: https://monitor-dnp.deltaindo.co.id/</div>
-    <div class="doc-meta">
-      <span><strong>Dokumen:</strong> Buku Petunjuk Operasional Karyawan</span>
-      <span><strong>Versi Rilis:</strong> 2.4-Production</span>
-      <span><strong>Penerbit:</strong> PJK3 Bidang Riksa Uji K3</span>
-    </div>
-  </div>
-  ${bodyHtml}
-`;
-
-const finalHtml = templateRaw.replace('{{BODY_CONTENT}}', styledBody);
+const finalHtml = templateRaw.replace('{{BODY_CONTENT}}', bodyHtml);
 
 if (!fs.existsSync(path.dirname(HTML_OUTPUT_PATH))) {
   fs.mkdirSync(path.dirname(HTML_OUTPUT_PATH), { recursive: true });
@@ -251,18 +257,30 @@ if (!fs.existsSync(edgePath)) {
 }
 
 console.log('[BUILD] Compiling PDF via Headless Microsoft Edge...');
-const edgeCmd = `"${edgePath}" --headless=new --disable-gpu --run-all-compositor-stages-before-draw --print-to-pdf="${PDF_OUTPUT_PATH}" --no-pdf-header-footer "${HTML_OUTPUT_PATH}"`;
+const edgeCmd = `"${edgePath}" --headless=new --disable-gpu --run-all-compositor-stages-before-draw --print-to-pdf="${PDF_TEMP_OUTPUT}" --no-pdf-header-footer "${HTML_OUTPUT_PATH}"`;
 
 try {
   execSync(edgeCmd, { stdio: 'inherit' });
-  if (fs.existsSync(PDF_OUTPUT_PATH)) {
-    const stats = fs.statSync(PDF_OUTPUT_PATH);
-    console.log(`[SUCCESS] Generated USER_MANUAL_END_USER.pdf (${stats.size} bytes)`);
-    // Also copy to 'user manual.pdf'
-    fs.copyFileSync(PDF_OUTPUT_PATH, COPY_PDF_PATH);
-    console.log(`[SUCCESS] Copied to 'user manual.pdf' (${stats.size} bytes)`);
+  if (fs.existsSync(PDF_TEMP_OUTPUT)) {
+    const stats = fs.statSync(PDF_TEMP_OUTPUT);
+    console.log(`[SUCCESS] Generated render PDF (${stats.size} bytes)`);
+
+    // Safely copy to target files
+    try {
+      fs.copyFileSync(PDF_TEMP_OUTPUT, PDF_OUTPUT_PATH);
+      console.log(`[SUCCESS] Updated ${PDF_OUTPUT_PATH}`);
+    } catch (e) {
+      console.warn(`[WARN] Could not overwrite ${PDF_OUTPUT_PATH} (file may be open in viewer).`);
+    }
+
+    try {
+      fs.copyFileSync(PDF_TEMP_OUTPUT, COPY_PDF_PATH);
+      console.log(`[SUCCESS] Updated ${COPY_PDF_PATH}`);
+    } catch (e) {
+      console.warn(`[WARN] Could not overwrite ${COPY_PDF_PATH} (file may be open in viewer).`);
+    }
   } else {
-    throw new Error('PDF output file was not created.');
+    throw new Error('PDF render output file was not created.');
   }
 } catch (err) {
   console.error('[ERROR] Failed to compile PDF:', err.message);

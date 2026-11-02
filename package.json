@@ -8,10 +8,11 @@
     "server": "node server/index.js",
     "client": "vite",
     "build": "vite build",
-    "build:manual": "node scripts/generateManualPdf.js",
-    "build:user-manual": "node scripts/generateUserManualPdf.js",
-    "test:manual": "node tests/manual/manualCoverage.test.js",
-    "test:user-manual": "node tests/manual/screenshotSuite.test.js && node tests/manual/userManualContent.test.js",
+    "manual:capture": "node user_manual/scripts/captureDistinctScreenshots.js",
+    "manual:build-parts": "node user_manual/scripts/generatePart1Pdf.js && node user_manual/scripts/generatePart2Pdf.js && node user_manual/scripts/generatePart3Pdf.js",
+    "manual:build-master": "node user_manual/scripts/combineMasterPdf.js",
+    "manual:build": "node user_manual/scripts/generatePart1Pdf.js && node user_manual/scripts/generatePart2Pdf.js && node user_manual/scripts/generatePart3Pdf.js && node user_manual/scripts/combineMasterPdf.js",
+    "manual:test": "node user_manual/tests/gitIsolation.test.js && node user_manual/tests/screenshotUniqueness.test.js && node user_manual/tests/part1Content.test.js && node user_manual/tests/part2Content.test.js && node user_manual/tests/part3Content.test.js && node user_manual/tests/masterPdfValidation.test.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -36,6 +37,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "pdf-lib": "^1.17.1",
     "playwright": "^1.64.1",
     "vite": "^8.1.0"
   },

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { showError, showSuccess, showConfirm } from '@/swal';
 import {
-    LayoutDashboard, Columns, List, Plus, Bell, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
+    LayoutDashboard, Columns, List, Plus, CalendarClock, LogOut, ShieldCheck, Boxes, HardHat, Menu, X, User as UserIcon, FileSpreadsheet
 } from 'lucide-react';
 import NotificationBell from '@/Components/NotificationBell';
 import { ROLES, PIC_THEMES, getRoleTheme } from '../Constants';
@@ -115,7 +115,7 @@ export default function AppLayout({ header, children }) {
         { href: '/jobs/create', label: 'Job Baru', icon: Plus, roles: ['marketing', 'superadmin'] },
         { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin', 'manager'] },
         { href: '/users', label: 'Users', icon: ShieldCheck, roles: ['superadmin'] },
-        { href: '/reminder-suket', label: 'Reminder Suket', icon: Bell, roles: ['marketing', 'manager', 'admin', 'superadmin'] },
+        { href: '/reminder-suket', label: 'Reminder Suket', icon: CalendarClock, roles: ['marketing', 'manager', 'admin', 'superadmin'] },
         { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'inspector', 'tim_ru', 'superadmin'] },
     ];
 

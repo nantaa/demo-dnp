@@ -50,7 +50,7 @@ function StatusBadge({ status, children }) {
     if (status === 'valid' || status === 'aktif' || status === 'tersedia') cls = 'bg-green-100 text-green-700 border-green-200';
     if (status === 'expiring_soon' || status === 'sedang dipakai') cls = 'bg-yellow-100 text-yellow-700 border-yellow-200';
     if (status === 'expired' || status === 'rusak') cls = 'bg-red-100 text-red-700 border-red-200';
-    
+
     return (
         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${cls}`}>
             {children}
@@ -74,7 +74,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     const [tab, setTab] = useState('alat');
     const [subTab, setSubTab] = useState('ahli');
     const todayStr = new Date().toISOString().slice(0, 10);
-    
+
     const { role } = auth.user || {};
     const canManage = ['superadmin', 'admin', 'manager'].includes(role);
 
@@ -221,14 +221,14 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
 
     // Helper to sort list by kode_form (natural alphanumeric order)
     const sortByKode = (list) => {
-        return [...list].sort((a, b) => 
+        return [...list].sort((a, b) =>
             (a.kode_form || '').localeCompare(b.kode_form || '', undefined, { numeric: true, sensitivity: 'base' })
         );
     };
 
     // Filter master template items for Surat Permohonan, Surat Tugas, and Form Disnaker
     const suratPermohonanList = useMemo(() => {
-        const filtered = form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f =>
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_PERMOHONAN') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('permohonan')) ||
             (f.nama && f.nama.toLowerCase().includes('permohonan'))
@@ -237,7 +237,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     }, [form_disnaker]);
 
     const suratTugasList = useMemo(() => {
-        const filtered = form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f =>
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_TUGAS') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('tugas')) ||
             (f.nama && f.nama.toLowerCase().includes('tugas'))
@@ -246,7 +246,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     }, [form_disnaker]);
 
     const suratKuasaList = useMemo(() => {
-        const filtered = form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f =>
             (f.pesawat && f.pesawat.toUpperCase() === 'SURAT_KUASA') ||
             (f.kode_disnaker && f.kode_disnaker.toLowerCase().includes('kuasa')) ||
             (f.nama && f.nama.toLowerCase().includes('kuasa'))
@@ -255,7 +255,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     }, [form_disnaker]);
 
     const suratLainnyaList = useMemo(() => {
-        const filtered = form_disnaker.filter(f => 
+        const filtered = form_disnaker.filter(f =>
             (f.pesawat && f.pesawat.toUpperCase() === 'LAINNYA') ||
             (f.kode_disnaker && (
                 f.kode_disnaker.toLowerCase().includes('lainnya') ||
@@ -302,7 +302,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
         let kat = [];
         try {
             kat = typeof a.kategori === 'string' ? JSON.parse(a.kategori) : (a.kategori || []);
-        } catch(e) {
+        } catch (e) {
             kat = Array.isArray(a.kategori) ? a.kategori : [];
         }
         alatForm.setData({
@@ -353,13 +353,13 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
             let spec = [];
             try {
                 spec = typeof i.spesialisasi === 'string' ? JSON.parse(i.spesialisasi) : (i.spesialisasi || []);
-            } catch(e) {
+            } catch (e) {
                 spec = Array.isArray(i.spesialisasi) ? i.spesialisasi : [];
             }
             let details = {};
             try {
                 details = typeof i.skp_details === 'string' ? JSON.parse(i.skp_details) : (i.skp_details || {});
-            } catch(e) {
+            } catch (e) {
                 details = i.skp_details || {};
             }
 
@@ -580,7 +580,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
     return (
         <AppLayout>
             <Head title="Manajemen Alat & SKP" />
-            
+
             <div className="pb-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                     <div>
@@ -667,9 +667,8 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             const active = tab === t.id;
                             return (
                                 <button key={t.id} onClick={() => setTab(t.id)}
-                                    className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-colors ${
-                                        active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-200'
-                                    }`}>
+                                    className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-colors ${active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-200'
+                                        }`}>
                                     <Icon size={16} /> {t.label} <span className="opacity-70 text-xs">({t.count})</span>
                                 </button>
                             );
@@ -750,18 +749,16 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                         <button
                                             type="button"
                                             onClick={() => setSubTab('ahli')}
-                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
-                                                subTab === 'ahli' ? 'bg-black text-white shadow-sm' : 'text-gray-600 hover:text-black'
-                                            }`}
+                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${subTab === 'ahli' ? 'bg-black text-white shadow-sm' : 'text-gray-600 hover:text-black'
+                                                }`}
                                         >
                                             AHLI
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setSubTab('petugas')}
-                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${
-                                                subTab === 'petugas' ? 'bg-black text-white shadow-sm' : 'text-gray-600 hover:text-black'
-                                            }`}
+                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${subTab === 'petugas' ? 'bg-black text-white shadow-sm' : 'text-gray-600 hover:text-black'
+                                                }`}
                                         >
                                             Petugas / PIC
                                         </button>
@@ -778,10 +775,10 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             <div>
                                                 <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
                                                     <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                                                    Pengaturan Rekomendasi Sistem (Predetermined Top 1 - 3)
+                                                    Rekomendasi Top TIM RU
                                                 </h4>
                                                 <p className="text-[11px] text-indigo-700 mt-0.5">
-                                                    Tentukan 3 inspektur default yang menjadi prioritas rekomendasi sistem untuk Admin saat menjadwalkan pekerjaan (Stage 3).
+                                                    Tentukan 3 inspektur default yang menjadi rekomendasi.
                                                 </p>
                                             </div>
                                             <button
@@ -816,7 +813,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                                 <option key={insp.id} value={insp.user_id}>
                                                                     {insp.user?.name || `Inspektur #${insp.id}`} {insp.subrole ? `(${insp.subrole})` : ''}
                                                                 </option>
-                            ))}
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 );
@@ -867,10 +864,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                         <div className="flex items-center gap-1.5 flex-wrap">
                                                             <span>{insp.user?.name || 'Unknown'}</span>
                                                             {insp.recommendation_rank && (
-                                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${
-                                                                    Number(insp.recommendation_rank) === 1 ? 'bg-emerald-600' :
-                                                                    Number(insp.recommendation_rank) === 2 ? 'bg-amber-500' : 'bg-teal-600'
-                                                                }`}>
+                                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded text-white ${Number(insp.recommendation_rank) === 1 ? 'bg-emerald-600' :
+                                                                        Number(insp.recommendation_rank) === 2 ? 'bg-amber-500' : 'bg-teal-600'
+                                                                    }`}>
                                                                     Top {insp.recommendation_rank} Rekomendasi
                                                                 </span>
                                                             )}
@@ -910,7 +906,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                                 let skpFiles = {};
                                                                 try {
                                                                     skpFiles = typeof insp.skp_files === 'string' ? JSON.parse(insp.skp_files) : (insp.skp_files || {});
-                                                                } catch(e) {
+                                                                } catch (e) {
                                                                     skpFiles = insp.skp_files || {};
                                                                 }
                                                                 const filePath = skpFiles[s];
@@ -997,7 +993,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                         let statObj = { status: 'valid', label: 'Valid' };
                                         if (days < 0) statObj = { status: 'expired', label: 'EXPIRED' };
                                         else if (days < 90) statObj = { status: 'expiring_soon', label: `${days} hari` };
-                                        
+
                                         return (
                                             <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50 text-sm">
                                                 <td className="p-4 font-mono font-semibold">{c.kode_cert}</td>
@@ -1373,9 +1369,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </tbody>
                             </table>
                         )}
-                        
+
                         <div className="p-4 bg-gray-50 text-xs text-gray-500 border-t border-gray-200">
-                             Data sinkronisasi master inventory.
+                            Data sinkronisasi master inventory.
                         </div>
                     </div>
                 </div>
@@ -1464,7 +1460,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border">
                         <h2 className="text-lg font-bold text-gray-900 mb-4">
-                            {selectedInspector 
+                            {selectedInspector
                                 ? (inspectorForm.data.subrole === 'teknisi' ? 'Edit Petugas / PIC' : 'Edit Ahli K3')
                                 : (inspectorForm.data.subrole === 'teknisi' ? 'Tambah Petugas / PIC Baru' : 'Tambah Ahli K3 Baru')
                             }
@@ -1480,7 +1476,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                 </select>
                                 {inspectorForm.errors.user_id && <div className="text-red-500 text-xs mt-1">{inspectorForm.errors.user_id}</div>}
                             </div>
-                            
+
                             <div>
                                 <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Subrole / Posisi</label>
                                 <select value={inspectorForm.data.subrole} onChange={e => inspectorForm.setData('subrole', e.target.value)} className="w-full border px-3 py-2 rounded text-sm bg-white">
@@ -1519,21 +1515,21 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                 <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">
                                                     Nomor {inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}
                                                 </label>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder={`Nomor ${inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}`} 
-                                                    value={inspectorForm.data.skp || ''} 
-                                                    onChange={e => inspectorForm.setData('skp', e.target.value)} 
-                                                    className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                <input
+                                                    type="text"
+                                                    placeholder={`Nomor ${inspectorForm.data.subrole === 'teknisi' ? 'Lisensi' : 'SKP'}`}
+                                                    value={inspectorForm.data.skp || ''}
+                                                    onChange={e => inspectorForm.setData('skp', e.target.value)}
+                                                    className="w-full border px-2 py-1.5 rounded text-xs bg-white"
                                                 />
                                             </div>
                                             <div>
                                                 <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Berlaku s/d</label>
-                                                <input 
-                                                    type="date" 
-                                                    value={inspectorForm.data.skp_expired_at || ''} 
-                                                    onChange={e => inspectorForm.setData('skp_expired_at', e.target.value)} 
-                                                    className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                <input
+                                                    type="date"
+                                                    value={inspectorForm.data.skp_expired_at || ''}
+                                                    onChange={e => inspectorForm.setData('skp_expired_at', e.target.value)}
+                                                    className="w-full border px-2 py-1.5 rounded text-xs bg-white"
                                                 />
                                             </div>
                                         </div>
@@ -1557,7 +1553,7 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                             let skpFiles = {};
                                             try {
                                                 skpFiles = typeof selectedInspector?.skp_files === 'string' ? JSON.parse(selectedInspector.skp_files) : (selectedInspector?.skp_files || {});
-                                            } catch(e) {
+                                            } catch (e) {
                                                 skpFiles = selectedInspector?.skp_files || {};
                                             }
                                             const existingFile = skpFiles[s] || skpFiles['Umum'];
@@ -1578,33 +1574,33 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div>
                                                             <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Nomor {docName}</label>
-                                                            <input 
-                                                                type="text" 
-                                                                placeholder={`Nomor ${docName}`} 
-                                                                value={detail.no_skp || inspectorForm.data.skp || ''} 
+                                                            <input
+                                                                type="text"
+                                                                placeholder={`Nomor ${docName}`}
+                                                                value={detail.no_skp || inspectorForm.data.skp || ''}
                                                                 onChange={e => {
                                                                     const val = e.target.value;
                                                                     inspectorForm.setData('skp_details_input', {
                                                                         ...inspectorForm.data.skp_details_input,
                                                                         [s]: { ...(inspectorForm.data.skp_details_input?.[s] || {}), no_skp: val }
                                                                     });
-                                                                }} 
-                                                                className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                                }}
+                                                                className="w-full border px-2 py-1.5 rounded text-xs bg-white"
                                                             />
                                                         </div>
                                                         <div>
                                                             <label className="block text-[11px] font-semibold text-gray-600 mb-0.5">Berlaku s/d</label>
-                                                            <input 
-                                                                type="date" 
-                                                                value={detail.expired_at || inspectorForm.data.skp_expired_at || ''} 
+                                                            <input
+                                                                type="date"
+                                                                value={detail.expired_at || inspectorForm.data.skp_expired_at || ''}
                                                                 onChange={e => {
                                                                     const val = e.target.value;
                                                                     inspectorForm.setData('skp_details_input', {
                                                                         ...inspectorForm.data.skp_details_input,
                                                                         [s]: { ...(inspectorForm.data.skp_details_input?.[s] || {}), expired_at: val }
                                                                     });
-                                                                }} 
-                                                                className="w-full border px-2 py-1.5 rounded text-xs bg-white" 
+                                                                }}
+                                                                className="w-full border px-2 py-1.5 rounded text-xs bg-white"
                                                             />
                                                         </div>
                                                     </div>
@@ -1810,9 +1806,9 @@ function AlatSkp({ inspectors = [], alat_uji = [], sertifikat_pjk3 = [], regulas
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Kategori Pesawat</label>
-                                    <select 
-                                        value={formDisnakerForm.data.pesawat} 
-                                        onChange={e => formDisnakerForm.setData('pesawat', e.target.value)} 
+                                    <select
+                                        value={formDisnakerForm.data.pesawat}
+                                        onChange={e => formDisnakerForm.setData('pesawat', e.target.value)}
                                         className="w-full border px-3 py-2 rounded text-sm bg-white"
                                     >
                                         <option value="">-- Pilih Kategori --</option>

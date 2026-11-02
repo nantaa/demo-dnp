@@ -186,7 +186,7 @@ function ReminderSuket({ jobs = [] }) {
                     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-12 text-center text-gray-500">
                         <ShieldCheck size={32} className="mx-auto mb-3 opacity-40" />
                         <div className="font-medium text-gray-900">Belum ada Suket terbit.</div>
-                        <div className="text-xs mt-1">Suket akan muncul di sini setelah Kadiv RU input No Suket dari Disnaker di Tahap 6.</div>
+                        <div className="text-xs mt-1">Suket akan muncul di sini setelah No. Suket diterbitkan pada Tahap 9 (Pengurusan Suket).</div>
                     </div>
                 ) : (
                     <>

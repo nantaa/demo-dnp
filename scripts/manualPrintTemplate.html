@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Panduan Pengguna Resmi - DNP Monitor v2.4</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 18mm 15mm 20mm 15mm;
+      @bottom-right {
+        content: "Halaman " counter(page);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+      }
+      @bottom-left {
+        content: "PT Delta Nusantara Persada — DNP Monitor v2.4";
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 9.5pt;
+      line-height: 1.55;
+      color: #1e293b;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Cover / Title styling */
+    .doc-header {
+      background: linear-gradient(135deg, #062444 0%, #0c3e72 100%);
+      color: #ffffff;
+      padding: 26px 30px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      border-left: 6px solid #00a8e8;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .doc-header h1 {
+      margin: 0 0 6px 0;
+      font-size: 20pt;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      border-bottom: none;
+      padding: 0;
+    }
+    .doc-header .doc-subtitle {
+      font-size: 11pt;
+      font-weight: 500;
+      color: #93c5fd;
+      margin-bottom: 12px;
+    }
+    .doc-header .doc-meta {
+      font-size: 8.5pt;
+      color: #cbd5e1;
+      display: flex;
+      gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 10px;
+    }
+
+    h1 {
+      color: #062444;
+      font-size: 15pt;
+      font-weight: 700;
+      border-bottom: 2px solid #00a8e8;
+      padding-bottom: 4px;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    h2 {
+      color: #0f4c81;
+      font-size: 12pt;
+      font-weight: 700;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 3px;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    h3 {
+      color: #1e3a5f;
+      font-size: 10.5pt;
+      font-weight: 600;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    h4 {
+      color: #334155;
+      font-size: 9.5pt;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin: 0 0 8px 0;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin: 4px 0 10px 0;
+      padding-left: 22px;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    strong {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    thead {
+      background-color: #062444;
+      color: #ffffff;
+      font-weight: 600;
+      display: table-header-group;
+    }
+
+    th {
+      padding: 7px 9px;
+      text-align: left;
+      font-weight: 600;
+      border: 1px solid #334155;
+    }
+
+    td {
+      padding: 6px 9px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* Callout & Blockquotes */
+    blockquote {
+      margin: 10px 0;
+      padding: 8px 14px;
+      background-color: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      color: #166534;
+      border-radius: 0 4px 4px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .callout-warning {
+      background-color: #fefce8;
+      border-left: 4px solid #ca8a04;
+      color: #854d0e;
+      padding: 8px 14px;
+      margin: 10px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    .callout-danger {
+      background-color: #fef2f2;
+      border-left: 4px solid #dc2626;
+      color: #991b1b;
+      padding: 8px 14px;
+      margin: 10px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 8.5pt;
+      background-color: #f1f5f9;
+      color: #09508d;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid #e2e8f0;
+    }
+
+    pre {
+      background-color: #0b192c;
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 8pt;
+      overflow-x: auto;
+      margin: 10px 0;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      border: 1px solid #1e293b;
+    }
+
+    pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+      border: none;
+    }
+
+    hr {
+      border: 0;
+      height: 1px;
+      background: #e2e8f0;
+      margin: 20px 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-warning { background: #fef9c3; color: #a16207; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+
+    /* Page break helpers */
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  <div class="content-container">
+    {{BODY_CONTENT}}
+  </div>
+</body>
+</html>

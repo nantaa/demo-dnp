@@ -30,7 +30,9 @@ class DashboardController extends Controller
             'unitsTracking',
             'historyLogs' => function($q) {
                 $q->select(['id', 'job_id', 'stage', 'action', 'action_by_user_id', 'notes', 'created_at'])
-                  ->with('user:id,name,role');
+                  ->with('user:id,name,role')
+                  ->orderBy('created_at', 'desc')
+                  ->orderBy('id', 'desc');
             }
         ])->orderBy('updated_at', 'desc');
 

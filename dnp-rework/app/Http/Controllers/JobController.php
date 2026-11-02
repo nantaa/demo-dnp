@@ -933,6 +933,10 @@ class JobController extends Controller
             }
         }
 
+        if ($request->has('notes')) {
+            $validated['notes'] = $request->input('notes');
+        }
+
         $job->update(array_merge($validated, ['disnaker_sla_status' => $slaStatus]));
 
         return back()->with('success', 'Data Disnaker berhasil diperbarui.');
@@ -1310,17 +1314,18 @@ class JobController extends Controller
         ]);
 
         // Store photo notes as a history log entry (Stage 4 photos)
+        $docStage = (int) ($request->stage ?: $job->stage);
         if ($request->photo_notes) {
             $this->recordHistoryLog(
                 $job,
-                $job->stage,
+                $docStage,
                 "Catatan foto [{$request->type}]: {$request->photo_notes}"
             );
         }
 
         $this->recordHistoryLog(
             $job,
-            $job->stage,
+            $docStage,
             "Dokumen diunggah: [{$request->type}] {$filename}"
         );
 
@@ -1883,31 +1888,39 @@ class JobController extends Controller
     {
         $userId = Auth::id();
 
-        // Check if there is a recent log from the same user on this job in the last 2 minutes (120s)
-        $recentLog = $job->historyLogs()
-            ->where('action_by_user_id', $userId)
-            ->where('stage', $stage)
-            ->where('created_at', '>=', now()->subSeconds(120))
-            ->latest('id')
-            ->first();
+        // Critical workflow events (Stage moves, Rejections, Reopen, Bypass) must always be distinct atomic rows
+        $isMilestoneEvent = str_starts_with($action, 'Moved from stage') 
+            || str_starts_with($action, 'DITOLAK') 
+            || str_starts_with($action, 'Dibuka Kembali') 
+            || str_starts_with($action, 'Job created')
+            || str_contains($action, 'Bypass')
+            || str_contains($action, 'Revisi');
 
-        if ($recentLog) {
-            // Coalesce / update existing log to avoid duplicate entries in audit trail
-            if (!str_contains($recentLog->action, $action)) {
-                $combined = $recentLog->action . ' • ' . $action;
-                $recentLog->action = \Illuminate\Support\Str::limit($combined, 250, '...');
-            }
-            if ($notes && !empty(trim($notes))) {
-                $recentLog->notes = $recentLog->notes ? ($recentLog->notes . "\n" . $notes) : $notes;
-            }
-            if (!empty($extra)) {
-                foreach ($extra as $k => $v) {
-                    $recentLog->{$k} = $v;
+        if (!$isMilestoneEvent) {
+            // Check if there is a recent identical log from the same user on this job in the last 60 seconds
+            $recentLog = $job->historyLogs()
+                ->where('action_by_user_id', $userId)
+                ->where('stage', $stage)
+                ->where('created_at', '>=', now()->subSeconds(60))
+                ->latest('id')
+                ->first();
+
+            if ($recentLog && !str_starts_with($recentLog->action, 'Moved from') && !str_starts_with($recentLog->action, 'DITOLAK')) {
+                // If it is the exact same action, simply update notes and touch timestamp
+                if (trim($recentLog->action) === trim($action)) {
+                    if ($notes && !empty(trim($notes))) {
+                        $recentLog->notes = $recentLog->notes ? ($recentLog->notes . "\n" . $notes) : $notes;
+                    }
+                    if (!empty($extra)) {
+                        foreach ($extra as $k => $v) {
+                            $recentLog->{$k} = $v;
+                        }
+                    }
+                    $recentLog->touch();
+                    $recentLog->save();
+                    return $recentLog;
                 }
             }
-            $recentLog->touch();
-            $recentLog->save();
-            return $recentLog;
         }
 
         return $job->historyLogs()->create(array_merge([

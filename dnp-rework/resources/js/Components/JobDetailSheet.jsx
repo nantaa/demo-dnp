@@ -9,7 +9,7 @@ import { Trash2, ChevronDown, Eye } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     STAGE9_SUKET_STATUSES, PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
-    STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES
+    STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES, getStageDisplayId, PIC_THEMES
 } from '@/Constants';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -91,8 +91,32 @@ const hasValidLhppLink = (links) => {
     return links.some(item => typeof item?.url === 'string' && item.url.trim().length > 0);
 };
 
-const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) =>
-    d ? new Date(d).toLocaleDateString('id-ID', opts) : '—';
+const toDateInput = (val) => {
+    if (!val) return '';
+    return String(val).slice(0, 10);
+};
+
+const fmt = (d, opts = { day: '2-digit', month: 'short', year: 'numeric' }) => {
+    if (!d) return '—';
+    const dateObj = new Date(d);
+    if (isNaN(dateObj.getTime())) return '—';
+    return dateObj.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', ...opts });
+};
+
+const fmtDateTimeWib = (d) => {
+    if (!d) return '—';
+    const dateObj = new Date(d);
+    if (isNaN(dateObj.getTime())) return '—';
+    const formatted = dateObj.toLocaleDateString('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    return `${formatted} WIB`;
+};
 
 const fmtCurrency = (n) =>
     n != null && n !== '' ? 'Rp ' + Number(n).toLocaleString('id-ID') : '—';
@@ -490,10 +514,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     const [lhppLinks, setLhppLinks] = useState(() => parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
     const [isSavingLink, setIsSavingLink] = useState(false);
     const [isSavingStage, setIsSavingStage] = useState(false);
-    const [s7, setS7] = useState({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
+    const [s7, setS7] = useState({ tgl_submit_disnaker: toDateInput(job.tgl_submit_disnaker) });
     const [s8, setS8] = useState({
-        tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
-        tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
+        tgl_doc_submitted_disnaker: toDateInput(job.tgl_doc_submitted_disnaker || job.tgl_submit_disnaker),
+        tgl_doc_received_disnaker:  toDateInput(job.tgl_doc_received_disnaker),
         s8_progress_status:         job.s8_progress_status         ?? '',
         s8_delay_reason:            job.s8_delay_reason            ?? '',
     });
@@ -674,10 +698,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 s5_review_notes:    job.s5_review_notes    ?? '',
             });
             setLhppLinks(parseLhppLinks(job.link_lhpp, job.actual_units ?? job.units));
-            setS7({ tgl_submit_disnaker: job.tgl_submit_disnaker ?? '' });
+            setS7({ tgl_submit_disnaker: toDateInput(job.tgl_submit_disnaker) });
             setS8({
-                tgl_doc_submitted_disnaker: job.tgl_doc_submitted_disnaker ?? '',
-                tgl_doc_received_disnaker:  job.tgl_doc_received_disnaker  ?? '',
+                tgl_doc_submitted_disnaker: toDateInput(job.tgl_doc_submitted_disnaker || job.tgl_submit_disnaker),
+                tgl_doc_received_disnaker:  toDateInput(job.tgl_doc_received_disnaker),
                 s8_progress_status:         job.s8_progress_status         ?? '',
                 s8_delay_reason:            job.s8_delay_reason            ?? '',
             });
@@ -3554,19 +3578,58 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     // ── History Tab ──────────────────────────────────────────────────────────
     const renderHistory = () => {
-        const rawLogs = (job.historyLogs || job.history_logs || []).slice().reverse();
+        const rawLogs = (job.historyLogs || job.history_logs || []).slice().sort((a, b) => {
+            const timeA = new Date(a.created_at || 0).getTime();
+            const timeB = new Date(b.created_at || 0).getTime();
+            if (timeB !== timeA) return timeB - timeA;
+            return (b.id || 0) - (a.id || 0);
+        });
+
         // If user is INS, filter out PO revision logs and mask PO numbers/references in actions & notes
         const logs = isINS
             ? rawLogs.filter(log => !String(log.action || '').toLowerCase().includes('revisi po'))
             : rawLogs;
 
-        const formatActionForIns = (action) => {
-            if (!isINS || !action) return action;
-            return action
-                .replace(/PO\/SPK received/gi, 'Pekerjaan Terdaftar')
-                .replace(/PO\/SPK/gi, 'Pekerjaan')
-                .replace(/PO:\s*[^\s,)]+/gi, 'PO: [Terkunci]')
-                .replace(/No\.?\s*PO\s*:[^\s,)]+/gi, 'No. PO: [Terkunci]');
+        const formatActionText = (action) => {
+            if (!action) return '';
+            let text = action;
+            if (isINS) {
+                text = text
+                    .replace(/PO\/SPK received/gi, 'Pekerjaan Terdaftar')
+                    .replace(/PO\/SPK/gi, 'Pekerjaan')
+                    .replace(/PO:\s*[^\s,)]+/gi, 'PO: [Terkunci]')
+                    .replace(/No\.?\s*PO\s*:[^\s,)]+/gi, 'No. PO: [Terkunci]');
+            }
+            // Replace internal stage numbers with exact Kanban display IDs (e.g. 13 -> 4b, 14 -> 11b, 15 -> 11c)
+            text = text.replace(/Moved from stage (\d+) to (\d+)/gi, (_, from, to) => {
+                const fromDisp = getStageDisplayId(parseInt(from));
+                const toDisp = getStageDisplayId(parseInt(to));
+                return `Pindah dari Tahap ${fromDisp} ke Tahap ${toDisp}`;
+            });
+            text = text.replace(/from Stage (\d+) ke Stage (\d+)/gi, (_, from, to) => {
+                const fromDisp = getStageDisplayId(parseInt(from));
+                const toDisp = getStageDisplayId(parseInt(to));
+                return `dari Tahap ${fromDisp} ke Tahap ${toDisp}`;
+            });
+            text = text.replace(/ke Stage (\d+)/gi, (_, st) => {
+                return `ke Tahap ${getStageDisplayId(parseInt(st))}`;
+            });
+            text = text.replace(/dari S(\d+) ke S(\d+)/gi, (_, from, to) => {
+                return `dari S${getStageDisplayId(parseInt(from))} ke S${getStageDisplayId(parseInt(to))}`;
+            });
+            text = text.replace(/ke S(\d+)/gi, (_, st) => {
+                return `ke S${getStageDisplayId(parseInt(st))}`;
+            });
+            text = text.replace(/Stage (\d+)/gi, (_, st) => {
+                return `Tahap ${getStageDisplayId(parseInt(st))}`;
+            });
+            text = text.replace(/Tahap (13|14|15)\b/gi, (_, st) => {
+                return `Tahap ${getStageDisplayId(parseInt(st))}`;
+            });
+            text = text.replace(/\bS(13|14|15)\b/g, (_, st) => {
+                return `S${getStageDisplayId(parseInt(st))}`;
+            });
+            return text;
         };
 
         const formatNotesForIns = (notes) => {
@@ -3576,31 +3639,99 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                 .replace(/PO:\s*[^\s,)]+/gi, 'PO: [Terkunci]');
         };
 
+        if (logs.length === 0) {
+            return (
+                <div className="text-center py-10 text-gray-400 text-sm">
+                    Belum ada riwayat aktivitas pada pekerjaan ini.
+                </div>
+            );
+        }
+
         return (
-            <div className="space-y-4">
-                {logs.map(log => (
-                    <div key={log.id} className="border-l-2 border-gray-200 pl-4 py-1 relative">
-                        <div className="absolute w-2 h-2 bg-gray-400 rounded-full -left-[5px] top-3"></div>
-                        <div className="bg-gray-50 rounded p-3">
-                            <div className="flex justify-between items-start mb-1">
-                                <span className="text-xs font-bold text-gray-700">{log.user?.name || 'System'}</span>
-                                <span className="text-xs text-gray-500">{fmt(log.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="timeline-container relative pl-6 space-y-4 border-l-2 border-slate-200 ml-2">
+                {logs.map(log => {
+                    const isMove = log.action?.includes('Moved from') || log.action?.includes('Pindah dari') || log.action?.includes('Dibuka Kembali') || log.action?.includes('Job created');
+                    const isReject = log.action?.includes('DITOLAK') || log.returned_from_stage;
+                    const isBypass = log.action?.includes('Bypass') || log.notes?.includes('BYPASS');
+                    const isDoc = log.action?.includes('Dokumen diunggah') || log.action?.includes('Catatan foto');
+
+                    const stageDisp = getStageDisplayId(log.stage);
+                    const stageObj = STAGES.find(s => s.id === Number(log.stage));
+                    const stageTheme = PIC_THEMES[stageObj?.role] || PIC_THEMES.admin;
+
+                    // Bullet color
+                    const bulletBg = isReject ? 'bg-red-500 ring-red-100' :
+                        isBypass ? 'bg-amber-500 ring-amber-100' :
+                        isMove ? 'bg-blue-600 ring-blue-100' :
+                        isDoc ? 'bg-emerald-600 ring-emerald-100' :
+                        'bg-slate-400 ring-slate-100';
+
+                    // Border accent color
+                    const cardBorder = isReject ? 'border-red-200 bg-red-50/40' :
+                        isBypass ? 'border-amber-200 bg-amber-50/30' :
+                        isMove ? 'border-blue-200/80 bg-blue-50/20' :
+                        'border-slate-200 bg-white';
+
+                    return (
+                        <div key={log.id} className="relative group">
+                            {/* Bullet icon dot */}
+                            <div className={`absolute -left-[31px] top-3.5 w-3.5 h-3.5 rounded-full ${bulletBg} ring-4 transition-all shadow-xs`} />
+
+                            <div className={`rounded-xl border p-3.5 shadow-2xs hover:shadow-xs transition-all ${cardBorder}`}>
+                                {/* Header: User + Role + WIB Timestamp */}
+                                <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5 pb-1.5 border-b border-gray-100/80">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-xs font-bold text-gray-900">
+                                            {log.user?.name || 'Sistem'}
+                                        </span>
+                                        {log.user?.role && (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 uppercase border border-slate-200">
+                                                {log.user.role === 'tim_ru' || log.user.role === 'inspektur' ? 'Tim RU' : log.user.role}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-[11px] font-mono text-gray-500">
+                                        {fmtDateTimeWib(log.created_at)}
+                                    </span>
+                                </div>
+
+                                {/* Body: Formatted action description */}
+                                <div className="text-xs font-semibold text-gray-800 leading-snug">
+                                    {formatActionText(log.action)}
+                                </div>
+
+                                {/* Notes Callout Box */}
+                                {log.notes && (
+                                    <div className="mt-2 text-xs bg-amber-50/90 border border-amber-200/90 rounded-lg p-2.5 text-amber-950 leading-relaxed">
+                                        <span className="font-bold text-amber-900 block text-[11px] mb-0.5">Catatan:</span>
+                                        "{formatNotesForIns(log.notes)}"
+                                    </div>
+                                )}
+
+                                {/* Returned From Warning Banner */}
+                                {log.returned_from_stage && (
+                                    <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-bold bg-red-100 text-red-800 border border-red-300">
+                                        ⚠️ Dikembalikan dari Tahap {getStageDisplayId(log.returned_from_stage)}
+                                    </div>
+                                )}
+
+                                {/* Stage Badge exactly matching Kanban column number & role theme */}
+                                <div className="mt-2.5 flex items-center gap-2">
+                                    <span
+                                        className="min-w-[28px] h-6 px-1.5 inline-flex items-center justify-center text-xs font-black rounded-md shadow-2xs text-white"
+                                        style={{ backgroundColor: stageTheme.primary }}
+                                        title={`Stage ${stageDisp} (${stageObj?.name || 'Stage'})`}
+                                    >
+                                        {stageDisp}
+                                    </span>
+                                    <span className="text-xs font-bold text-gray-700">
+                                        Tahap {stageDisp} · {stageObj?.name || `Stage ${stageDisp}`}
+                                    </span>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-800">{formatActionForIns(log.action)}</p>
-                            {log.notes && (
-                                <p className="text-xs text-gray-600 mt-1 italic border-l-2 border-gray-300 pl-2">"{formatNotesForIns(log.notes)}"</p>
-                            )}
-                            {log.returned_from_stage && (
-                                <span className="inline-block mt-2 px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded border border-red-200">
-                                    DIKEMBALIKAN dari Stage {log.returned_from_stage}
-                                </span>
-                            )}
-                            <span className="inline-block mt-1 text-[10px] bg-blue-100 text-blue-800 px-2 rounded-full">
-                                Stage {STAGES.find(s => s.id === log.stage)?.displayId || log.stage}
-                            </span>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };

@@ -89,7 +89,7 @@ class Job extends Model
      */
     public function historyLogs(): HasMany
     {
-        return $this->hasMany(JobHistory::class);
+        return $this->hasMany(JobHistory::class)->orderBy('created_at', 'desc')->orderBy('id', 'desc');
     }
 
     /**

@@ -433,7 +433,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             {selectedJob && (
                 <JobDetailSheet 
                     key={selectedJob.id}
-                    job={selectedJob} 
+                    job={jobs.find(j => j.id === selectedJob.id) || selectedJob} 
                     onClose={() => setSelectedJob(null)} 
                     auth={auth} 
                 />

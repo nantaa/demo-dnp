@@ -11,6 +11,8 @@ export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
     const isINS = ['inspektur', 'inspector', 'tim_ru'].includes(auth?.user?.role);
     const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
+    const isManager = auth?.user?.role === 'manager';
+    const canViewSelesai = isSuperadmin || isManager;
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
 
@@ -186,7 +188,7 @@ export default function KanbanIndex({ jobs, auth }) {
                             <Plus size={14} /> Job Baru
                         </Link>
                     )}
-                    {isSuperadmin && (
+                    {canViewSelesai && (
                         <button
                             onClick={() => setShowSelesai(s => !s)}
                             className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow-xs transition ${
@@ -233,8 +235,8 @@ export default function KanbanIndex({ jobs, auth }) {
                 onScroll={handleBoardScroll} 
                 className="flex h-full overflow-x-auto space-x-4 pb-4"
             >
-                {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin enables showSelesai */}
-                {STAGES.filter(stage => !stage.hidden || (isSuperadmin && showSelesai)).map((stage) => {
+                {/* Render pipeline stages — include Stage 16 (Selesai / Arsip) when Superadmin or Manager enables showSelesai */}
+                {STAGES.filter(stage => !stage.hidden || (canViewSelesai && showSelesai)).map((stage) => {
                     const hasViewPermission = canViewStage(stage.id);
                     const columnJobs = jobs.filter(j => {
                         if (j.stage !== stage.id) return false;

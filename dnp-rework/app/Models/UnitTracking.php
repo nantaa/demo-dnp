@@ -18,9 +18,9 @@ class UnitTracking extends Model
      * The attributes that should be cast.
      */
     protected $casts = [
-        'tgl_submit' => 'date',
-        'tgl_suket' => 'date',
-        'suket_expired_at' => 'date',
+        'tgl_submit'       => 'date:Y-m-d',
+        'tgl_suket'        => 'date:Y-m-d',
+        'suket_expired_at' => 'date:Y-m-d',
     ];
 
     /**

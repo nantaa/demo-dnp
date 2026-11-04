@@ -53,3 +53,16 @@ implementation_plan*
 .vscode/
 
 
+
+# Unrelated / Non-System Files (Hidden from Git)
+*.docx
+*.xlsx
+*.xls
+*.csv
+docs_ori/
+docs/
+scripts/
+build_template.*
+KANBAN_FLOW_SIMULATOR.html
+PROJECT_CAPABILITIES_AND_BOUNDARIES.html
+!dnp-rework/resources/templates/SuratTugas.docx

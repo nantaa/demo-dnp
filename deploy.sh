@@ -85,15 +85,22 @@ if [ -d "$SHARED_STORAGE" ]; then
     ln -sfn "$SHARED_STORAGE" storage
 fi
 
-# Fix permissions
+# Fix permissions & storage directories
+mkdir -p "$SHARED_STORAGE/app/public/documents"
+mkdir -p "$SHARED_STORAGE/app/public/photos"
+mkdir -p "$SHARED_STORAGE/app/public/invoices"
+mkdir -p "$SHARED_STORAGE/app/public/sukets"
+sudo chown -R www-data:www-data "$SHARED_STORAGE" "$PROD_DIR/bootstrap/cache" 2>/dev/null || true
+sudo find "$SHARED_STORAGE" -type d -exec chmod 775 {} + 2>/dev/null || true
+sudo find "$SHARED_STORAGE" -type f -exec chmod 664 {} + 2>/dev/null || true
 sudo chmod -R 777 "$PROD_DIR/bootstrap/cache" 2>/dev/null || true
-sudo chmod -R 777 "$SHARED_STORAGE" 2>/dev/null || true
 
 # 6. Artisan
 echo "🗄️  6/7 Artisan..."
 cd "$PROD_DIR"
 php artisan migrate --force || true
-php artisan storage:link 2>/dev/null || true
+rm -rf "$PROD_DIR/public/storage" 2>/dev/null || true
+php artisan storage:link --force 2>/dev/null || true
 php artisan optimize:clear || true
 
 sudo systemctl reload php8.2-fpm 2>/dev/null || sudo systemctl reload php8.3-fpm 2>/dev/null || true

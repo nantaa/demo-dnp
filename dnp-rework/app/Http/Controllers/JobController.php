@@ -1381,6 +1381,8 @@ class JobController extends Controller
         // Default to inline viewing so opening in browser tab (Chrome PDF viewer) renders properly with real tab name
         $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($fullPath);
         $response->headers->set('Content-Type', $mimeType);
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $response->headers->set('Content-Security-Policy', "frame-ancestors 'self'");
         $response->setContentDisposition(
             \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_INLINE,
             $cleanAscii,

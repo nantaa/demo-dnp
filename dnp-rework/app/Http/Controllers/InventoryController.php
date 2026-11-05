@@ -15,8 +15,8 @@ class InventoryController extends Controller
 {
     private function canManage(): bool
     {
-        $role = Auth::user()->role;
-        return in_array($role, ['superadmin', 'admin', 'manager']);
+        $user = Auth::user();
+        return $user && $user->isSuperadmin();
     }
 
     // ─── Alat Uji ────────────────────────────────────────────────────────

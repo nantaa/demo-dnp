@@ -113,15 +113,20 @@ export default function AppLayout({ header, children }) {
         { href: '/kanban', label: 'Kanban', icon: Columns },
         { href: '/jobs', label: 'Daftar Job', icon: List },
         { href: '/jobs/create', label: 'Job Baru', icon: Plus, roles: ['marketing', 'superadmin'] },
-        { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin', 'manager'] },
+        { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin'] },
         { href: '/users', label: 'Users', icon: ShieldCheck, roles: ['superadmin'] },
-        { href: '/reminder-suket', label: 'Reminder Suket', icon: CalendarClock, roles: ['marketing', 'manager', 'admin', 'superadmin'] },
-        { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['admin', 'manager', 'inspektur', 'inspector', 'tim_ru', 'superadmin'] },
+        { href: '/reminder-suket', label: 'Reminder Suket', icon: CalendarClock, roles: ['superadmin'] },
+        { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['superadmin'] },
     ];
 
     const userRole = (user?.role || '').toLowerCase();
+    const isSuperadmin = userRole === 'superadmin' || !!user?.is_superadmin;
     const userTheme = getRoleTheme(user?.role);
-    const visibleNav = navItems.filter(item => !item.roles || item.roles.includes(userRole));
+    const visibleNav = navItems.filter(item => {
+        if (!item.roles) return true;
+        if (isSuperadmin) return true;
+        return item.roles.includes(userRole);
+    });
 
     const handleLogout = async (e) => {
         if (e) e.preventDefault();
@@ -169,8 +174,8 @@ export default function AppLayout({ header, children }) {
                                     PT DELTA NUSANTARA Persada
                                 </div>
                                 <div className="text-sm sm:text-base font-extrabold leading-tight mt-0.5">
-                                    <span className="text-[#D9381E]">Riksa Uji</span>
-                                    <span className="text-[#0A385C]"> - Monitoring</span>
+                                    <span className="text-[#D9381E]">Aplikasi DNP</span>
+                                    <span className="text-[#0A385C]"> - 16 Kanban</span>
                                 </div>
                             </div>
                         </div>
@@ -329,8 +334,8 @@ export default function AppLayout({ header, children }) {
                                         href={item.href}
                                         title={item.label}
                                         className={`flex items-center rounded-lg text-sm font-medium transition-all ${desktopSidebarCollapsed
-                                                ? 'justify-center py-2.5 px-0'
-                                                : 'gap-3 px-3 py-2.5'
+                                            ? 'justify-center py-2.5 px-0'
+                                            : 'gap-3 px-3 py-2.5'
                                             } ${active
                                                 ? 'bg-[#00A8E8]/15 text-[#00A8E8] border-l-[3px] border-[#00A8E8]'
                                                 : 'text-slate-400 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'

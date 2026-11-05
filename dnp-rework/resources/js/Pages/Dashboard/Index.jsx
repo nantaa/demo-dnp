@@ -4,9 +4,9 @@ import AppLayout from '@/Layouts/AppLayout';
 import { STAGES, getStageDisplayId } from '@/Constants';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { showSuccess } from '@/swal';
-import { 
-    Activity, Plus, CheckCircle2, Bell, FileCheck, Calendar, AlertTriangle, 
-    Wrench, Hourglass, ClipboardList, Upload, Banknote, Package, Eye, 
+import {
+    Activity, Plus, CheckCircle2, Bell, FileCheck, Calendar, AlertTriangle,
+    Wrench, Hourglass, ClipboardList, Upload, Banknote, Package, Eye,
     Building2, HardHat, ChevronLeft, ChevronRight, User, Shield, Briefcase,
     MapPin, ArrowRight
 } from 'lucide-react';
@@ -79,14 +79,14 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
     const personalFiltered = useMemo(() => {
         if (!isMGR || !filterMine) return jobs;
         const uId = String(user.id);
-        return jobs.filter(j => 
-            j.s5_reviewed_by === user.name || 
-            (j.inspectors || []).some(ins => 
-                String(ins.id) === uId || 
-                String(ins.user_id) === uId || 
-                String(ins.pivot?.inspector_id) === uId || 
+        return jobs.filter(j =>
+            j.s5_reviewed_by === user.name ||
+            (j.inspectors || []).some(ins =>
+                String(ins.id) === uId ||
+                String(ins.user_id) === uId ||
+                String(ins.pivot?.inspector_id) === uId ||
                 String(ins.pivot?.user_id) === uId
-            ) || 
+            ) ||
             String(j.report_writer_id) === uId
         );
     }, [jobs, filterMine, isMGR, user.name, user.id]);
@@ -108,16 +108,16 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
         const isAssignedToMe = (j) => {
             const uId = String(user.id);
-            return (j.inspectors || []).some(ins => 
-                String(ins.id) === uId || 
-                String(ins.user_id) === uId || 
-                String(ins.pivot?.inspector_id) === uId || 
+            return (j.inspectors || []).some(ins =>
+                String(ins.id) === uId ||
+                String(ins.user_id) === uId ||
+                String(ins.pivot?.inspector_id) === uId ||
                 String(ins.pivot?.user_id) === uId
             ) || String(j.report_writer_id) === uId;
         };
 
         // Tim RU specific: include Stage 5 (Penyusunan LHPP) & Stage 6
-        const lhppJobs = isINS ? personalFiltered.filter(j => 
+        const lhppJobs = isINS ? personalFiltered.filter(j =>
             isAssignedToMe(j) && (j.stage === 5 || j.stage === 6)
         )
             .map(j => {
@@ -198,7 +198,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
         const mktOmzetYtd = thisYearJobs.reduce((sum, j) => sum + Number(j.nilai || 0), 0);
         // Total completed deals this year (Stage 12 / 16)
         const mktClosingYtd = thisYearJobs.filter(j => j.stage === 12 || j.stage === 16).reduce((sum, j) => sum + Number(j.nilai || 0), 0);
-        
+
         // Annual Target (12x monthly target baseline)
         const mktTargetMonthly = MARKETING_TARGETS[user.name] || 150000000;
         const mktTarget = mktTargetMonthly * 12; // Yearly target
@@ -289,9 +289,9 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             else arBuckets['>90'].push(j);
         });
 
-        const tandaTerimaPending = jobs.filter(j => 
-            j.stage === 15 && 
-            !j.tanda_terima_kembali && 
+        const tandaTerimaPending = jobs.filter(j =>
+            j.stage === 15 &&
+            !j.tanda_terima_kembali &&
             !(j.documents || []).some(d => d.stage === 15 && ['Tanda Terima Suket', 'Dokumen Penyerahan'].includes(d.type))
         );
 
@@ -308,12 +308,12 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
 
     const titlePrefix = isMGR && filterMine ? `Personal - ${user.name}` : `Overview`;
     const titleRole = isMKT ? 'Dashboard Marketing' :
-                      isINS ? 'Dashboard Tim Riksa Uji (Tim RU)' :
-                      isADM ? 'Dashboard Admin' :
-                      isFIN ? 'Dashboard Keuangan' :
-                      isMGR ? 'Dashboard Manajerial' :
-                      isAHLI ? 'Dashboard Tim Ahli' :
-                      isSuper ? 'Dashboard Superadmin' : 'Dashboard';
+        isINS ? 'Dashboard Tim Riksa Uji (Tim RU)' :
+            isADM ? 'Dashboard Admin' :
+                isFIN ? 'Dashboard Keuangan' :
+                    isMGR ? 'Dashboard Manajerial' :
+                        isAHLI ? 'Dashboard Tim Ahli' :
+                            isSuper ? 'Dashboard Superadmin' : 'Dashboard';
 
     return (
         <AppLayout>
@@ -332,15 +332,13 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                     {isMGR && (
                         <div className="flex rounded-lg border border-slate-200 shadow-2xs overflow-hidden bg-white p-1 gap-1">
                             <button onClick={() => setFilterMine(true)}
-                                className={`px-4 py-1.5 text-xs font-extrabold rounded-md flex items-center gap-2 transition-all ${
-                                    filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-                                }`}>
+                                className={`px-4 py-1.5 text-xs font-extrabold rounded-md flex items-center gap-2 transition-all ${filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+                                    }`}>
                                 <User size={14} /> Pekerjaan Saya
                             </button>
                             <button onClick={() => setFilterMine(false)}
-                                className={`px-4 py-1.5 text-xs font-extrabold rounded-md transition-all ${
-                                    !filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
-                                }`}>
+                                className={`px-4 py-1.5 text-xs font-extrabold rounded-md transition-all ${!filterMine ? 'bg-[#0A385C] text-[#00A8E8] shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+                                    }`}>
                                 Semua Job
                             </button>
                         </div>
@@ -352,7 +350,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             </div>
 
             {/* Role-Specific Components */}
-            {isMKT && <MktDashboard stats={stats} onSelectJob={setSelectedJob} />}
+            {isMKT && <MktDashboard stats={stats} onSelectJob={setSelectedJob} isSuper={isSuper} />}
             {isADM && <AdmDashboard stats={stats} onSelectJob={setSelectedJob} jobs={jobs} inspectors={inspectors} />}
             {isINS && <InsDashboard stats={stats} user={user} onSelectJob={setSelectedJob} />}
             {(isMGR || isAHLI) && <MgrDashboard stats={stats} onSelectJob={setSelectedJob} isAhli={isAHLI} />}
@@ -363,7 +361,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-xs">
                         <div className="flex items-center gap-2 font-extrabold text-base mb-4 text-[#0A385C]">
                             <Shield size={20} className="text-[#00A8E8]" />
-                            <span>Monitoring Superadmin · PT Delta Nusantara Persada</span>
+                            <span>Superadmin · PT Delta Nusantara Persada</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -431,11 +429,11 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
             </div>
 
             {selectedJob && (
-                <JobDetailSheet 
+                <JobDetailSheet
                     key={selectedJob.id}
-                    job={jobs.find(j => j.id === selectedJob.id) || selectedJob} 
-                    onClose={() => setSelectedJob(null)} 
-                    auth={auth} 
+                    job={jobs.find(j => j.id === selectedJob.id) || selectedJob}
+                    onClose={() => setSelectedJob(null)}
+                    auth={auth}
                 />
             )}
         </AppLayout>
@@ -461,7 +459,7 @@ function KPICard({ label, value, sub, icon: Icon, accentClass, bgClass = 'bg-whi
 // ============================================================
 // MARKETING DASHBOARD
 // ============================================================
-function MktDashboard({ stats, onSelectJob }) {
+function MktDashboard({ stats, onSelectJob, isSuper = false }) {
     const { mktTarget, mktTargetMonthly, mktRealisasi, mktOmzetYtd, mktClosingYtd, achievement, currentYear = new Date().getFullYear(), funnel = [], expiringSukets = [] } = stats;
     const maxFunnel = Math.max(...(funnel || []).map(f => f.count), 1);
 
@@ -504,9 +502,8 @@ function MktDashboard({ stats, onSelectJob }) {
                 </div>
                 <div className="h-4 bg-gray-100 rounded-full overflow-hidden border">
                     <div style={{ width: `${Math.min(100, achievement)}%` }}
-                        className={`h-full transition-all duration-500 rounded-full ${
-                            achievement >= 100 ? 'bg-green-600' : 'bg-orange-500'
-                        }`} />
+                        className={`h-full transition-all duration-500 rounded-full ${achievement >= 100 ? 'bg-green-600' : 'bg-orange-500'
+                            }`} />
                 </div>
                 <div className="mt-3 flex justify-between text-xs text-slate-500 font-medium border-t pt-2">
                     <span>Baseline target bulanan: {formatRp(mktTargetMonthly)} / bulan</span>
@@ -549,9 +546,11 @@ function MktDashboard({ stats, onSelectJob }) {
                         <div className="text-xs text-gray-400 font-bold uppercase tracking-wider">Klien Prioritas</div>
                         <h3 className="text-lg font-bold text-gray-800 mt-0.5">Suket Akan Expire — Kirim Penawaran Baru</h3>
                     </div>
-                    <Link href="/reminder-suket" className="text-xs font-bold text-orange-600 hover:underline">
-                        Lihat Semua &rarr;
-                    </Link>
+                    {isSuper && (
+                        <Link href="/reminder-suket" className="text-xs font-bold text-orange-600 hover:underline">
+                            Lihat Semua &rarr;
+                        </Link>
+                    )}
                 </div>
                 {expiringSukets.length === 0 ? (
                     <div className="p-8 text-center text-gray-500 text-sm">
@@ -583,9 +582,8 @@ function MktDashboard({ stats, onSelectJob }) {
                                             <td className="p-4 text-gray-500">{s.unit?.unit_label || '—'}</td>
                                             <td className="p-4 font-mono text-gray-400">{formatDate(s.unit?.suket_expired_at)}</td>
                                             <td className="p-4 text-right">
-                                                <span className={`font-mono font-bold text-sm ${
-                                                    isExp ? 'text-red-600' : isUrg ? 'text-amber-500' : 'text-gray-900'
-                                                }`}>
+                                                <span className={`font-mono font-bold text-sm ${isExp ? 'text-red-600' : isUrg ? 'text-amber-500' : 'text-gray-900'
+                                                    }`}>
                                                     {isExp ? `+${Math.abs(s.days)}h LATE` : `${s.days} hari`}
                                                 </span>
                                             </td>
@@ -739,9 +737,8 @@ function AdmDashboard({ stats, onSelectJob, jobs, inspectors }) {
                                             <td className="p-4 font-semibold text-gray-700">{j.klien}</td>
                                             <td className="p-4 font-mono text-gray-500">{j.tgl_pelaksanaan ? formatDate(j.tgl_pelaksanaan) : 'Belum dijadwal'}</td>
                                             <td className="p-4">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
-                                                    stExists ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                }`}>
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${stExists ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                    }`}>
                                                     {stExists ? '✓ Terbit' : '× Belum'}
                                                 </span>
                                             </td>
@@ -763,9 +760,8 @@ function AdmDashboard({ stats, onSelectJob, jobs, inspectors }) {
 function H5BlinkKPI({ count }) {
     const active = count > 0;
     return (
-        <div className={`p-5 border rounded-xl shadow-sm transition-all ${
-            active ? 'border-red-500 bg-red-50/50 animate-pulse' : 'bg-white'
-        }`}>
+        <div className={`p-5 border rounded-xl shadow-sm transition-all ${active ? 'border-red-500 bg-red-50/50 animate-pulse' : 'bg-white'
+            }`}>
             <div className="flex justify-between items-start">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Peringatan H-5 Disnaker</div>
                 <AlertTriangle className={`h-5 w-5 ${active ? 'text-red-600' : 'text-gray-400'}`} />
@@ -862,9 +858,8 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
         const isToday = cellDate.toDateString() === new Date().toDateString();
 
         cells.push(
-            <div key={`day-${day}`} className={`min-h-24 p-2 border border-gray-100 relative flex flex-col justify-between ${
-                isToday ? 'bg-orange-50/60 border-orange-200' : 'bg-white'
-            }`}>
+            <div key={`day-${day}`} className={`min-h-24 p-2 border border-gray-100 relative flex flex-col justify-between ${isToday ? 'bg-orange-50/60 border-orange-200' : 'bg-white'
+                }`}>
                 <span className={`text-xs font-bold mb-1 ${isToday ? 'text-orange-600' : 'text-gray-400'}`}>
                     {day} {isToday && '· Hari Ini'}
                 </span>
@@ -876,7 +871,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
 
                         return (
                             <div key={j.id} onClick={() => onSelectJob(j)}
-                                title={`${j.kode} - ${j.klien}\nTim RU: ${insList.map((u, idx) => `#${idx+1} ${u.name}`).join(', ') || 'Belum diassign'}`}
+                                title={`${j.kode} - ${j.klien}\nTim RU: ${insList.map((u, idx) => `#${idx + 1} ${u.name}`).join(', ') || 'Belum diassign'}`}
                                 className="text-[10px] font-bold rounded bg-blue-50 text-blue-900 p-1.5 border border-blue-200 cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-colors flex flex-col gap-0.5 shadow-xs">
                                 <div className="truncate flex justify-between items-center">
                                     <span className="truncate font-semibold text-blue-950">{j.kode}</span>
@@ -885,7 +880,7 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                                 <div className="text-[9px] font-medium text-gray-600 truncate">{j.klien}</div>
                                 {insList.length > 0 && (
                                     <div className="text-[8px] font-semibold text-teal-800 bg-teal-50 border border-teal-200/60 rounded px-1 py-0.5 truncate mt-0.5">
-                                         {leadIns}{secondIns ? `, ${secondIns}` : ''}{insList.length > 2 ? ` +${insList.length - 2}` : ''}
+                                        {leadIns}{secondIns ? `, ${secondIns}` : ''}{insList.length > 2 ? ` +${insList.length - 2}` : ''}
                                     </div>
                                 )}
                             </div>
@@ -909,8 +904,8 @@ function AdmCalendar({ jobs, inspectors = [], onSelectJob }) {
                     {/* Inspector Filter Dropdown */}
                     <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 shadow-xs text-xs">
                         <User size={14} className="text-teal-600" />
-                        <select 
-                            value={selectedInspectorId} 
+                        <select
+                            value={selectedInspectorId}
                             onChange={e => setSelectedInspectorId(e.target.value)}
                             className="bg-transparent font-semibold text-gray-700 outline-none cursor-pointer border-none focus:ring-0 text-xs py-0 pl-0 pr-6"
                         >
@@ -1029,11 +1024,10 @@ function InsDashboard({ stats, user, onSelectJob }) {
                                                 <span className="font-mono text-xs font-bold text-gray-800 px-2 py-0.5 rounded bg-gray-100 border border-gray-200">
                                                     {job.kode}
                                                 </span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                    isStage4
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isStage4
                                                         ? 'bg-amber-50 text-amber-800 border-amber-200'
                                                         : 'bg-indigo-50 text-indigo-800 border-indigo-200'
-                                                }`}>
+                                                    }`}>
                                                     S{job.stage} · {stageName}
                                                 </span>
                                             </div>
@@ -1060,9 +1054,9 @@ function InsDashboard({ stats, user, onSelectJob }) {
                                                         {isStage4 ? 'Tanggal Lapangan' : 'SLA LHPP'}
                                                     </span>
                                                     <span className="font-medium text-gray-700 block">
-                                                        {isStage4 
+                                                        {isStage4
                                                             ? formatDate(job.tgl_lapangan || job.tgl_mulai || job.created_at)
-                                                            : (job.remainingDays !== undefined 
+                                                            : (job.remainingDays !== undefined
                                                                 ? (job.remainingDays < 0 ? `Terlambat ${Math.abs(job.remainingDays)}h` : `${job.remainingDays}h tersisa`)
                                                                 : 'SOP 3 hari/unit')}
                                                     </span>
@@ -1074,11 +1068,10 @@ function InsDashboard({ stats, user, onSelectJob }) {
                                             <button
                                                 type="button"
                                                 onClick={() => onSelectJob(job)}
-                                                className={`w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-sm ${
-                                                    isStage4
+                                                className={`w-full py-2 px-3 rounded-lg text-xs font-bold text-white transition flex items-center justify-center gap-1.5 shadow-sm ${isStage4
                                                         ? 'bg-amber-600 hover:bg-amber-700'
                                                         : 'bg-indigo-600 hover:bg-indigo-700'
-                                                }`}
+                                                    }`}
                                             >
                                                 {isStage4 ? (
                                                     <>
@@ -1151,9 +1144,8 @@ function InsDashboard({ stats, user, onSelectJob }) {
                                                 </div>
                                             </td>
                                             <td className="p-4 text-right">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold border ${
-                                                    isLate ? 'bg-red-100 text-red-800 border-red-200' : isUrgent ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-green-100 text-green-800 border-green-200'
-                                                }`}>
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold border ${isLate ? 'bg-red-100 text-red-800 border-red-200' : isUrgent ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-green-100 text-green-800 border-green-200'
+                                                    }`}>
                                                     {isLate ? 'OVERDUE' : isUrgent ? 'WARNING' : 'ON TRACK'}
                                                 </span>
                                             </td>
@@ -1295,15 +1287,14 @@ function MgrDashboard({ stats, onSelectJob, isAhli = false }) {
                                         <div className="w-48 text-sm font-semibold text-gray-700">{s.name}</div>
                                         <div className="flex-1 h-6 bg-gray-50 border rounded overflow-hidden relative">
                                             <div style={{ width: `${widthPct}%` }}
-                                                className={`h-full flex items-center justify-end pr-3 text-white text-[10px] font-bold transition-all duration-500 ${
-                                                    isBottleneck ? 'bg-red-600' : 'bg-black'
-                                                }`}>
+                                                className={`h-full flex items-center justify-end pr-3 text-white text-[10px] font-bold transition-all duration-500 ${isBottleneck ? 'bg-red-600' : 'bg-black'
+                                                    }`}>
                                                 {s.count > 0 ? `${s.count} job` : ''}
                                             </div>
                                         </div>
                                         {isBottleneck && (
                                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">
-                                                 BOTTLENECK
+                                                BOTTLENECK
                                             </span>
                                         )}
                                     </div>
@@ -1332,9 +1323,8 @@ function MgrDashboard({ stats, onSelectJob, isAhli = false }) {
                             const isIdle = insp.totalActive === 0;
 
                             return (
-                                <div key={insp.id} className={`p-4 border rounded-xl bg-white shadow-sm flex flex-col justify-between hover:border-gray-400 transition-colors ${
-                                    isOverloaded ? 'border-red-200 bg-red-50/10' : 'border-gray-200'
-                                }`}>
+                                <div key={insp.id} className={`p-4 border rounded-xl bg-white shadow-sm flex flex-col justify-between hover:border-gray-400 transition-colors ${isOverloaded ? 'border-red-200 bg-red-50/10' : 'border-gray-200'
+                                    }`}>
                                     <div>
                                         <div className="flex justify-between items-start">
                                             <div>
@@ -1344,9 +1334,8 @@ function MgrDashboard({ stats, onSelectJob, isAhli = false }) {
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <span className={`text-2xl font-black ${
-                                                    isOverloaded ? 'text-red-600' : isIdle ? 'text-gray-300' : 'text-gray-900'
-                                                }`}>
+                                                <span className={`text-2xl font-black ${isOverloaded ? 'text-red-600' : isIdle ? 'text-gray-300' : 'text-gray-900'
+                                                    }`}>
                                                     {insp.totalActive}
                                                 </span>
                                                 <span className="block text-[8px] text-gray-400 uppercase font-bold">Aktif</span>
@@ -1401,9 +1390,8 @@ function MgrDashboard({ stats, onSelectJob, isAhli = false }) {
                                             <td className="p-4 font-bold text-gray-700">{t.job.klien}</td>
                                             <td className="p-4 text-gray-500">{t.unit.unit_label || `Unit ${t.unit.unit_no}`}</td>
                                             <td className="p-4">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
-                                                    opt ? opt.tag : 'bg-gray-100 text-gray-800'
-                                                }`}>
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${opt ? opt.tag : 'bg-gray-100 text-gray-800'
+                                                    }`}>
                                                     {opt ? opt.label : t.status.toUpperCase()}
                                                 </span>
                                             </td>
@@ -1424,15 +1412,15 @@ function MgrDashboard({ stats, onSelectJob, isAhli = false }) {
 // FINANCE DASHBOARD
 // ============================================================
 function FinDashboard({ stats, onSelectJob }) {
-    const { 
-        siapTagih = [], 
-        verifikasiBayar = [], 
-        closingFinancial = [], 
-        piutangBerjalan = [], 
-        piutangOverdue = [], 
-        totalPiutang = 0, 
-        totalOverdue = 0, 
-        arBuckets = { '0-30': [], '31-60': [], '61-90': [], '>90': [] }, 
+    const {
+        siapTagih = [],
+        verifikasiBayar = [],
+        closingFinancial = [],
+        piutangBerjalan = [],
+        piutangOverdue = [],
+        totalPiutang = 0,
+        totalOverdue = 0,
+        arBuckets = { '0-30': [], '31-60': [], '61-90': [], '>90': [] },
         tandaTerimaPending = [],
         getInvoiceAmount = (j) => Number(j.total_invoice_amount || j.nilai || 0),
         getInvoiceDate = (j) => j.tgl_invoice_issued || j.invoice_date || null,
@@ -1443,34 +1431,34 @@ function FinDashboard({ stats, onSelectJob }) {
         <div className="space-y-6">
             {/* KPI Strip */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <KPICard 
-                    label="Suket Siap Tagih" 
-                    value={siapTagih.length} 
-                    sub="Tahap 10 antrean invoice" 
-                    icon={FileCheck} 
-                    accentClass="text-orange-500" 
+                <KPICard
+                    label="Suket Siap Tagih"
+                    value={siapTagih.length}
+                    sub="Tahap 10 antrean invoice"
+                    icon={FileCheck}
+                    accentClass="text-orange-500"
                 />
-                <KPICard 
-                    label="Verifikasi Bayar" 
-                    value={verifikasiBayar.length} 
-                    sub="Tahap 11b konfirmasi lunas & PPh" 
-                    icon={Banknote} 
-                    accentClass={verifikasiBayar.length > 0 ? 'text-teal-600' : 'text-gray-400'} 
-                    bgClass={verifikasiBayar.length > 0 ? 'bg-teal-50/50 border-teal-200' : 'bg-white'} 
+                <KPICard
+                    label="Verifikasi Bayar"
+                    value={verifikasiBayar.length}
+                    sub="Tahap 11b konfirmasi lunas & PPh"
+                    icon={Banknote}
+                    accentClass={verifikasiBayar.length > 0 ? 'text-teal-600' : 'text-gray-400'}
+                    bgClass={verifikasiBayar.length > 0 ? 'bg-teal-50/50 border-teal-200' : 'bg-white'}
                 />
-                <KPICard 
-                    label="Piutang Berjalan" 
-                    value={formatRp(totalPiutang)} 
-                    sub={`${piutangBerjalan.length} invoice unpaid`} 
-                    icon={Banknote} 
+                <KPICard
+                    label="Piutang Berjalan"
+                    value={formatRp(totalPiutang)}
+                    sub={`${piutangBerjalan.length} invoice unpaid`}
+                    icon={Banknote}
                 />
-                <KPICard 
-                    label="Overdue AR" 
-                    value={formatRp(totalOverdue)} 
-                    sub={`${piutangOverdue.length} invoice lewat TOP`} 
-                    icon={AlertTriangle} 
-                    accentClass={piutangOverdue.length > 0 ? 'text-red-600' : 'text-gray-400'} 
-                    bgClass={piutangOverdue.length > 0 ? 'bg-red-50/50 border-red-200 animate-pulse' : 'bg-white'} 
+                <KPICard
+                    label="Overdue AR"
+                    value={formatRp(totalOverdue)}
+                    sub={`${piutangOverdue.length} invoice lewat TOP`}
+                    icon={AlertTriangle}
+                    accentClass={piutangOverdue.length > 0 ? 'text-red-600' : 'text-gray-400'}
+                    bgClass={piutangOverdue.length > 0 ? 'bg-red-50/50 border-red-200 animate-pulse' : 'bg-white'}
                 />
             </div>
 
@@ -1522,9 +1510,8 @@ function FinDashboard({ stats, onSelectJob }) {
                                             </td>
                                             <td className="p-4 text-xs font-semibold text-gray-600">{j.owner_marketing || '—'}</td>
                                             <td className="p-4">
-                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
-                                                    hasDraftInvoice ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
-                                                }`}>
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${hasDraftInvoice ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
                                                     {hasDraftInvoice ? `Draft: ${j.invoice_no}` : 'Belum Invoice'}
                                                 </span>
                                             </td>
@@ -1577,10 +1564,9 @@ function FinDashboard({ stats, onSelectJob }) {
                                         <td className="p-4 font-semibold text-gray-800">{j.klien}</td>
                                         <td className="p-4 font-mono font-bold text-gray-900">{formatRp(getInvoiceAmount(j))}</td>
                                         <td className="p-4">
-                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
-                                                j.s14_payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                j.s14_payment_status === 'partial' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
-                                            }`}>
+                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${j.s14_payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                                                    j.s14_payment_status === 'partial' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                                                }`}>
                                                 {j.s14_payment_status === 'paid' ? 'Paid (Lunas)' : j.s14_payment_status === 'partial' ? 'Partial' : 'Menunggu Verifikasi'}
                                             </span>
                                         </td>
@@ -1723,9 +1709,8 @@ function FinDashboard({ stats, onSelectJob }) {
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right">
-                                                <span className={`font-mono font-bold text-xs ${
-                                                    daysSince > 60 ? 'text-red-600' : daysSince > 30 ? 'text-amber-500' : 'text-gray-900'
-                                                }`}>
+                                                <span className={`font-mono font-bold text-xs ${daysSince > 60 ? 'text-red-600' : daysSince > 30 ? 'text-amber-500' : 'text-gray-900'
+                                                    }`}>
                                                     {daysSince} hari
                                                 </span>
                                             </td>
@@ -1776,9 +1761,8 @@ function FinDashboard({ stats, onSelectJob }) {
                                             <td className="p-4 font-mono font-bold text-gray-700">{formatRp(getInvoiceAmount(j))}</td>
                                             <td className="p-4 font-mono text-gray-400">{formatDate(invDate)}</td>
                                             <td className="p-4 text-right">
-                                                <span className={`font-mono font-bold text-xs ${
-                                                    daysSince > 14 ? 'text-red-600' : daysSince > 7 ? 'text-amber-500' : 'text-gray-900'
-                                                }`}>
+                                                <span className={`font-mono font-bold text-xs ${daysSince > 14 ? 'text-red-600' : daysSince > 7 ? 'text-amber-500' : 'text-gray-900'
+                                                    }`}>
                                                     {daysSince} hari lalu
                                                 </span>
                                             </td>

@@ -70,12 +70,22 @@ class DashboardController extends Controller
 
     public function reminderSuket()
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user || !$user->isSuperadmin()) {
+            abort(403, 'Akses Ditolak. Menu Reminder Suket hanya dapat diakses oleh Superadmin.');
+        }
+
         $data = $this->getSharedData();
         return Inertia::render('Dashboard/ReminderSuket', $data);
     }
 
     public function inventory()
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user || !$user->isSuperadmin()) {
+            abort(403, 'Akses Ditolak. Menu Alat & SKP hanya dapat diakses oleh Superadmin.');
+        }
+
         $data = $this->getSharedData();
         $data['inspectors']      = fn () => \App\Models\InspectorProfile::with('user')->get();
         $data['alat_uji']        = fn () => \App\Models\AlatUji::all();

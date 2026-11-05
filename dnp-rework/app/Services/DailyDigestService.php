@@ -140,7 +140,7 @@ class DailyDigestService
             }
 
             // 6. MANAGER & SUPERADMIN (Executive Overview of All Stages & Bottlenecks)
-            elseif (in_array($role, ['manager', 'superadmin'])) {
+            elseif (in_array($role, array_merge(\App\Models\User::MANAGER_ROLES, ['superadmin']))) {
                 $isAssigned = true;
                 $actionRequired = 'Pengawasan manajerial: saat ini di tahap ' . (self::$stageNames[$stage] ?? "Stage {$stage}");
             }

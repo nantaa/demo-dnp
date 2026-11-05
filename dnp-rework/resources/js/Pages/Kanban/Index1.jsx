@@ -3,7 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES } from '@/Constants';
+import { STAGES, isManagerRole } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
 import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -11,7 +11,7 @@ export default function KanbanIndex({ jobs, auth }) {
     const { permissions } = auth;
     const isINS = ['inspektur', 'inspector', 'tim_ru'].includes(auth?.user?.role);
     const isSuperadmin = auth?.user?.role === 'superadmin' || permissions === 'superadmin';
-    const isManager = auth?.user?.role === 'manager';
+    const isManager = isManagerRole(auth?.user?.role);
     const canViewSelesai = isSuperadmin || isManager;
     const [selectedJob, setSelectedJob] = useState(null);
     const [showSelesai, setShowSelesai] = useState(false);
@@ -115,14 +115,14 @@ export default function KanbanIndex({ jobs, auth }) {
         if (['inspektur', 'inspector', 'tim_ru'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
         if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
         if (auth.user?.role === 'marketing' && [1, 11, 13, 15].includes(sId)) return true;
-        if (auth.user?.role === 'manager' && ![1, 10, 11, 12, 13, 14, 15, 16].includes(sId)) return true;
+        if (isManager && ![1, 10, 11, 12, 13, 14, 15, 16].includes(sId)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };
 
     const canViewStage = (stageId) => {
         const sId = Number(stageId);
-        if (isSuperadmin || auth.user?.role === 'admin' || auth.user?.role === 'manager') return true;
+        if (isSuperadmin || auth.user?.role === 'admin' || isManager) return true;
         if (['inspektur', 'inspector', 'tim_ru'].includes(auth.user?.role)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (
@@ -183,7 +183,7 @@ export default function KanbanIndex({ jobs, auth }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {['marketing', 'manager'].includes(auth.user.role) && (
+                    {(auth.user.role === 'marketing' || isManager) && (
                         <Link href={route('jobs.create')} className="bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
                             <Plus size={14} /> Job Baru
                         </Link>

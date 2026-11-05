@@ -122,12 +122,29 @@ export const PIC_THEMES = {
         avatarText: 'text-[#4764AF]',
         accent: 'from-[#193B68] to-[#4764AF]',
         label: 'MGR',
-        name: 'Management / Kadiv RU',
+        name: 'Kadiv RU / Manager Teknis',
+    },
+    general_manager: {
+        primary: '#3B82F6',
+        dark: '#1E3A8A',
+        light: '#BFDBFE',
+        border: 'border-t-[#3B82F6]',
+        badge: 'bg-[#1E3A8A] text-[#BFDBFE]',
+        pillBorder: 'border-[#3B82F6]',
+        pillBg: 'bg-[#3B82F6]/10',
+        avatarBg: 'bg-[#1E3A8A]',
+        avatarText: 'text-[#3B82F6]',
+        accent: 'from-[#1E3A8A] to-[#3B82F6]',
+        label: 'GM',
+        name: 'General Manager',
     },
 };
 PIC_THEMES.tim_ru = PIC_THEMES.inspektur;
 PIC_THEMES.inspector = PIC_THEMES.inspektur;
-PIC_THEMES.management = PIC_THEMES.manager;
+PIC_THEMES.management = PIC_THEMES.general_manager;
+PIC_THEMES.gm = PIC_THEMES.general_manager;
+PIC_THEMES.manager_ops = PIC_THEMES.general_manager;
+PIC_THEMES.manager_operasional = PIC_THEMES.general_manager;
 PIC_THEMES.tenaga_ahli = PIC_THEMES.tim_ahli;
 PIC_THEMES.super_admin = PIC_THEMES.superadmin;
 
@@ -148,10 +165,17 @@ export const ROLES = {
     tim_ru: { name: 'Tim Riksa Uji', label: 'TRU' },
     inspector: { name: 'Tim Riksa Uji', label: 'TRU' },
     tim_ahli: { name: 'Tim Ahli', label: 'AHLI' },
-    manager: { name: 'Kadiv RU / Manager', label: 'MGR' },
+    manager: { name: 'Kadiv RU / Manager Teknis (Bisa di S3)', label: 'MGR' },
+    general_manager: { name: 'General Manager (Tidak Bisa di S3)', label: 'GM' },
+    management: { name: 'Management / Direksi (Tidak Bisa di S3)', label: 'MGT' },
     finance: { name: 'Admin Keuangan', label: 'FIN' },
     superadmin: { name: 'Super Administrator', label: 'SUP' },
 };
+
+export const MANAGER_ROLES = ['manager', 'general_manager', 'management', 'manager_ops', 'manager_operasional'];
+export const S3_EXCLUDED_ROLES = ['general_manager', 'management', 'manager_ops', 'manager_operasional'];
+export const isManagerRole = (role) => MANAGER_ROLES.includes(String(role || '').toLowerCase());
+export const isS3Excluded = (role) => S3_EXCLUDED_ROLES.includes(String(role || '').toLowerCase());
 
 export const RU_ROLES = ['inspektur', 'inspector', 'tim_ru'];
 export const isRURole = (role) => RU_ROLES.includes(String(role || '').toLowerCase());

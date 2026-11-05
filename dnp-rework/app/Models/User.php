@@ -69,12 +69,31 @@ class User extends Authenticatable
         return $this->belongsToMany(Job::class, 'job_inspectors', 'inspector_id', 'job_id');
     }
 
+    public const MANAGER_ROLES = ['manager', 'general_manager', 'management', 'manager_ops', 'manager_operasional'];
+    public const NON_TECHNICAL_MANAGER_ROLES = ['general_manager', 'management', 'manager_ops', 'manager_operasional'];
+
     /**
      * Helper to check if user is a superadmin
      */
     public function isSuperadmin(): bool
     {
         return $this->role === 'superadmin';
+    }
+
+    /**
+     * Helper to check if user is a manager (technical or non-technical)
+     */
+    public function isManager(): bool
+    {
+        return in_array(strtolower($this->role ?? ''), self::MANAGER_ROLES);
+    }
+
+    /**
+     * Helper to check if user is a non-technical manager (cannot be assigned at S3)
+     */
+    public function isNonTechnicalManager(): bool
+    {
+        return in_array(strtolower($this->role ?? ''), self::NON_TECHNICAL_MANAGER_ROLES);
     }
 
     /**

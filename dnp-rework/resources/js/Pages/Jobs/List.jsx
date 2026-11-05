@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES } from '@/Constants';
+import { STAGES, isManagerRole } from '@/Constants';
 import { showWarning, showConfirm, showSuccess } from '@/swal';
 import { Trash2, ArrowUpDown, ChevronUp, ChevronDown, Search, X } from 'lucide-react';
 
@@ -19,7 +19,7 @@ export default function JobList({ jobs, auth }) {
 
     const visibleJobs = useMemo(() => {
         return jobs.filter(job => {
-            if (permissions === 'superadmin' || auth.user?.role === 'admin' || auth.user?.role === 'manager') return true;
+            if (permissions === 'superadmin' || auth.user?.role === 'admin' || isManagerRole(auth.user?.role)) return true;
             if (auth.user?.role === 'marketing') return job.owner_marketing === auth.user?.name;
 
             // Assigned inspector or report writer access: keep visible across all stages even when moved backwards
@@ -324,7 +324,7 @@ export default function JobList({ jobs, auth }) {
                         <option value="stage_desc">Urutkan: Stage (16 → 1)</option>
                     </select>
 
-                    {['marketing', 'manager'].includes(auth.user.role) && (
+                    {(auth.user.role === 'marketing' || isManagerRole(auth.user.role)) && (
                         <Link href={route('jobs.create')} className="bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap hover:bg-gray-800 transition">
                             + Job Baru
                         </Link>

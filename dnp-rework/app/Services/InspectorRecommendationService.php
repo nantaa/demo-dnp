@@ -26,6 +26,7 @@ class InspectorRecommendationService
                 $query->whereIn('role', ['inspektur', 'inspector', 'tim_ru', 'manager'])
                       ->orWhereHas('inspectorProfile');
             })
+            ->whereNotIn('role', User::NON_TECHNICAL_MANAGER_ROLES)
             ->with(['inspectorProfile'])
             ->get();
 

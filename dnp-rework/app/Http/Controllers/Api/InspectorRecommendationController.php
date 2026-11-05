@@ -25,7 +25,7 @@ class InspectorRecommendationController extends Controller
 
         // RBAC: Only scheduling managers (superadmin, admin, manager) can customize the threshold
         if ($request->has('threshold')) {
-            if ($user && in_array($user->role, ['superadmin', 'admin', 'manager'])) {
+            if ($user && (in_array($user->role, ['superadmin', 'admin']) || $user->isManager())) {
                 $customThreshold = (int) $request->query('threshold');
             }
         }

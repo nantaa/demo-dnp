@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { STAGES, getStageDisplayId } from '@/Constants';
+import { STAGES, getStageDisplayId, isManagerRole } from '@/Constants';
 import JobDetailSheet from '@/Components/JobDetailSheet';
 import { showSuccess } from '@/swal';
 import {
@@ -71,7 +71,7 @@ export default function DashboardIndex({ jobs = [], inspectors = [], auth = {} }
     const isADM = user.role === 'admin';
     const isINS = user.role === 'inspektur' || user.role === 'inspector' || user.role === 'tim_ru';
     const isFIN = user.role === 'finance';
-    const isMGR = user.role === 'manager';
+    const isMGR = isManagerRole(user.role);
     const isSuper = user.role === 'superadmin';
     const isAHLI = user.role === 'tim_ahli' || user.role === 'ahli';
 

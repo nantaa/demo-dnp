@@ -46,7 +46,7 @@ export default function SmartRecommendation({ job, onSelectInspector, selectedIn
     const allInspectors = [
         ...(data?.recommended || []).map(r => ({ ...r, isEliminated: false })),
         ...(data?.eliminated || []).map(e => ({ user: e.user, profile: e.profile || {}, score: null, details: {}, bonuses: [], klien_exp: 0, pesawat_exp: 0, isEliminated: true, eliminatedReason: e.reason })),
-    ];
+    ].filter(item => !['general_manager', 'management', 'manager_ops', 'manager_operasional'].includes(item?.user?.role));
 
     const filteredInspectors = allInspectors.filter(ins => {
         if (filterRole === 'all') return true;

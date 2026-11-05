@@ -48,7 +48,7 @@ class NotificationService
      */
     public static function getManagerUserIds(): array
     {
-        return User::where('role', 'manager')->pluck('id')->toArray();
+        return User::whereIn('role', User::MANAGER_ROLES)->pluck('id')->toArray();
     }
 
     /**

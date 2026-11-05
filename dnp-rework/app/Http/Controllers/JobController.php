@@ -37,7 +37,7 @@ class JobController extends Controller
             return false;
         }
 
-        if ($user->role === 'manager' && !in_array($stage, array_merge(self::MKT_STAGES, self::FIN_STAGES))) {
+        if (($user->role === 'manager' || $user->isManager()) && !in_array($stage, array_merge(self::MKT_STAGES, self::FIN_STAGES))) {
             return true;
         }
 
@@ -184,7 +184,7 @@ class JobController extends Controller
     {
         $user = Auth::user();
         $isOwnerMkt = ($user->role === 'marketing' && $job->owner_marketing === $user->name);
-        $isAdminOrMgr = in_array($user->role, ['superadmin', 'admin', 'manager']);
+        $isAdminOrMgr = in_array($user->role, ['superadmin', 'admin', 'manager']) || $user->isManager();
 
         if (!$isAdminOrMgr && !$isOwnerMkt && !$this->canActOnStage($job->stage, $job)) {
             abort(403, 'Anda tidak memiliki izin untuk mengubah informasi job ini.');
@@ -490,6 +490,22 @@ class JobController extends Controller
                 ->values()
                 ->toArray();
 
+            // Guard: Non-technical manager roles cannot be assigned as inspector or report writer at Stage 3
+            $invalidInspectors = User::whereIn('id', $allInspectorIds)
+                ->whereIn('role', User::NON_TECHNICAL_MANAGER_ROLES)
+                ->pluck('name')
+                ->toArray();
+            if (!empty($invalidInspectors)) {
+                return back()->withErrors(['schedule_days' => 'User berikut memiliki role manager non-teknis dan tidak dapat ditugaskan sebagai inspektur di Stage 3: ' . implode(', ', $invalidInspectors)]);
+            }
+
+            if (!empty($validated['report_writer_id'])) {
+                $rwUser = User::find($validated['report_writer_id']);
+                if ($rwUser && in_array($rwUser->role, User::NON_TECHNICAL_MANAGER_ROLES)) {
+                    return back()->withErrors(['report_writer_id' => 'Role manager non-teknis tidak dapat dipilih sebagai penanggung jawab laporan pada Stage 3.']);
+                }
+            }
+
             $job->inspectors()->sync($allInspectorIds);
 
             // First day's date is the canonical start date (for H-5, summary displays)
@@ -675,7 +691,7 @@ class JobController extends Controller
     public function approveAsManager(Request $request, Job $job)
     {
         $user = Auth::user();
-        if ($user->role !== 'manager' && !$user->isSuperadmin()) {
+        if (!$user->isManager() && !$user->isSuperadmin()) {
             abort(403, 'Only Kadiv/MGR can approve.');
         }
 
@@ -746,7 +762,7 @@ class JobController extends Controller
         $isInspector = $job->inspectors()->where('users.id', $user->id)->exists()
             || (int)$job->report_writer_id === (int)$user->id
             || in_array($user->role, ['inspektur', 'inspector', 'tim_ru']);
-        if (!$isInspector && !$user->isSuperadmin() && $user->role !== 'manager') {
+        if (!$isInspector && !$user->isSuperadmin() && !$user->isManager()) {
             abort(403, 'Only assigned inspectors can submit Stage 4 data.');
         }
 
@@ -773,7 +789,7 @@ class JobController extends Controller
         $user = Auth::user();
         // Admin (stage 5 owner), Inspector (stage 6 owner), or Manager can save
         $isInspector = $job->inspectors()->where('users.id', $user->id)->exists();
-        if (!$this->canActOnStage(5, $job) && !$isInspector && !$user->isSuperadmin() && $user->role !== 'manager') {
+        if (!$this->canActOnStage(5, $job) && !$isInspector && !$user->isSuperadmin() && !$user->isManager()) {
             abort(403, 'Only the LHPP stage owner can submit unit evaluations.');
         }
 
@@ -801,7 +817,7 @@ class JobController extends Controller
         if ($evaluation->job_id !== $job->id) {
             abort(403, 'Evaluation does not belong to this job.');
         }
-        if (!$this->canActOnStage($job->stage, $job) && Auth::user()->role !== 'manager' && !Auth::user()->isSuperadmin()) {
+        if (!$this->canActOnStage($job->stage, $job) && !Auth::user()->isManager() && !Auth::user()->isSuperadmin()) {
             abort(403, 'Unauthorized.');
         }
         $evaluation->delete();
@@ -842,7 +858,7 @@ class JobController extends Controller
     public function saveStage5Review(Request $request, Job $job)
     {
         $user = Auth::user();
-        if ($user->role !== 'manager' && !$user->isSuperadmin()) {
+        if (!$user->isManager() && !$user->isSuperadmin()) {
             abort(403, 'Only Kadiv/MGR can submit Stage 5 review.');
         }
 
@@ -1266,7 +1282,7 @@ class JobController extends Controller
             || (int)$job->report_writer_id === (int)$user->id;
 
         $canUpload = $user->isSuperadmin()
-            || ($user->role === 'manager' && !in_array((int)$request->stage, array_merge(self::MKT_STAGES, self::FIN_STAGES)))
+            || ($user->isManager() && !in_array((int)$request->stage, array_merge(self::MKT_STAGES, self::FIN_STAGES)))
             || ($user->role === 'marketing' && in_array((int)$request->stage, [1, 11, 13, 15]))
             || ($user->role === 'finance' && in_array((int)$request->stage, [10, 12, 14]))
             || (($user->role === 'admin' && (int)$request->stage !== 1) && in_array((int)$request->stage, [2, 3, 7, 8, 9]))
@@ -1566,7 +1582,7 @@ class JobController extends Controller
             || (int)$job->report_writer_id === (int)$user->id;
 
         $canDelete = $user->isSuperadmin()
-            || ($user->role === 'manager' && !in_array((int)$document->stage, array_merge(self::MKT_STAGES, self::FIN_STAGES)))
+            || ($user->isManager() && !in_array((int)$document->stage, array_merge(self::MKT_STAGES, self::FIN_STAGES)))
             || (($user->role === 'admin' && (int)$document->stage !== 1) && in_array((int)$document->stage, [2, 3, 7, 8, 9]))
             || ($document->uploaded_by_user_id === $user->id && !($user->role === 'admin' && !in_array((int)$document->stage, [2, 3, 7, 8, 9])))
             || ($user->role === 'marketing' && in_array((int)$document->stage, [1, 11, 13, 15]))

@@ -9,7 +9,8 @@ import { Trash2, ChevronDown, Eye } from 'lucide-react';
 import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     STAGE9_SUKET_STATUSES, PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
-    STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES, getStageDisplayId, PIC_THEMES
+    STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES, getStageDisplayId, PIC_THEMES,
+    isManagerRole, isS3Excluded
 } from '@/Constants';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -775,7 +776,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
     // ── Permissions ──────────────────────────────────────────────────────────
     const { permissions, user } = auth || {};
     const isInspector = user?.role === 'inspektur' || user?.role === 'inspector' || user?.role === 'tim_ru';
-    const isMGR = user?.role === 'manager';
+    const isMGR = isManagerRole(user?.role);
     const isAssignedInspector = (job.inspectors || []).some(ins => 
         String(ins.id) === String(user?.id) || 
         String(ins.user_id) === String(user?.id) || 
@@ -835,7 +836,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
 
     const canViewStageDocs = (sid) => {
         const sIdNum = Number(sid);
-        if (['superadmin','admin','manager'].includes(user?.role)) return true;
+        if (['superadmin','admin'].includes(user?.role) || isManagerRole(user?.role)) return true;
         if (user?.role === 'marketing' && (job.owner_marketing === user?.name || [1, 11, 13, 15].includes(sIdNum))) return true;
         if (user?.role === 'finance' && [10, 12, 14].includes(sIdNum)) return true;
         if (isInspector || isAssignedInspector) return true;
@@ -847,7 +848,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const sIdNum = Number(sid);
         const curStageNum = Number(job.stage);
         if (user?.role === 'superadmin') return true;
-        if (user?.role === 'manager' && !MKT_STAGES.includes(sIdNum) && !FIN_STAGES.includes(sIdNum)) return true;
+        if (isManagerRole(user?.role) && !MKT_STAGES.includes(sIdNum) && !FIN_STAGES.includes(sIdNum)) return true;
         if (user?.role === 'admin') {
             if (sIdNum === 1 || ![2, 3, 7, 8, 9].includes(sIdNum)) return false;
             return true;
@@ -1747,7 +1748,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 const allInspectors = [
                                     ...(recommendations.recommended || []),
                                     ...(recommendations.eliminated  || []),
-                                ];
+                                ].filter(item => !isS3Excluded(item?.user?.role));
                                 return (
                                     <div key={dayIdx} className="bg-white border border-indigo-200 rounded-lg p-3">
                                         {/* Day header: label + date picker + remove */}
@@ -1862,7 +1863,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 {[
                                     ...(recommendations.recommended || []),
                                     ...(recommendations.eliminated || [])
-                                ].map(item => (
+                                ].filter(item => !isS3Excluded(item?.user?.role)).map(item => (
                                     <option key={item.user.id} value={item.user.id}>
                                         {item.user.name} ({item.user.role})
                                     </option>

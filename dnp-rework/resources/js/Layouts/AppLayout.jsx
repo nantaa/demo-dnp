@@ -132,7 +132,7 @@ export default function AppLayout({ header, children }) {
         if (e) e.preventDefault();
         const res = await showConfirm(
             'Konfirmasi Keluar',
-            'Apakah Anda yakin ingin keluar dari sistem MORIKU?',
+            'Apakah Anda yakin ingin keluar dari sistem Aplikasi?',
             'Ya, Keluar',
             'Batal'
         );

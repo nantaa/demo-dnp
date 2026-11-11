@@ -624,6 +624,33 @@ export default function KanbanIndex({ jobs, auth }) {
                                         <h3 className="font-bold text-sm text-slate-900 leading-tight mb-1 group-hover:text-[#0A385C] transition-colors">{job.klien}</h3>
                                         <p className="text-xs text-slate-500 mb-2 truncate">{job.pesawat} • {job.lokasi}</p>
 
+                                        {/* Stage 5 LHPP Review Decision Banner */}
+                                        {job.stage === 5 && (() => {
+                                            const s5Map = {
+                                                approved: { label: 'LHPP DISETUJUI', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
+                                                approved_conditional: { label: 'DISETUJUI BERSYARAT (REVISI)', cls: 'bg-amber-50 text-amber-800 font-bold border-amber-200' },
+                                                rejected: { label: 'LHPP DITOLAK', cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
+                                            };
+                                            const badge = s5Map[job.s5_review_decision] || { label: 'MENUNGGU REVIEW AHLI', cls: 'bg-purple-50 text-purple-700 border-purple-200' };
+                                            return (
+                                                <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
+                                                    <div className="flex items-center justify-between font-bold">
+                                                        <span>{badge.label}</span>
+                                                        {job.s5_reviewed_by && (
+                                                            <span className="text-[10px] font-normal opacity-85">
+                                                                Oleh: {job.s5_reviewed_by}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {job.s5_review_notes && (
+                                                         <p className="text-[10px] italic border-t border-purple-200/60 pt-1 truncate" title={job.s5_review_notes}>
+                                                             Catatan: {job.s5_review_notes}
+                                                         </p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
                                         {/* Stage 8 Disnaker Status Banner & Delay Reason */}
                                         {job.stage === 8 && (() => {
                                             const sMap = {
@@ -675,6 +702,53 @@ export default function KanbanIndex({ jobs, auth }) {
                                             );
                                         })()}
 
+                                        {/* Stage 10 Invoice Progress Status Banner */}
+                                        {job.stage === 10 && (() => {
+                                            const s10Map = {
+                                                not_started: { label: 'NOT STARTED', cls: 'bg-slate-50 text-slate-600 border-slate-200' },
+                                                delayed: { label: 'DELAYED / TERTUNDA', cls: 'bg-red-50 text-red-800 font-bold border-red-200' },
+                                                in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-50 text-blue-800 font-bold border-blue-200' },
+                                                almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-50 text-amber-800 font-bold border-amber-200' },
+                                                done: { label: 'INVOICE SELESAI', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
+                                            };
+                                            const badge = s10Map[job.s10_progress_status] || { label: 'STATUS PROGRESS: PENDING', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+                                            return (
+                                                <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
+                                                    <div className="flex items-center justify-between font-bold">
+                                                        <span>{badge.label}</span>
+                                                        {job.no_faktur_pajak && (
+                                                            <span className="text-[10px] font-mono font-normal opacity-80" title={`Faktur: ${job.no_faktur_pajak}`}>
+                                                                FP: {job.no_faktur_pajak.substring(0, 10)}...
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Stage 14 (11b) Payment Status Banner */}
+                                        {job.stage === 14 && (() => {
+                                            const s14Map = {
+                                                pending: { label: 'MENUNGGU PEMBAYARAN', cls: 'bg-amber-50 text-amber-800 font-bold border-amber-200' },
+                                                partial: { label: 'DIBAYAR SEBAGIAN (PARTIAL)', cls: 'bg-blue-50 text-blue-800 font-bold border-blue-200' },
+                                                paid: { label: 'LUNAS (PAID)', cls: 'bg-emerald-50 text-emerald-800 font-bold border-emerald-200' },
+                                            };
+                                            const badge = s14Map[job.s14_payment_status] || { label: 'MENUNGGU VERIFIKASI BAYAR', cls: 'bg-slate-50 text-slate-600 border-slate-200' };
+                                            return (
+                                                <div className={`mt-2 mb-1 p-2 rounded-lg border text-[11px] ${badge.cls} space-y-0.5`}>
+                                                    <div className="flex items-center justify-between font-bold">
+                                                        <span>{badge.label}</span>
+                                                        {job.s14_payment_status === 'paid' && <span>✓</span>}
+                                                    </div>
+                                                    {job.s14_payment_notes && (
+                                                        <p className="text-[10px] italic border-t border-amber-200/60 pt-1 truncate" title={job.s14_payment_notes}>
+                                                            {job.s14_payment_notes}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
+
                                         {/* Inspector / Tim Pill Badges if assigned */}
                                         {job.inspectors && job.inspectors.length > 0 && (
                                             <div className="flex items-center gap-1 my-2 overflow-x-auto">
@@ -714,6 +788,18 @@ export default function KanbanIndex({ jobs, auth }) {
                                                     }
                                                 }
 
+                                                if (job.stage === 5 && job.s5_review_decision) {
+                                                    const s5Map = {
+                                                        approved: { label: 'DISETUJUI', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                        approved_conditional: { label: 'REVISI', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                                                        rejected: { label: 'DITOLAK', cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                    };
+                                                    const badge = s5Map[job.s5_review_decision];
+                                                    if (badge) {
+                                                        return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
+                                                    }
+                                                }
+
                                                 if (job.stage === 8 && job.s8_progress_status) {
                                                     const sMap = {
                                                         progress: { label: 'PROSES DISNAKER', cls: 'bg-blue-100 text-blue-800 border-blue-300' },
@@ -742,6 +828,32 @@ export default function KanbanIndex({ jobs, auth }) {
                                                         done: { label: 'DONE', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
                                                     };
                                                     const badge = s9Map[job.s9_progress_status];
+                                                    if (badge) {
+                                                        return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
+                                                    }
+                                                }
+
+                                                if (job.stage === 10 && job.s10_progress_status) {
+                                                    const s10Map = {
+                                                        not_started: { label: 'NOT STARTED', cls: 'bg-gray-100 text-gray-700 border-gray-300' },
+                                                        delayed: { label: 'DELAYED', cls: 'bg-red-100 text-red-800 font-bold border-red-300' },
+                                                        in_progress: { label: 'IN PROGRESS', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                                                        almost_done: { label: 'ALMOST DONE', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                                                        done: { label: 'INVOICE SELESAI', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    };
+                                                    const badge = s10Map[job.s10_progress_status];
+                                                    if (badge) {
+                                                        return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
+                                                    }
+                                                }
+
+                                                if (job.stage === 14 && job.s14_payment_status) {
+                                                    const s14Map = {
+                                                        pending: { label: 'MENUNGGU BAYAR', cls: 'bg-amber-100 text-amber-800 font-bold border-amber-300' },
+                                                        partial: { label: 'PARTIAL', cls: 'bg-blue-100 text-blue-800 font-bold border-blue-300' },
+                                                        paid: { label: 'LUNAS', cls: 'bg-emerald-100 text-emerald-800 font-bold border-emerald-300' },
+                                                    };
+                                                    const badge = s14Map[job.s14_payment_status];
                                                     if (badge) {
                                                         return <span className={`px-2 py-0.5 rounded-full border ${badge.cls}`}>{badge.label}</span>;
                                                     }

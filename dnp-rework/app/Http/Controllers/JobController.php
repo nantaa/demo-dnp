@@ -1217,6 +1217,21 @@ class JobController extends Controller
             $validated['s14_payment_notes'] ?? null
         );
 
+        // Notify Marketing Owner & Stage 14 owners about payment status update
+        $recipients = NotificationService::getRelatedUserIds($job, 14);
+        $statusText = match ($validated['s14_payment_status']) {
+            'paid'    => 'Lunas (Paid)',
+            'partial' => 'Dibayar Sebagian (Partial)',
+            default   => 'Pending',
+        };
+        NotificationService::send(
+            $recipients,
+            'payment_status_updated',
+            "Status Pembayaran (11b) {$job->kode}: {$statusText}",
+            "Finance telah memperbarui status pembayaran untuk {$job->klien} menjadi {$statusText}." . (!empty($validated['s14_payment_notes']) ? " Catatan: {$validated['s14_payment_notes']}" : ''),
+            $job->id
+        );
+
         return back()->with('success', 'Status pembayaran berhasil disimpan.');
     }
 
@@ -1248,6 +1263,18 @@ class JobController extends Controller
             $job,
             $job->stage,
             $action
+        );
+
+        // Notify Marketing Owner & Stage 12 stakeholders about final closing
+        $recipients = NotificationService::getRelatedUserIds($job, 12);
+        NotificationService::send(
+            $recipients,
+            'job_financial_closed',
+            "Closing Pembayaran (Stage 12) {$job->kode}",
+            $validated['paid']
+                ? "Job {$job->kode} ({$job->klien}) telah diverifikasi LUNAS sebesar Rp " . number_format($validated['payment_amount_received'], 0, ',', '.') . " dan resmi ditutup oleh Finance."
+                : "Informasi pembayaran Stage 12 untuk {$job->kode} ({$job->klien}) telah diperbarui oleh Finance.",
+            $job->id
         );
 
         return back()->with('success', $validated['paid'] ? 'Job berhasil ditutup sebagai LUNAS.' : 'Data pembayaran berhasil disimpan.');

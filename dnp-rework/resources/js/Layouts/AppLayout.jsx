@@ -113,10 +113,10 @@ export default function AppLayout({ header, children }) {
         { href: '/kanban', label: 'Kanban', icon: Columns },
         { href: '/jobs', label: 'Daftar Job', icon: List },
         { href: '/jobs/create', label: 'Job Baru', icon: Plus, roles: ['marketing', 'superadmin'] },
-        { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin'] },
+        // { href: '/pelaporan', label: 'Pelaporan', icon: FileSpreadsheet, roles: ['superadmin'] },
         { href: '/users', label: 'Users', icon: ShieldCheck, roles: ['superadmin'] },
-        { href: '/reminder-suket', label: 'Reminder Suket', icon: CalendarClock, roles: ['superadmin'] },
-        { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['superadmin'] },
+        // { href: '/reminder-suket', label: 'Reminder Suket', icon: CalendarClock, roles: ['superadmin'] },
+        // { href: '/inventory', label: 'Alat & SKP', icon: Boxes, roles: ['superadmin'] },
     ];
 
     const userRole = (user?.role || '').toLowerCase();

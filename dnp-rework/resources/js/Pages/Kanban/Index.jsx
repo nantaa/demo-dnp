@@ -30,6 +30,19 @@ export default function KanbanIndex({ jobs, auth }) {
         return [];
     });
 
+    // Auto-open job detail modal when arriving from notification deep-link (?job_id=...)
+    useEffect(() => {
+        if (typeof window !== 'undefined' && Array.isArray(jobs) && jobs.length > 0) {
+            const params = new URLSearchParams(window.location.search);
+            const targetJobId = params.get('job_id');
+            if (targetJobId) {
+                const found = jobs.find(j => String(j.id) === String(targetJobId) || j.kode === targetJobId);
+                if (found) {
+                    setSelectedJob(found);
+                }
+            }
+        }
+    }, [jobs]);
 
     const toggleStageCollapse = (stageId) => {
         setCollapsedStages(prev => {

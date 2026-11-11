@@ -44,7 +44,8 @@ class SendWaEscalations extends Command
             }
 
             $jobKode = $notif->job ? " [Job: {$notif->job->kode}]" : '';
-            $message = "⏰ *REMINDER DNP MONITOR*{$jobKode}\n\n*{$notif->title}*\n{$notif->body}\n\nMohon segera ditindaklanjuti di aplikasi DNP Monitor.\nhttps://dnp.deltanusanpersada.co.id";
+            $baseUrl = rtrim(config('app.url') ?: 'https://monitor-dnp.deltaindo.co.id', '/');
+            $message = "⏰ *REMINDER DNP MONITOR*{$jobKode}\n\n*{$notif->title}*\n{$notif->body}\n\nMohon segera ditindaklanjuti di aplikasi DNP Monitor.\n{$baseUrl}";
 
             $sent = WablasService::send($user->phone, $message);
             if ($sent) {

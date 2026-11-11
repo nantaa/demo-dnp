@@ -63,13 +63,27 @@ export default function NotificationBell({ onSelectJob }) {
     }, []);
 
     const markAsRead = (id) => {
-        fetch(`/api/notifications/${id}/read`, { method: 'POST', headers: { 'X-CSRF-TOKEN': getCsrfToken() } })
+        fetch(`/api/notifications/${id}/read`, {
+            method: 'POST',
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        })
             .then(() => fetchNotifications())
             .catch(console.error);
     };
 
     const markAllRead = () => {
-        fetch('/api/notifications/read-all', { method: 'POST', headers: { 'X-CSRF-TOKEN': getCsrfToken() } })
+        fetch('/api/notifications/read-all', {
+            method: 'POST',
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        })
             .then(() => fetchNotifications())
             .catch(console.error);
     };
@@ -89,7 +103,7 @@ export default function NotificationBell({ onSelectJob }) {
             if (window.location.pathname.includes('/kanban') && onSelectJob && notif.job) {
                 onSelectJob(notif.job);
             } else {
-                router.visit(`/kanban`);
+                router.visit(`/kanban?job_id=${encodeURIComponent(notif.job_id)}`);
             }
         }
     };

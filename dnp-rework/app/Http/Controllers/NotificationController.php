@@ -16,6 +16,12 @@ class NotificationController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
 
+        // Auto-purge orphan notifications whose job was deleted
+        Notification::where('user_id', $userId)
+            ->whereNotNull('job_id')
+            ->whereDoesntHave('job')
+            ->delete();
+
         // Auto-purge legacy notifications where this user was not related to the job
         if ($user && $user->role === 'marketing') {
             Notification::where('user_id', $userId)
@@ -39,7 +45,7 @@ class NotificationController extends Controller
         }
 
         $notifications = Notification::where('user_id', $userId)
-            ->with(['job:id,kode,klien,pesawat,stage,owner_marketing'])
+            ->with(['job:id,kode,no_po,klien,pesawat,stage,owner_marketing'])
             ->orderBy('created_at', 'desc')
             ->take(15)
             ->get();

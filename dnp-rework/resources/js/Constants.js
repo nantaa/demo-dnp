@@ -165,9 +165,9 @@ export const ROLES = {
     tim_ru: { name: 'Tim Riksa Uji', label: 'TRU' },
     inspector: { name: 'Tim Riksa Uji', label: 'TRU' },
     tim_ahli: { name: 'Tim Ahli', label: 'AHLI' },
-    manager: { name: 'Kadiv RU / Manager Teknis (Bisa di S3)', label: 'MGR' },
-    general_manager: { name: 'General Manager (Tidak Bisa di S3)', label: 'GM' },
-    management: { name: 'Management / Direksi (Tidak Bisa di S3)', label: 'MGT' },
+    manager: { name: 'Kadiv RU / Manager Teknis', label: 'MGR' },
+    general_manager: { name: 'General Manager', label: 'GM' },
+    management: { name: 'Management / Direksi', label: 'MGT' },
     finance: { name: 'Admin Keuangan', label: 'FIN' },
     superadmin: { name: 'Super Administrator', label: 'SUP' },
 };

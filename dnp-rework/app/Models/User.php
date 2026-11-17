@@ -89,11 +89,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper to check if user is a non-technical manager (cannot be assigned at S3)
+     * Helper to check if user is a non-technical manager (cannot be assigned at S3, view-only)
      */
     public function isNonTechnicalManager(): bool
     {
         return in_array(strtolower($this->role ?? ''), self::NON_TECHNICAL_MANAGER_ROLES);
+    }
+
+    /**
+     * Helper to check if user is a technical manager (Kadiv RU / Manager Teknis)
+     */
+    public function isTechnicalManager(): bool
+    {
+        return strtolower($this->role ?? '') === 'manager';
     }
 
     /**

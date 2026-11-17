@@ -173,8 +173,11 @@ export const ROLES = {
 };
 
 export const MANAGER_ROLES = ['manager', 'general_manager', 'management', 'manager_ops', 'manager_operasional'];
+export const NON_TECHNICAL_MANAGER_ROLES = ['general_manager', 'management', 'manager_ops', 'manager_operasional'];
 export const S3_EXCLUDED_ROLES = ['general_manager', 'management', 'manager_ops', 'manager_operasional'];
 export const isManagerRole = (role) => MANAGER_ROLES.includes(String(role || '').toLowerCase());
+export const isTechnicalManager = (role) => String(role || '').toLowerCase() === 'manager';
+export const isNonTechnicalManager = (role) => NON_TECHNICAL_MANAGER_ROLES.includes(String(role || '').toLowerCase());
 export const isS3Excluded = (role) => S3_EXCLUDED_ROLES.includes(String(role || '').toLowerCase());
 
 export const RU_ROLES = ['inspektur', 'inspector', 'tim_ru'];

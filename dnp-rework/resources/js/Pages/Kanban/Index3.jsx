@@ -3,7 +3,7 @@ import { Head, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KanbanColumn from '@/Components/KanbanColumn';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES, isManagerRole } from '@/Constants';
+import { STAGES, isManagerRole, isTechnicalManager, isNonTechnicalManager } from '@/Constants';
 import { showConfirm, showSuccess } from '@/swal';
 import { Trash2, Plus, Archive, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -111,11 +111,14 @@ export default function KanbanIndex({ jobs, auth }) {
     const canManageStage = (stageId) => {
         const sId = Number(stageId);
         if (isSuperadmin) return true;
+        // Non-technical manager (Management/Direksi, General Manager) is view-only across all stages
+        if (isNonTechnicalManager(auth.user?.role)) return false;
         if (auth.user?.role === 'admin' && [2, 3, 7, 8, 9].includes(sId)) return true;
         if (['inspektur', 'inspector', 'tim_ru'].includes(auth.user?.role) && [4, 5].includes(sId)) return true;
         if (auth.user?.role === 'finance' && [10, 12, 14].includes(sId)) return true;
         if (auth.user?.role === 'marketing' && [1, 11, 13, 15].includes(sId)) return true;
-        if (isManager && ![1, 10, 11, 12, 13, 14, 15, 16].includes(sId)) return true;
+        // Technical manager (Kadiv RU / Manager Teknis) can manage operational stages as normal
+        if (isTechnicalManager(auth.user?.role) && ![1, 10, 11, 12, 13, 14, 15, 16].includes(sId)) return true;
         const perm = permissions?.[sId] || permissions?.[stageId];
         return perm && (perm.is_owner === true || perm.is_owner === 1 || perm.is_owner === '1');
     };
@@ -183,7 +186,7 @@ export default function KanbanIndex({ jobs, auth }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {(auth.user.role === 'marketing' || isManager) && (
+                    {(auth.user.role === 'marketing' || isTechnicalManager(auth.user?.role)) && (
                         <Link href={route('jobs.create')} className="bg-black hover:bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
                             <Plus size={14} /> Job Baru
                         </Link>

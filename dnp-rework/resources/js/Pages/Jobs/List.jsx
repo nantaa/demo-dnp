@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import JobDetailSheet from '@/Components/JobDetailSheet';
-import { STAGES, isManagerRole } from '@/Constants';
+import { STAGES, isManagerRole, isTechnicalManager } from '@/Constants';
 import { showWarning, showConfirm, showSuccess } from '@/swal';
 import { Trash2, ArrowUpDown, ChevronUp, ChevronDown, Search, X } from 'lucide-react';
 
@@ -324,7 +324,7 @@ export default function JobList({ jobs, auth }) {
                         <option value="stage_desc">Urutkan: Stage (16 → 1)</option>
                     </select>
 
-                    {(auth.user.role === 'marketing' || isManagerRole(auth.user.role)) && (
+                    {(auth.user.role === 'marketing' || isTechnicalManager(auth.user.role)) && (
                         <Link href={route('jobs.create')} className="bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap hover:bg-gray-800 transition">
                             + Job Baru
                         </Link>

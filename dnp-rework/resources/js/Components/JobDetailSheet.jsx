@@ -10,7 +10,7 @@ import {
     DOC_TYPES_BY_STAGE, STAGES, STAGE4_PHOTO_TYPES, STAGE5_DECISIONS,
     STAGE9_SUKET_STATUSES, PROGRESS_STATUSES, STAGE8_DISNAKER_STATUSES, MKT_STAGES, FIN_STAGES, STAGE1_REQUIRED_DOCS, STAGE2_REQUIRED_DOCS,
     STAGE2_VERIFY_CHECKLIST, INDONESIA_PROVINCES, getStageDisplayId, PIC_THEMES,
-    isManagerRole, isS3Excluded
+    isManagerRole, isTechnicalManager, isNonTechnicalManager, isS3Excluded
 } from '@/Constants';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -825,9 +825,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(curStage)) return true;
         if (user?.role === 'finance' && [10, 12, 14].includes(curStage)) return true;
         if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
-        // Stage 3 (Penjadwalan & ST) is strictly Admin owned; Management is view-only (cannot edit)
-        if (isMGR && curStage === 3) return false;
-        if (isMGR && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
+        // Non-technical manager (Management/Direksi, General Manager) is view-only (cannot edit anything)
+        if (isNonTechnicalManager(user?.role)) return false;
+        // Technical Manager (Kadiv RU / Manager Teknis) can manage operational stages as normal
+        if (isTechnicalManager(user?.role) && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
         if (isInspector || isAssignedInspector) {
             return [4, 5].includes(curStage);
         }
@@ -850,9 +851,10 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const sIdNum = Number(sid);
         const curStageNum = Number(job.stage);
         if (user?.role === 'superadmin') return true;
-        // Stage 3 docs: Management is view-only (cannot edit/manage)
-        if (isManagerRole(user?.role) && sIdNum === 3) return false;
-        if (isManagerRole(user?.role) && !MKT_STAGES.includes(sIdNum) && !FIN_STAGES.includes(sIdNum)) return true;
+        // Non-technical manager cannot upload or delete documents (view-only)
+        if (isNonTechnicalManager(user?.role)) return false;
+        // Technical Manager can manage docs for operational stages
+        if (isTechnicalManager(user?.role) && !MKT_STAGES.includes(sIdNum) && !FIN_STAGES.includes(sIdNum)) return true;
         if (user?.role === 'admin') {
             if (sIdNum === 1 || ![2, 3, 7, 8, 9].includes(sIdNum)) return false;
             return true;
@@ -1527,7 +1529,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 Persetujuan: Kadiv/MGR sudah menyetujui. Admin dapat melanjutkan.
                             </div>
                         )}
-                        {job.peer_review_status === 'requested' && isMGR && (
+                        {job.peer_review_status === 'requested' && isTechnicalManager(user?.role) && (
                             <div className="bg-blue-50 border border-blue-300 rounded p-3 flex items-center justify-between">
                                 <span className="text-sm text-blue-800 font-medium">Admin meminta persetujuan Anda.</span>
                                 <button type="button" onClick={handleApproveAsManager}
@@ -1536,7 +1538,7 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
                                 </button>
                             </div>
                         )}
-                        {job.peer_review_status === 'requested' && !isMGR && (
+                        {job.peer_review_status === 'requested' && !isTechnicalManager(user?.role) && (
                             <div className="px-3 py-2 rounded text-sm bg-yellow-50 text-yellow-700 border border-yellow-200 flex items-center gap-1">
                                 Menunggu persetujuan Kadiv/MGR…
                             </div>

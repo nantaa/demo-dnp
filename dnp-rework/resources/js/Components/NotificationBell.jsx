@@ -12,10 +12,29 @@ export default function NotificationBell({ onSelectJob }) {
     const dropdownRef = useRef(null);
     const prevNotifIdsRef = useRef(null);
 
+    const intervalRef = useRef(null);
+
     const fetchNotifications = () => {
-        fetch('/api/notifications')
-            .then(res => res.json())
+        fetch('/api/notifications', {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => {
+                if (res.status === 401 || res.status === 419) {
+                    // Session expired or unauthenticated, silently stop polling to prevent Inertia modal collision
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                        intervalRef.current = null;
+                    }
+                    return null;
+                }
+                if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+                return res.json();
+            })
             .then(data => {
+                if (!data) return;
                 const fetchedNotifs = data.notifications || [];
                 const newUnreadCount = data.unread_count || 0;
 
@@ -41,14 +60,21 @@ export default function NotificationBell({ onSelectJob }) {
                 setNotifications(fetchedNotifs);
                 setUnreadCount(newUnreadCount);
             })
-            .catch(console.error);
+            .catch(err => {
+                // Silently log network interruptions without triggering global Inertia error dialogs
+                console.warn('Notification fetch paused:', err?.message || err);
+            });
     };
 
     useEffect(() => {
         fetchNotifications();
         // Poll every 8 seconds for fast real-time corner alerts
-        const interval = setInterval(fetchNotifications, 8000);
-        return () => clearInterval(interval);
+        intervalRef.current = setInterval(fetchNotifications, 8000);
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
     }, []);
 
     // Close dropdown on outside click

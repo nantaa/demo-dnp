@@ -37,6 +37,11 @@ class JobController extends Controller
             return false;
         }
 
+        // Stage 3 (Penjadwalan & ST) is strictly owned by Admin; Management cannot edit/act (view only)
+        if ($stage === 3 && ($user->role === 'manager' || $user->isManager())) {
+            return false;
+        }
+
         if (($user->role === 'manager' || $user->isManager()) && !in_array($stage, array_merge(self::MKT_STAGES, self::FIN_STAGES))) {
             return true;
         }

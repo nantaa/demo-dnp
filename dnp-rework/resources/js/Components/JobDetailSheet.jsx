@@ -825,6 +825,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         if (user?.role === 'marketing' && [1, 11, 13, 15].includes(curStage)) return true;
         if (user?.role === 'finance' && [10, 12, 14].includes(curStage)) return true;
         if (['tim_ahli', 'ahli'].includes(user?.role) && curStage === 6) return true;
+        // Stage 3 (Penjadwalan & ST) is strictly Admin owned; Management is view-only (cannot edit)
+        if (isMGR && curStage === 3) return false;
         if (isMGR && !MKT_STAGES.includes(curStage) && !FIN_STAGES.includes(curStage)) return true;
         if (isInspector || isAssignedInspector) {
             return [4, 5].includes(curStage);
@@ -848,6 +850,8 @@ export default function JobDetailSheet({ job, onClose, auth, canManage: propCanM
         const sIdNum = Number(sid);
         const curStageNum = Number(job.stage);
         if (user?.role === 'superadmin') return true;
+        // Stage 3 docs: Management is view-only (cannot edit/manage)
+        if (isManagerRole(user?.role) && sIdNum === 3) return false;
         if (isManagerRole(user?.role) && !MKT_STAGES.includes(sIdNum) && !FIN_STAGES.includes(sIdNum)) return true;
         if (user?.role === 'admin') {
             if (sIdNum === 1 || ![2, 3, 7, 8, 9].includes(sIdNum)) return false;
